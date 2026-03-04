@@ -2,13 +2,11 @@
     <properties>
         <property id="race_distance_km" type="float">42.195</property>
         <property id="target_time_hms" type="string">05:00:00</property>
-        <property id="fuel_base_min" type="number">35</property>
     </properties>
 
     <strings>
         <string id="setting_race_distance">レース距離 (km)</string>
         <string id="setting_target_time">目標タイム (HH:MM:SS)</string>
-        <string id="setting_fuel_interval">補給間隔 (分)</string>
     </strings>
 
     <settings>
@@ -17,9 +15,6 @@
         </setting>
         <setting propertyKey="@Properties.target_time_hms" title="@Strings.setting_target_time">
             <settingConfig type="alphaNumeric" />
-        </setting>
-        <setting propertyKey="@Properties.fuel_base_min" title="@Strings.setting_fuel_interval">
-            <settingConfig type="numeric" />
         </setting>
     </settings>
 </resources>

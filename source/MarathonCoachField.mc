@@ -5,16 +5,13 @@ using Toybox.WatchUi as Ui;
 class MarathonCoachField extends Ui.DataField {
     const KEY_RACE_DISTANCE_KM = "race_distance_km";
     const KEY_TARGET_TIME_HMS = "target_time_hms";
-    const KEY_FUEL_BASE_MIN = "fuel_base_min";
 
     const DEFAULT_RACE_DISTANCE_KM = 42.195;
     const DEFAULT_TARGET_TIME_HMS = "05:00:00";
-    const DEFAULT_FUEL_BASE_MIN = 35;
 
     var _statusText = "STEP2 SETTINGS";
     var _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
     var _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
-    var _fuelBaseMin = DEFAULT_FUEL_BASE_MIN;
 
     function initialize() {
         DataField.initialize();
@@ -44,13 +41,11 @@ class MarathonCoachField extends Ui.DataField {
 
         dc.drawText(centerX, 34, Gfx.FONT_SMALL, "DIST " + _raceDistanceKm.toString() + "km", Gfx.TEXT_JUSTIFY_CENTER);
         dc.drawText(centerX, 58, Gfx.FONT_SMALL, "GOAL " + _targetTimeHms, Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(centerX, 82, Gfx.FONT_SMALL, "FUEL " + _fuelBaseMin.toString() + "m", Gfx.TEXT_JUSTIFY_CENTER);
     }
 
     function _loadSettings() {
         _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
         _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
-        _fuelBaseMin = DEFAULT_FUEL_BASE_MIN;
 
         var raceDistance = Props.getValue(KEY_RACE_DISTANCE_KM);
         if (raceDistance != null and raceDistance instanceof Number and raceDistance > 0) {
@@ -63,11 +58,6 @@ class MarathonCoachField extends Ui.DataField {
             if (targetTimeText.length() > 0) {
                 _targetTimeHms = targetTimeText;
             }
-        }
-
-        var fuelBase = Props.getValue(KEY_FUEL_BASE_MIN);
-        if (fuelBase != null and fuelBase instanceof Number and fuelBase > 0) {
-            _fuelBaseMin = fuelBase;
         }
     }
 }
