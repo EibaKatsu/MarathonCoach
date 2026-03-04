@@ -1,0 +1,4 @@
+<resources>
+    <string id="AppName">Marathon Coach</string>
+    <string id="Step1Status">STEP1 READY</string>
+</resources>

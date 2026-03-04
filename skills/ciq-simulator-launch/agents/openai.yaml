@@ -1,0 +1,4 @@
+interface:
+  display_name: "CIQ Simulator Launch"
+  short_description: "Connect IQ simulator build and launch workflow"
+  default_prompt: "シミュレーション起動"
