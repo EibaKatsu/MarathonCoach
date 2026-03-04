@@ -219,6 +219,7 @@ HR超過判定はバタつき防止のため、
 ## 参照：UIモック（格納前提）
 以下のイメージを `codex/assets/ui/mockups/` に格納し、必要に応じて更新する。
 
+- 現在のUIモック（採用）: `assets/UI_Image.png`
 - `assets/ui/mockups/ui_b_v1.png`
 - `assets/ui/mockups/ui_b_v2_pace_unit_small.png`
 - `assets/ui/mockups/ui_b_v3_pace_centered.png`
@@ -259,4 +260,5 @@ HR超過判定はバタつき防止のため、
 13. 最終調整（視認性/軽量化/安定性）
 
 ### 現在の進行
-- **STEP 1: 実装完了（シミュレーター確認待ち）**
+- **STEP 1: 完了**
+- **STEP 2: 実施中（設定3項目の実装）**

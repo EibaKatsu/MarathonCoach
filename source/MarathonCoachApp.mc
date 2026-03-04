@@ -1,4 +1,5 @@
 using Toybox.Application as App;
+using Toybox.WatchUi as Ui;
 
 class MarathonCoachApp extends App.AppBase {
     function initialize() {
@@ -7,5 +8,9 @@ class MarathonCoachApp extends App.AppBase {
 
     function getInitialView() {
         return [ new MarathonCoachField() ];
+    }
+
+    function onSettingsChanged() {
+        Ui.requestUpdate();
     }
 }
