@@ -5,7 +5,7 @@ using Toybox.WatchUi as Ui;
 class MarathonCoachField extends Ui.DataField {
     const KEY_RACE_DISTANCE_KM = "race_distance_km";
     const KEY_TARGET_TIME_HMS = "target_time_hms";
-    const LAYOUT_DEBUG_OVERLAY = true;
+    const LAYOUT_DEBUG_OVERLAY = false;
 
     const DEFAULT_RACE_DISTANCE_KM = 42.195;
     const DEFAULT_TARGET_TIME_HMS = "05:00:00";
@@ -72,15 +72,11 @@ class MarathonCoachField extends Ui.DataField {
         var rightColX = centerX;
         var rightColW = (left + safeWidth) - rightColX;
 
-        // Keep STEP3 marker visible while validating spacing in simulator.
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
-        dc.drawText(width / 2, 2, Gfx.FONT_TINY, _statusText, Gfx.TEXT_JUSTIFY_CENTER);
-
         // 1st row left: HR/CAP
         dc.drawText(
             leftColX + (leftColW / 2),
-            top + 6,
-            Gfx.FONT_MEDIUM,
+            top + 28,
+            Gfx.FONT_TINY,
             "152 / 155",
             Gfx.TEXT_JUSTIFY_CENTER
         );
@@ -88,15 +84,16 @@ class MarathonCoachField extends Ui.DataField {
         // Right col row1-2 span: FUEL ring
         var fuelSpanTop = top;
         var fuelSpanBottom = row2Y;
-        var fuelCenterX = rightColX + (rightColW / 2);
         var fuelCenterY = fuelSpanTop + ((fuelSpanBottom - fuelSpanTop) / 2);
         var fuelRadius = _clamp((_min(rightColW, fuelSpanBottom - fuelSpanTop) / 2) - 6, 20, 58);
+        // Move slightly left so the circle just crosses the center guide line.
+        var fuelCenterX = rightColX + fuelRadius - 2;
 
         dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
         dc.fillCircle(fuelCenterX, fuelCenterY, fuelRadius);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLUE);
-        dc.drawText(fuelCenterX, fuelCenterY - 24, Gfx.FONT_SMALL, "FUEL", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(fuelCenterX, fuelCenterY - 2, Gfx.FONT_MEDIUM, "6:20", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(fuelCenterX, fuelCenterY - 20, Gfx.FONT_XTINY, "FUEL", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(fuelCenterX, fuelCenterY + 2, Gfx.FONT_SMALL, "6:20", Gfx.TEXT_JUSTIFY_CENTER);
 
         // Left col row2-3 span: coach card
         var cardX = leftColX + 4;
@@ -108,33 +105,32 @@ class MarathonCoachField extends Ui.DataField {
         dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
         dc.fillRoundedRectangle(cardX, cardY, cardW, cardH, cardCorner);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLUE);
-        dc.drawText(cardX + (cardW / 2), cardY + 26, Gfx.FONT_MEDIUM, "ちょい", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(cardX + (cardW / 2), cardY + 52, Gfx.FONT_MEDIUM, "落とし", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(cardX + (cardW / 2), cardY + cardH - 40, Gfx.FONT_MEDIUM, "↓ -10s", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(cardX + (cardW / 2), cardY + 22, Gfx.FONT_SMALL, "ちょい", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(cardX + (cardW / 2), cardY + 44, Gfx.FONT_SMALL, "落とし", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(cardX + (cardW / 2), cardY + cardH - 28, Gfx.FONT_SMALL, "↓ -10s", Gfx.TEXT_JUSTIFY_CENTER);
 
         // 3rd row right: pace
         var paceTop = row2Y;
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
         dc.drawText(
             rightColX + (rightColW / 2),
-            paceTop + 14,
-            Gfx.FONT_LARGE,
+            paceTop + 16,
+            Gfx.FONT_MEDIUM,
             "7:21",
             Gfx.TEXT_JUSTIFY_CENTER
         );
         dc.drawText(
-            rightColX + (rightColW / 2),
-            paceTop + 54,
-            Gfx.FONT_SMALL,
+            rightColX + rightColW - 6,
+            row3Y - 18,
+            Gfx.FONT_XTINY,
             "/km",
-            Gfx.TEXT_JUSTIFY_CENTER
+            Gfx.TEXT_JUSTIFY_RIGHT
         );
 
         // 4th row: DIST / TIME + PACE delta
         var row4CenterY = row3Y + ((bottomY - row3Y) / 2);
-        dc.drawText(leftColX + (leftColW / 2), row3Y + 6, Gfx.FONT_SMALL, "22.3 km", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(rightColX + (rightColW / 2), row3Y + 6, Gfx.FONT_SMALL, "2:33:12", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(width / 2, row4CenterY + 6, Gfx.FONT_SMALL, "PACE +10s", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width / 2, row3Y + 4, Gfx.FONT_SMALL, "22.3 km  2:33:12", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width / 2, row4CenterY + 8, Gfx.FONT_TINY, "PACE +10s", Gfx.TEXT_JUSTIFY_CENTER);
 
         if (LAYOUT_DEBUG_OVERLAY) {
             dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
