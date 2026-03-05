@@ -1,5 +1,6 @@
 using Toybox.Application.Properties as Props;
 using Toybox.Graphics as Gfx;
+using Toybox.Lang as Lang;
 using Toybox.Math as Math;
 using Toybox.System as Sys;
 using Toybox.WatchUi as Ui;
@@ -17,8 +18,8 @@ class MarathonCoachField extends Ui.DataField {
     var _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
     var _paceNowSecPerKm = null;
     var _paceNowText = "--:--";
-    var _paceSampleMs = [];
-    var _paceSampleSecPerKm = [];
+    var _paceSampleMs as Lang.Array = [];
+    var _paceSampleSecPerKm as Lang.Array = [];
 
     function initialize() {
         DataField.initialize();
