@@ -1,5 +1,7 @@
 using Toybox.Application.Properties as Props;
 using Toybox.Graphics as Gfx;
+using Toybox.Math as Math;
+using Toybox.System as Sys;
 using Toybox.WatchUi as Ui;
 
 class MarathonCoachField extends Ui.DataField {
@@ -13,6 +15,10 @@ class MarathonCoachField extends Ui.DataField {
     var _statusText = "STEP3 LAYOUT";
     var _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
     var _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
+    var _paceNowSecPerKm = null;
+    var _paceNowText = "--:--";
+    var _paceSampleMs = [];
+    var _paceSampleSecPerKm = [];
 
     function initialize() {
         DataField.initialize();
@@ -21,8 +27,9 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function compute(info) {
-        // Step 2: load and reflect settings values.
+        // Step 2 settings + Step 4 pace window update.
         _loadSettings();
+        _updatePaceWindow(info);
         return;
     }
 
@@ -176,7 +183,7 @@ class MarathonCoachField extends Ui.DataField {
             rightColX + (rightColW / 2),
             paceY,
             paceFont,
-            "7:21",
+            _paceNowText,
             Gfx.TEXT_JUSTIFY_CENTER
         );
         dc.drawText(
@@ -224,6 +231,62 @@ class MarathonCoachField extends Ui.DataField {
             return 0; // small
         }
         return 1; // medium
+    }
+
+    function _updatePaceWindow(info) {
+        var nowMs = Sys.getTimer();
+        var samplePaceSecPerKm = _extractPaceSecPerKm(info);
+
+        if (samplePaceSecPerKm != null) {
+            _paceSampleMs.add(nowMs);
+            _paceSampleSecPerKm.add(samplePaceSecPerKm);
+        }
+
+        var keepWindowMs = 10000;
+        while (_paceSampleMs.size() > 0 and (nowMs - _paceSampleMs[0]) > keepWindowMs) {
+            _paceSampleMs.remove(0);
+            _paceSampleSecPerKm.remove(0);
+        }
+
+        if (_paceSampleSecPerKm.size() == 0) {
+            _paceNowSecPerKm = null;
+            _paceNowText = "--:--";
+            return;
+        }
+
+        var sumPace = 0.0;
+        for (var i = 0; i < _paceSampleSecPerKm.size(); i += 1) {
+            sumPace += _paceSampleSecPerKm[i];
+        }
+
+        _paceNowSecPerKm = sumPace / _paceSampleSecPerKm.size();
+        _paceNowText = _formatPaceSecPerKm(_paceNowSecPerKm);
+    }
+
+    function _extractPaceSecPerKm(info) {
+        if (info == null or info.currentSpeed == null) {
+            return null;
+        }
+
+        var speedMps = info.currentSpeed;
+        if (speedMps <= 0) {
+            return null;
+        }
+
+        var paceSecPerKm = 1000.0 / speedMps;
+        // Reject clearly invalid GPS/sensor spikes.
+        if (paceSecPerKm < 120 or paceSecPerKm > 1200) {
+            return null;
+        }
+
+        return paceSecPerKm;
+    }
+
+    function _formatPaceSecPerKm(paceSecPerKm) {
+        var roundedSec = Math.floor(paceSecPerKm + 0.5);
+        var minPart = Math.floor(roundedSec / 60);
+        var secPart = roundedSec - (minPart * 60);
+        return minPart.format("%d") + ":" + secPart.format("%02d");
     }
 
     function _textYByRatio(blockTop, blockHeight, ratioPct, fontHeight) {
