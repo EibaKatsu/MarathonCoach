@@ -2,13 +2,13 @@ using Toybox.Application.Properties as Props;
 using Toybox.Graphics as Gfx;
 using Toybox.Lang as Lang;
 using Toybox.Math as Math;
-using Toybox.System as Sys;
 using Toybox.WatchUi as Ui;
 
 class MarathonCoachField extends Ui.DataField {
     const KEY_RACE_DISTANCE_KM = "race_distance_km";
     const KEY_TARGET_TIME_HMS = "target_time_hms";
     const LAYOUT_DEBUG_OVERLAY = false;
+    const FUEL_INTERVAL_SEC = 35 * 60;
 
     const DEFAULT_RACE_DISTANCE_KM = 42.195;
     const DEFAULT_TARGET_TIME_HMS = "05:00:00";
@@ -18,8 +18,13 @@ class MarathonCoachField extends Ui.DataField {
     var _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
     var _paceNowSecPerKm = null;
     var _paceNowText = "--:--";
-    var _paceSampleMs as Lang.Array = [];
     var _paceSampleSecPerKm as Lang.Array = [];
+    var _lastPaceSampleElapsedSec = null;
+    var _lastFuelTimeSec = null;
+    var _fuelDueTimeSec = null;
+    var _fuelRemainingSec = null;
+    var _fuelRemainingText = "--:--";
+    var _timerRunning = null;
 
     function initialize() {
         DataField.initialize();
@@ -31,7 +36,36 @@ class MarathonCoachField extends Ui.DataField {
         // Step 2 settings + Step 4 pace window update.
         _loadSettings();
         _updatePaceWindow(info);
+        _updateFuelTimer(info);
         return;
+    }
+
+    function onTimerStart() {
+        _timerRunning = true;
+    }
+
+    function onTimerResume() {
+        _timerRunning = true;
+    }
+
+    function onTimerPause() {
+        _timerRunning = false;
+    }
+
+    function onTimerStop() {
+        _timerRunning = false;
+    }
+
+    function onTimerReset() {
+        _timerRunning = false;
+        _lastFuelTimeSec = null;
+        _fuelDueTimeSec = null;
+        _fuelRemainingSec = null;
+        _fuelRemainingText = "--:--";
+        _paceSampleSecPerKm = [];
+        _lastPaceSampleElapsedSec = null;
+        _paceNowSecPerKm = null;
+        _paceNowText = "--:--";
     }
 
     function onUpdate(dc as Gfx.Dc) {
@@ -153,7 +187,7 @@ class MarathonCoachField extends Ui.DataField {
         dc.fillCircle(fuelCenterX, fuelCenterY, fuelRadius);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLUE);
         dc.drawText(fuelCenterX, fuelLabelY, fuelLabelFont, "FUEL", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(fuelCenterX, fuelTimeY, fuelTimeFont, "6:20", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(fuelCenterX, fuelTimeY, fuelTimeFont, _fuelRemainingText, Gfx.TEXT_JUSTIFY_CENTER);
 
         // Left col row2-3 span: coach card
         var cardInset = _clamp((squareSize * 2) / 100, 2, 10);
@@ -235,17 +269,35 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _updatePaceWindow(info) {
-        var nowMs = Sys.getTimer();
-        var samplePaceSecPerKm = _extractPaceSecPerKm(info);
-
-        if (samplePaceSecPerKm != null) {
-            _paceSampleMs.add(nowMs);
-            _paceSampleSecPerKm.add(samplePaceSecPerKm);
+        var elapsedSec = _extractElapsedSec(info);
+        if (elapsedSec == null) {
+            _paceNowSecPerKm = null;
+            _paceNowText = "--:--";
+            return;
         }
 
-        var keepWindowMs = 10000;
-        while (_paceSampleMs.size() > 0 and (nowMs - _paceSampleMs[0]) > keepWindowMs) {
-            _paceSampleMs.remove(0);
+        var samplePaceSecPerKm = _extractPaceSecPerKm(info);
+
+        if (_lastPaceSampleElapsedSec != null and elapsedSec < _lastPaceSampleElapsedSec) {
+            _paceSampleSecPerKm = [];
+            _lastPaceSampleElapsedSec = null;
+        }
+
+        // While paused/stopped, freeze current displayed pace.
+        if (_timerRunning == false) {
+            return;
+        }
+
+        if (
+            samplePaceSecPerKm != null and
+            (_lastPaceSampleElapsedSec == null or elapsedSec > _lastPaceSampleElapsedSec)
+        ) {
+            _paceSampleSecPerKm.add(samplePaceSecPerKm);
+            _lastPaceSampleElapsedSec = elapsedSec;
+        }
+
+        var maxSamples = 10;
+        while (_paceSampleSecPerKm.size() > maxSamples) {
             _paceSampleSecPerKm.remove(0);
         }
 
@@ -283,8 +335,65 @@ class MarathonCoachField extends Ui.DataField {
         return paceSecPerKm;
     }
 
+    function _updateFuelTimer(info) {
+        var elapsedSec = _extractElapsedSec(info);
+        if (elapsedSec == null) {
+            _fuelRemainingSec = null;
+            _fuelRemainingText = "--:--";
+            return;
+        }
+
+        if (_lastFuelTimeSec == null or elapsedSec < _lastFuelTimeSec) {
+            // Initialize once, or recover when elapsed time resets.
+            _lastFuelTimeSec = elapsedSec;
+        }
+
+        // While paused/stopped, freeze remaining time.
+        if (_timerRunning == false and _fuelRemainingSec != null) {
+            _fuelRemainingText = _formatMinSec(_fuelRemainingSec);
+            return;
+        }
+
+        _fuelDueTimeSec = _lastFuelTimeSec + FUEL_INTERVAL_SEC;
+        _fuelRemainingSec = _fuelDueTimeSec - elapsedSec;
+        if (_fuelRemainingSec < 0) {
+            _fuelRemainingSec = 0;
+        }
+
+        _fuelRemainingText = _formatMinSec(_fuelRemainingSec);
+    }
+
+    function _extractElapsedSec(info) {
+        if (info == null) {
+            return null;
+        }
+
+        // Activity.Info.timerTime is milliseconds in DataField compute().
+        if (info.timerTime != null and info.timerTime instanceof Number and info.timerTime >= 0) {
+            return Math.floor(info.timerTime / 1000);
+        }
+
+        // Fallback for devices/profiles that expose elapsedTime directly.
+        if (info.elapsedTime != null and info.elapsedTime instanceof Number and info.elapsedTime >= 0) {
+            var elapsed = info.elapsedTime;
+            if (elapsed > 100000) {
+                return Math.floor(elapsed / 1000);
+            }
+            return Math.floor(elapsed);
+        }
+
+        return null;
+    }
+
     function _formatPaceSecPerKm(paceSecPerKm) {
         var roundedSec = Math.floor(paceSecPerKm + 0.5);
+        var minPart = Math.floor(roundedSec / 60);
+        var secPart = roundedSec - (minPart * 60);
+        return minPart.format("%d") + ":" + secPart.format("%02d");
+    }
+
+    function _formatMinSec(totalSec) {
+        var roundedSec = Math.floor(totalSec + 0.5);
         var minPart = Math.floor(roundedSec / 60);
         var secPart = roundedSec - (minPart * 60);
         return minPart.format("%d") + ":" + secPart.format("%02d");
