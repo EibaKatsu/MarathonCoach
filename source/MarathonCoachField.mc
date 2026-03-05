@@ -105,9 +105,9 @@ class MarathonCoachField extends Ui.DataField {
         dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
         dc.fillRoundedRectangle(cardX, cardY, cardW, cardH, cardCorner);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLUE);
-        dc.drawText(cardX + (cardW / 2), cardY + 22, Gfx.FONT_SMALL, "ちょい", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(cardX + (cardW / 2), cardY + 44, Gfx.FONT_SMALL, "落とし", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(cardX + (cardW / 2), cardY + cardH - 28, Gfx.FONT_SMALL, "↓ -10s", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(cardX + (cardW / 2), cardY + 7, Gfx.FONT_SMALL, "EASE", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(cardX + (cardW / 2), cardY + 37, Gfx.FONT_SMALL, "DOWN", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(cardX + (cardW / 2), cardY + cardH - 38, Gfx.FONT_SMALL, "v -10s", Gfx.TEXT_JUSTIFY_CENTER);
 
         // 3rd row right: pace
         var paceTop = row2Y;
