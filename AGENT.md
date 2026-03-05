@@ -313,6 +313,7 @@ HR超過判定はバタつき防止のため、
 以下のイメージを `codex/assets/ui/mockups/` に格納し、必要に応じて更新する。
 
 - 現在のUIモック（採用）: `assets/UI_Image.png`
+- STEP3レイアウト4分割（fr255基準）: `assets/step3_layout_fr255_4block_mockup.png`
 - `assets/ui/mockups/ui_b_v1.png`
 - `assets/ui/mockups/ui_b_v2_pace_unit_small.png`
 - `assets/ui/mockups/ui_b_v3_pace_centered.png`
@@ -356,3 +357,47 @@ HR超過判定はバタつき防止のため、
 ### 現在の進行
 - **STEP 1: 完了**
 - **STEP 2: 実装完了（設定2項目・補給35分固定、シミュレーター再確認待ち）**
+- **STEP 3: 方針確定（レイアウト枠仕様を固定、実装は次）**
+
+---
+
+## STEP3レイアウト方針（確定）
+### 対象デバイス
+- 基準：`fr255`
+- デバイス差分は機種個別分岐ではなく、`small / medium / large` のサイズクラスで吸収する
+  - `small`: `min(width, height) <= 218`
+  - `medium`: `219 .. 260`（`fr255`はここ）
+  - `large`: `>= 261`
+
+### STEP3で固定する範囲
+- 固定対象は **外枠（safe area）+ 内部分割（中央割 + 縦4分割）**
+- ロジック（判定、トグル、固定表示の条件）はSTEP4以降で実装する
+
+### レイアウトモデル（中央割 + 縦4分割）
+- 分割ルール：画面を中央で左右に分け、さらに上下を4段に分ける（計8セル）
+- 添付モック（`assets/step3_layout_fr255_4block_mockup.png`）準拠で配置する
+- 要素配置：
+1. 1段目（上段）：左=`HR/CAP`、右=`FUELリング上部（右1-2段跨ぎ）`
+2. 2段目：左=`CARD（上半）`、右=`FUELリング下部（右1-2段跨ぎ）`
+3. 3段目：左=`CARD（下半）`、右=`PACE（大） + /km`
+4. 4段目（下段）：左=`DIST`、右=`TIME`（`PACE Δ` は下段内で補助表示）
+
+### 座標・サイズの決め方
+- 画面絶対値ではなく **比率ベース** を使う
+- 主要寸法は `ratio + min/max px` のガードで定義する
+  - 例：`outerPadding = 5%`（`min 8px / max 16px`）
+- ブロック間ギャップも比率で定義し、クラス別に微調整する
+
+### 表示優先順位（狭小時）
+- 欠けを避ける優先順は以下とする
+1. コーチカード文言（CARD）
+2. 現在ペース（PACE）
+3. HR/CAP（1段目・左セル）
+4. FUEL残り時間（右1-2段跨ぎセル）
+5. DIST/TIME（4段目・左右セル）
+6. PACE Δ（最初に縮退/省略対象）
+
+### デバッグ方針
+- `layoutDebugOverlay` フラグで枠線・基準線を描画可能にする
+- STEP3検証はオーバーレイONで実施し、配置確定後にOFFで最終確認する
+- 配置イメージ参照: `assets/step3_layout_fr255_4block_mockup.png`
