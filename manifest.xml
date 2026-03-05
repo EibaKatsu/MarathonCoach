@@ -2,6 +2,7 @@
 <iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
     <iq:application id="a1b2c3d4e5f60718293a4b5c6d7e8f90" type="datafield" name="@Strings.AppName" entry="MarathonCoachApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="3.2.0">
         <iq:products>
+            <iq:product id="fr255"/>
             <iq:product id="venu3"/>
             <iq:product id="vivoactive5"/>
             <iq:product id="fr57042mm"/>
