@@ -54,90 +54,151 @@ class MarathonCoachField extends Ui.DataField {
         var width = dc.getWidth();
         var height = dc.getHeight();
         var minDim = _min(width, height);
+        var sizeClass = _getSizeClass(minDim);
 
-        var outerPadding = _clamp((minDim * 5) / 100, 8, 16);
-        var left = outerPadding;
-        var top = outerPadding;
-        var safeWidth = width - (outerPadding * 2);
-        var safeHeight = height - (outerPadding * 2);
-        var centerX = left + (safeWidth / 2);
+        var insetPct = 7;
+        var hrFont = Gfx.FONT_TINY;
+        var cardFont = Gfx.FONT_SMALL;
+        var paceFont = Gfx.FONT_LARGE;
+        var footerFont = Gfx.FONT_SMALL;
+        var paceDeltaFont = Gfx.FONT_TINY;
+        var fuelLabelFont = Gfx.FONT_XTINY;
+        var fuelTimeFont = Gfx.FONT_SMALL;
+        var fuelRadiusPct = 46;
 
-        var row1Y = top + (safeHeight / 4);
-        var row2Y = top + ((safeHeight * 2) / 4);
-        var row3Y = top + ((safeHeight * 3) / 4);
-        var bottomY = top + safeHeight;
+        if (sizeClass == 2) {
+            insetPct = 9;
+            hrFont = Gfx.FONT_XTINY;
+            cardFont = Gfx.FONT_TINY;
+            paceFont = Gfx.FONT_LARGE;
+            footerFont = Gfx.FONT_SMALL;
+            paceDeltaFont = Gfx.FONT_TINY;
+            fuelLabelFont = Gfx.FONT_TINY;
+            fuelTimeFont = Gfx.FONT_MEDIUM;
+            fuelRadiusPct = 50;
+        } else if (sizeClass == 0) {
+            insetPct = 6;
+            hrFont = Gfx.FONT_XTINY;
+            cardFont = Gfx.FONT_TINY;
+            paceFont = Gfx.FONT_MEDIUM;
+            footerFont = Gfx.FONT_TINY;
+            paceDeltaFont = Gfx.FONT_XTINY;
+            fuelRadiusPct = 44;
+        }
+
+        // Use an inscribed square area so round displays keep consistent composition.
+        var squareSize = _clamp((minDim * (100 - (insetPct * 2))) / 100, (minDim * 70) / 100, minDim);
+        var left = (width - squareSize) / 2;
+        var top = (height - squareSize) / 2;
+        var right = left + squareSize;
+        var bottomY = top + squareSize;
+        var centerX = left + (squareSize / 2);
+
+        var row1Y = top + (squareSize / 4);
+        var row2Y = top + ((squareSize * 2) / 4);
+        var row3Y = top + ((squareSize * 3) / 4);
 
         var leftColX = left;
         var leftColW = centerX - leftColX;
         var rightColX = centerX;
-        var rightColW = (left + safeWidth) - rightColX;
+        var rightColW = right - rightColX;
+        var rowHeight = squareSize / 4;
+        var row12Height = row2Y - top;
+        var row4Height = bottomY - row3Y;
 
         // 1st row left: HR/CAP
+        var hrY = _textYByRatio(top, rowHeight, 66, dc.getFontHeight(hrFont));
         dc.drawText(
             leftColX + (leftColW / 2),
-            top + 28,
-            Gfx.FONT_TINY,
+            hrY,
+            hrFont,
             "152 / 155",
             Gfx.TEXT_JUSTIFY_CENTER
         );
 
         // Right col row1-2 span: FUEL ring
-        var fuelSpanTop = top;
-        var fuelSpanBottom = row2Y;
-        var fuelCenterY = fuelSpanTop + ((fuelSpanBottom - fuelSpanTop) / 2);
-        var fuelRadius = _clamp((_min(rightColW, fuelSpanBottom - fuelSpanTop) / 2) - 6, 20, 58);
-        // Move slightly left so the circle just crosses the center guide line.
-        var fuelCenterX = rightColX + fuelRadius - 2;
+        var fuelRadius = _clamp(
+            _min((rightColW * fuelRadiusPct) / 100, (row12Height * fuelRadiusPct) / 100),
+            20,
+            (minDim * 28) / 100
+        );
+        var fuelCenterX = rightColX + fuelRadius - _clamp((squareSize * 1) / 100, 2, 6);
+        var maxFuelCenterX = right - fuelRadius - 2;
+        if (fuelCenterX > maxFuelCenterX) {
+            fuelCenterX = maxFuelCenterX;
+        }
+        var fuelCenterY = top + (row12Height / 2);
+        var fuelLabelY = _textYByRatio(
+            fuelCenterY - fuelRadius,
+            fuelRadius * 2,
+            31,
+            dc.getFontHeight(fuelLabelFont)
+        );
+        var fuelTimeY = _textYByRatio(
+            fuelCenterY - fuelRadius,
+            fuelRadius * 2,
+            60,
+            dc.getFontHeight(fuelTimeFont)
+        );
 
         dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
         dc.fillCircle(fuelCenterX, fuelCenterY, fuelRadius);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLUE);
-        dc.drawText(fuelCenterX, fuelCenterY - 20, Gfx.FONT_XTINY, "FUEL", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(fuelCenterX, fuelCenterY + 2, Gfx.FONT_SMALL, "6:20", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(fuelCenterX, fuelLabelY, fuelLabelFont, "FUEL", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(fuelCenterX, fuelTimeY, fuelTimeFont, "6:20", Gfx.TEXT_JUSTIFY_CENTER);
 
         // Left col row2-3 span: coach card
-        var cardX = leftColX + 4;
-        var cardY = row1Y + 4;
-        var cardW = leftColW - 8;
-        var cardH = (row3Y - row1Y) - 8;
+        var cardInset = _clamp((squareSize * 2) / 100, 2, 10);
+        var cardX = leftColX + cardInset;
+        var cardY = row1Y + cardInset;
+        var cardW = leftColW - (cardInset * 2);
+        var cardH = (row3Y - row1Y) - (cardInset * 2);
         var cardCorner = _clamp(cardW / 8, 10, 26);
+        var cardFontH = dc.getFontHeight(cardFont);
+        var cardGap = _max((cardH - (cardFontH * 3)) / 4, 1);
+        var cardLine1Y = cardY + cardGap;
+        var cardLine2Y = cardLine1Y + cardFontH + cardGap;
+        var cardLine3Y = cardLine2Y + cardFontH + cardGap;
 
         dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
         dc.fillRoundedRectangle(cardX, cardY, cardW, cardH, cardCorner);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLUE);
-        dc.drawText(cardX + (cardW / 2), cardY + 7, Gfx.FONT_SMALL, "EASE", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(cardX + (cardW / 2), cardY + 37, Gfx.FONT_SMALL, "DOWN", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(cardX + (cardW / 2), cardY + cardH - 38, Gfx.FONT_SMALL, "v -10s", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(cardX + (cardW / 2), cardLine1Y, cardFont, "EASE", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(cardX + (cardW / 2), cardLine2Y, cardFont, "DOWN", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(cardX + (cardW / 2), cardLine3Y, cardFont, "v -10s", Gfx.TEXT_JUSTIFY_CENTER);
 
         // 3rd row right: pace
-        var paceTop = row2Y;
+        var paceY = row2Y;
+        var paceUnitY = _textYByRatio(row2Y, rowHeight, 86, dc.getFontHeight(Gfx.FONT_XTINY));
+        var paceUnitX = rightColX + rightColW - _clamp((rightColW * 4) / 100, 4, 12);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
         dc.drawText(
             rightColX + (rightColW / 2),
-            paceTop + 16,
-            Gfx.FONT_MEDIUM,
+            paceY,
+            paceFont,
             "7:21",
             Gfx.TEXT_JUSTIFY_CENTER
         );
         dc.drawText(
-            rightColX + rightColW - 6,
-            row3Y - 18,
+            paceUnitX,
+            paceUnitY,
             Gfx.FONT_XTINY,
             "/km",
             Gfx.TEXT_JUSTIFY_RIGHT
         );
 
         // 4th row: DIST / TIME + PACE delta
-        var row4CenterY = row3Y + ((bottomY - row3Y) / 2);
-        dc.drawText(width / 2, row3Y + 4, Gfx.FONT_SMALL, "22.3 km  2:33:12", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(width / 2, row4CenterY + 8, Gfx.FONT_TINY, "PACE +10s", Gfx.TEXT_JUSTIFY_CENTER);
+        var mergedY = _textYByRatio(row3Y, row4Height, 24, dc.getFontHeight(footerFont));
+        var paceDeltaY = _textYByRatio(row3Y, row4Height, 70, dc.getFontHeight(paceDeltaFont));
+        dc.drawText(width / 2, mergedY, footerFont, "22.3 km  2:33:12", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width / 2, paceDeltaY, paceDeltaFont, "PACE +10s", Gfx.TEXT_JUSTIFY_CENTER);
 
         if (LAYOUT_DEBUG_OVERLAY) {
             dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
             dc.drawLine(centerX, top, centerX, bottomY);
-            dc.drawLine(left, row1Y, left + safeWidth, row1Y);
-            dc.drawLine(left, row2Y, left + safeWidth, row2Y);
-            dc.drawLine(left, row3Y, left + safeWidth, row3Y);
+            dc.drawLine(left, row1Y, right, row1Y);
+            dc.drawLine(left, row2Y, right, row2Y);
+            dc.drawLine(left, row3Y, right, row3Y);
         }
     }
 
@@ -146,6 +207,27 @@ class MarathonCoachField extends Ui.DataField {
             return a;
         }
         return b;
+    }
+
+    function _max(a, b) {
+        if (a > b) {
+            return a;
+        }
+        return b;
+    }
+
+    function _getSizeClass(minDim) {
+        if (minDim >= 261) {
+            return 2; // large
+        }
+        if (minDim <= 218) {
+            return 0; // small
+        }
+        return 1; // medium
+    }
+
+    function _textYByRatio(blockTop, blockHeight, ratioPct, fontHeight) {
+        return blockTop + ((blockHeight * ratioPct) / 100) - (fontHeight / 2);
     }
 
     function _clamp(value, minValue, maxValue) {
