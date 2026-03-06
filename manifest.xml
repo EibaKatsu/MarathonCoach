@@ -13,5 +13,8 @@
             <iq:language>eng</iq:language>
             <iq:language>jpn</iq:language>
         </iq:languages>
+        <iq:permissions>
+            <iq:uses-permission id="UserProfile"/>
+        </iq:permissions>
     </iq:application>
 </iq:manifest>

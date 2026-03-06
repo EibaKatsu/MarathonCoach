@@ -2,6 +2,7 @@ using Toybox.Application.Properties as Props;
 using Toybox.Graphics as Gfx;
 using Toybox.Lang as Lang;
 using Toybox.Math as Math;
+using Toybox.UserProfile;
 using Toybox.WatchUi as Ui;
 
 class MarathonCoachField extends Ui.DataField {
@@ -12,7 +13,6 @@ class MarathonCoachField extends Ui.DataField {
     const LAP_DEBOUNCE_SEC = 20;
     const CARD_TOGGLE_SEC = 3;
     const FUEL_TOGGLE_LEAD_SEC = 2 * 60;
-    const DEFAULT_CAP_HEART_RATE = 155;
 
     const CARD_MODE_ACTION = 0;
     const CARD_MODE_FUEL = 1;
@@ -41,8 +41,8 @@ class MarathonCoachField extends Ui.DataField {
     var _lastElapsedSec = null;
     var _lastLapResetSec = null;
     var _currentHeartRate = null;
-    var _capHeartRate = DEFAULT_CAP_HEART_RATE;
-    var _hrCapText = "-- / --";
+    var _capHeartRate = null;
+    var _hrCapText = "-- / --:--";
     var _cardMode = CARD_MODE_ACTION;
     var _cardLine1 = "EASE";
     var _cardLine2 = "DOWN";
@@ -382,14 +382,82 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _updateHeartRate(info) {
+        _resolveCapHeartRate(info);
+
+        var capText = "--:--";
+        if (_capHeartRate != null) {
+            capText = _capHeartRate.format("%d");
+        }
+
         if (info != null and info.currentHeartRate != null and info.currentHeartRate > 0) {
             _currentHeartRate = info.currentHeartRate;
-            _hrCapText = _currentHeartRate.format("%d") + " / " + _capHeartRate.format("%d");
+            _hrCapText = _currentHeartRate.format("%d") + " / " + capText;
             return;
         }
 
         _currentHeartRate = null;
-        _hrCapText = "-- / " + _capHeartRate.format("%d");
+        _hrCapText = "-- / " + capText;
+    }
+
+    function _resolveCapHeartRate(info) {
+        var lthrHeartRate = _getLthrHeartRate();
+        if (lthrHeartRate != null and lthrHeartRate > 0) {
+            _capHeartRate = lthrHeartRate;
+            return;
+        }
+
+        var maxHeartRate = _getConfiguredMaxHeartRate(info);
+        if (maxHeartRate != null and maxHeartRate > 0) {
+            _capHeartRate = Math.floor((maxHeartRate * 0.86) + 0.5);
+            return;
+        }
+
+        _capHeartRate = null;
+    }
+
+    function _getLthrHeartRate() {
+        // No direct public API for LTHR in current Connect IQ SDK.
+        return null;
+    }
+
+    function _getConfiguredMaxHeartRate(info) {
+        var zones = _getHeartRateZonesForCurrentSport();
+        if (zones != null and zones.size() >= 6) {
+            var maxZone5 = zones[5];
+            if (maxZone5 != null and maxZone5 instanceof Number and maxZone5 > 0) {
+                return maxZone5;
+            }
+        }
+
+        // Final fallback from current activity context.
+        if (info != null and info.maxHeartRate != null and info.maxHeartRate > 0) {
+            return info.maxHeartRate;
+        }
+
+        return null;
+    }
+
+    function _getHeartRateZonesForCurrentSport() as Lang.Array<Lang.Number> or Null {
+        try {
+            var sport = UserProfile.getCurrentSport();
+            var zones = UserProfile.getHeartRateZones(sport);
+            if (zones != null and zones.size() >= 6) {
+                return zones;
+            }
+        } catch (e) {
+            // Fall through to generic zones.
+        }
+
+        try {
+            var genericZones = UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_GENERIC);
+            if (genericZones != null and genericZones.size() >= 6) {
+                return genericZones;
+            }
+        } catch (e2) {
+            return null;
+        }
+
+        return null;
     }
 
     function _extractPaceSecPerKm(info) {
@@ -505,7 +573,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _isHeartRateOverCap() {
-        return _currentHeartRate != null and _currentHeartRate > _capHeartRate;
+        return _currentHeartRate != null and _capHeartRate != null and _currentHeartRate > _capHeartRate;
     }
 
     function _isDriftOn(info) {
