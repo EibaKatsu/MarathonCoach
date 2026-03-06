@@ -16,6 +16,14 @@ class MarathonCoachField extends Ui.DataField {
     const HR_OVER_TRIGGER_SEC = 12;
     const HR_OVER_RELEASE_SEC = 5;
     const CAP_RESOLVE_RETRY_SEC = 30;
+    const WARMUP_MESSAGE_ROTATE_SEC = 5;
+    const DRIFT_BASELINE_START_SEC = 20 * 60;
+    const DRIFT_BASELINE_MIN_DISTANCE_KM = 3.0;
+    const DRIFT_WINDOW_SEC = 10 * 60;
+    const DRIFT_PACE_STABLE_THRESHOLD_SEC = 5;
+    const DRIFT_HR_ON_DELTA = 10;
+    const DRIFT_HR_OFF_DELTA = 6;
+    const DRIFT_OFF_CONFIRM_SEC = 60;
 
     const CARD_MODE_ACTION = 0;
     const CARD_MODE_FUEL = 1;
@@ -51,6 +59,34 @@ class MarathonCoachField extends Ui.DataField {
     var _hrOverActive = false;
     var _hrOverStartSec = null;
     var _hrRecoverStartSec = null;
+    var _driftBaselineStartSec = null;
+    var _driftBaselineHrSum = 0.0;
+    var _driftBaselinePaceSum = 0.0;
+    var _driftBaselineCount = 0;
+    var _driftBaseHr = null;
+    var _driftBasePace = null;
+    var _driftRingHr as Lang.Array = [];
+    var _driftRingPace as Lang.Array = [];
+    var _driftRingWriteIndex = 0;
+    var _driftRingCount = 0;
+    var _driftRingHrSum = 0.0;
+    var _driftRingPaceSum = 0.0;
+    var _driftLastSampleElapsedSec = null;
+    var _driftActive = false;
+    var _driftOffStartSec = null;
+    var _warmupMessages as Lang.Array = [
+        "焦るな",
+        "落ち着け",
+        "そのまま",
+        "まだ序盤",
+        "リズムで",
+        "力むな",
+        "深呼吸",
+        "大丈夫",
+        "いい感じ",
+        "がんばれ"
+    ];
+    var _warmupMessageSlot = -1;
     var _cardMode = CARD_MODE_ACTION;
     var _cardLine1 = "EASE";
     var _cardLine2 = "DOWN";
@@ -69,6 +105,7 @@ class MarathonCoachField extends Ui.DataField {
         _updateHrOverState(info);
         _updatePaceWindow(info);
         _updateFuelTimer(info);
+        _updateDriftState(info);
         _updateCardDisplay(info);
         return;
     }
@@ -104,10 +141,9 @@ class MarathonCoachField extends Ui.DataField {
         _hrOverActive = false;
         _hrOverStartSec = null;
         _hrRecoverStartSec = null;
-        _cardMode = CARD_MODE_ACTION;
-        _cardLine1 = "EASE";
-        _cardLine2 = "DOWN";
-        _cardLine3 = "v -10s";
+        _resetDriftState();
+        _warmupMessageSlot = -1;
+        _setActionCardByBaseline(null);
     }
 
     function onTimerLap() {
@@ -341,11 +377,6 @@ class MarathonCoachField extends Ui.DataField {
             _resetPaceWindow();
         }
 
-        // While paused/stopped, freeze current displayed pace.
-        if (_timerRunning == false) {
-            return;
-        }
-
         if (
             samplePaceSecPerKm != null and
             (_lastPaceSampleElapsedSec == null or elapsedSec > _lastPaceSampleElapsedSec)
@@ -534,6 +565,163 @@ class MarathonCoachField extends Ui.DataField {
         return 8;
     }
 
+    function _updateDriftState(info) {
+        var elapsedSec = _extractElapsedSec(info);
+        if (elapsedSec == null) {
+            return;
+        }
+
+        if (_driftLastSampleElapsedSec != null and elapsedSec < _driftLastSampleElapsedSec) {
+            _resetDriftState();
+        }
+
+        if (_driftLastSampleElapsedSec != null and elapsedSec == _driftLastSampleElapsedSec) {
+            return;
+        }
+        _driftLastSampleElapsedSec = elapsedSec;
+
+        var sampleHr = _currentHeartRate;
+        var samplePace = _extractPaceSecPerKm(info);
+        var distanceKm = _extractElapsedDistanceKm(info);
+
+        _updateDriftBaseline(elapsedSec, distanceKm, sampleHr, samplePace);
+
+        if (_driftBaseHr == null or _driftBasePace == null) {
+            _driftActive = false;
+            _driftOffStartSec = null;
+            return;
+        }
+
+        if (sampleHr == null or samplePace == null) {
+            return;
+        }
+
+        _appendDriftRollingSample(sampleHr, samplePace);
+        if (_driftRingCount == 0) {
+            return;
+        }
+
+        var curHr = _driftRingHrSum / _driftRingCount;
+        var curPace = _driftRingPaceSum / _driftRingCount;
+        var paceDiffAbs = _abs(curPace - _driftBasePace);
+
+        // Evaluate drift only while pace remains near baseline pace.
+        if (paceDiffAbs > DRIFT_PACE_STABLE_THRESHOLD_SEC) {
+            _driftOffStartSec = null;
+            return;
+        }
+
+        var hrDelta = curHr - _driftBaseHr;
+        if (!_driftActive and hrDelta >= DRIFT_HR_ON_DELTA) {
+            _driftActive = true;
+            _driftOffStartSec = null;
+            return;
+        }
+
+        if (_driftActive and hrDelta <= DRIFT_HR_OFF_DELTA) {
+            if (_driftOffStartSec == null) {
+                _driftOffStartSec = elapsedSec;
+                return;
+            }
+            if ((elapsedSec - _driftOffStartSec) >= DRIFT_OFF_CONFIRM_SEC) {
+                _driftActive = false;
+                _driftOffStartSec = null;
+            }
+            return;
+        }
+
+        _driftOffStartSec = null;
+    }
+
+    function _updateDriftBaseline(elapsedSec, distanceKm, sampleHr, samplePace) {
+        if (_driftBaseHr != null and _driftBasePace != null) {
+            return;
+        }
+
+        if (_driftBaselineStartSec == null) {
+            if (
+                elapsedSec >= DRIFT_BASELINE_START_SEC and
+                distanceKm != null and distanceKm >= DRIFT_BASELINE_MIN_DISTANCE_KM
+            ) {
+                _driftBaselineStartSec = elapsedSec;
+                _driftBaselineHrSum = 0.0;
+                _driftBaselinePaceSum = 0.0;
+                _driftBaselineCount = 0;
+            } else {
+                return;
+            }
+        }
+
+        if ((elapsedSec - _driftBaselineStartSec) < DRIFT_WINDOW_SEC) {
+            if (sampleHr != null and samplePace != null) {
+                _driftBaselineHrSum += sampleHr;
+                _driftBaselinePaceSum += samplePace;
+                _driftBaselineCount += 1;
+            }
+            return;
+        }
+
+        if (_driftBaselineCount > 0) {
+            _driftBaseHr = _driftBaselineHrSum / _driftBaselineCount;
+            _driftBasePace = _driftBaselinePaceSum / _driftBaselineCount;
+            _driftRingHr = [];
+            _driftRingPace = [];
+            _driftRingWriteIndex = 0;
+            _driftRingCount = 0;
+            _driftRingHrSum = 0.0;
+            _driftRingPaceSum = 0.0;
+        } else {
+            // Re-arm baseline sampling if the initial window had no valid samples.
+            _driftBaselineStartSec = null;
+        }
+    }
+
+    function _appendDriftRollingSample(sampleHr, samplePace) {
+        var maxSamples = DRIFT_WINDOW_SEC;
+        if (_driftRingCount < maxSamples) {
+            _driftRingHr.add(sampleHr);
+            _driftRingPace.add(samplePace);
+            _driftRingHrSum += sampleHr;
+            _driftRingPaceSum += samplePace;
+            _driftRingCount += 1;
+            if (_driftRingCount == maxSamples) {
+                _driftRingWriteIndex = 0;
+            }
+            return;
+        }
+
+        var oldHr = _driftRingHr[_driftRingWriteIndex];
+        var oldPace = _driftRingPace[_driftRingWriteIndex];
+        _driftRingHrSum -= oldHr;
+        _driftRingPaceSum -= oldPace;
+        _driftRingHr[_driftRingWriteIndex] = sampleHr;
+        _driftRingPace[_driftRingWriteIndex] = samplePace;
+        _driftRingHrSum += sampleHr;
+        _driftRingPaceSum += samplePace;
+        _driftRingWriteIndex += 1;
+        if (_driftRingWriteIndex >= maxSamples) {
+            _driftRingWriteIndex = 0;
+        }
+    }
+
+    function _resetDriftState() {
+        _driftBaselineStartSec = null;
+        _driftBaselineHrSum = 0.0;
+        _driftBaselinePaceSum = 0.0;
+        _driftBaselineCount = 0;
+        _driftBaseHr = null;
+        _driftBasePace = null;
+        _driftRingHr = [];
+        _driftRingPace = [];
+        _driftRingWriteIndex = 0;
+        _driftRingCount = 0;
+        _driftRingHrSum = 0.0;
+        _driftRingPaceSum = 0.0;
+        _driftLastSampleElapsedSec = null;
+        _driftActive = false;
+        _driftOffStartSec = null;
+    }
+
     function _updateFuelTimer(info) {
         var elapsedSec = _extractElapsedSec(info);
         if (elapsedSec == null) {
@@ -587,10 +775,7 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         if (elapsedSec == null) {
-            _cardMode = CARD_MODE_ACTION;
-            _cardLine1 = "EASE";
-            _cardLine2 = "DOWN";
-            _cardLine3 = "v -10s";
+            _setActionCardByBaseline(null);
             return;
         }
 
@@ -617,10 +802,7 @@ class MarathonCoachField extends Ui.DataField {
             }
         }
 
-        _cardMode = CARD_MODE_ACTION;
-        _cardLine1 = "EASE";
-        _cardLine2 = "DOWN";
-        _cardLine3 = "v -10s";
+        _setActionCardByBaseline(elapsedSec);
     }
 
     function _isFuelOverdue() {
@@ -673,8 +855,81 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _isDriftOn(info) {
-        // STEP10 implements real drift detection.
-        return false;
+        return _driftActive;
+    }
+
+    function _isBaselineReady() {
+        return _driftBaseHr != null and _driftBasePace != null;
+    }
+
+    function _setActionCardByBaseline(elapsedSec) {
+        _cardMode = CARD_MODE_ACTION;
+        if (_isBaselineReady()) {
+            _cardLine1 = "EASE";
+            _cardLine2 = "DOWN";
+            _cardLine3 = "v -10s";
+            return;
+        }
+
+        _setWarmupCardMessages(elapsedSec);
+    }
+
+    function _setWarmupCardMessages(elapsedSec) {
+        var slot = -1;
+        if (elapsedSec != null) {
+            slot = Math.floor(elapsedSec / WARMUP_MESSAGE_ROTATE_SEC);
+        }
+
+        if (slot == _warmupMessageSlot and _cardLine1 != null and _cardLine2 != null and _cardLine3 != null) {
+            return;
+        }
+        _warmupMessageSlot = slot;
+
+        if (_warmupMessages.size() == 0) {
+            _cardLine1 = "EASE";
+            _cardLine2 = "DOWN";
+            _cardLine3 = "v -10s";
+            return;
+        }
+
+        if (_warmupMessages.size() < 3) {
+            _cardLine1 = _warmupMessages[0];
+            _cardLine2 = _warmupMessages[0];
+            _cardLine3 = _warmupMessages[0];
+            return;
+        }
+
+        var idx1 = _randomMessageIndex(_warmupMessages.size(), -1, -1);
+        var idx2 = _randomMessageIndex(_warmupMessages.size(), idx1, -1);
+        var idx3 = _randomMessageIndex(_warmupMessages.size(), idx1, idx2);
+        _cardLine1 = _warmupMessages[idx1];
+        _cardLine2 = _warmupMessages[idx2];
+        _cardLine3 = _warmupMessages[idx3];
+    }
+
+    function _randomMessageIndex(size, avoid1, avoid2) {
+        if (size <= 0) {
+            return 0;
+        }
+
+        var idx = 0;
+        for (var i = 0; i < 10; i += 1) {
+            idx = Math.floor(Math.rand()) % size;
+            if (idx < 0) {
+                idx += size;
+            }
+            if (idx != avoid1 and idx != avoid2) {
+                return idx;
+            }
+        }
+
+        // Fallback scan in case random values kept colliding.
+        for (var j = 0; j < size; j += 1) {
+            if (j != avoid1 and j != avoid2) {
+                return j;
+            }
+        }
+        return 0;
     }
 
     function _extractElapsedSec(info) {
@@ -723,6 +978,13 @@ class MarathonCoachField extends Ui.DataField {
         }
         if (value > maxValue) {
             return maxValue;
+        }
+        return value;
+    }
+
+    function _abs(value) {
+        if (value < 0) {
+            return -value;
         }
         return value;
     }
