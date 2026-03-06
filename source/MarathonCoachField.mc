@@ -9,6 +9,16 @@ class MarathonCoachField extends Ui.DataField {
     const KEY_TARGET_TIME_HMS = "target_time_hms";
     const LAYOUT_DEBUG_OVERLAY = false;
     const FUEL_INTERVAL_SEC = 35 * 60;
+    const LAP_DEBOUNCE_SEC = 20;
+    const CARD_TOGGLE_SEC = 3;
+    const FUEL_TOGGLE_LEAD_SEC = 2 * 60;
+    const DEFAULT_CAP_HEART_RATE = 155;
+
+    const CARD_MODE_ACTION = 0;
+    const CARD_MODE_FUEL = 1;
+    const CARD_MODE_FUEL_OVERDUE = 2;
+    const CARD_MODE_HR_OVER = 3;
+    const CARD_MODE_DRIFT = 4;
 
     const DEFAULT_RACE_DISTANCE_KM = 42.195;
     const DEFAULT_TARGET_TIME_HMS = "05:00:00";
@@ -18,13 +28,25 @@ class MarathonCoachField extends Ui.DataField {
     var _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
     var _paceNowSecPerKm = null;
     var _paceNowText = "--:--";
-    var _paceSampleSecPerKm as Lang.Array = [];
+    var _paceRingSecPerKm as Lang.Array = [];
+    var _paceRingWriteIndex = 0;
+    var _paceRingCount = 0;
+    var _paceRingSum = 0.0;
     var _lastPaceSampleElapsedSec = null;
     var _lastFuelTimeSec = null;
     var _fuelDueTimeSec = null;
     var _fuelRemainingSec = null;
     var _fuelRemainingText = "--:--";
-    var _timerRunning = null;
+    var _timerRunning = false;
+    var _lastElapsedSec = null;
+    var _lastLapResetSec = null;
+    var _currentHeartRate = null;
+    var _capHeartRate = DEFAULT_CAP_HEART_RATE;
+    var _hrCapText = "-- / --";
+    var _cardMode = CARD_MODE_ACTION;
+    var _cardLine1 = "EASE";
+    var _cardLine2 = "DOWN";
+    var _cardLine3 = "v -10s";
 
     function initialize() {
         DataField.initialize();
@@ -35,8 +57,10 @@ class MarathonCoachField extends Ui.DataField {
     function compute(info) {
         // Step 2 settings + Step 4 pace window update.
         _loadSettings();
+        _updateHeartRate(info);
         _updatePaceWindow(info);
         _updateFuelTimer(info);
+        _updateCardDisplay(info);
         return;
     }
 
@@ -58,14 +82,35 @@ class MarathonCoachField extends Ui.DataField {
 
     function onTimerReset() {
         _timerRunning = false;
+        _lastElapsedSec = null;
+        _lastLapResetSec = null;
         _lastFuelTimeSec = null;
         _fuelDueTimeSec = null;
         _fuelRemainingSec = null;
         _fuelRemainingText = "--:--";
-        _paceSampleSecPerKm = [];
-        _lastPaceSampleElapsedSec = null;
+        _resetPaceWindow();
         _paceNowSecPerKm = null;
         _paceNowText = "--:--";
+        _cardMode = CARD_MODE_ACTION;
+        _cardLine1 = "EASE";
+        _cardLine2 = "DOWN";
+        _cardLine3 = "v -10s";
+    }
+
+    function onTimerLap() {
+        if (_lastElapsedSec == null) {
+            return;
+        }
+
+        if (_lastLapResetSec != null and (_lastElapsedSec - _lastLapResetSec) < LAP_DEBOUNCE_SEC) {
+            return;
+        }
+
+        _lastFuelTimeSec = _lastElapsedSec;
+        _fuelDueTimeSec = _lastFuelTimeSec + FUEL_INTERVAL_SEC;
+        _fuelRemainingSec = FUEL_INTERVAL_SEC;
+        _fuelRemainingText = _formatMinSec(_fuelRemainingSec);
+        _lastLapResetSec = _lastElapsedSec;
     }
 
     function onUpdate(dc as Gfx.Dc) {
@@ -154,7 +199,7 @@ class MarathonCoachField extends Ui.DataField {
             leftColX + (leftColW / 2),
             hrY,
             hrFont,
-            "152 / 155",
+            _hrCapText,
             Gfx.TEXT_JUSTIFY_CENTER
         );
 
@@ -205,9 +250,9 @@ class MarathonCoachField extends Ui.DataField {
         dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
         dc.fillRoundedRectangle(cardX, cardY, cardW, cardH, cardCorner);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLUE);
-        dc.drawText(cardX + (cardW / 2), cardLine1Y, cardFont, "EASE", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(cardX + (cardW / 2), cardLine2Y, cardFont, "DOWN", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(cardX + (cardW / 2), cardLine3Y, cardFont, "v -10s", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(cardX + (cardW / 2), cardLine1Y, cardFont, _cardLine1, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(cardX + (cardW / 2), cardLine2Y, cardFont, _cardLine2, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(cardX + (cardW / 2), cardLine3Y, cardFont, _cardLine3, Gfx.TEXT_JUSTIFY_CENTER);
 
         // 3rd row right: pace
         var paceY = row2Y;
@@ -270,6 +315,7 @@ class MarathonCoachField extends Ui.DataField {
 
     function _updatePaceWindow(info) {
         var elapsedSec = _extractElapsedSec(info);
+        _lastElapsedSec = elapsedSec;
         if (elapsedSec == null) {
             _paceNowSecPerKm = null;
             _paceNowText = "--:--";
@@ -279,8 +325,7 @@ class MarathonCoachField extends Ui.DataField {
         var samplePaceSecPerKm = _extractPaceSecPerKm(info);
 
         if (_lastPaceSampleElapsedSec != null and elapsedSec < _lastPaceSampleElapsedSec) {
-            _paceSampleSecPerKm = [];
-            _lastPaceSampleElapsedSec = null;
+            _resetPaceWindow();
         }
 
         // While paused/stopped, freeze current displayed pace.
@@ -292,28 +337,59 @@ class MarathonCoachField extends Ui.DataField {
             samplePaceSecPerKm != null and
             (_lastPaceSampleElapsedSec == null or elapsedSec > _lastPaceSampleElapsedSec)
         ) {
-            _paceSampleSecPerKm.add(samplePaceSecPerKm);
+            _appendPaceSample(samplePaceSecPerKm);
             _lastPaceSampleElapsedSec = elapsedSec;
         }
 
-        var maxSamples = 10;
-        while (_paceSampleSecPerKm.size() > maxSamples) {
-            _paceSampleSecPerKm.remove(0);
-        }
-
-        if (_paceSampleSecPerKm.size() == 0) {
+        if (_paceRingCount == 0) {
             _paceNowSecPerKm = null;
             _paceNowText = "--:--";
             return;
         }
 
-        var sumPace = 0.0;
-        for (var i = 0; i < _paceSampleSecPerKm.size(); i += 1) {
-            sumPace += _paceSampleSecPerKm[i];
+        _paceNowSecPerKm = _paceRingSum / _paceRingCount;
+        _paceNowText = _formatPaceSecPerKm(_paceNowSecPerKm);
+    }
+
+    function _resetPaceWindow() {
+        _paceRingSecPerKm = [];
+        _paceRingWriteIndex = 0;
+        _paceRingCount = 0;
+        _paceRingSum = 0.0;
+        _lastPaceSampleElapsedSec = null;
+    }
+
+    function _appendPaceSample(samplePaceSecPerKm) {
+        var maxSamples = 10;
+        if (_paceRingCount < maxSamples) {
+            _paceRingSecPerKm.add(samplePaceSecPerKm);
+            _paceRingSum += samplePaceSecPerKm;
+            _paceRingCount += 1;
+            if (_paceRingCount == maxSamples) {
+                _paceRingWriteIndex = 0;
+            }
+            return;
         }
 
-        _paceNowSecPerKm = sumPace / _paceSampleSecPerKm.size();
-        _paceNowText = _formatPaceSecPerKm(_paceNowSecPerKm);
+        var oldSample = _paceRingSecPerKm[_paceRingWriteIndex];
+        _paceRingSum -= oldSample;
+        _paceRingSecPerKm[_paceRingWriteIndex] = samplePaceSecPerKm;
+        _paceRingSum += samplePaceSecPerKm;
+        _paceRingWriteIndex += 1;
+        if (_paceRingWriteIndex >= maxSamples) {
+            _paceRingWriteIndex = 0;
+        }
+    }
+
+    function _updateHeartRate(info) {
+        if (info != null and info.currentHeartRate != null and info.currentHeartRate > 0) {
+            _currentHeartRate = info.currentHeartRate;
+            _hrCapText = _currentHeartRate.format("%d") + " / " + _capHeartRate.format("%d");
+            return;
+        }
+
+        _currentHeartRate = null;
+        _hrCapText = "-- / " + _capHeartRate.format("%d");
     }
 
     function _extractPaceSecPerKm(info) {
@@ -343,9 +419,13 @@ class MarathonCoachField extends Ui.DataField {
             return;
         }
 
-        if (_lastFuelTimeSec == null or elapsedSec < _lastFuelTimeSec) {
-            // Initialize once, or recover when elapsed time resets.
-            _lastFuelTimeSec = elapsedSec;
+        if (_lastFuelTimeSec == null) {
+            // Keep fuel schedule aligned to activity elapsed time (FIT playback time).
+            _lastFuelTimeSec = 0;
+        } else if (elapsedSec < _lastFuelTimeSec) {
+            // Recover when activity timer resets or playback jumps backward before last reset point.
+            _lastFuelTimeSec = 0;
+            _lastLapResetSec = null;
         }
 
         // While paused/stopped, freeze remaining time.
@@ -361,6 +441,76 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         _fuelRemainingText = _formatMinSec(_fuelRemainingSec);
+    }
+
+    function _updateCardDisplay(info) {
+        var elapsedSec = _extractElapsedSec(info);
+        var fuelOverdue = _isFuelOverdue();
+
+        if (_isHeartRateOverCap()) {
+            _cardMode = CARD_MODE_HR_OVER;
+            _cardLine1 = "EASE";
+            _cardLine2 = "DOWN";
+            _cardLine3 = "HR HIGH";
+            return;
+        }
+
+        if (_isDriftOn(info)) {
+            _cardMode = CARD_MODE_DRIFT;
+            _cardLine1 = "WATER";
+            _cardLine2 = "+";
+            _cardLine3 = "FUEL";
+            return;
+        }
+
+        if (elapsedSec == null) {
+            _cardMode = CARD_MODE_ACTION;
+            _cardLine1 = "EASE";
+            _cardLine2 = "DOWN";
+            _cardLine3 = "v -10s";
+            return;
+        }
+
+        // Toggle starts in the final 2 minutes before fuel due, and continues after overdue.
+        var inFuelToggleWindow = (
+            fuelOverdue or
+            (_fuelRemainingSec != null and _fuelRemainingSec <= FUEL_TOGGLE_LEAD_SEC)
+        );
+        if (inFuelToggleWindow) {
+            var toggleSlot = Math.floor(elapsedSec / CARD_TOGGLE_SEC);
+            var showFuelCard = ((toggleSlot % 2) == 1);
+            if (showFuelCard) {
+                _cardLine1 = "FUEL";
+                if (fuelOverdue) {
+                    _cardMode = CARD_MODE_FUEL_OVERDUE;
+                    _cardLine2 = "NOW";
+                    _cardLine3 = "!";
+                } else {
+                    _cardMode = CARD_MODE_FUEL;
+                    _cardLine2 = "IN";
+                    _cardLine3 = _fuelRemainingText;
+                }
+                return;
+            }
+        }
+
+        _cardMode = CARD_MODE_ACTION;
+        _cardLine1 = "EASE";
+        _cardLine2 = "DOWN";
+        _cardLine3 = "v -10s";
+    }
+
+    function _isFuelOverdue() {
+        return _fuelRemainingSec != null and _fuelRemainingSec <= 0;
+    }
+
+    function _isHeartRateOverCap() {
+        return _currentHeartRate != null and _currentHeartRate > _capHeartRate;
+    }
+
+    function _isDriftOn(info) {
+        // STEP10 implements real drift detection.
+        return false;
     }
 
     function _extractElapsedSec(info) {
