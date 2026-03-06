@@ -35,6 +35,20 @@ class MarathonCoachField extends Ui.DataField {
     const DEFAULT_TARGET_TIME_HMS = "05:00:00";
 
     var _statusText = "STEP3 LAYOUT";
+    var _fuelLabelText = "FUEL";
+    var _paceDeltaText = "PACE +10s";
+    var _actionLine1Text = "EASE";
+    var _actionLine2Text = "DOWN";
+    var _actionLine3Text = "v -10s";
+    var _hrOverLine1Text = "HR";
+    var _hrOverLine2Text = "OVER";
+    var _hrOverLine3Text = "CAP";
+    var _driftLine1Text = "WATER";
+    var _driftLine2Text = "+";
+    var _driftLine3Text = "FUEL";
+    var _fuelSoonLine2Text = "IN";
+    var _fuelNowLine2Text = "NOW";
+    var _fuelNowLine3Text = "!";
     var _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
     var _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
     var _paceNowSecPerKm = null;
@@ -74,18 +88,7 @@ class MarathonCoachField extends Ui.DataField {
     var _driftLastSampleElapsedSec = null;
     var _driftActive = false;
     var _driftOffStartSec = null;
-    var _warmupMessages as Lang.Array = [
-        "焦るな",
-        "落ち着け",
-        "そのまま",
-        "まだ序盤",
-        "リズムで",
-        "力むな",
-        "深呼吸",
-        "大丈夫",
-        "いい感じ",
-        "がんばれ"
-    ];
+    var _warmupMessages as Lang.Array = [];
     var _warmupMessageSlot = -1;
     var _cardMode = CARD_MODE_ACTION;
     var _cardLine1 = "EASE";
@@ -94,8 +97,43 @@ class MarathonCoachField extends Ui.DataField {
 
     function initialize() {
         DataField.initialize();
-        _statusText = Ui.loadResource(Rez.Strings.Step3Status);
+        _loadLocalizedTexts();
         _loadSettings();
+    }
+
+    function _loadLocalizedTexts() {
+        _statusText = Ui.loadResource(Rez.Strings.Step3Status);
+        _fuelLabelText = Ui.loadResource(Rez.Strings.FuelLabel);
+        _paceDeltaText = Ui.loadResource(Rez.Strings.PaceDeltaLabel);
+        _actionLine1Text = Ui.loadResource(Rez.Strings.CardActionLine1);
+        _actionLine2Text = Ui.loadResource(Rez.Strings.CardActionLine2);
+        _actionLine3Text = Ui.loadResource(Rez.Strings.CardActionLine3);
+        _hrOverLine1Text = Ui.loadResource(Rez.Strings.CardHrOverLine1);
+        _hrOverLine2Text = Ui.loadResource(Rez.Strings.CardHrOverLine2);
+        _hrOverLine3Text = Ui.loadResource(Rez.Strings.CardHrOverLine3);
+        _driftLine1Text = Ui.loadResource(Rez.Strings.CardDriftLine1);
+        _driftLine2Text = Ui.loadResource(Rez.Strings.CardDriftLine2);
+        _driftLine3Text = Ui.loadResource(Rez.Strings.CardDriftLine3);
+        _fuelSoonLine2Text = Ui.loadResource(Rez.Strings.CardFuelSoonLine2);
+        _fuelNowLine2Text = Ui.loadResource(Rez.Strings.CardFuelNowLine2);
+        _fuelNowLine3Text = Ui.loadResource(Rez.Strings.CardFuelNowLine3);
+
+        _warmupMessages = [
+            Ui.loadResource(Rez.Strings.WarmupMsg1),
+            Ui.loadResource(Rez.Strings.WarmupMsg2),
+            Ui.loadResource(Rez.Strings.WarmupMsg3),
+            Ui.loadResource(Rez.Strings.WarmupMsg4),
+            Ui.loadResource(Rez.Strings.WarmupMsg5),
+            Ui.loadResource(Rez.Strings.WarmupMsg6),
+            Ui.loadResource(Rez.Strings.WarmupMsg7),
+            Ui.loadResource(Rez.Strings.WarmupMsg8),
+            Ui.loadResource(Rez.Strings.WarmupMsg9),
+            Ui.loadResource(Rez.Strings.WarmupMsg10)
+        ];
+
+        _cardLine1 = _actionLine1Text;
+        _cardLine2 = _actionLine2Text;
+        _cardLine3 = _actionLine3Text;
     }
 
     function compute(info) {
@@ -280,7 +318,7 @@ class MarathonCoachField extends Ui.DataField {
         dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
         dc.fillCircle(fuelCenterX, fuelCenterY, fuelRadius);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLUE);
-        dc.drawText(fuelCenterX, fuelLabelY, fuelLabelFont, "FUEL", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(fuelCenterX, fuelLabelY, fuelLabelFont, _fuelLabelText, Gfx.TEXT_JUSTIFY_CENTER);
         dc.drawText(fuelCenterX, fuelTimeY, fuelTimeFont, _fuelRemainingText, Gfx.TEXT_JUSTIFY_CENTER);
 
         // Left col row2-3 span: coach card
@@ -291,17 +329,18 @@ class MarathonCoachField extends Ui.DataField {
         var cardH = (row3Y - row1Y) - (cardInset * 2);
         var cardCorner = _clamp(cardW / 8, 10, 26);
         var cardFontH = dc.getFontHeight(cardFont);
-        var cardGap = _max((cardH - (cardFontH * 3)) / 4, 1);
-        var cardLine1Y = cardY + cardGap;
-        var cardLine2Y = cardLine1Y + cardFontH + cardGap;
-        var cardLine3Y = cardLine2Y + cardFontH + cardGap;
+        var cardLines = _getCardDisplayLines();
+        var cardLineCount = cardLines.size();
+        var cardGap = _max((cardH - (cardFontH * cardLineCount)) / (cardLineCount + 1), 1);
+        var cardLineY = cardY + cardGap;
 
         dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
         dc.fillRoundedRectangle(cardX, cardY, cardW, cardH, cardCorner);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLUE);
-        dc.drawText(cardX + (cardW / 2), cardLine1Y, cardFont, _cardLine1, Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(cardX + (cardW / 2), cardLine2Y, cardFont, _cardLine2, Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(cardX + (cardW / 2), cardLine3Y, cardFont, _cardLine3, Gfx.TEXT_JUSTIFY_CENTER);
+        for (var i = 0; i < cardLineCount; i += 1) {
+            dc.drawText(cardX + (cardW / 2), cardLineY, cardFont, cardLines[i], Gfx.TEXT_JUSTIFY_CENTER);
+            cardLineY += cardFontH + cardGap;
+        }
 
         // 3rd row right: pace
         var paceY = row2Y;
@@ -327,7 +366,7 @@ class MarathonCoachField extends Ui.DataField {
         var mergedY = _textYByRatio(row3Y, row4Height, 24, dc.getFontHeight(footerFont));
         var paceDeltaY = _textYByRatio(row3Y, row4Height, 70, dc.getFontHeight(paceDeltaFont));
         dc.drawText(width / 2, mergedY, footerFont, "22.3 km  2:33:12", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(width / 2, paceDeltaY, paceDeltaFont, "PACE +10s", Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width / 2, paceDeltaY, paceDeltaFont, _paceDeltaText, Gfx.TEXT_JUSTIFY_CENTER);
 
         if (LAYOUT_DEBUG_OVERLAY) {
             dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
@@ -760,17 +799,17 @@ class MarathonCoachField extends Ui.DataField {
 
         if (_isHeartRateOverCap()) {
             _cardMode = CARD_MODE_HR_OVER;
-            _cardLine1 = "HR";
-            _cardLine2 = "OVER";
-            _cardLine3 = "CAP";
+            _cardLine1 = _hrOverLine1Text;
+            _cardLine2 = _hrOverLine2Text;
+            _cardLine3 = _hrOverLine3Text;
             return;
         }
 
         if (_isDriftOn(info)) {
             _cardMode = CARD_MODE_DRIFT;
-            _cardLine1 = "WATER";
-            _cardLine2 = "+";
-            _cardLine3 = "FUEL";
+            _cardLine1 = _driftLine1Text;
+            _cardLine2 = _driftLine2Text;
+            _cardLine3 = _driftLine3Text;
             return;
         }
 
@@ -788,14 +827,14 @@ class MarathonCoachField extends Ui.DataField {
             var toggleSlot = Math.floor(elapsedSec / CARD_TOGGLE_SEC);
             var showFuelCard = ((toggleSlot % 2) == 1);
             if (showFuelCard) {
-                _cardLine1 = "FUEL";
+                _cardLine1 = _fuelLabelText;
                 if (fuelOverdue) {
                     _cardMode = CARD_MODE_FUEL_OVERDUE;
-                    _cardLine2 = "NOW";
-                    _cardLine3 = "!";
+                    _cardLine2 = _fuelNowLine2Text;
+                    _cardLine3 = _fuelNowLine3Text;
                 } else {
                     _cardMode = CARD_MODE_FUEL;
-                    _cardLine2 = "IN";
+                    _cardLine2 = _fuelSoonLine2Text;
                     _cardLine3 = _fuelRemainingText;
                 }
                 return;
@@ -865,9 +904,9 @@ class MarathonCoachField extends Ui.DataField {
     function _setActionCardByBaseline(elapsedSec) {
         _cardMode = CARD_MODE_ACTION;
         if (_isBaselineReady()) {
-            _cardLine1 = "EASE";
-            _cardLine2 = "DOWN";
-            _cardLine3 = "v -10s";
+            _cardLine1 = _actionLine1Text;
+            _cardLine2 = _actionLine2Text;
+            _cardLine3 = _actionLine3Text;
             return;
         }
 
@@ -886,25 +925,102 @@ class MarathonCoachField extends Ui.DataField {
         _warmupMessageSlot = slot;
 
         if (_warmupMessages.size() == 0) {
-            _cardLine1 = "EASE";
-            _cardLine2 = "DOWN";
-            _cardLine3 = "v -10s";
+            _cardLine1 = _actionLine1Text;
+            _cardLine2 = _actionLine2Text;
+            _cardLine3 = _actionLine3Text;
             return;
         }
 
-        if (_warmupMessages.size() < 3) {
-            _cardLine1 = _warmupMessages[0];
-            _cardLine2 = _warmupMessages[0];
-            _cardLine3 = _warmupMessages[0];
+        var idx = _randomMessageIndex(_warmupMessages.size(), -1, -1);
+        _setCardLinesFromMessage(_warmupMessages[idx]);
+    }
+
+    function _setCardLinesFromMessage(message) {
+        _cardLine1 = "";
+        _cardLine2 = "";
+        _cardLine3 = "";
+
+        if (message == null) {
             return;
         }
 
-        var idx1 = _randomMessageIndex(_warmupMessages.size(), -1, -1);
-        var idx2 = _randomMessageIndex(_warmupMessages.size(), idx1, -1);
-        var idx3 = _randomMessageIndex(_warmupMessages.size(), idx1, idx2);
-        _cardLine1 = _warmupMessages[idx1];
-        _cardLine2 = _warmupMessages[idx2];
-        _cardLine3 = _warmupMessages[idx3];
+        var text = message.toString();
+        if (text.length() == 0) {
+            return;
+        }
+
+        var words = _splitWords(text);
+        if (words.size() == 0) {
+            return;
+        }
+
+        _cardLine1 = words[0];
+
+        if (words.size() >= 2) {
+            _cardLine2 = words[1];
+        }
+        if (words.size() >= 3) {
+            _cardLine3 = words[2];
+            // Card keeps 3 lines. If extra words exist, append to line 3.
+            for (var i = 3; i < words.size(); i += 1) {
+                _cardLine3 += " " + words[i];
+            }
+        }
+    }
+
+    function _splitWords(text) as Lang.Array {
+        var words = [];
+        var remaining = text;
+
+        while (remaining != null and remaining.length() > 0) {
+            var spaceIndex = remaining.find(" ");
+            if (spaceIndex == null) {
+                if (remaining.length() > 0) {
+                    words.add(remaining);
+                }
+                break;
+            }
+
+            if (spaceIndex > 0) {
+                words.add(remaining.substring(0, spaceIndex));
+            }
+
+            if ((spaceIndex + 1) >= remaining.length()) {
+                break;
+            }
+            remaining = remaining.substring(spaceIndex + 1, remaining.length());
+            while (remaining.length() > 0 and remaining.substring(0, 1) == " ") {
+                if (remaining.length() == 1) {
+                    remaining = "";
+                    break;
+                }
+                remaining = remaining.substring(1, remaining.length());
+            }
+            if (remaining.length() == 0) {
+                break;
+            } else {
+                continue;
+            }
+        }
+
+        return words;
+    }
+
+    function _getCardDisplayLines() as Lang.Array {
+        var lines = [];
+        if (_cardLine1 != null and _cardLine1.length() > 0) {
+            lines.add(_cardLine1);
+        }
+        if (_cardLine2 != null and _cardLine2.length() > 0) {
+            lines.add(_cardLine2);
+        }
+        if (_cardLine3 != null and _cardLine3.length() > 0) {
+            lines.add(_cardLine3);
+        }
+        if (lines.size() == 0) {
+            lines.add("");
+        }
+        return lines;
     }
 
     function _randomMessageIndex(size, avoid1, avoid2) {

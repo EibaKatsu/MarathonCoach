@@ -1,0 +1,32 @@
+<resources>
+    <string id="AppName">マラソンコーチ</string>
+    <string id="Step1Status">STEP1 READY</string>
+    <string id="Step2Status">STEP2 SETTINGS</string>
+    <string id="Step3Status">STEP3 LAYOUT</string>
+    <string id="setting_race_distance">レース距離 (km)</string>
+    <string id="setting_target_time">目標タイム (HH:MM:SS)</string>
+    <string id="FuelLabel">FUEL</string>
+    <string id="PaceDeltaLabel">PACE +10s</string>
+    <string id="CardActionLine1">ちょい</string>
+    <string id="CardActionLine2">落とし</string>
+    <string id="CardActionLine3">v -10s</string>
+    <string id="CardHrOverLine1">HR</string>
+    <string id="CardHrOverLine2">OVER</string>
+    <string id="CardHrOverLine3">CAP</string>
+    <string id="CardDriftLine1">みず</string>
+    <string id="CardDriftLine2">+</string>
+    <string id="CardDriftLine3">ほきゅう</string>
+    <string id="CardFuelSoonLine2">IN</string>
+    <string id="CardFuelNowLine2">NOW</string>
+    <string id="CardFuelNowLine3">!</string>
+    <string id="WarmupMsg1">焦るな</string>
+    <string id="WarmupMsg2">落ち着け</string>
+    <string id="WarmupMsg3">そのまま</string>
+    <string id="WarmupMsg4">まだ序盤</string>
+    <string id="WarmupMsg5">リズムで</string>
+    <string id="WarmupMsg6">力むな</string>
+    <string id="WarmupMsg7">深呼吸</string>
+    <string id="WarmupMsg8">大丈夫</string>
+    <string id="WarmupMsg9">いい感じ</string>
+    <string id="WarmupMsg10">がんばれ</string>
+</resources>
