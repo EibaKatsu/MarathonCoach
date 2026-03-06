@@ -13,6 +13,9 @@ class MarathonCoachField extends Ui.DataField {
     const LAP_DEBOUNCE_SEC = 20;
     const CARD_TOGGLE_SEC = 3;
     const FUEL_TOGGLE_LEAD_SEC = 2 * 60;
+    const HR_OVER_TRIGGER_SEC = 12;
+    const HR_OVER_RELEASE_SEC = 5;
+    const CAP_RESOLVE_RETRY_SEC = 30;
 
     const CARD_MODE_ACTION = 0;
     const CARD_MODE_FUEL = 1;
@@ -41,8 +44,13 @@ class MarathonCoachField extends Ui.DataField {
     var _lastElapsedSec = null;
     var _lastLapResetSec = null;
     var _currentHeartRate = null;
+    var _baseCapHeartRate = null;
     var _capHeartRate = null;
     var _hrCapText = "-- / --:--";
+    var _nextCapResolveRetrySec = 0;
+    var _hrOverActive = false;
+    var _hrOverStartSec = null;
+    var _hrRecoverStartSec = null;
     var _cardMode = CARD_MODE_ACTION;
     var _cardLine1 = "EASE";
     var _cardLine2 = "DOWN";
@@ -58,6 +66,7 @@ class MarathonCoachField extends Ui.DataField {
         // Step 2 settings + Step 4 pace window update.
         _loadSettings();
         _updateHeartRate(info);
+        _updateHrOverState(info);
         _updatePaceWindow(info);
         _updateFuelTimer(info);
         _updateCardDisplay(info);
@@ -84,6 +93,7 @@ class MarathonCoachField extends Ui.DataField {
         _timerRunning = false;
         _lastElapsedSec = null;
         _lastLapResetSec = null;
+        _nextCapResolveRetrySec = 0;
         _lastFuelTimeSec = null;
         _fuelDueTimeSec = null;
         _fuelRemainingSec = null;
@@ -91,6 +101,9 @@ class MarathonCoachField extends Ui.DataField {
         _resetPaceWindow();
         _paceNowSecPerKm = null;
         _paceNowText = "--:--";
+        _hrOverActive = false;
+        _hrOverStartSec = null;
+        _hrRecoverStartSec = null;
         _cardMode = CARD_MODE_ACTION;
         _cardLine1 = "EASE";
         _cardLine2 = "DOWN";
@@ -400,19 +413,43 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveCapHeartRate(info) {
+        var elapsedSec = _extractElapsedSec(info);
+        if (_baseCapHeartRate == null) {
+            var shouldResolveBase = (elapsedSec == null or elapsedSec >= _nextCapResolveRetrySec);
+            if (shouldResolveBase) {
+                _baseCapHeartRate = _resolveBaseCapHeartRate();
+                if (_baseCapHeartRate == null and elapsedSec != null) {
+                    _nextCapResolveRetrySec = elapsedSec + CAP_RESOLVE_RETRY_SEC;
+                }
+            }
+        }
+
+        if (_baseCapHeartRate == null) {
+            _capHeartRate = null;
+            return;
+        }
+
+        var distanceKm = _extractElapsedDistanceKm(info);
+        var capOffset = _getCapDistanceOffset(distanceKm);
+        var adjustedCap = _baseCapHeartRate - capOffset;
+        if (adjustedCap < 1) {
+            adjustedCap = 1;
+        }
+        _capHeartRate = adjustedCap;
+    }
+
+    function _resolveBaseCapHeartRate() {
         var lthrHeartRate = _getLthrHeartRate();
         if (lthrHeartRate != null and lthrHeartRate > 0) {
-            _capHeartRate = lthrHeartRate;
-            return;
+            return lthrHeartRate;
         }
 
-        var maxHeartRate = _getConfiguredMaxHeartRate(info);
+        var maxHeartRate = _getConfiguredMaxHeartRate();
         if (maxHeartRate != null and maxHeartRate > 0) {
-            _capHeartRate = Math.floor((maxHeartRate * 0.86) + 0.5);
-            return;
+            return Math.floor((maxHeartRate * 0.86) + 0.5);
         }
 
-        _capHeartRate = null;
+        return null;
     }
 
     function _getLthrHeartRate() {
@@ -420,18 +457,13 @@ class MarathonCoachField extends Ui.DataField {
         return null;
     }
 
-    function _getConfiguredMaxHeartRate(info) {
+    function _getConfiguredMaxHeartRate() {
         var zones = _getHeartRateZonesForCurrentSport();
         if (zones != null and zones.size() >= 6) {
             var maxZone5 = zones[5];
             if (maxZone5 != null and maxZone5 instanceof Number and maxZone5 > 0) {
                 return maxZone5;
             }
-        }
-
-        // Final fallback from current activity context.
-        if (info != null and info.maxHeartRate != null and info.maxHeartRate > 0) {
-            return info.maxHeartRate;
         }
 
         return null;
@@ -479,6 +511,29 @@ class MarathonCoachField extends Ui.DataField {
         return paceSecPerKm;
     }
 
+    function _extractElapsedDistanceKm(info) {
+        if (info == null or info.elapsedDistance == null or !(info.elapsedDistance instanceof Number)) {
+            return null;
+        }
+        if (info.elapsedDistance < 0) {
+            return null;
+        }
+        return info.elapsedDistance / 1000.0;
+    }
+
+    function _getCapDistanceOffset(distanceKm) {
+        if (distanceKm == null or distanceKm < 10.0) {
+            return 23;
+        }
+        if (distanceKm < 25.0) {
+            return 18;
+        }
+        if (distanceKm < 35.0) {
+            return 13;
+        }
+        return 8;
+    }
+
     function _updateFuelTimer(info) {
         var elapsedSec = _extractElapsedSec(info);
         if (elapsedSec == null) {
@@ -517,9 +572,9 @@ class MarathonCoachField extends Ui.DataField {
 
         if (_isHeartRateOverCap()) {
             _cardMode = CARD_MODE_HR_OVER;
-            _cardLine1 = "EASE";
-            _cardLine2 = "DOWN";
-            _cardLine3 = "HR HIGH";
+            _cardLine1 = "HR";
+            _cardLine2 = "OVER";
+            _cardLine3 = "CAP";
             return;
         }
 
@@ -573,7 +628,48 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _isHeartRateOverCap() {
-        return _currentHeartRate != null and _capHeartRate != null and _currentHeartRate > _capHeartRate;
+        return _hrOverActive;
+    }
+
+    function _updateHrOverState(info) {
+        if (_currentHeartRate == null or _capHeartRate == null) {
+            _hrOverActive = false;
+            _hrOverStartSec = null;
+            _hrRecoverStartSec = null;
+            return;
+        }
+
+        var elapsedSec = _extractElapsedSec(info);
+        if (elapsedSec == null) {
+            _hrOverActive = false;
+            _hrOverStartSec = null;
+            _hrRecoverStartSec = null;
+            return;
+        }
+
+        if (_currentHeartRate > _capHeartRate) {
+            _hrRecoverStartSec = null;
+            if (!_hrOverActive) {
+                if (_hrOverStartSec == null or elapsedSec < _hrOverStartSec) {
+                    _hrOverStartSec = elapsedSec;
+                }
+                if ((elapsedSec - _hrOverStartSec) >= HR_OVER_TRIGGER_SEC) {
+                    _hrOverActive = true;
+                }
+            }
+            return;
+        }
+
+        _hrOverStartSec = null;
+        if (_hrOverActive) {
+            if (_hrRecoverStartSec == null or elapsedSec < _hrRecoverStartSec) {
+                _hrRecoverStartSec = elapsedSec;
+            }
+            if ((elapsedSec - _hrRecoverStartSec) >= HR_OVER_RELEASE_SEC) {
+                _hrOverActive = false;
+                _hrRecoverStartSec = null;
+            }
+        }
     }
 
     function _isDriftOn(info) {
