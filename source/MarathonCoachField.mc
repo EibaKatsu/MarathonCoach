@@ -485,7 +485,8 @@ class MarathonCoachField extends Ui.DataField {
     function _resolveCapHeartRate(info) {
         var elapsedSec = _extractElapsedSec(info);
         if (_baseCapHeartRate == null) {
-            var shouldResolveBase = (elapsedSec == null or elapsedSec >= _nextCapResolveRetrySec);
+            // Resolve only after activity elapsed time becomes available to keep source stable.
+            var shouldResolveBase = (elapsedSec != null and elapsedSec >= _nextCapResolveRetrySec);
             if (shouldResolveBase) {
                 _baseCapHeartRate = _resolveBaseCapHeartRate();
                 if (_baseCapHeartRate == null and elapsedSec != null) {
@@ -529,11 +530,15 @@ class MarathonCoachField extends Ui.DataField {
 
     function _getConfiguredMaxHeartRate() {
         var zones = _getHeartRateZonesForCurrentSport();
-        if (zones != null and zones.size() >= 6) {
-            var maxZone5 = zones[5];
-            if (maxZone5 != null and maxZone5 instanceof Number and maxZone5 > 0) {
-                return maxZone5;
-            }
+        var maxHeartRate = _extractMaxZoneValue(zones);
+        if (maxHeartRate != null) {
+            return maxHeartRate;
+        }
+
+        var genericZones = _getGenericHeartRateZones();
+        maxHeartRate = _extractMaxZoneValue(genericZones);
+        if (maxHeartRate != null) {
+            return maxHeartRate;
         }
 
         return null;
@@ -543,23 +548,54 @@ class MarathonCoachField extends Ui.DataField {
         try {
             var sport = UserProfile.getCurrentSport();
             var zones = UserProfile.getHeartRateZones(sport);
-            if (zones != null and zones.size() >= 6) {
+            if (zones != null and zones.size() > 0) {
                 return zones;
             }
         } catch (e) {
-            // Fall through to generic zones.
-        }
-
-        try {
-            var genericZones = UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_GENERIC);
-            if (genericZones != null and genericZones.size() >= 6) {
-                return genericZones;
-            }
-        } catch (e2) {
             return null;
         }
 
         return null;
+    }
+
+    function _getGenericHeartRateZones() as Lang.Array<Lang.Number> or Null {
+        try {
+            var genericZones = UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_GENERIC);
+            if (genericZones != null and genericZones.size() > 0) {
+                return genericZones;
+            }
+        } catch (e) {
+            return null;
+        }
+
+        return null;
+    }
+
+    function _extractMaxZoneValue(zones as Lang.Array<Lang.Number> or Null) {
+        if (zones == null or zones.size() == 0) {
+            return null;
+        }
+
+        var maxValue = null;
+        for (var i = 0; i < zones.size(); i += 1) {
+            var value = zones[i];
+            if (value == null or !(value instanceof Number) or value <= 0) {
+                continue;
+            }
+            if (maxValue == null or value > maxValue) {
+                maxValue = value;
+            }
+        }
+
+        if (maxValue == null) {
+            return null;
+        }
+
+        try {
+            return Math.floor(maxValue + 0.5);
+        } catch (e) {
+            return null;
+        }
     }
 
     function _extractPaceSecPerKm(info) {
