@@ -5,8 +5,8 @@
     </properties>
 
     <strings>
-        <string id="setting_race_distance">レース距離 (km)</string>
-        <string id="setting_target_time">目標タイム (HH:MM:SS)</string>
+        <string id="setting_race_distance">Race Distance (km)</string>
+        <string id="setting_target_time">Target Time (HH:MM:SS)</string>
     </strings>
 
     <settings>

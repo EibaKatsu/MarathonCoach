@@ -20,7 +20,7 @@ class MarathonCoachField extends Ui.DataField {
     const FUEL_WARNING_BLINK_PERIOD_SEC = 2;
     const FUEL_WARNING_BLINK_ON_SEC = 1;
     const HR_OVER_TRIGGER_MARGIN_BPM = 1;
-    const WARMUP_MESSAGE_ROTATE_SEC = 5;
+    const WARMUP_MESSAGE_ROTATE_SEC = 15;
     const DRIFT_BASELINE_START_SEC = 20 * 60;
     const DRIFT_BASELINE_MIN_DISTANCE_KM = 3.0;
     const DRIFT_WINDOW_SEC = 10 * 60;
@@ -215,7 +215,12 @@ class MarathonCoachField extends Ui.DataField {
             Ui.loadResource(Rez.Strings.WarmupMsg7),
             Ui.loadResource(Rez.Strings.WarmupMsg8),
             Ui.loadResource(Rez.Strings.WarmupMsg9),
-            Ui.loadResource(Rez.Strings.WarmupMsg10)
+            Ui.loadResource(Rez.Strings.WarmupMsg10),
+            Ui.loadResource(Rez.Strings.WarmupMsg11),
+            Ui.loadResource(Rez.Strings.WarmupMsg12),
+            Ui.loadResource(Rez.Strings.WarmupMsg13),
+            Ui.loadResource(Rez.Strings.WarmupMsg14),
+            Ui.loadResource(Rez.Strings.WarmupMsg15)
         ];
 
         _setCardLinesFromMessage(_actionHoldText);
