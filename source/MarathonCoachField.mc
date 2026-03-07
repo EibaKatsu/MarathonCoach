@@ -43,6 +43,12 @@ class MarathonCoachField extends Ui.DataField {
 
     const DEFAULT_RACE_DISTANCE_KM = 42.195;
     const DEFAULT_TARGET_TIME_HMS = "05:00:00";
+    const HR_GAUGE_ZONE_COUNT = 5;
+    const HR_ZONE_COLOR_1 = 0x9E9E9E; // gray
+    const HR_ZONE_COLOR_2 = 0x52B7E8; // light blue
+    const HR_ZONE_COLOR_3 = 0x63C84A; // yellow-green
+    const HR_ZONE_COLOR_4 = 0xF29F67; // orange
+    const HR_ZONE_COLOR_5 = 0xF01818; // red
 
     var _statusText = "STEP3 LAYOUT";
     var _fuelLabelText = "FUEL";
@@ -345,7 +351,6 @@ class MarathonCoachField extends Ui.DataField {
         var sizeClass = _getSizeClass(minDim);
 
         var insetPct = 7;
-        var hrFont = Gfx.FONT_TINY;
         var cardFont = Gfx.FONT_SMALL;
         var paceFont = Gfx.FONT_LARGE;
         var footerFont = Gfx.FONT_SMALL;
@@ -356,7 +361,6 @@ class MarathonCoachField extends Ui.DataField {
 
         if (sizeClass == 2) {
             insetPct = 9;
-            hrFont = Gfx.FONT_XTINY;
             cardFont = Gfx.FONT_TINY;
             paceFont = Gfx.FONT_LARGE;
             footerFont = Gfx.FONT_SMALL;
@@ -366,7 +370,6 @@ class MarathonCoachField extends Ui.DataField {
             fuelRadiusPct = 50;
         } else if (sizeClass == 0) {
             insetPct = 6;
-            hrFont = Gfx.FONT_XTINY;
             cardFont = Gfx.FONT_TINY;
             paceFont = Gfx.FONT_MEDIUM;
             footerFont = Gfx.FONT_TINY;
@@ -394,15 +397,8 @@ class MarathonCoachField extends Ui.DataField {
         var row12Height = row2Y - top;
         var row4Height = bottomY - row3Y;
 
-        // 1st row left: HR/ZONE
-        var hrY = _textYByRatio(top, rowHeight, 66, dc.getFontHeight(hrFont));
-        dc.drawText(
-            leftColX + (leftColW / 2),
-            hrY,
-            hrFont,
-            _hrZoneText,
-            Gfx.TEXT_JUSTIFY_CENTER
-        );
+        // 1st row left: HR gauge (value + Z1-Z5 bar + position marker)
+        _drawHeartRateGauge(dc, leftColX, top, leftColW, rowHeight, sizeClass);
 
         // Right col row1-2 span: FUEL ring
         var fuelRadius = _clamp(
@@ -489,6 +485,170 @@ class MarathonCoachField extends Ui.DataField {
             dc.drawLine(left, row2Y, right, row2Y);
             dc.drawLine(left, row3Y, right, row3Y);
         }
+    }
+
+    function _drawHeartRateGauge(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
+        var valueFont = Gfx.FONT_MEDIUM;
+        if (sizeClass == 2) {
+            valueFont = Gfx.FONT_LARGE;
+        } else if (sizeClass == 0) {
+            valueFont = Gfx.FONT_SMALL;
+        }
+
+        var valueText = "--";
+        if (_currentHeartRate != null) {
+            valueText = _currentHeartRate.format("%d");
+        }
+
+        var valueHeight = dc.getFontHeight(valueFont);
+        var markerHeight = _clamp((areaH * 25) / 100, 6, 12);
+        var gaugeHeight = _clamp((areaH * 22) / 100, 8, 14);
+        // Keep the numeric label position stable, then move only the gauge upward.
+        var baseGaugeTop = areaY + areaH - markerHeight - gaugeHeight;
+        var valueY = baseGaugeTop - valueHeight;
+        if (valueY < areaY) {
+            valueY = areaY;
+        }
+        var glyphBottomInset = _clamp(valueHeight / 6, 2, 6);
+        var gaugeTop = (valueY + valueHeight) - glyphBottomInset;
+        var maxGaugeTop = areaY + areaH - markerHeight - gaugeHeight;
+        if (gaugeTop > maxGaugeTop) {
+            gaugeTop = maxGaugeTop;
+        }
+
+        var gaugeHorizontalInset = _clamp((areaW * 10) / 100, 6, 18);
+        if (sizeClass == 0) {
+            gaugeHorizontalInset = _clamp((areaW * 16) / 100, 10, 24);
+        } else if (sizeClass == 2) {
+            gaugeHorizontalInset = _clamp((areaW * 8) / 100, 4, 14);
+        }
+        var gaugeAreaX = areaX + gaugeHorizontalInset;
+        var gaugeAreaW = areaW - (gaugeHorizontalInset * 2);
+        if (gaugeAreaW < 24) {
+            gaugeAreaX = areaX;
+            gaugeAreaW = areaW;
+        }
+
+        var segmentGap = _clamp(gaugeAreaW / 60, 1, 3);
+        var totalGap = (HR_GAUGE_ZONE_COUNT - 1) * segmentGap;
+        var segmentWidth = Math.floor((gaugeAreaW - totalGap) / HR_GAUGE_ZONE_COUNT);
+        if (segmentWidth < 4) {
+            segmentWidth = 4;
+        }
+        var gaugeWidth = (segmentWidth * HR_GAUGE_ZONE_COUNT) + totalGap;
+        if (gaugeWidth > gaugeAreaW) {
+            gaugeWidth = gaugeAreaW;
+            segmentWidth = Math.floor((gaugeWidth - totalGap) / HR_GAUGE_ZONE_COUNT);
+            if (segmentWidth < 2) {
+                segmentWidth = 2;
+            }
+            gaugeWidth = (segmentWidth * HR_GAUGE_ZONE_COUNT) + totalGap;
+        }
+
+        var gaugeX = Math.floor(gaugeAreaX + ((gaugeAreaW - gaugeWidth) / 2));
+        for (var i = 0; i < HR_GAUGE_ZONE_COUNT; i += 1) {
+            var segX = gaugeX + (i * (segmentWidth + segmentGap));
+            dc.setColor(_getHeartRateZoneGaugeColor(i + 1), Gfx.COLOR_BLACK);
+            dc.fillRectangle(segX, gaugeTop, segmentWidth, gaugeHeight);
+        }
+
+        if (_currentHeartRate != null) {
+            var markerRatio = _resolveHeartRateGaugeRatio();
+            var markerX = gaugeX + Math.floor((markerRatio * (gaugeWidth - 1)) + 0.5);
+            var markerTipY = gaugeTop + gaugeHeight + 1;
+            var markerHalfWidth = _clamp(segmentWidth / 3, 2, 5);
+            dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
+            _drawUpTriangleMarker(dc, markerX, markerTipY, markerHalfWidth, markerHeight);
+        }
+
+        // Draw value last so it always stays above the gauge layer.
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            areaX + (areaW / 2),
+            valueY,
+            valueFont,
+            valueText,
+            Gfx.TEXT_JUSTIFY_CENTER
+        );
+    }
+
+    function _drawUpTriangleMarker(dc as Gfx.Dc, centerX, tipY, halfWidth, height) {
+        var markerHeight = _max(height, 1);
+        var markerHalfWidth = _max(halfWidth, 1);
+        for (var row = 0; row < markerHeight; row += 1) {
+            var span = Math.floor((markerHalfWidth * (row + 1)) / markerHeight);
+            if (span < 1) {
+                span = 1;
+            }
+            dc.drawLine(centerX - span, tipY + row, centerX + span, tipY + row);
+        }
+    }
+
+    function _getHeartRateZoneGaugeColor(zoneNumber) {
+        if (zoneNumber <= 1) {
+            return HR_ZONE_COLOR_1;
+        }
+        if (zoneNumber == 2) {
+            return HR_ZONE_COLOR_2;
+        }
+        if (zoneNumber == 3) {
+            return HR_ZONE_COLOR_3;
+        }
+        if (zoneNumber == 4) {
+            return HR_ZONE_COLOR_4;
+        }
+        return HR_ZONE_COLOR_5;
+    }
+
+    function _resolveHeartRateGaugeRatio() {
+        if (_currentHeartRate == null) {
+            return 0.5;
+        }
+
+        var heartRate = _currentHeartRate;
+        var zoneNumber = _currentHeartRateZone;
+        if (zoneNumber == null) {
+            zoneNumber = _resolveHeartRateZone(_currentHeartRate, _activeHeartRateZones);
+        }
+        if (zoneNumber == null) {
+            return _resolveHeartRateGaugeRatioFallback(heartRate);
+        }
+
+        zoneNumber = _clamp(zoneNumber, 1, HR_GAUGE_ZONE_COUNT);
+        var upper = _getZoneUpperHeartRate(_activeHeartRateZones, zoneNumber);
+        if (upper == null) {
+            return _resolveHeartRateGaugeRatioFallback(heartRate);
+        }
+
+        var lower = null;
+        if (zoneNumber > 1) {
+            lower = _getZoneUpperHeartRate(_activeHeartRateZones, zoneNumber - 1);
+        }
+        if (lower == null) {
+            lower = upper - 20;
+            if (lower < 1) {
+                lower = 1;
+            }
+        }
+        if (upper <= lower) {
+            upper = lower + 1;
+        }
+
+        var progress = _clamp(((heartRate - lower) * 1.0) / ((upper - lower) * 1.0), 0.0, 1.0);
+        var ratio = ((zoneNumber - 1) + progress) / HR_GAUGE_ZONE_COUNT;
+        return _clamp(ratio, 0.0, 1.0);
+    }
+
+    function _resolveHeartRateGaugeRatioFallback(heartRate) {
+        if (heartRate == null) {
+            return 0.5;
+        }
+        var minHr = 80;
+        var maxHr = 200;
+        if (maxHr <= minHr) {
+            return 0.5;
+        }
+        return _clamp(((heartRate - minHr) * 1.0) / ((maxHr - minHr) * 1.0), 0.0, 1.0);
     }
 
     function _min(a, b) {
@@ -758,10 +918,20 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _normalizeHeartRateValue(value) {
-        if (value == null or !(value instanceof Number) or value <= 0) {
+        if (value == null) {
             return null;
         }
-        return Math.floor(value + 0.5);
+        try {
+            if (value != value) {
+                return null;
+            }
+            if (value < 1 or value > 300) {
+                return null;
+            }
+        } catch (e) {
+            return null;
+        }
+        return value;
     }
 
     function _extractPaceSecPerKm(info) {
