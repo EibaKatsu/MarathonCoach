@@ -1755,6 +1755,14 @@ class MarathonCoachField extends Ui.DataField {
         var elapsedSec = _extractElapsedSec(info);
         var fuelOverdue = _isFuelOverdue();
 
+        if (fuelOverdue) {
+            _cardMode = CARD_MODE_FUEL_OVERDUE;
+            _cardLine1 = _fuelLabelText;
+            _cardLine2 = _fuelNowLine2Text;
+            _cardLine3 = _fuelNowLine3Text;
+            return;
+        }
+
         if (_isHeartRateOverCap()) {
             _cardMode = CARD_MODE_HR_OVER;
             _cardLine1 = _hrOverLine1Text;
@@ -1776,10 +1784,9 @@ class MarathonCoachField extends Ui.DataField {
             return;
         }
 
-        // Toggle starts in the final 2 minutes before fuel due, and continues after overdue.
+        // Toggle starts in the final 2 minutes before fuel due.
         var inFuelToggleWindow = (
-            fuelOverdue or
-            (_fuelRemainingSec != null and _fuelRemainingSec <= FUEL_TOGGLE_LEAD_SEC)
+            _fuelRemainingSec != null and _fuelRemainingSec <= FUEL_TOGGLE_LEAD_SEC
         );
         if (inFuelToggleWindow) {
             var toggleSlot = Math.floor(elapsedSec / CARD_TOGGLE_SEC);
@@ -1787,15 +1794,9 @@ class MarathonCoachField extends Ui.DataField {
             var showFuelCard = ((toggleSlot - (halfToggleSlot * 2)) >= 1);
             if (showFuelCard) {
                 _cardLine1 = _fuelLabelText;
-                if (fuelOverdue) {
-                    _cardMode = CARD_MODE_FUEL_OVERDUE;
-                    _cardLine2 = _fuelNowLine2Text;
-                    _cardLine3 = _fuelNowLine3Text;
-                } else {
-                    _cardMode = CARD_MODE_FUEL;
-                    _cardLine2 = _fuelSoonLine2Text;
-                    _cardLine3 = _fuelRemainingText;
-                }
+                _cardMode = CARD_MODE_FUEL;
+                _cardLine2 = _fuelSoonLine2Text;
+                _cardLine3 = _fuelRemainingText;
                 return;
             }
         }
