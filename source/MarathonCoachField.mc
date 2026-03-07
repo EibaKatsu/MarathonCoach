@@ -15,9 +15,7 @@ class MarathonCoachField extends Ui.DataField {
     const LAP_DEBOUNCE_SEC = 20;
     const CARD_TOGGLE_SEC = 3;
     const FUEL_TOGGLE_LEAD_SEC = 2 * 60;
-    const HR_OVER_TRIGGER_SEC = 12;
-    const HR_OVER_RELEASE_SEC = 5;
-    const CAP_RESOLVE_RETRY_SEC = 30;
+    const HR_OVER_TRIGGER_MARGIN_BPM = 1;
     const WARMUP_MESSAGE_ROTATE_SEC = 5;
     const DRIFT_BASELINE_START_SEC = 20 * 60;
     const DRIFT_BASELINE_MIN_DISTANCE_KM = 3.0;
@@ -27,10 +25,12 @@ class MarathonCoachField extends Ui.DataField {
     const DRIFT_HR_OFF_DELTA = 6;
     const DRIFT_OFF_CONFIRM_SEC = 60;
     const MIN_DISTANCE_FOR_PREDICTION_KM = 0.5;
-    const ACTION_PUSH_PACE_DELTA_SEC = 8;
     const ACTION_EASE_PACE_DELTA_SEC = -8;
-    const ACTION_PUSH_MIN_CAP_MARGIN_BPM = 6;
-    const ACTION_EASE_CAP_MARGIN_BPM = 3;
+    const ACTION_PUSH_TRIGGER_SEC = 6;
+    const ACTION_PUSH_RELEASE_SEC = 5;
+    const ACTION_PUSH_RELEASE_PACE_HYSTERESIS_SEC = 2;
+    const ACTION_PUSH_RELEASE_HR_HYSTERESIS_BPM = 1;
+    const ACTION_EASE_MIN_HEADROOM_BPM = 3;
     const ACTION_EASE_BASELINE_HR_DELTA_BPM = 6;
     const FIT_FACT_LOG = true;
     const DIST_PROBE_LOG = true;
@@ -53,7 +53,7 @@ class MarathonCoachField extends Ui.DataField {
     var _actionEaseText = "Ease down";
     var _hrOverLine1Text = "HR";
     var _hrOverLine2Text = "OVER";
-    var _hrOverLine3Text = "CAP";
+    var _hrOverLine3Text = "ZONE";
     var _driftLine1Text = "WATER";
     var _driftLine2Text = "+";
     var _driftLine3Text = "FUEL";
@@ -82,13 +82,16 @@ class MarathonCoachField extends Ui.DataField {
     var _lastElapsedSec = null;
     var _lastLapResetSec = null;
     var _currentHeartRate = null;
-    var _baseCapHeartRate = null;
-    var _capHeartRate = null;
-    var _hrCapText = "-- / --:--";
-    var _nextCapResolveRetrySec = 0;
+    var _activeHeartRateZones as Lang.Array<Lang.Number> = [];
+    var _currentHeartRateZone = null;
+    var _allowedMaxHeartRate = null;
+    var _hrZoneText = "-- / --";
     var _hrOverActive = false;
     var _hrOverStartSec = null;
     var _hrRecoverStartSec = null;
+    var _pushActive = false;
+    var _pushStartSec = null;
+    var _pushRecoverStartSec = null;
     var _driftBaselineStartSec = null;
     var _driftBaselineHrSum = 0.0;
     var _driftBaselinePaceSum = 0.0;
@@ -197,6 +200,7 @@ class MarathonCoachField extends Ui.DataField {
         _updateSummaryMetrics(info);
         _updateFuelTimer(info);
         _updateDriftState(info);
+        _updatePushState(info);
         _updateCardDisplay(info);
         return;
     }
@@ -221,7 +225,6 @@ class MarathonCoachField extends Ui.DataField {
         _timerRunning = false;
         _lastElapsedSec = null;
         _lastLapResetSec = null;
-        _nextCapResolveRetrySec = 0;
         _lastFuelTimeSec = null;
         _fuelDueTimeSec = null;
         _fuelRemainingSec = null;
@@ -231,9 +234,17 @@ class MarathonCoachField extends Ui.DataField {
         _paceNowText = "--:--";
         _distanceTimeText = "--.- km  --:--:--";
         _goalDeltaText = _buildGoalDeltaText(null);
+        _currentHeartRate = null;
+        _activeHeartRateZones = [];
+        _currentHeartRateZone = null;
+        _allowedMaxHeartRate = null;
+        _hrZoneText = "-- / --";
         _hrOverActive = false;
         _hrOverStartSec = null;
         _hrRecoverStartSec = null;
+        _pushActive = false;
+        _pushStartSec = null;
+        _pushRecoverStartSec = null;
         _fitElapsedBaseSec = 0.0;
         _fitLastRawElapsedSec = null;
         _fitDistanceBaseM = null;
@@ -383,13 +394,13 @@ class MarathonCoachField extends Ui.DataField {
         var row12Height = row2Y - top;
         var row4Height = bottomY - row3Y;
 
-        // 1st row left: HR/CAP
+        // 1st row left: HR/ZONE
         var hrY = _textYByRatio(top, rowHeight, 66, dc.getFontHeight(hrFont));
         dc.drawText(
             leftColX + (leftColW / 2),
             hrY,
             hrFont,
-            _hrCapText,
+            _hrZoneText,
             Gfx.TEXT_JUSTIFY_CENTER
         );
 
@@ -614,84 +625,79 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _updateHeartRate(info) {
-        _resolveCapHeartRate(info);
-
-        var capText = "--:--";
-        if (_capHeartRate != null) {
-            capText = _capHeartRate.format("%d");
-        }
-
         var heartRate = _extractCurrentHeartRate(info);
         if (heartRate != null and heartRate > 0) {
             _currentHeartRate = heartRate;
-            _hrCapText = _currentHeartRate.format("%d") + " / " + capText;
-            return;
+        } else {
+            _currentHeartRate = null;
         }
 
-        _currentHeartRate = null;
-        _hrCapText = "-- / " + capText;
+        _activeHeartRateZones = _resolveActiveHeartRateZones();
+        _allowedMaxHeartRate = _resolveAllowedMaxHeartRate(info, _activeHeartRateZones);
+        _currentHeartRateZone = _resolveHeartRateZone(_currentHeartRate, _activeHeartRateZones);
+
+        var hrText = "--";
+        if (_currentHeartRate != null) {
+            hrText = _currentHeartRate.format("%d");
+        }
+
+        var zoneText = "--";
+        if (_currentHeartRateZone != null) {
+            zoneText = "Z" + _currentHeartRateZone.format("%d");
+        }
+
+        _hrZoneText = hrText + " / " + zoneText;
     }
 
-    function _resolveCapHeartRate(info) {
-        var elapsedSec = _extractElapsedSec(info);
-        if (_baseCapHeartRate == null) {
-            // Resolve only after activity elapsed time becomes available to keep source stable.
-            var shouldResolveBase = (elapsedSec != null and elapsedSec >= _nextCapResolveRetrySec);
-            if (shouldResolveBase) {
-                _baseCapHeartRate = _resolveBaseCapHeartRate();
-                if (_baseCapHeartRate == null and elapsedSec != null) {
-                    _nextCapResolveRetrySec = elapsedSec + CAP_RESOLVE_RETRY_SEC;
-                }
-            }
-        }
-
-        if (_baseCapHeartRate == null) {
-            _capHeartRate = null;
-            return;
-        }
-
-        var distanceKm = _extractElapsedDistanceKm(info);
-        var capOffset = _getCapDistanceOffset(distanceKm);
-        var adjustedCap = _baseCapHeartRate - capOffset;
-        if (adjustedCap < 1) {
-            adjustedCap = 1;
-        }
-        _capHeartRate = adjustedCap;
-    }
-
-    function _resolveBaseCapHeartRate() {
-        var lthrHeartRate = _getLthrHeartRate();
-        if (lthrHeartRate != null and lthrHeartRate > 0) {
-            return lthrHeartRate;
-        }
-
-        var maxHeartRate = _getConfiguredMaxHeartRate();
-        if (maxHeartRate != null and maxHeartRate > 0) {
-            return Math.floor((maxHeartRate * 0.86) + 0.5);
-        }
-
-        return null;
-    }
-
-    function _getLthrHeartRate() {
-        // No direct public API for LTHR in current Connect IQ SDK.
-        return null;
-    }
-
-    function _getConfiguredMaxHeartRate() {
+    function _resolveActiveHeartRateZones() as Lang.Array<Lang.Number> {
         var zones = _getHeartRateZonesForCurrentSport();
-        var maxHeartRate = _extractMaxZoneValue(zones);
-        if (maxHeartRate != null) {
-            return maxHeartRate;
+        if (zones != null and zones.size() > 0) {
+            return zones;
         }
 
         var genericZones = _getGenericHeartRateZones();
-        maxHeartRate = _extractMaxZoneValue(genericZones);
-        if (maxHeartRate != null) {
-            return maxHeartRate;
+        if (genericZones != null and genericZones.size() > 0) {
+            return genericZones;
         }
 
-        return null;
+        return [];
+    }
+
+    function _resolveAllowedMaxHeartRate(info, zones as Lang.Array<Lang.Number>) {
+        if (zones == null or zones.size() == 0) {
+            return null;
+        }
+
+        var distanceKm = _extractElapsedDistanceKm(info);
+        var allowedZoneNumber = _getAllowedZoneNumber(distanceKm);
+        var zoneUpper = _getZoneUpperHeartRate(zones, allowedZoneNumber);
+        if (zoneUpper == null) {
+            return null;
+        }
+
+        var allowed = zoneUpper + _getAllowedZoneOffsetBpm(distanceKm);
+        if (allowed < 1) {
+            allowed = 1;
+        }
+        return allowed;
+    }
+
+    function _resolveHeartRateZone(heartRate, zones as Lang.Array<Lang.Number>) {
+        if (heartRate == null or zones == null or zones.size() == 0) {
+            return null;
+        }
+
+        for (var i = 0; i < zones.size(); i += 1) {
+            var upper = _normalizeHeartRateValue(zones[i]);
+            if (upper == null) {
+                continue;
+            }
+            if (heartRate <= upper) {
+                return i + 1;
+            }
+        }
+
+        return zones.size();
     }
 
     function _getHeartRateZonesForCurrentSport() as Lang.Array<Lang.Number> or Null {
@@ -721,31 +727,41 @@ class MarathonCoachField extends Ui.DataField {
         return null;
     }
 
-    function _extractMaxZoneValue(zones as Lang.Array<Lang.Number> or Null) {
-        if (zones == null or zones.size() == 0) {
+    function _getZoneUpperHeartRate(zones as Lang.Array<Lang.Number>, zoneNumber) {
+        if (zones == null or zones.size() == 0 or zoneNumber <= 0) {
             return null;
         }
 
-        var maxValue = null;
-        for (var i = 0; i < zones.size(); i += 1) {
-            var value = zones[i];
-            if (value == null or !(value instanceof Number) or value <= 0) {
-                continue;
+        var idx = zoneNumber - 1;
+        if (idx < 0) {
+            idx = 0;
+        }
+        if (idx >= zones.size()) {
+            idx = zones.size() - 1;
+        }
+
+        for (var i = idx; i >= 0; i -= 1) {
+            var backward = _normalizeHeartRateValue(zones[i]);
+            if (backward != null) {
+                return backward;
             }
-            if (maxValue == null or value > maxValue) {
-                maxValue = value;
+        }
+
+        for (var j = idx + 1; j < zones.size(); j += 1) {
+            var forward = _normalizeHeartRateValue(zones[j]);
+            if (forward != null) {
+                return forward;
             }
         }
 
-        if (maxValue == null) {
-            return null;
-        }
+        return null;
+    }
 
-        try {
-            return Math.floor(maxValue + 0.5);
-        } catch (e) {
+    function _normalizeHeartRateValue(value) {
+        if (value == null or !(value instanceof Number) or value <= 0) {
             return null;
         }
+        return Math.floor(value + 0.5);
     }
 
     function _extractPaceSecPerKm(info) {
@@ -1082,17 +1098,80 @@ class MarathonCoachField extends Ui.DataField {
         return value.toString();
     }
 
-    function _getCapDistanceOffset(distanceKm) {
+    function _getAllowedZoneNumber(distanceKm) {
         if (distanceKm == null or distanceKm < 10.0) {
-            return 23;
-        }
-        if (distanceKm < 25.0) {
-            return 18;
+            return 2;
         }
         if (distanceKm < 35.0) {
-            return 13;
+            return 3;
         }
-        return 8;
+        return 4;
+    }
+
+    function _getAllowedZoneOffsetBpm(distanceKm) {
+        if (distanceKm == null or distanceKm < 25.0) {
+            return 0;
+        }
+        if (distanceKm < 35.0) {
+            return 2;
+        }
+        if (distanceKm < 40.0) {
+            return 0;
+        }
+        return 3;
+    }
+
+    function _getHrOverTriggerSec(distanceKm) {
+        if (distanceKm != null and distanceKm >= 40.0) {
+            return 20;
+        }
+        if (distanceKm != null and distanceKm >= 35.0) {
+            return 10;
+        }
+        return 12;
+    }
+
+    function _getHrOverReleaseSec(distanceKm) {
+        return 5;
+    }
+
+    function _getHrOverReleaseOffsetBpm(distanceKm) {
+        if (distanceKm != null and distanceKm >= 35.0 and distanceKm < 40.0) {
+            return 1;
+        }
+        return 2;
+    }
+
+    function _getPushPaceDeltaThresholdSec(distanceKm) {
+        if (distanceKm == null or distanceKm < 10.0) {
+            return 12;
+        }
+        if (distanceKm < 25.0) {
+            return 8;
+        }
+        if (distanceKm < 35.0) {
+            return 6;
+        }
+        if (distanceKm < 40.0) {
+            return 4;
+        }
+        return 3;
+    }
+
+    function _getPushHeadroomThresholdBpm(distanceKm) {
+        if (distanceKm == null or distanceKm < 10.0) {
+            return 8;
+        }
+        if (distanceKm < 25.0) {
+            return 6;
+        }
+        if (distanceKm < 35.0) {
+            return 4;
+        }
+        if (distanceKm < 40.0) {
+            return 3;
+        }
+        return 2;
     }
 
     function _updateDriftState(info) {
@@ -1338,7 +1417,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _updateHrOverState(info) {
-        if (_currentHeartRate == null or _capHeartRate == null) {
+        if (_currentHeartRate == null or _allowedMaxHeartRate == null) {
             _hrOverActive = false;
             _hrOverStartSec = null;
             _hrRecoverStartSec = null;
@@ -1353,13 +1432,20 @@ class MarathonCoachField extends Ui.DataField {
             return;
         }
 
-        if (_currentHeartRate > _capHeartRate) {
+        var distanceKm = _extractElapsedDistanceKm(info);
+        var triggerThreshold = _allowedMaxHeartRate + HR_OVER_TRIGGER_MARGIN_BPM;
+        var releaseThreshold = _allowedMaxHeartRate - _getHrOverReleaseOffsetBpm(distanceKm);
+        if (releaseThreshold < 1) {
+            releaseThreshold = 1;
+        }
+
+        if (_currentHeartRate > triggerThreshold) {
             _hrRecoverStartSec = null;
             if (!_hrOverActive) {
                 if (_hrOverStartSec == null or elapsedSec < _hrOverStartSec) {
                     _hrOverStartSec = elapsedSec;
                 }
-                if ((elapsedSec - _hrOverStartSec) >= HR_OVER_TRIGGER_SEC) {
+                if ((elapsedSec - _hrOverStartSec) >= _getHrOverTriggerSec(distanceKm)) {
                     _hrOverActive = true;
                 }
             }
@@ -1368,10 +1454,14 @@ class MarathonCoachField extends Ui.DataField {
 
         _hrOverStartSec = null;
         if (_hrOverActive) {
-            if (_hrRecoverStartSec == null or elapsedSec < _hrRecoverStartSec) {
-                _hrRecoverStartSec = elapsedSec;
+            if (_currentHeartRate <= releaseThreshold) {
+                if (_hrRecoverStartSec == null or elapsedSec < _hrRecoverStartSec) {
+                    _hrRecoverStartSec = elapsedSec;
+                }
+            } else {
+                _hrRecoverStartSec = null;
             }
-            if ((elapsedSec - _hrRecoverStartSec) >= HR_OVER_RELEASE_SEC) {
+            if (_hrRecoverStartSec != null and (elapsedSec - _hrRecoverStartSec) >= _getHrOverReleaseSec(distanceKm)) {
                 _hrOverActive = false;
                 _hrRecoverStartSec = null;
             }
@@ -1386,15 +1476,93 @@ class MarathonCoachField extends Ui.DataField {
         return _driftBaseHr != null and _driftBasePace != null;
     }
 
+    function _updatePushState(info) {
+        var elapsedSec = _extractElapsedSec(info);
+        if (elapsedSec == null) {
+            _resetPushState();
+            return;
+        }
+
+        if (_isFuelOverdue() or _hrOverActive or _driftActive) {
+            _resetPushState();
+            return;
+        }
+
+        if (
+            _paceNowSecPerKm == null or
+            _targetPaceSecPerKm == null or
+            _allowedMaxHeartRate == null or
+            _currentHeartRate == null
+        ) {
+            _resetPushState();
+            return;
+        }
+
+        var distanceKm = _extractElapsedDistanceKm(info);
+        var paceDeltaSec = _paceNowSecPerKm - _targetPaceSecPerKm;
+        var headroomBpm = _allowedMaxHeartRate - _currentHeartRate;
+        var paceTriggerThreshold = _getPushPaceDeltaThresholdSec(distanceKm);
+        var headroomTriggerThreshold = _getPushHeadroomThresholdBpm(distanceKm);
+        var canTrigger = (
+            paceDeltaSec >= paceTriggerThreshold and
+            headroomBpm >= headroomTriggerThreshold
+        );
+
+        if (!_pushActive) {
+            _pushRecoverStartSec = null;
+            if (canTrigger) {
+                if (_pushStartSec == null or elapsedSec < _pushStartSec) {
+                    _pushStartSec = elapsedSec;
+                }
+                if ((elapsedSec - _pushStartSec) >= ACTION_PUSH_TRIGGER_SEC) {
+                    _pushActive = true;
+                    _pushStartSec = null;
+                }
+            } else {
+                _pushStartSec = null;
+            }
+            return;
+        }
+
+        _pushStartSec = null;
+        var paceReleaseThreshold = paceTriggerThreshold - ACTION_PUSH_RELEASE_PACE_HYSTERESIS_SEC;
+        var headroomReleaseThreshold = headroomTriggerThreshold - ACTION_PUSH_RELEASE_HR_HYSTERESIS_BPM;
+        if (headroomReleaseThreshold < 0) {
+            headroomReleaseThreshold = 0;
+        }
+        var shouldRelease = (
+            paceDeltaSec < paceReleaseThreshold or
+            headroomBpm < headroomReleaseThreshold
+        );
+        if (!shouldRelease) {
+            _pushRecoverStartSec = null;
+            return;
+        }
+
+        if (_pushRecoverStartSec == null or elapsedSec < _pushRecoverStartSec) {
+            _pushRecoverStartSec = elapsedSec;
+        }
+        if ((elapsedSec - _pushRecoverStartSec) >= ACTION_PUSH_RELEASE_SEC) {
+            _pushActive = false;
+            _pushRecoverStartSec = null;
+        }
+    }
+
+    function _resetPushState() {
+        _pushActive = false;
+        _pushStartSec = null;
+        _pushRecoverStartSec = null;
+    }
+
     function _resolveActionMessage() {
         var paceDeltaSec = null;
         if (_paceNowSecPerKm != null and _targetPaceSecPerKm != null) {
             paceDeltaSec = _paceNowSecPerKm - _targetPaceSecPerKm;
         }
 
-        var capMargin = null;
-        if (_capHeartRate != null and _currentHeartRate != null) {
-            capMargin = _capHeartRate - _currentHeartRate;
+        var hrHeadroom = null;
+        if (_allowedMaxHeartRate != null and _currentHeartRate != null) {
+            hrHeadroom = _allowedMaxHeartRate - _currentHeartRate;
         }
 
         var baselineHrDelta = null;
@@ -1406,7 +1574,7 @@ class MarathonCoachField extends Ui.DataField {
         if (paceDeltaSec != null and paceDeltaSec <= ACTION_EASE_PACE_DELTA_SEC) {
             shouldEase = true;
         }
-        if (capMargin != null and capMargin <= ACTION_EASE_CAP_MARGIN_BPM) {
+        if (hrHeadroom != null and hrHeadroom <= ACTION_EASE_MIN_HEADROOM_BPM) {
             shouldEase = true;
         }
         if (baselineHrDelta != null and baselineHrDelta >= ACTION_EASE_BASELINE_HR_DELTA_BPM) {
@@ -1416,8 +1584,7 @@ class MarathonCoachField extends Ui.DataField {
             return _actionEaseText;
         }
 
-        var canPushByHr = (capMargin == null or capMargin >= ACTION_PUSH_MIN_CAP_MARGIN_BPM);
-        if (paceDeltaSec != null and paceDeltaSec >= ACTION_PUSH_PACE_DELTA_SEC and canPushByHr) {
+        if (_pushActive) {
             return _actionPushText;
         }
 
