@@ -1,7 +1,9 @@
 using Toybox.Application.Properties as Props;
+using Toybox.Activity;
 using Toybox.Graphics as Gfx;
 using Toybox.Lang as Lang;
 using Toybox.Math as Math;
+using Toybox.System as Sys;
 using Toybox.UserProfile;
 using Toybox.WatchUi as Ui;
 
@@ -24,6 +26,14 @@ class MarathonCoachField extends Ui.DataField {
     const DRIFT_HR_ON_DELTA = 10;
     const DRIFT_HR_OFF_DELTA = 6;
     const DRIFT_OFF_CONFIRM_SEC = 60;
+    const MIN_DISTANCE_FOR_PREDICTION_KM = 0.5;
+    const ACTION_PUSH_PACE_DELTA_SEC = 8;
+    const ACTION_EASE_PACE_DELTA_SEC = -8;
+    const ACTION_PUSH_MIN_CAP_MARGIN_BPM = 6;
+    const ACTION_EASE_CAP_MARGIN_BPM = 3;
+    const ACTION_EASE_BASELINE_HR_DELTA_BPM = 6;
+    const FIT_FACT_LOG = true;
+    const DIST_PROBE_LOG = true;
 
     const CARD_MODE_ACTION = 0;
     const CARD_MODE_FUEL = 1;
@@ -36,10 +46,11 @@ class MarathonCoachField extends Ui.DataField {
 
     var _statusText = "STEP3 LAYOUT";
     var _fuelLabelText = "FUEL";
-    var _paceDeltaText = "PACE +10s";
-    var _actionLine1Text = "EASE";
-    var _actionLine2Text = "DOWN";
-    var _actionLine3Text = "v -10s";
+    var _goalTimeLabelText = "TGT";
+    var _goalDeltaText = "TGT 05:00";
+    var _actionPushText = "Push a bit";
+    var _actionHoldText = "Hold pace";
+    var _actionEaseText = "Ease down";
     var _hrOverLine1Text = "HR";
     var _hrOverLine2Text = "OVER";
     var _hrOverLine3Text = "CAP";
@@ -51,6 +62,9 @@ class MarathonCoachField extends Ui.DataField {
     var _fuelNowLine3Text = "!";
     var _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
     var _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
+    var _targetTimeSec = null;
+    var _targetPaceSecPerKm = null;
+    var _distanceTimeText = "--.- km  --:--:--";
     var _paceNowSecPerKm = null;
     var _paceNowText = "--:--";
     var _paceRingSecPerKm as Lang.Array = [];
@@ -58,6 +72,8 @@ class MarathonCoachField extends Ui.DataField {
     var _paceRingCount = 0;
     var _paceRingSum = 0.0;
     var _lastPaceSampleElapsedSec = null;
+    var _paceFallbackLastElapsedSec = null;
+    var _paceFallbackLastDistanceKm = null;
     var _lastFuelTimeSec = null;
     var _fuelDueTimeSec = null;
     var _fuelRemainingSec = null;
@@ -88,6 +104,39 @@ class MarathonCoachField extends Ui.DataField {
     var _driftLastSampleElapsedSec = null;
     var _driftActive = false;
     var _driftOffStartSec = null;
+    var _fitElapsedBaseSec = 0.0;
+    var _fitLastRawElapsedSec = null;
+    var _fitDistanceBaseM = null;
+    var _fitLastRawDistanceM = null;
+    var _distanceFromLocationM = 0.0;
+    var _distanceLastLocation = null;
+    var _distanceLastLocationElapsedSec = null;
+    var _distanceFromSpeedM = 0.0;
+    var _distanceLastElapsedSec = null;
+    var _fallbackActivityInfo = null;
+    var _sampleElapsedRaw = null;
+    var _sampleTimerRaw = null;
+    var _sampleDistanceRawM = null;
+    var _sampleCurrentSpeedRaw = null;
+    var _sampleAverageSpeedRaw = null;
+    var _sampleCurrentLocation = null;
+    var _sampleSpeedMps = null;
+    var _sampleHeartRate = null;
+    var _sampleElapsedSource = "null";
+    var _sampleTimerSource = "null";
+    var _sampleDistanceSource = "null";
+    var _sampleCurrentSpeedSource = "null";
+    var _sampleAverageSpeedSource = "null";
+    var _sampleSpeedSource = "null";
+    var _sampleHeartRateSource = "null";
+    var _sampleCurrentLocationSource = "null";
+    var _lastFactLogLine = null;
+    var _probeLocDistanceM = 0.0;
+    var _probeLocLastLocation = null;
+    var _probeLocLastElapsedSec = null;
+    var _probeSpeedDistanceM = 0.0;
+    var _probeSpeedLastElapsedSec = null;
+    var _lastDistanceProbeLogLine = null;
     var _warmupMessages as Lang.Array = [];
     var _warmupMessageSlot = -1;
     var _cardMode = CARD_MODE_ACTION;
@@ -104,10 +153,11 @@ class MarathonCoachField extends Ui.DataField {
     function _loadLocalizedTexts() {
         _statusText = Ui.loadResource(Rez.Strings.Step3Status);
         _fuelLabelText = Ui.loadResource(Rez.Strings.FuelLabel);
-        _paceDeltaText = Ui.loadResource(Rez.Strings.PaceDeltaLabel);
-        _actionLine1Text = Ui.loadResource(Rez.Strings.CardActionLine1);
-        _actionLine2Text = Ui.loadResource(Rez.Strings.CardActionLine2);
-        _actionLine3Text = Ui.loadResource(Rez.Strings.CardActionLine3);
+        _goalTimeLabelText = Ui.loadResource(Rez.Strings.GoalTimeLabel);
+        _goalDeltaText = _buildGoalDeltaText(null);
+        _actionPushText = Ui.loadResource(Rez.Strings.ActionPushText);
+        _actionHoldText = Ui.loadResource(Rez.Strings.ActionHoldText);
+        _actionEaseText = Ui.loadResource(Rez.Strings.ActionEaseText);
         _hrOverLine1Text = Ui.loadResource(Rez.Strings.CardHrOverLine1);
         _hrOverLine2Text = Ui.loadResource(Rez.Strings.CardHrOverLine2);
         _hrOverLine3Text = Ui.loadResource(Rez.Strings.CardHrOverLine3);
@@ -131,17 +181,20 @@ class MarathonCoachField extends Ui.DataField {
             Ui.loadResource(Rez.Strings.WarmupMsg10)
         ];
 
-        _cardLine1 = _actionLine1Text;
-        _cardLine2 = _actionLine2Text;
-        _cardLine3 = _actionLine3Text;
+        _setCardLinesFromMessage(_actionHoldText);
     }
 
     function compute(info) {
         // Step 2 settings + Step 4 pace window update.
+        _fallbackActivityInfo = null;
+        _captureInfoSample(info);
+        _logFactSample();
+        _logDistanceProbe(info);
         _loadSettings();
         _updateHeartRate(info);
         _updateHrOverState(info);
         _updatePaceWindow(info);
+        _updateSummaryMetrics(info);
         _updateFuelTimer(info);
         _updateDriftState(info);
         _updateCardDisplay(info);
@@ -176,9 +229,44 @@ class MarathonCoachField extends Ui.DataField {
         _resetPaceWindow();
         _paceNowSecPerKm = null;
         _paceNowText = "--:--";
+        _distanceTimeText = "--.- km  --:--:--";
+        _goalDeltaText = _buildGoalDeltaText(null);
         _hrOverActive = false;
         _hrOverStartSec = null;
         _hrRecoverStartSec = null;
+        _fitElapsedBaseSec = 0.0;
+        _fitLastRawElapsedSec = null;
+        _fitDistanceBaseM = null;
+        _fitLastRawDistanceM = null;
+        _distanceFromLocationM = 0.0;
+        _distanceLastLocation = null;
+        _distanceLastLocationElapsedSec = null;
+        _distanceFromSpeedM = 0.0;
+        _distanceLastElapsedSec = null;
+        _fallbackActivityInfo = null;
+        _sampleElapsedRaw = null;
+        _sampleTimerRaw = null;
+        _sampleDistanceRawM = null;
+        _sampleCurrentSpeedRaw = null;
+        _sampleAverageSpeedRaw = null;
+        _sampleCurrentLocation = null;
+        _sampleSpeedMps = null;
+        _sampleHeartRate = null;
+        _sampleElapsedSource = "null";
+        _sampleTimerSource = "null";
+        _sampleDistanceSource = "null";
+        _sampleCurrentSpeedSource = "null";
+        _sampleAverageSpeedSource = "null";
+        _sampleSpeedSource = "null";
+        _sampleHeartRateSource = "null";
+        _sampleCurrentLocationSource = "null";
+        _lastFactLogLine = null;
+        _probeLocDistanceM = 0.0;
+        _probeLocLastLocation = null;
+        _probeLocLastElapsedSec = null;
+        _probeSpeedDistanceM = 0.0;
+        _probeSpeedLastElapsedSec = null;
+        _lastDistanceProbeLogLine = null;
         _resetDriftState();
         _warmupMessageSlot = -1;
         _setActionCardByBaseline(null);
@@ -209,6 +297,8 @@ class MarathonCoachField extends Ui.DataField {
     function _loadSettings() {
         _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
         _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
+        _targetTimeSec = null;
+        _targetPaceSecPerKm = null;
 
         var raceDistance = Props.getValue(KEY_RACE_DISTANCE_KM);
         if (raceDistance != null and raceDistance instanceof Number and raceDistance > 0) {
@@ -217,10 +307,23 @@ class MarathonCoachField extends Ui.DataField {
 
         var targetTime = Props.getValue(KEY_TARGET_TIME_HMS);
         if (targetTime != null) {
-            var targetTimeText = targetTime.toString();
+            var targetTimeText = _normalizeTimeText(targetTime.toString());
             if (targetTimeText.length() > 0) {
                 _targetTimeHms = targetTimeText;
             }
+        }
+
+        _targetTimeSec = _parseTimeToSec(_targetTimeHms);
+        if (_targetTimeSec == null or _targetTimeSec <= 0) {
+            _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
+            _targetTimeSec = _parseTimeToSec(DEFAULT_TARGET_TIME_HMS);
+        }
+        if (_targetTimeSec == null or _targetTimeSec <= 0) {
+            _targetTimeSec = 5 * 3600;
+            _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
+        }
+        if (_targetTimeSec != null and _targetTimeSec > 0 and _raceDistanceKm > 0) {
+            _targetPaceSecPerKm = _targetTimeSec / _raceDistanceKm;
         }
     }
 
@@ -235,7 +338,7 @@ class MarathonCoachField extends Ui.DataField {
         var cardFont = Gfx.FONT_SMALL;
         var paceFont = Gfx.FONT_LARGE;
         var footerFont = Gfx.FONT_SMALL;
-        var paceDeltaFont = Gfx.FONT_TINY;
+        var paceDeltaFont = Gfx.FONT_XTINY;
         var fuelLabelFont = Gfx.FONT_XTINY;
         var fuelTimeFont = Gfx.FONT_SMALL;
         var fuelRadiusPct = 46;
@@ -246,7 +349,7 @@ class MarathonCoachField extends Ui.DataField {
             cardFont = Gfx.FONT_TINY;
             paceFont = Gfx.FONT_LARGE;
             footerFont = Gfx.FONT_SMALL;
-            paceDeltaFont = Gfx.FONT_TINY;
+            paceDeltaFont = Gfx.FONT_XTINY;
             fuelLabelFont = Gfx.FONT_TINY;
             fuelTimeFont = Gfx.FONT_MEDIUM;
             fuelRadiusPct = 50;
@@ -362,11 +465,11 @@ class MarathonCoachField extends Ui.DataField {
             Gfx.TEXT_JUSTIFY_RIGHT
         );
 
-        // 4th row: DIST / TIME + PACE delta
+        // 4th row: DIST / TIME + GOAL / prediction delta
         var mergedY = _textYByRatio(row3Y, row4Height, 24, dc.getFontHeight(footerFont));
         var paceDeltaY = _textYByRatio(row3Y, row4Height, 70, dc.getFontHeight(paceDeltaFont));
-        dc.drawText(width / 2, mergedY, footerFont, "22.3 km  2:33:12", Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(width / 2, paceDeltaY, paceDeltaFont, _paceDeltaText, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width / 2, mergedY, footerFont, _distanceTimeText, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(width / 2, paceDeltaY, paceDeltaFont, _goalDeltaText, Gfx.TEXT_JUSTIFY_CENTER);
 
         if (LAYOUT_DEBUG_OVERLAY) {
             dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
@@ -411,6 +514,9 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         var samplePaceSecPerKm = _extractPaceSecPerKm(info);
+        if (samplePaceSecPerKm == null) {
+            samplePaceSecPerKm = _extractPaceFromDistanceDelta(info, elapsedSec);
+        }
 
         if (_lastPaceSampleElapsedSec != null and elapsedSec < _lastPaceSampleElapsedSec) {
             _resetPaceWindow();
@@ -440,6 +546,8 @@ class MarathonCoachField extends Ui.DataField {
         _paceRingCount = 0;
         _paceRingSum = 0.0;
         _lastPaceSampleElapsedSec = null;
+        _paceFallbackLastElapsedSec = null;
+        _paceFallbackLastDistanceKm = null;
     }
 
     function _appendPaceSample(samplePaceSecPerKm) {
@@ -464,6 +572,47 @@ class MarathonCoachField extends Ui.DataField {
         }
     }
 
+    function _updateSummaryMetrics(info) {
+        var elapsedSec = _extractElapsedSec(info);
+        var distanceKm = _extractElapsedDistanceKm(info);
+
+        var distanceText = "--.- km";
+        if (distanceKm != null) {
+            distanceText = _formatDistanceKm(distanceKm);
+        }
+
+        var elapsedText = "--:--:--";
+        if (elapsedSec != null) {
+            elapsedText = _formatElapsedTime(elapsedSec);
+        }
+
+        _distanceTimeText = distanceText + "  " + elapsedText;
+        var predictionDeltaText = null;
+        var displayPaceSecPerKm = null;
+        if (_paceNowSecPerKm != null) {
+            // Keep delta calculation aligned with the pace value shown on screen.
+            displayPaceSecPerKm = Math.floor(_paceNowSecPerKm + 0.5);
+        }
+        if (
+            _targetTimeSec != null and _targetTimeSec > 0 and
+            displayPaceSecPerKm != null and
+            elapsedSec != null and
+            distanceKm != null and
+            _raceDistanceKm > 0 and
+            distanceKm >= MIN_DISTANCE_FOR_PREDICTION_KM
+        ) {
+            var remainingDistanceKm = _raceDistanceKm - distanceKm;
+            if (remainingDistanceKm < 0) {
+                remainingDistanceKm = 0;
+            }
+            var predictedTotalSec = elapsedSec + (remainingDistanceKm * displayPaceSecPerKm);
+            var deltaSec = predictedTotalSec - _targetTimeSec;
+            predictionDeltaText = _formatSignedDeltaMinSec(deltaSec);
+        }
+
+        _goalDeltaText = _buildGoalDeltaText(predictionDeltaText);
+    }
+
     function _updateHeartRate(info) {
         _resolveCapHeartRate(info);
 
@@ -472,8 +621,9 @@ class MarathonCoachField extends Ui.DataField {
             capText = _capHeartRate.format("%d");
         }
 
-        if (info != null and info.currentHeartRate != null and info.currentHeartRate > 0) {
-            _currentHeartRate = info.currentHeartRate;
+        var heartRate = _extractCurrentHeartRate(info);
+        if (heartRate != null and heartRate > 0) {
+            _currentHeartRate = heartRate;
             _hrCapText = _currentHeartRate.format("%d") + " / " + capText;
             return;
         }
@@ -599,11 +749,11 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _extractPaceSecPerKm(info) {
-        if (info == null or info.currentSpeed == null) {
+        var speedMps = _extractCurrentSpeed(info);
+        if (speedMps == null) {
             return null;
         }
 
-        var speedMps = info.currentSpeed;
         if (speedMps <= 0) {
             return null;
         }
@@ -618,13 +768,318 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _extractElapsedDistanceKm(info) {
-        if (info == null or info.elapsedDistance == null or !(info.elapsedDistance instanceof Number)) {
+        // In Activity.Info, elapsedDistance is the FIT-equivalent running total_distance (meters).
+        if (!_isNumericSample(_sampleDistanceRawM)) {
             return null;
         }
-        if (info.elapsedDistance < 0) {
+        if (_sampleDistanceRawM < 0) {
             return null;
         }
-        return info.elapsedDistance / 1000.0;
+        return _sampleDistanceRawM / 1000.0;
+    }
+
+    function _extractPaceFromDistanceDelta(info, elapsedSec) {
+        var distanceKm = _extractElapsedDistanceKm(info);
+        if (distanceKm == null) {
+            return null;
+        }
+
+        var samplePaceSecPerKm = null;
+        if (
+            _paceFallbackLastElapsedSec != null and
+            _paceFallbackLastDistanceKm != null and
+            elapsedSec > _paceFallbackLastElapsedSec
+        ) {
+            var deltaSec = elapsedSec - _paceFallbackLastElapsedSec;
+            var deltaDistanceKm = distanceKm - _paceFallbackLastDistanceKm;
+            if (deltaSec > 0 and deltaDistanceKm > 0) {
+                var speedMps = (deltaDistanceKm * 1000.0) / deltaSec;
+                if (speedMps > 0) {
+                    samplePaceSecPerKm = 1000.0 / speedMps;
+                    if (samplePaceSecPerKm < 120 or samplePaceSecPerKm > 1200) {
+                        samplePaceSecPerKm = null;
+                    }
+                }
+            }
+        }
+
+        _paceFallbackLastElapsedSec = elapsedSec;
+        _paceFallbackLastDistanceKm = distanceKm;
+        return samplePaceSecPerKm;
+    }
+
+    function _extractCurrentHeartRate(info) {
+        return _sampleHeartRate;
+    }
+
+    function _extractCurrentSpeed(info) {
+        return _sampleSpeedMps;
+    }
+
+    function _getElapsedTimeRaw(info) {
+        // Match MessageInGarmin: use timerTime, and fall back to system uptime when unavailable.
+        if (_sampleTimerRaw != null) {
+            return _sampleTimerRaw;
+        }
+        return Sys.getTimer();
+    }
+
+    function _getFallbackActivityInfo() {
+        if (_fallbackActivityInfo != null) {
+            return _fallbackActivityInfo;
+        }
+        try {
+            _fallbackActivityInfo = Activity.getActivityInfo();
+            return _fallbackActivityInfo;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function _captureInfoSample(info) {
+        var fallbackInfo = _getFallbackActivityInfo();
+
+        _sampleElapsedRaw = _pickSampleNumber(
+            (info != null) ? info.elapsedTime : null,
+            (fallbackInfo != null) ? fallbackInfo.elapsedTime : null,
+            "elapsedTime"
+        );
+        _sampleElapsedSource = _pickSampleSource(
+            (info != null) ? info.elapsedTime : null,
+            (fallbackInfo != null) ? fallbackInfo.elapsedTime : null
+        );
+
+        _sampleTimerRaw = _pickSampleNumber(
+            (info != null) ? info.timerTime : null,
+            (fallbackInfo != null) ? fallbackInfo.timerTime : null,
+            "timerTime"
+        );
+        _sampleTimerSource = _pickSampleSource(
+            (info != null) ? info.timerTime : null,
+            (fallbackInfo != null) ? fallbackInfo.timerTime : null
+        );
+
+        _sampleDistanceRawM = _pickSampleNumber(
+            (info != null) ? info.elapsedDistance : null,
+            (fallbackInfo != null) ? fallbackInfo.elapsedDistance : null,
+            "elapsedDistance"
+        );
+        _sampleDistanceSource = _pickSampleSource(
+            (info != null) ? info.elapsedDistance : null,
+            (fallbackInfo != null) ? fallbackInfo.elapsedDistance : null
+        );
+
+        _sampleCurrentSpeedRaw = _pickSampleNumber(
+            (info != null) ? info.currentSpeed : null,
+            (fallbackInfo != null) ? fallbackInfo.currentSpeed : null,
+            "currentSpeed"
+        );
+        _sampleCurrentSpeedSource = _pickSampleSource(
+            (info != null) ? info.currentSpeed : null,
+            (fallbackInfo != null) ? fallbackInfo.currentSpeed : null
+        );
+
+        _sampleAverageSpeedRaw = _pickSampleNumber(
+            (info != null) ? info.averageSpeed : null,
+            (fallbackInfo != null) ? fallbackInfo.averageSpeed : null,
+            "averageSpeed"
+        );
+        _sampleAverageSpeedSource = _pickSampleSource(
+            (info != null) ? info.averageSpeed : null,
+            (fallbackInfo != null) ? fallbackInfo.averageSpeed : null
+        );
+
+        _sampleSpeedMps = _sampleCurrentSpeedRaw;
+        _sampleSpeedSource = _sampleCurrentSpeedSource;
+        if (_sampleSpeedMps == null) {
+            _sampleSpeedMps = _sampleAverageSpeedRaw;
+            _sampleSpeedSource = _sampleAverageSpeedSource;
+        }
+
+        var locPrimary = (info != null) ? info.currentLocation : null;
+        var locSecondary = (fallbackInfo != null) ? fallbackInfo.currentLocation : null;
+        if (locPrimary != null) {
+            _sampleCurrentLocation = locPrimary;
+            _sampleCurrentLocationSource = "info";
+        } else if (locSecondary != null) {
+            _sampleCurrentLocation = locSecondary;
+            _sampleCurrentLocationSource = "fallback";
+        } else {
+            _sampleCurrentLocation = null;
+            _sampleCurrentLocationSource = "none";
+        }
+
+        _sampleHeartRate = _pickSampleNumber(
+            (info != null) ? info.currentHeartRate : null,
+            (fallbackInfo != null) ? fallbackInfo.currentHeartRate : null,
+            "currentHeartRate"
+        );
+        _sampleHeartRateSource = _pickSampleSource(
+            (info != null) ? info.currentHeartRate : null,
+            (fallbackInfo != null) ? fallbackInfo.currentHeartRate : null
+        );
+    }
+
+    function _pickSampleNumber(primary, secondary, label) {
+        if (_isNumericSample(primary)) {
+            return primary;
+        }
+        if (_isNumericSample(secondary)) {
+            return secondary;
+        }
+        return null;
+    }
+
+    function _pickSampleSource(primary, secondary) {
+        if (_isNumericSample(primary)) {
+            return "info";
+        }
+        if (_isNumericSample(secondary)) {
+            return "fallback";
+        }
+        return "none";
+    }
+
+    function _isNumericSample(value) {
+        return value != null and (
+            value instanceof Number or
+            value instanceof Float or
+            value instanceof Double or
+            value instanceof Long
+        );
+    }
+
+    function _distanceBetweenLocationsM(fromLocation, toLocation) {
+        if (fromLocation == null or toLocation == null) {
+            return null;
+        }
+        try {
+            var fromRad = fromLocation.toRadians();
+            var toRad = toLocation.toRadians();
+            if (fromRad == null or toRad == null or fromRad.size() < 2 or toRad.size() < 2) {
+                return null;
+            }
+
+            var lat1 = fromRad[0];
+            var lon1 = fromRad[1];
+            var lat2 = toRad[0];
+            var lon2 = toRad[1];
+
+            var dLat = lat2 - lat1;
+            var dLon = lon2 - lon1;
+            var sinHalfLat = Math.sin(dLat / 2.0);
+            var sinHalfLon = Math.sin(dLon / 2.0);
+            var a = (sinHalfLat * sinHalfLat) + (Math.cos(lat1) * Math.cos(lat2) * sinHalfLon * sinHalfLon);
+            if (a < 0) {
+                a = 0;
+            } else if (a > 1) {
+                a = 1;
+            }
+
+            var c = 2.0 * Math.atan2(Math.sqrt(a), Math.sqrt(1.0 - a));
+            return 6371000.0 * c;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function _logFactSample() {
+        if (!FIT_FACT_LOG) {
+            return;
+        }
+        var line =
+            "[FACT] et=" + _factValue(_sampleElapsedRaw) + "(" + _sampleElapsedSource + ")" +
+            " tt=" + _factValue(_sampleTimerRaw) + "(" + _sampleTimerSource + ")" +
+            " dist=" + _factValue(_sampleDistanceRawM) + "(" + _sampleDistanceSource + ")" +
+            " currSpd=" + _factValue(_sampleCurrentSpeedRaw) + "(" + _sampleCurrentSpeedSource + ")" +
+            " avgSpd=" + _factValue(_sampleAverageSpeedRaw) + "(" + _sampleAverageSpeedSource + ")" +
+            " spd=" + _factValue(_sampleSpeedMps) + "(" + _sampleSpeedSource + ")" +
+            " hr=" + _factValue(_sampleHeartRate) + "(" + _sampleHeartRateSource + ")" +
+            " loc=" + _sampleCurrentLocationSource;
+        if (_lastFactLogLine == line) {
+            return;
+        }
+        _lastFactLogLine = line;
+        Sys.println(line);
+    }
+
+    function _logDistanceProbe(info) {
+        if (!DIST_PROBE_LOG) {
+            return;
+        }
+
+        var fallbackInfo = _getFallbackActivityInfo();
+        var elapsedSec = _extractElapsedSec(info);
+        var rawElapsed = _getElapsedTimeRaw(info);
+
+        var infoElapsedDistance = null;
+        if (info != null and _isNumericSample(info.elapsedDistance)) {
+            infoElapsedDistance = info.elapsedDistance;
+        }
+        var fallbackElapsedDistance = null;
+        if (fallbackInfo != null and _isNumericSample(fallbackInfo.elapsedDistance)) {
+            fallbackElapsedDistance = fallbackInfo.elapsedDistance;
+        }
+
+        var locationDeltaM = null;
+        if (elapsedSec != null and _sampleCurrentLocation != null) {
+            if (_probeLocLastElapsedSec == null or elapsedSec < _probeLocLastElapsedSec) {
+                _probeLocDistanceM = 0.0;
+                _probeLocLastLocation = _sampleCurrentLocation;
+                _probeLocLastElapsedSec = elapsedSec;
+            } else if (elapsedSec > _probeLocLastElapsedSec) {
+                if (_probeLocLastLocation != null) {
+                    locationDeltaM = _distanceBetweenLocationsM(_probeLocLastLocation, _sampleCurrentLocation);
+                    if (locationDeltaM != null and locationDeltaM > 0) {
+                        _probeLocDistanceM += locationDeltaM;
+                    }
+                }
+                _probeLocLastLocation = _sampleCurrentLocation;
+                _probeLocLastElapsedSec = elapsedSec;
+            }
+        }
+
+        var speedDeltaM = null;
+        if (elapsedSec != null) {
+            if (_probeSpeedLastElapsedSec == null or elapsedSec < _probeSpeedLastElapsedSec) {
+                _probeSpeedDistanceM = 0.0;
+                _probeSpeedLastElapsedSec = elapsedSec;
+            } else {
+                var deltaSec = elapsedSec - _probeSpeedLastElapsedSec;
+                if (deltaSec > 0 and _sampleSpeedMps != null and _sampleSpeedMps > 0) {
+                    speedDeltaM = _sampleSpeedMps * deltaSec;
+                    _probeSpeedDistanceM += speedDeltaM;
+                }
+                if (deltaSec > 0) {
+                    _probeSpeedLastElapsedSec = elapsedSec;
+                }
+            }
+        }
+
+        var line =
+            "[DIST_PROBE] rawT=" + _factValue(rawElapsed) +
+            " sec=" + _factValue(elapsedSec) +
+            " infoDist=" + _factValue(infoElapsedDistance) +
+            " fbDist=" + _factValue(fallbackElapsedDistance) +
+            " sampleDist=" + _factValue(_sampleDistanceRawM) + "(" + _sampleDistanceSource + ")" +
+            " locSrc=" + _sampleCurrentLocationSource +
+            " locDeltaM=" + _factValue(locationDeltaM) +
+            " locAccumM=" + _factValue(_probeLocDistanceM) +
+            " spd=" + _factValue(_sampleSpeedMps) + "(" + _sampleSpeedSource + ")" +
+            " spdDeltaM=" + _factValue(speedDeltaM) +
+            " spdAccumM=" + _factValue(_probeSpeedDistanceM);
+        if (_lastDistanceProbeLogLine == line) {
+            return;
+        }
+        _lastDistanceProbeLogLine = line;
+        Sys.println(line);
+    }
+
+    function _factValue(value) {
+        if (value == null) {
+            return "null";
+        }
+        return value.toString();
     }
 
     function _getCapDistanceOffset(distanceKm) {
@@ -814,12 +1269,6 @@ class MarathonCoachField extends Ui.DataField {
             _lastLapResetSec = null;
         }
 
-        // While paused/stopped, freeze remaining time.
-        if (_timerRunning == false and _fuelRemainingSec != null) {
-            _fuelRemainingText = _formatMinSec(_fuelRemainingSec);
-            return;
-        }
-
         _fuelDueTimeSec = _lastFuelTimeSec + FUEL_INTERVAL_SEC;
         _fuelRemainingSec = _fuelDueTimeSec - elapsedSec;
         if (_fuelRemainingSec < 0) {
@@ -937,12 +1386,48 @@ class MarathonCoachField extends Ui.DataField {
         return _driftBaseHr != null and _driftBasePace != null;
     }
 
+    function _resolveActionMessage() {
+        var paceDeltaSec = null;
+        if (_paceNowSecPerKm != null and _targetPaceSecPerKm != null) {
+            paceDeltaSec = _paceNowSecPerKm - _targetPaceSecPerKm;
+        }
+
+        var capMargin = null;
+        if (_capHeartRate != null and _currentHeartRate != null) {
+            capMargin = _capHeartRate - _currentHeartRate;
+        }
+
+        var baselineHrDelta = null;
+        if (_driftBaseHr != null and _currentHeartRate != null) {
+            baselineHrDelta = _currentHeartRate - _driftBaseHr;
+        }
+
+        var shouldEase = false;
+        if (paceDeltaSec != null and paceDeltaSec <= ACTION_EASE_PACE_DELTA_SEC) {
+            shouldEase = true;
+        }
+        if (capMargin != null and capMargin <= ACTION_EASE_CAP_MARGIN_BPM) {
+            shouldEase = true;
+        }
+        if (baselineHrDelta != null and baselineHrDelta >= ACTION_EASE_BASELINE_HR_DELTA_BPM) {
+            shouldEase = true;
+        }
+        if (shouldEase) {
+            return _actionEaseText;
+        }
+
+        var canPushByHr = (capMargin == null or capMargin >= ACTION_PUSH_MIN_CAP_MARGIN_BPM);
+        if (paceDeltaSec != null and paceDeltaSec >= ACTION_PUSH_PACE_DELTA_SEC and canPushByHr) {
+            return _actionPushText;
+        }
+
+        return _actionHoldText;
+    }
+
     function _setActionCardByBaseline(elapsedSec) {
         _cardMode = CARD_MODE_ACTION;
         if (_isBaselineReady()) {
-            _cardLine1 = _actionLine1Text;
-            _cardLine2 = _actionLine2Text;
-            _cardLine3 = _actionLine3Text;
+            _setCardLinesFromMessage(_resolveActionMessage());
             return;
         }
 
@@ -961,9 +1446,7 @@ class MarathonCoachField extends Ui.DataField {
         _warmupMessageSlot = slot;
 
         if (_warmupMessages.size() == 0) {
-            _cardLine1 = _actionLine1Text;
-            _cardLine2 = _actionLine2Text;
-            _cardLine3 = _actionLine3Text;
+            _setCardLinesFromMessage(_actionHoldText);
             return;
         }
 
@@ -1084,26 +1567,149 @@ class MarathonCoachField extends Ui.DataField {
         return 0;
     }
 
-    function _extractElapsedSec(info) {
-        if (info == null) {
+    function _parseTimeToSec(text) {
+        if (text == null) {
             return null;
         }
 
-        // Activity.Info.timerTime is milliseconds in DataField compute().
-        if (info.timerTime != null and info.timerTime instanceof Number and info.timerTime >= 0) {
-            return Math.floor(info.timerTime / 1000);
+        var raw = _normalizeTimeText(text.toString());
+        if (raw.length() == 0) {
+            return null;
         }
 
-        // Fallback for devices/profiles that expose elapsedTime directly.
-        if (info.elapsedTime != null and info.elapsedTime instanceof Number and info.elapsedTime >= 0) {
-            var elapsed = info.elapsedTime;
-            if (elapsed > 100000) {
-                return Math.floor(elapsed / 1000);
+        var p1 = raw.find(":");
+        if (p1 == null or p1 < 0) {
+            return null;
+        }
+
+        var tail = raw.substring(p1 + 1, raw.length());
+        var p2rel = tail.find(":");
+        var hourText = raw.substring(0, p1);
+        var minText = "";
+        var secText = "0";
+        if (p2rel == null or p2rel < 0) {
+            minText = tail;
+        } else {
+            var p2 = p1 + 1 + p2rel;
+            minText = raw.substring(p1 + 1, p2);
+            secText = raw.substring(p2 + 1, raw.length());
+        }
+
+        var h = _parsePositiveInt(hourText);
+        var m = _parsePositiveInt(minText);
+        var s = _parsePositiveInt(secText);
+        if (h == null or m == null or s == null) {
+            return null;
+        }
+        if (m >= 60 or s >= 60) {
+            return null;
+        }
+        return (h * 3600) + (m * 60) + s;
+    }
+
+    function _parsePositiveInt(text) {
+        var rawText = _normalizeTimeText(text);
+        if (rawText == null or rawText.length() == 0) {
+            return null;
+        }
+
+        var value = 0;
+        for (var i = 0; i < rawText.length(); i += 1) {
+            var ch = rawText.substring(i, i + 1);
+            var digit = _digitValue(ch);
+            if (digit == null) {
+                return null;
             }
-            return Math.floor(elapsed);
+            value = (value * 10) + digit;
+        }
+        return value;
+    }
+
+    function _normalizeTimeText(text) {
+        if (text == null) {
+            return "";
         }
 
+        var raw = text.toString();
+        var normalized = "";
+        for (var i = 0; i < raw.length(); i += 1) {
+            var ch = raw.substring(i, i + 1);
+            if (ch == "：" or ch == "∶") {
+                normalized += ":";
+                continue;
+            }
+
+            var asciiDigit = _fullWidthDigitToAscii(ch);
+            if (asciiDigit != null) {
+                normalized += asciiDigit;
+                continue;
+            }
+            normalized += ch;
+        }
+
+        var start = 0;
+        while (start < normalized.length()) {
+            var first = normalized.substring(start, start + 1);
+            if (first != " " and first != "\t" and first != "　") {
+                break;
+            }
+            start += 1;
+        }
+
+        var endExclusive = normalized.length();
+        while (endExclusive > start) {
+            var last = normalized.substring(endExclusive - 1, endExclusive);
+            if (last != " " and last != "\t" and last != "　") {
+                break;
+            }
+            endExclusive -= 1;
+        }
+
+        if (start >= endExclusive) {
+            return "";
+        }
+        return normalized.substring(start, endExclusive);
+    }
+
+    function _fullWidthDigitToAscii(ch) {
+        if (ch == "０") { return "0"; }
+        if (ch == "１") { return "1"; }
+        if (ch == "２") { return "2"; }
+        if (ch == "３") { return "3"; }
+        if (ch == "４") { return "4"; }
+        if (ch == "５") { return "5"; }
+        if (ch == "６") { return "6"; }
+        if (ch == "７") { return "7"; }
+        if (ch == "８") { return "8"; }
+        if (ch == "９") { return "9"; }
         return null;
+    }
+
+    function _digitValue(ch) {
+        if (ch == "0") { return 0; }
+        if (ch == "1") { return 1; }
+        if (ch == "2") { return 2; }
+        if (ch == "3") { return 3; }
+        if (ch == "4") { return 4; }
+        if (ch == "5") { return 5; }
+        if (ch == "6") { return 6; }
+        if (ch == "7") { return 7; }
+        if (ch == "8") { return 8; }
+        if (ch == "9") { return 9; }
+        return null;
+    }
+
+    function _extractElapsedSec(info) {
+        // Match MessageInGarmin time semantics: use raw timer milliseconds as the time source.
+        var rawElapsed = _getElapsedTimeRaw(info);
+        if (rawElapsed == null) {
+            return null;
+        }
+        var elapsedSec = rawElapsed / 1000.0;
+        if (elapsedSec < 0) {
+            elapsedSec = 0;
+        }
+        return Math.floor(elapsedSec);
     }
 
     function _formatPaceSecPerKm(paceSecPerKm) {
@@ -1118,6 +1724,65 @@ class MarathonCoachField extends Ui.DataField {
         var minPart = Math.floor(roundedSec / 60);
         var secPart = roundedSec - (minPart * 60);
         return minPart.format("%d") + ":" + secPart.format("%02d");
+    }
+
+    function _formatElapsedTime(totalSec) {
+        var sec = Math.floor(totalSec);
+        if (sec < 0) {
+            sec = 0;
+        }
+        var hourPart = Math.floor(sec / 3600);
+        var remain = sec - (hourPart * 3600);
+        var minPart = Math.floor(remain / 60);
+        var secPart = remain - (minPart * 60);
+        return hourPart.format("%d") + ":" + minPart.format("%02d") + ":" + secPart.format("%02d");
+    }
+
+    function _formatDistanceKm(distanceKm) {
+        var roundedTenth = Math.floor((distanceKm * 10.0) + 0.5);
+        if (roundedTenth < 0) {
+            roundedTenth = 0;
+        }
+        var kmWhole = Math.floor(roundedTenth / 10);
+        var kmDecimal = roundedTenth - (kmWhole * 10);
+        return kmWhole.format("%d") + "." + kmDecimal.format("%d") + " km";
+    }
+
+    function _buildGoalDeltaText(deltaText) {
+        if (deltaText == null or deltaText.length() == 0) {
+            return _goalTimeLabelText + " " + _formatTargetTimeHourMin();
+        }
+        return _goalTimeLabelText + " " + _formatTargetTimeHourMin() + " (" + deltaText + ")";
+    }
+
+    function _formatTargetTimeHourMin() {
+        var sec = _targetTimeSec;
+        if (sec == null or sec < 0) {
+            sec = _parseTimeToSec(_targetTimeHms);
+        }
+        if (sec == null or sec < 0) {
+            sec = _parseTimeToSec(DEFAULT_TARGET_TIME_HMS);
+        }
+        if (sec == null or sec < 0) {
+            return "05:00";
+        }
+
+        var totalSec = Math.floor(sec);
+        var hourPart = Math.floor(totalSec / 3600);
+        var minPart = Math.floor((totalSec - (hourPart * 3600)) / 60);
+        return hourPart.format("%d") + ":" + minPart.format("%02d");
+    }
+
+    function _formatSignedDeltaMinSec(deltaSec) {
+        var absSec = _abs(deltaSec);
+        var roundedAbsSec = Math.floor((absSec + 2.5) / 5) * 5;
+        var sign = "+";
+        if (deltaSec < -2.5) {
+            sign = "-";
+        }
+        var minPart = Math.floor(roundedAbsSec / 60);
+        var secPart = roundedAbsSec - (minPart * 60);
+        return sign + minPart.format("%02d") + "m" + secPart.format("%02d") + "s";
     }
 
     function _textYByRatio(blockTop, blockHeight, ratioPct, fontHeight) {

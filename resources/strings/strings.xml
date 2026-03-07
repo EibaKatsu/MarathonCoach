@@ -4,7 +4,11 @@
     <string id="Step2Status">STEP2 SETTINGS</string>
     <string id="Step3Status">STEP3 LAYOUT</string>
     <string id="FuelLabel">FUEL</string>
-    <string id="PaceDeltaLabel">PACE +10s</string>
+    <string id="GoalTimeLabel">TGT</string>
+    <string id="PredictedDeltaLabel">DELTA</string>
+    <string id="ActionPushText">Push a bit</string>
+    <string id="ActionHoldText">Hold pace</string>
+    <string id="ActionEaseText">Ease down</string>
     <string id="CardActionLine1">EASE</string>
     <string id="CardActionLine2">DOWN</string>
     <string id="CardActionLine3">v -10s</string>

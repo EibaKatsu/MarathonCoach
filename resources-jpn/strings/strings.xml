@@ -6,7 +6,11 @@
     <string id="setting_race_distance">レース距離 (km)</string>
     <string id="setting_target_time">目標タイム (HH:MM:SS)</string>
     <string id="FuelLabel">FUEL</string>
-    <string id="PaceDeltaLabel">PACE +10s</string>
+    <string id="GoalTimeLabel">TGT</string>
+    <string id="PredictedDeltaLabel">差</string>
+    <string id="ActionPushText">ちょい上げ</string>
+    <string id="ActionHoldText">そのまま</string>
+    <string id="ActionEaseText">ちょい落とし</string>
     <string id="CardActionLine1">ちょい</string>
     <string id="CardActionLine2">落とし</string>
     <string id="CardActionLine3">v -10s</string>
