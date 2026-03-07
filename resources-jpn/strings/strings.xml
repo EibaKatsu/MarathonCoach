@@ -25,7 +25,8 @@
     <string id="CardFuelNowLine3">!</string>
     <string id="FuelMeterPrimaryLabel">補給</string>
     <string id="FuelMeterAltLabel">あと</string>
-    <string id="FuelMeterWarningText">今補給</string>
+    <string id="FuelMeterWarningText">補給now</string>
+    <string id="FuelMeterWarningSubText">補給後LAP</string>
     <string id="FuelMeterCautionPrefix">あと</string>
     <string id="FuelMeterCautionSuffix">分</string>
     <string id="FuelMeterMinuteSuffix">m</string>

@@ -23,7 +23,8 @@
     <string id="CardFuelNowLine3">!</string>
     <string id="FuelMeterPrimaryLabel">FUEL</string>
     <string id="FuelMeterAltLabel">IN</string>
-    <string id="FuelMeterWarningText">FUEL NOW</string>
+    <string id="FuelMeterWarningText">Fuel now</string>
+    <string id="FuelMeterWarningSubText">Press LAP</string>
     <string id="FuelMeterCautionPrefix">IN </string>
     <string id="FuelMeterCautionSuffix">m</string>
     <string id="FuelMeterMinuteSuffix">m</string>
