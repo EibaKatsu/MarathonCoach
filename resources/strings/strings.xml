@@ -21,6 +21,12 @@
     <string id="CardFuelSoonLine2">IN</string>
     <string id="CardFuelNowLine2">NOW</string>
     <string id="CardFuelNowLine3">!</string>
+    <string id="FuelMeterPrimaryLabel">FUEL</string>
+    <string id="FuelMeterAltLabel">IN</string>
+    <string id="FuelMeterWarningText">FUEL NOW</string>
+    <string id="FuelMeterCautionPrefix">IN </string>
+    <string id="FuelMeterCautionSuffix">m</string>
+    <string id="FuelMeterMinuteSuffix">m</string>
     <string id="WarmupMsg1">Stay calm</string>
     <string id="WarmupMsg2">Relax</string>
     <string id="WarmupMsg3">Hold pace</string>

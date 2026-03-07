@@ -11,10 +11,12 @@ class MarathonCoachField extends Ui.DataField {
     const KEY_RACE_DISTANCE_KM = "race_distance_km";
     const KEY_TARGET_TIME_HMS = "target_time_hms";
     const LAYOUT_DEBUG_OVERLAY = false;
-    const FUEL_INTERVAL_SEC = 35 * 60;
+    const FUEL_INTERVAL_SEC = 3 * 60; // test setting
     const LAP_DEBOUNCE_SEC = 20;
     const CARD_TOGGLE_SEC = 3;
     const FUEL_TOGGLE_LEAD_SEC = 2 * 60;
+    const FUEL_METER_WARNING_LEAD_SEC = 1 * 60; // test setting
+    const FUEL_METER_LABEL_TOGGLE_SEC = 2;
     const HR_OVER_TRIGGER_MARGIN_BPM = 1;
     const WARMUP_MESSAGE_ROTATE_SEC = 5;
     const DRIFT_BASELINE_START_SEC = 20 * 60;
@@ -40,6 +42,9 @@ class MarathonCoachField extends Ui.DataField {
     const CARD_MODE_FUEL_OVERDUE = 2;
     const CARD_MODE_HR_OVER = 3;
     const CARD_MODE_DRIFT = 4;
+    const FUEL_METER_STATE_NORMAL = 0;
+    const FUEL_METER_STATE_CAUTION = 1;
+    const FUEL_METER_STATE_WARNING = 2;
 
     const DEFAULT_RACE_DISTANCE_KM = 42.195;
     const DEFAULT_TARGET_TIME_HMS = "05:00:00";
@@ -49,6 +54,13 @@ class MarathonCoachField extends Ui.DataField {
     const HR_ZONE_COLOR_3 = 0x63C84A; // yellow-green
     const HR_ZONE_COLOR_4 = 0xF29F67; // orange
     const HR_ZONE_COLOR_5 = 0xF01818; // red
+    const FUEL_METER_CENTER_COLOR = 0x101820;
+    const FUEL_RING_NORMAL_TRACK_COLOR = 0x23425C;
+    const FUEL_RING_NORMAL_FILL_COLOR = 0x52B7E8;
+    const FUEL_RING_CAUTION_TRACK_COLOR = 0x5E4E28;
+    const FUEL_RING_CAUTION_FILL_COLOR = 0xF29F67;
+    const FUEL_RING_WARNING_TRACK_COLOR = 0x6B2121;
+    const FUEL_RING_WARNING_FILL_COLOR = 0xF01818;
 
     var _statusText = "STEP3 LAYOUT";
     var _fuelLabelText = "FUEL";
@@ -66,6 +78,12 @@ class MarathonCoachField extends Ui.DataField {
     var _fuelSoonLine2Text = "IN";
     var _fuelNowLine2Text = "NOW";
     var _fuelNowLine3Text = "!";
+    var _fuelMeterPrimaryLabelText = "FUEL";
+    var _fuelMeterAltLabelText = "IN";
+    var _fuelMeterWarningText = "FUEL NOW";
+    var _fuelMeterCautionPrefixText = "IN ";
+    var _fuelMeterCautionSuffixText = "m";
+    var _fuelMeterMinuteSuffixText = "m";
     var _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
     var _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
     var _targetTimeSec = null;
@@ -176,6 +194,12 @@ class MarathonCoachField extends Ui.DataField {
         _fuelSoonLine2Text = Ui.loadResource(Rez.Strings.CardFuelSoonLine2);
         _fuelNowLine2Text = Ui.loadResource(Rez.Strings.CardFuelNowLine2);
         _fuelNowLine3Text = Ui.loadResource(Rez.Strings.CardFuelNowLine3);
+        _fuelMeterPrimaryLabelText = Ui.loadResource(Rez.Strings.FuelMeterPrimaryLabel);
+        _fuelMeterAltLabelText = Ui.loadResource(Rez.Strings.FuelMeterAltLabel);
+        _fuelMeterWarningText = Ui.loadResource(Rez.Strings.FuelMeterWarningText);
+        _fuelMeterCautionPrefixText = Ui.loadResource(Rez.Strings.FuelMeterCautionPrefix);
+        _fuelMeterCautionSuffixText = Ui.loadResource(Rez.Strings.FuelMeterCautionSuffix);
+        _fuelMeterMinuteSuffixText = Ui.loadResource(Rez.Strings.FuelMeterMinuteSuffix);
 
         _warmupMessages = [
             Ui.loadResource(Rez.Strings.WarmupMsg1),
@@ -365,7 +389,7 @@ class MarathonCoachField extends Ui.DataField {
             paceFont = Gfx.FONT_LARGE;
             footerFont = Gfx.FONT_SMALL;
             paceDeltaFont = Gfx.FONT_XTINY;
-            fuelLabelFont = Gfx.FONT_TINY;
+            fuelLabelFont = Gfx.FONT_XTINY;
             fuelTimeFont = Gfx.FONT_MEDIUM;
             fuelRadiusPct = 50;
         } else if (sizeClass == 0) {
@@ -412,24 +436,7 @@ class MarathonCoachField extends Ui.DataField {
             fuelCenterX = maxFuelCenterX;
         }
         var fuelCenterY = top + (row12Height / 2);
-        var fuelLabelY = _textYByRatio(
-            fuelCenterY - fuelRadius,
-            fuelRadius * 2,
-            31,
-            dc.getFontHeight(fuelLabelFont)
-        );
-        var fuelTimeY = _textYByRatio(
-            fuelCenterY - fuelRadius,
-            fuelRadius * 2,
-            60,
-            dc.getFontHeight(fuelTimeFont)
-        );
-
-        dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
-        dc.fillCircle(fuelCenterX, fuelCenterY, fuelRadius);
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLUE);
-        dc.drawText(fuelCenterX, fuelLabelY, fuelLabelFont, _fuelLabelText, Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(fuelCenterX, fuelTimeY, fuelTimeFont, _fuelRemainingText, Gfx.TEXT_JUSTIFY_CENTER);
+        _drawFuelMeter(dc, sizeClass, fuelCenterX, fuelCenterY, fuelRadius, fuelLabelFont, fuelTimeFont);
 
         // Left col row2-3 span: coach card
         var cardInset = _clamp((squareSize * 2) / 100, 2, 10);
@@ -485,6 +492,170 @@ class MarathonCoachField extends Ui.DataField {
             dc.drawLine(left, row2Y, right, row2Y);
             dc.drawLine(left, row3Y, right, row3Y);
         }
+    }
+
+    function _drawFuelMeter(dc as Gfx.Dc, sizeClass, centerX, centerY, radius, labelFont, valueFont) {
+        var meterState = _resolveFuelMeterState();
+        var ringTrackColor = _getFuelMeterTrackColor(meterState);
+        var ringFillColor = _getFuelMeterFillColor(meterState);
+        var ringProgress = _resolveFuelMeterProgressRatio(meterState);
+        var centerText = _resolveFuelMeterCenterText(meterState);
+        var meterLabelText = _resolveFuelMeterLabelText();
+
+        var ringThickness = _clamp(radius / 4, 4, 11);
+        if (meterState != FUEL_METER_STATE_NORMAL) {
+            ringThickness = _clamp(ringThickness + 1, 4, 12);
+        }
+        var orbitRadius = radius - Math.floor(ringThickness / 2);
+        if (orbitRadius < 2) {
+            orbitRadius = 2;
+        }
+        var dotRadius = _clamp(Math.floor((ringThickness + 1) / 2), 2, 6);
+        var segmentCount = _clamp((radius * 3), 28, 72);
+        var activeSegments = Math.floor((ringProgress * segmentCount) + 0.5);
+        if (activeSegments > segmentCount) {
+            activeSegments = segmentCount;
+        }
+
+        var pi = 3.141592653589793;
+        var startAngleRad = -(pi / 2.0);
+        var stepAngleRad = (2.0 * pi) / segmentCount;
+        for (var i = 0; i < segmentCount; i += 1) {
+            var angleRad = startAngleRad + (stepAngleRad * i);
+            var ringX = centerX + (Math.cos(angleRad) * orbitRadius);
+            var ringY = centerY + (Math.sin(angleRad) * orbitRadius);
+            if (i < activeSegments) {
+                dc.setColor(ringFillColor, Gfx.COLOR_BLACK);
+            } else {
+                dc.setColor(ringTrackColor, Gfx.COLOR_BLACK);
+            }
+            dc.fillCircle(Math.floor(ringX + 0.5), Math.floor(ringY + 0.5), dotRadius);
+        }
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+        dc.drawCircle(centerX, centerY, radius);
+
+        var innerRadius = radius - ringThickness - 1;
+        if (innerRadius > 0) {
+            dc.setColor(FUEL_METER_CENTER_COLOR, Gfx.COLOR_BLACK);
+            dc.fillCircle(centerX, centerY, innerRadius);
+            dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+            dc.drawCircle(centerX, centerY, innerRadius);
+        }
+
+        var centerTextFont = valueFont;
+        if (centerText != null and centerText.length() >= 5) {
+            if (sizeClass == 2) {
+                centerTextFont = Gfx.FONT_SMALL;
+            } else {
+                centerTextFont = Gfx.FONT_TINY;
+            }
+        }
+
+        var showTopLabel = (meterState != FUEL_METER_STATE_WARNING);
+        var labelY = _textYByRatio(
+            centerY - radius,
+            radius * 2,
+            31,
+            dc.getFontHeight(labelFont)
+        );
+        var centerTextRatio = 60;
+        if (!showTopLabel) {
+            centerTextRatio = 50;
+        }
+        var centerTextY = _textYByRatio(
+            centerY - radius,
+            radius * 2,
+            centerTextRatio,
+            dc.getFontHeight(centerTextFont)
+        );
+
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+        if (showTopLabel) {
+            dc.drawText(centerX, labelY, labelFont, meterLabelText, Gfx.TEXT_JUSTIFY_CENTER);
+        }
+        dc.drawText(centerX, centerTextY, centerTextFont, centerText, Gfx.TEXT_JUSTIFY_CENTER);
+    }
+
+    function _resolveFuelMeterState() {
+        if (
+            _isFuelOverdue() or
+            (_fuelRemainingSec != null and _fuelRemainingSec <= FUEL_METER_WARNING_LEAD_SEC)
+        ) {
+            return FUEL_METER_STATE_WARNING;
+        }
+        if (_fuelRemainingSec != null and _fuelRemainingSec <= FUEL_TOGGLE_LEAD_SEC) {
+            return FUEL_METER_STATE_CAUTION;
+        }
+        return FUEL_METER_STATE_NORMAL;
+    }
+
+    function _getFuelMeterTrackColor(meterState) {
+        if (meterState == FUEL_METER_STATE_WARNING) {
+            return FUEL_RING_WARNING_TRACK_COLOR;
+        }
+        if (meterState == FUEL_METER_STATE_CAUTION) {
+            return FUEL_RING_CAUTION_TRACK_COLOR;
+        }
+        return FUEL_RING_NORMAL_TRACK_COLOR;
+    }
+
+    function _getFuelMeterFillColor(meterState) {
+        if (meterState == FUEL_METER_STATE_WARNING) {
+            return FUEL_RING_WARNING_FILL_COLOR;
+        }
+        if (meterState == FUEL_METER_STATE_CAUTION) {
+            return FUEL_RING_CAUTION_FILL_COLOR;
+        }
+        return FUEL_RING_NORMAL_FILL_COLOR;
+    }
+
+    function _resolveFuelMeterProgressRatio(meterState) {
+        if (meterState == FUEL_METER_STATE_WARNING) {
+            return 1.0;
+        }
+        if (_fuelRemainingSec == null) {
+            return 0.0;
+        }
+
+        var remainingSec = _clamp(_fuelRemainingSec, 0, FUEL_INTERVAL_SEC);
+        return _clamp((remainingSec * 1.0) / (FUEL_INTERVAL_SEC * 1.0), 0.0, 1.0);
+    }
+
+    function _resolveFuelMeterCenterText(meterState) {
+        if (meterState == FUEL_METER_STATE_WARNING) {
+            return _fuelMeterWarningText;
+        }
+
+        var remainingMin = _resolveFuelMeterRemainingMin();
+        if (remainingMin != null) {
+            return remainingMin.format("%d") + _fuelMeterMinuteSuffixText;
+        }
+        return "--";
+    }
+
+    function _resolveFuelMeterRemainingMin() {
+        if (_fuelRemainingSec == null) {
+            return null;
+        }
+
+        var remainingSec = _fuelRemainingSec;
+        if (remainingSec < 0) {
+            remainingSec = 0;
+        }
+        if (remainingSec == 0) {
+            return 0;
+        }
+        return Math.floor((remainingSec + 59) / 60);
+    }
+
+    function _resolveFuelMeterLabelText() {
+        var uptimeSec = Math.floor(Sys.getTimer() / 1000.0);
+        var slot = Math.floor(uptimeSec / FUEL_METER_LABEL_TOGGLE_SEC);
+        var halfSlot = Math.floor(slot / 2);
+        if ((slot - (halfSlot * 2)) >= 1) {
+            return _fuelMeterAltLabelText;
+        }
+        return _fuelMeterPrimaryLabelText;
     }
 
     function _drawHeartRateGauge(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
@@ -1559,7 +1730,8 @@ class MarathonCoachField extends Ui.DataField {
         );
         if (inFuelToggleWindow) {
             var toggleSlot = Math.floor(elapsedSec / CARD_TOGGLE_SEC);
-            var showFuelCard = ((toggleSlot % 2) == 1);
+            var halfToggleSlot = Math.floor(toggleSlot / 2);
+            var showFuelCard = ((toggleSlot - (halfToggleSlot * 2)) >= 1);
             if (showFuelCard) {
                 _cardLine1 = _fuelLabelText;
                 if (fuelOverdue) {

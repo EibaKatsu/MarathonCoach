@@ -23,6 +23,12 @@
     <string id="CardFuelSoonLine2">IN</string>
     <string id="CardFuelNowLine2">NOW</string>
     <string id="CardFuelNowLine3">!</string>
+    <string id="FuelMeterPrimaryLabel">補給</string>
+    <string id="FuelMeterAltLabel">あと</string>
+    <string id="FuelMeterWarningText">今補給</string>
+    <string id="FuelMeterCautionPrefix">あと</string>
+    <string id="FuelMeterCautionSuffix">分</string>
+    <string id="FuelMeterMinuteSuffix">m</string>
     <string id="WarmupMsg1">焦るな</string>
     <string id="WarmupMsg2">落ち着け</string>
     <string id="WarmupMsg3">そのまま</string>
