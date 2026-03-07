@@ -36,6 +36,8 @@ class MarathonCoachField extends Ui.DataField {
     const ACTION_PUSH_RELEASE_HR_HYSTERESIS_BPM = 1;
     const ACTION_EASE_MIN_HEADROOM_BPM = 3;
     const ACTION_EASE_BASELINE_HR_DELTA_BPM = 6;
+    const CARD_VARIANT_PREVIEW_ENABLED = true;
+    const CARD_VARIANT_PREVIEW_SEC = 15;
     const FIT_FACT_LOG = true;
     const DIST_PROBE_LOG = true;
 
@@ -44,6 +46,14 @@ class MarathonCoachField extends Ui.DataField {
     const CARD_MODE_FUEL_OVERDUE = 2;
     const CARD_MODE_HR_OVER = 3;
     const CARD_MODE_DRIFT = 4;
+    const CARD_VARIANT_WARMUP = 0;
+    const CARD_VARIANT_ACTION_PUSH = 1;
+    const CARD_VARIANT_ACTION_HOLD = 2;
+    const CARD_VARIANT_ACTION_EASE = 3;
+    const CARD_VARIANT_FUEL_SOON = 4;
+    const CARD_VARIANT_FUEL_NOW = 5;
+    const CARD_VARIANT_RECOVERY = 6;
+    const CARD_VARIANT_HR_WARNING = 7;
     const FUEL_METER_STATE_NORMAL = 0;
     const FUEL_METER_STATE_CAUTION = 1;
     const FUEL_METER_STATE_WARNING = 2;
@@ -170,9 +180,18 @@ class MarathonCoachField extends Ui.DataField {
     var _warmupMessages as Lang.Array = [];
     var _warmupMessageSlot = -1;
     var _cardMode = CARD_MODE_ACTION;
+    var _cardVariant = CARD_VARIANT_ACTION_HOLD;
     var _cardLine1 = "EASE";
     var _cardLine2 = "DOWN";
     var _cardLine3 = "v -10s";
+    var _cardBgWarmupSmall = null;
+    var _cardBgActionPushSmall = null;
+    var _cardBgActionHoldSmall = null;
+    var _cardBgActionEaseSmall = null;
+    var _cardBgFuelSoonSmall = null;
+    var _cardBgFuelNowSmall = null;
+    var _cardBgRecoverySmall = null;
+    var _cardBgHrWarningSmall = null;
 
     function initialize() {
         DataField.initialize();
@@ -223,6 +242,17 @@ class MarathonCoachField extends Ui.DataField {
             Ui.loadResource(Rez.Strings.WarmupMsg15)
         ];
 
+        _cardBgWarmupSmall = Ui.loadResource(Rez.Drawables.CardBgWarmupSmall);
+        _cardBgActionPushSmall = Ui.loadResource(Rez.Drawables.CardBgActionPushSmall);
+        _cardBgActionHoldSmall = Ui.loadResource(Rez.Drawables.CardBgActionHoldSmall);
+        _cardBgActionEaseSmall = Ui.loadResource(Rez.Drawables.CardBgActionEaseSmall);
+        _cardBgFuelSoonSmall = Ui.loadResource(Rez.Drawables.CardBgFuelSoonSmall);
+        _cardBgFuelNowSmall = Ui.loadResource(Rez.Drawables.CardBgFuelNowSmall);
+        _cardBgRecoverySmall = Ui.loadResource(Rez.Drawables.CardBgRecoverySmall);
+        _cardBgHrWarningSmall = Ui.loadResource(Rez.Drawables.CardBgHrWarningSmall);
+
+        _cardMode = CARD_MODE_ACTION;
+        _cardVariant = CARD_VARIANT_ACTION_HOLD;
         _setCardLinesFromMessage(_actionHoldText);
     }
 
@@ -384,7 +414,6 @@ class MarathonCoachField extends Ui.DataField {
         var sizeClass = _getSizeClass(minDim);
 
         var insetPct = 7;
-        var cardFont = Gfx.FONT_SMALL;
         var paceFont = Gfx.FONT_LARGE;
         var footerFont = Gfx.FONT_SMALL;
         var paceDeltaFont = Gfx.FONT_XTINY;
@@ -394,7 +423,6 @@ class MarathonCoachField extends Ui.DataField {
 
         if (sizeClass == 2) {
             insetPct = 9;
-            cardFont = Gfx.FONT_TINY;
             paceFont = Gfx.FONT_LARGE;
             footerFont = Gfx.FONT_SMALL;
             paceDeltaFont = Gfx.FONT_XTINY;
@@ -403,7 +431,6 @@ class MarathonCoachField extends Ui.DataField {
             fuelRadiusPct = 50;
         } else if (sizeClass == 0) {
             insetPct = 6;
-            cardFont = Gfx.FONT_TINY;
             paceFont = Gfx.FONT_MEDIUM;
             footerFont = Gfx.FONT_TINY;
             paceDeltaFont = Gfx.FONT_XTINY;
@@ -453,20 +480,12 @@ class MarathonCoachField extends Ui.DataField {
         var cardY = row1Y + cardInset;
         var cardW = leftColW - (cardInset * 2);
         var cardH = (row3Y - row1Y) - (cardInset * 2);
-        var cardCorner = _clamp(cardW / 8, 10, 26);
-        var cardFontH = dc.getFontHeight(cardFont);
-        var cardLines = _getCardDisplayLines();
-        var cardLineCount = cardLines.size();
-        var cardGap = _max((cardH - (cardFontH * cardLineCount)) / (cardLineCount + 1), 1);
-        var cardLineY = cardY + cardGap;
-
-        dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
-        dc.fillRoundedRectangle(cardX, cardY, cardW, cardH, cardCorner);
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLUE);
-        for (var i = 0; i < cardLineCount; i += 1) {
-            dc.drawText(cardX + (cardW / 2), cardLineY, cardFont, cardLines[i], Gfx.TEXT_JUSTIFY_CENTER);
-            cardLineY += cardFontH + cardGap;
+        var cardCorner = _clamp(cardW / 7, 8, 24);
+        var maxCardCorner = _max((_min(cardW, cardH) / 2) - 1, 2);
+        if (cardCorner > maxCardCorner) {
+            cardCorner = maxCardCorner;
         }
+        _drawCoachCardWithPng(dc, sizeClass, cardX, cardY, cardW, cardH, cardCorner);
 
         // 3rd row right: pace
         var paceY = row2Y;
@@ -501,6 +520,487 @@ class MarathonCoachField extends Ui.DataField {
             dc.drawLine(left, row2Y, right, row2Y);
             dc.drawLine(left, row3Y, right, row3Y);
         }
+    }
+
+    function _drawCoachCard(dc as Gfx.Dc, sizeClass, cardX, cardY, cardW, cardH, cardCorner) {
+        var borderColor = _getCardBorderColor(_cardVariant);
+        var gradientTopColor = _getCardGradientTopColor(_cardVariant);
+        var gradientMidColor = _getCardGradientMidColor(_cardVariant);
+        var gradientBottomColor = _getCardGradientBottomColor(_cardVariant);
+        var sheenColor = _getCardSheenColor(_cardVariant);
+        var textColor = _getCardTextColor(_cardVariant);
+
+        var borderWidth = _clamp((cardW * 2) / 100, 1, 3);
+        var bodyX = cardX + borderWidth;
+        var bodyY = cardY + borderWidth;
+        var bodyW = cardW - (borderWidth * 2);
+        var bodyH = cardH - (borderWidth * 2);
+        var bodyCorner = cardCorner - borderWidth;
+        var maxBodyCorner = _max((_min(bodyW, bodyH) / 2) - 1, 2);
+        if (bodyCorner > maxBodyCorner) {
+            bodyCorner = maxBodyCorner;
+        }
+        if (bodyCorner < 4) {
+            bodyCorner = 4;
+        }
+        if (bodyCorner > maxBodyCorner) {
+            bodyCorner = maxBodyCorner;
+        }
+
+        if (bodyW < 4 or bodyH < 4) {
+            dc.setColor(borderColor, Gfx.COLOR_BLACK);
+            dc.fillRoundedRectangle(cardX, cardY, cardW, cardH, cardCorner);
+            return;
+        }
+
+        dc.setColor(borderColor, Gfx.COLOR_BLACK);
+        dc.fillRoundedRectangle(cardX, cardY, cardW, cardH, cardCorner);
+        _fillRoundedGradient(
+            dc,
+            bodyX,
+            bodyY,
+            bodyW,
+            bodyH,
+            bodyCorner,
+            gradientTopColor,
+            gradientMidColor,
+            gradientBottomColor
+        );
+
+        var sheenInset = _clamp((bodyW * 6) / 100, 5, 18);
+        var sheenHeight = _clamp((bodyH * 22) / 100, 5, 22);
+        var sheenW = bodyW - (sheenInset * 2);
+        if (sheenW > 4 and sheenHeight > 2) {
+            dc.setColor(sheenColor, Gfx.COLOR_BLACK);
+            dc.fillRectangle(bodyX + sheenInset, bodyY + 1, sheenW, sheenHeight);
+        }
+
+        var cardLines = _getCardDisplayLines();
+        var cardLineCount = cardLines.size();
+        var cardFont = _resolveCardFont(sizeClass, cardLineCount);
+        var cardFontH = dc.getFontHeight(cardFont);
+        var textPadTop = _clamp((bodyH * 14) / 100, 6, 16);
+        var textPadBottom = _clamp((bodyH * 14) / 100, 6, 16);
+        var textAreaY = bodyY + textPadTop;
+        var textAreaH = bodyH - textPadTop - textPadBottom;
+        if (textAreaH < cardFontH) {
+            textAreaY = bodyY + _clamp((bodyH - cardFontH) / 2, 1, bodyH);
+            textAreaH = cardFontH;
+        }
+
+        var cardGap = 0;
+        if (cardLineCount >= 2) {
+            cardGap = _max((textAreaH - (cardFontH * cardLineCount)) / (cardLineCount - 1), 1);
+        }
+        var textTotalH = (cardFontH * cardLineCount) + (cardGap * (cardLineCount - 1));
+        var cardLineY = textAreaY + _max((textAreaH - textTotalH) / 2, 0);
+        var textLeft = bodyX + _clamp((bodyW * 15) / 100, 10, 24);
+        var textRight = bodyX + bodyW - _clamp((bodyW * 10) / 100, 8, 20);
+        var textCenterX = textLeft + ((textRight - textLeft) / 2);
+
+        dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
+        for (var i = 0; i < cardLineCount; i += 1) {
+            dc.drawText(textCenterX, cardLineY, cardFont, cardLines[i], Gfx.TEXT_JUSTIFY_CENTER);
+            cardLineY += cardFontH + cardGap;
+        }
+    }
+
+    function _drawCoachCardWithPng(dc as Gfx.Dc, sizeClass, cardX, cardY, cardW, cardH, cardCorner) {
+        var frameColor = _getCardBorderColor(_cardVariant);
+        var baseColor = _getCardGradientBottomColor(_cardVariant);
+        var textColor = _getCardTextColor(_cardVariant);
+        var innerX = cardX + 2;
+        var innerY = cardY + 2;
+        var innerW = cardW - 4;
+        var innerH = cardH - 4;
+
+        var bgBitmap = _getCardBgBitmapSmall(_cardVariant);
+        if (bgBitmap != null) {
+            var bgW = _getBitmapWidth(bgBitmap);
+            var bgH = _getBitmapHeight(bgBitmap);
+            if (bgW > 0 and bgH > 0) {
+                if (sizeClass == 0) {
+                    var drawX = cardX + ((cardW - bgW) / 2);
+                    var drawY = cardY + ((cardH - bgH) / 2);
+                    dc.drawBitmap(drawX, drawY, bgBitmap);
+                    innerX = drawX + 2;
+                    innerY = drawY + 2;
+                    innerW = bgW - 4;
+                    innerH = bgH - 4;
+                } else {
+                    try {
+                        dc.drawScaledBitmap(cardX, cardY, cardW, cardH, bgBitmap);
+                        var inset = _clamp((cardW * 3) / 100, 2, 7);
+                        innerX = cardX + inset;
+                        innerY = cardY + inset;
+                        innerW = cardW - (inset * 2);
+                        innerH = cardH - (inset * 2);
+                    } catch (e) {
+                        var fallbackX = cardX + ((cardW - bgW) / 2);
+                        var fallbackY = cardY + ((cardH - bgH) / 2);
+                        dc.drawBitmap(fallbackX, fallbackY, bgBitmap);
+                        innerX = fallbackX + 2;
+                        innerY = fallbackY + 2;
+                        innerW = bgW - 4;
+                        innerH = bgH - 4;
+                    }
+                }
+            } else {
+                dc.drawBitmap(cardX, cardY, bgBitmap);
+            }
+        } else {
+            dc.setColor(frameColor, Gfx.COLOR_BLACK);
+            dc.fillRoundedRectangle(cardX, cardY, cardW, cardH, cardCorner);
+            var innerCorner = _max(cardCorner - 2, 2);
+            dc.setColor(baseColor, Gfx.COLOR_BLACK);
+            dc.fillRoundedRectangle(innerX, innerY, innerW, innerH, innerCorner);
+        }
+
+        if (innerW < 8 or innerH < 8) {
+            return;
+        }
+
+        var cardLines = _getCardDisplayLines();
+        var cardLineCount = cardLines.size();
+        var cardFont = Gfx.FONT_TINY;
+        if (sizeClass == 0) {
+            if (cardLineCount <= 1) {
+                cardFont = Gfx.FONT_SMALL;
+            } else if (cardLineCount == 2) {
+                cardFont = Gfx.FONT_SMALL;
+            } else if (cardLineCount >= 3) {
+                cardFont = Gfx.FONT_TINY;
+            }
+        } else {
+            cardFont = _resolveCardFont(sizeClass, cardLineCount);
+        }
+        var fontH = dc.getFontHeight(cardFont);
+        var textPadX = _clamp((innerW * 12) / 100, 8, 12);
+        var textAreaX = innerX + textPadX;
+        var textAreaW = innerW - (textPadX * 2);
+        if (textAreaW < 10) {
+            textAreaX = innerX + 4;
+            textAreaW = innerW - 8;
+        }
+        var textAreaY = innerY + _clamp((innerH * 14) / 100, 5, 11);
+        var textAreaH = innerH - (_clamp((innerH * 14) / 100, 5, 11) * 2);
+        if (textAreaH < fontH) {
+            textAreaY = innerY + _max((innerH - fontH) / 2, 1);
+            textAreaH = fontH;
+        }
+
+        var gap = 0;
+        if (cardLineCount > 1) {
+            gap = _max((textAreaH - (fontH * cardLineCount)) / (cardLineCount - 1), 1);
+        }
+        var totalH = (fontH * cardLineCount) + (gap * (cardLineCount - 1));
+        var textY = textAreaY + _max((textAreaH - totalH) / 2, 0);
+        var textX = textAreaX + (textAreaW / 2);
+
+        for (var i = 0; i < cardLineCount; i += 1) {
+            _drawCardSmallTextBold(dc, textX, textY, cardFont, cardLines[i], textColor);
+            textY += fontH + gap;
+        }
+    }
+
+    function _drawCardSmallTextBold(dc as Gfx.Dc, x, y, font, text, textColor) {
+        // Outline + dual white pass gives readable text on bright/saturated cards.
+        dc.setColor(0x131A25, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(x - 1, y, font, text, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(x + 1, y, font, text, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(x, y - 1, font, text, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(x, y + 1, font, text, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(x, y, font, text, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(x + 1, y, font, text, Gfx.TEXT_JUSTIFY_CENTER);
+    }
+
+    function _getCardBgBitmapSmall(cardVariant) {
+        if (cardVariant == CARD_VARIANT_WARMUP) {
+            return _cardBgWarmupSmall;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
+            return _cardBgActionPushSmall;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_HOLD) {
+            return _cardBgActionHoldSmall;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
+            return _cardBgActionEaseSmall;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
+            return _cardBgFuelSoonSmall;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
+            return _cardBgFuelNowSmall;
+        }
+        if (cardVariant == CARD_VARIANT_RECOVERY) {
+            return _cardBgRecoverySmall;
+        }
+        if (cardVariant == CARD_VARIANT_HR_WARNING) {
+            return _cardBgHrWarningSmall;
+        }
+        return _cardBgActionHoldSmall;
+    }
+
+    function _getBitmapWidth(bitmap) {
+        if (bitmap == null) {
+            return 0;
+        }
+        try {
+            return bitmap.getWidth();
+        } catch (e) {
+            return 0;
+        }
+    }
+
+    function _getBitmapHeight(bitmap) {
+        if (bitmap == null) {
+            return 0;
+        }
+        try {
+            return bitmap.getHeight();
+        } catch (e) {
+            return 0;
+        }
+    }
+
+    function _getCardBorderColor(cardVariant) {
+        if (cardVariant == CARD_VARIANT_WARMUP) {
+            return 0x56728F;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
+            return 0x4C7898;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
+            return 0x7F694F;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
+            return 0x926E49;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
+            return 0xA14B58;
+        }
+        if (cardVariant == CARD_VARIANT_RECOVERY) {
+            return 0x4F7480;
+        }
+        if (cardVariant == CARD_VARIANT_HR_WARNING) {
+            return 0x97554A;
+        }
+        return 0x516684;
+    }
+
+    function _getCardGradientTopColor(cardVariant) {
+        if (cardVariant == CARD_VARIANT_WARMUP) {
+            return 0x315B7D;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
+            return 0x275778;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
+            return 0x5E4B36;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
+            return 0x70543A;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
+            return 0x883744;
+        }
+        if (cardVariant == CARD_VARIANT_RECOVERY) {
+            return 0x2D5A66;
+        }
+        if (cardVariant == CARD_VARIANT_HR_WARNING) {
+            return 0x7B342F;
+        }
+        return 0x274A6A;
+    }
+
+    function _getCardGradientBottomColor(cardVariant) {
+        if (cardVariant == CARD_VARIANT_WARMUP) {
+            return 0x182F47;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
+            return 0x16324B;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
+            return 0x2E2418;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
+            return 0x3D2D20;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
+            return 0x461925;
+        }
+        if (cardVariant == CARD_VARIANT_RECOVERY) {
+            return 0x183640;
+        }
+        if (cardVariant == CARD_VARIANT_HR_WARNING) {
+            return 0x401B18;
+        }
+        return 0x182E45;
+    }
+
+    function _getCardGradientMidColor(cardVariant) {
+        if (cardVariant == CARD_VARIANT_WARMUP) {
+            return 0x244767;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
+            return 0x204765;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
+            return 0x463726;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
+            return 0x594230;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
+            return 0x6A2835;
+        }
+        if (cardVariant == CARD_VARIANT_RECOVERY) {
+            return 0x234A56;
+        }
+        if (cardVariant == CARD_VARIANT_HR_WARNING) {
+            return 0x5C2722;
+        }
+        return 0x22415F;
+    }
+
+    function _getCardSheenColor(cardVariant) {
+        if (cardVariant == CARD_VARIANT_WARMUP) {
+            return 0x7FA8D0;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
+            return 0x7CAED6;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
+            return 0xB08A61;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
+            return 0xC39A70;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
+            return 0xD97983;
+        }
+        if (cardVariant == CARD_VARIANT_RECOVERY) {
+            return 0x79AAB9;
+        }
+        if (cardVariant == CARD_VARIANT_HR_WARNING) {
+            return 0xCE8476;
+        }
+        return 0x779DC1;
+    }
+
+    function _getCardAccentColor(cardVariant) {
+        if (cardVariant == CARD_VARIANT_WARMUP) {
+            return 0x9ED7FF;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
+            return 0x9CD8FF;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
+            return 0xF1CC95;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
+            return 0xFFD29A;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
+            return 0xFFC2B0;
+        }
+        if (cardVariant == CARD_VARIANT_RECOVERY) {
+            return 0x9DE5EE;
+        }
+        if (cardVariant == CARD_VARIANT_HR_WARNING) {
+            return 0xFFB99B;
+        }
+        return 0xA9D0F8;
+    }
+
+    function _getCardTopBandColor(cardVariant) {
+        if (cardVariant == CARD_VARIANT_WARMUP) {
+            return 0x6EAED8;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
+            return 0x6ABCE3;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
+            return 0xC39A6E;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
+            return 0xD7AA76;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
+            return 0xD96E7E;
+        }
+        if (cardVariant == CARD_VARIANT_RECOVERY) {
+            return 0x63B9C8;
+        }
+        if (cardVariant == CARD_VARIANT_HR_WARNING) {
+            return 0xD97B6A;
+        }
+        return 0x6AA3CF;
+    }
+
+    function _getCardTextColor(cardVariant) {
+        return Gfx.COLOR_WHITE;
+    }
+
+    function _resolveCardFont(sizeClass, cardLineCount) {
+        if (sizeClass == 0) {
+            if (cardLineCount <= 1) {
+                return Gfx.FONT_SMALL;
+            }
+            if (cardLineCount == 2) {
+                return Gfx.FONT_TINY;
+            }
+            return Gfx.FONT_XTINY;
+        }
+
+        if (sizeClass == 2) {
+            if (cardLineCount <= 1) {
+                return Gfx.FONT_MEDIUM;
+            }
+            if (cardLineCount == 2) {
+                return Gfx.FONT_SMALL;
+            }
+            return Gfx.FONT_TINY;
+        }
+
+        if (cardLineCount <= 1) {
+            return Gfx.FONT_SMALL;
+        }
+        if (cardLineCount == 2) {
+            return Gfx.FONT_SMALL;
+        }
+        return Gfx.FONT_TINY;
+    }
+
+    function _fillRoundedGradient(dc as Gfx.Dc, x, y, width, height, corner, topColor, midColor, bottomColor) {
+        dc.setColor(bottomColor, Gfx.COLOR_BLACK);
+        dc.fillRoundedRectangle(x, y, width, height, corner);
+
+        var innerX = x + 1;
+        var innerY = y + 1;
+        var innerW = width - 2;
+        var innerH = height - 2;
+        if (innerW < 2 or innerH < 2) {
+            return;
+        }
+
+        var topH = _clamp((innerH * 38) / 100, 2, innerH - 1);
+        var midY = innerY + topH;
+        var midH = _clamp((innerH * 34) / 100, 2, innerH - topH);
+        var maxMidH = innerH - topH;
+        if (midH > maxMidH) {
+            midH = maxMidH;
+        }
+        if (midH < 1) {
+            midH = 1;
+        }
+
+        dc.setColor(topColor, Gfx.COLOR_BLACK);
+        dc.fillRectangle(innerX, innerY, innerW, topH);
+        dc.setColor(midColor, Gfx.COLOR_BLACK);
+        dc.fillRectangle(innerX, midY, innerW, midH);
     }
 
     function _drawFuelMeter(dc as Gfx.Dc, sizeClass, centerX, centerY, radius, labelFont, valueFont) {
@@ -1757,30 +2257,44 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _updateCardDisplay(info) {
+        if (CARD_VARIANT_PREVIEW_ENABLED) {
+            _applyCardVariantPreview();
+            return;
+        }
+
         var elapsedSec = _extractElapsedSec(info);
         var fuelOverdue = _isFuelOverdue();
 
         if (fuelOverdue) {
-            _cardMode = CARD_MODE_FUEL_OVERDUE;
-            _cardLine1 = _fuelLabelText;
-            _cardLine2 = _fuelNowLine2Text;
-            _cardLine3 = _fuelNowLine3Text;
+            _setCardFixedLines(
+                CARD_MODE_FUEL_OVERDUE,
+                CARD_VARIANT_FUEL_NOW,
+                _fuelLabelText,
+                _fuelNowLine2Text,
+                _fuelNowLine3Text
+            );
             return;
         }
 
         if (_isHeartRateOverCap()) {
-            _cardMode = CARD_MODE_HR_OVER;
-            _cardLine1 = _hrOverLine1Text;
-            _cardLine2 = _hrOverLine2Text;
-            _cardLine3 = _hrOverLine3Text;
+            _setCardFixedLines(
+                CARD_MODE_HR_OVER,
+                CARD_VARIANT_HR_WARNING,
+                _hrOverLine1Text,
+                _hrOverLine2Text,
+                _hrOverLine3Text
+            );
             return;
         }
 
         if (_isDriftOn(info)) {
-            _cardMode = CARD_MODE_DRIFT;
-            _cardLine1 = _driftLine1Text;
-            _cardLine2 = _driftLine2Text;
-            _cardLine3 = _driftLine3Text;
+            _setCardFixedLines(
+                CARD_MODE_DRIFT,
+                CARD_VARIANT_RECOVERY,
+                _driftLine1Text,
+                _driftLine2Text,
+                _driftLine3Text
+            );
             return;
         }
 
@@ -1798,15 +2312,94 @@ class MarathonCoachField extends Ui.DataField {
             var halfToggleSlot = Math.floor(toggleSlot / 2);
             var showFuelCard = ((toggleSlot - (halfToggleSlot * 2)) >= 1);
             if (showFuelCard) {
-                _cardLine1 = _fuelLabelText;
-                _cardMode = CARD_MODE_FUEL;
-                _cardLine2 = _fuelSoonLine2Text;
-                _cardLine3 = _fuelRemainingText;
+                _setCardFixedLines(
+                    CARD_MODE_FUEL,
+                    CARD_VARIANT_FUEL_SOON,
+                    _fuelLabelText,
+                    _fuelSoonLine2Text,
+                    _fuelRemainingText
+                );
                 return;
             }
         }
 
         _setActionCardByBaseline(elapsedSec);
+    }
+
+    function _applyCardVariantPreview() {
+        var tickSec = Math.floor(Sys.getTimer() / 1000);
+        var slot = 0;
+        if (CARD_VARIANT_PREVIEW_SEC > 0) {
+            slot = Math.floor(tickSec / CARD_VARIANT_PREVIEW_SEC);
+        }
+        var pattern = slot % 8;
+
+        if (pattern == 0) {
+            _cardMode = CARD_MODE_ACTION;
+            _cardVariant = CARD_VARIANT_WARMUP;
+            if (_warmupMessages.size() > 0) {
+                var warmupIdx = slot % _warmupMessages.size();
+                _setCardLinesFromMessage(_warmupMessages[warmupIdx]);
+            } else {
+                _setCardLinesFromMessage(_actionHoldText);
+            }
+            return;
+        }
+        if (pattern == 1) {
+            _cardMode = CARD_MODE_ACTION;
+            _cardVariant = CARD_VARIANT_ACTION_PUSH;
+            _setCardLinesFromMessage(_actionPushText);
+            return;
+        }
+        if (pattern == 2) {
+            _cardMode = CARD_MODE_ACTION;
+            _cardVariant = CARD_VARIANT_ACTION_HOLD;
+            _setCardLinesFromMessage(_actionHoldText);
+            return;
+        }
+        if (pattern == 3) {
+            _cardMode = CARD_MODE_ACTION;
+            _cardVariant = CARD_VARIANT_ACTION_EASE;
+            _setCardLinesFromMessage(_actionEaseText);
+            return;
+        }
+        if (pattern == 4) {
+            _setCardFixedLines(
+                CARD_MODE_FUEL,
+                CARD_VARIANT_FUEL_SOON,
+                _fuelLabelText,
+                _fuelSoonLine2Text,
+                _formatMinSec(14 * 60)
+            );
+            return;
+        }
+        if (pattern == 5) {
+            _setCardFixedLines(
+                CARD_MODE_FUEL_OVERDUE,
+                CARD_VARIANT_FUEL_NOW,
+                _fuelLabelText,
+                _fuelNowLine2Text,
+                _fuelNowLine3Text
+            );
+            return;
+        }
+        if (pattern == 6) {
+            _setCardFixedLines(
+                CARD_MODE_DRIFT,
+                CARD_VARIANT_RECOVERY,
+                _driftLine1Text,
+                _driftLine2Text,
+                _driftLine3Text
+            );
+            return;
+        }
+        _setCardFixedLines(
+            CARD_MODE_HR_OVER,
+            CARD_VARIANT_HR_WARNING,
+            _hrOverLine1Text,
+            _hrOverLine2Text,
+            _hrOverLine3Text
+        );
     }
 
     function _isFuelOverdue() {
@@ -1955,7 +2548,7 @@ class MarathonCoachField extends Ui.DataField {
         _pushRecoverStartSec = null;
     }
 
-    function _resolveActionMessage() {
+    function _resolveActionVariant() {
         var paceDeltaSec = null;
         if (_paceNowSecPerKm != null and _targetPaceSecPerKm != null) {
             paceDeltaSec = _paceNowSecPerKm - _targetPaceSecPerKm;
@@ -1982,20 +2575,31 @@ class MarathonCoachField extends Ui.DataField {
             shouldEase = true;
         }
         if (shouldEase) {
-            return _actionEaseText;
+            return CARD_VARIANT_ACTION_EASE;
         }
 
         if (_pushActive) {
-            return _actionPushText;
+            return CARD_VARIANT_ACTION_PUSH;
         }
 
+        return CARD_VARIANT_ACTION_HOLD;
+    }
+
+    function _resolveActionMessage(actionVariant) {
+        if (actionVariant == CARD_VARIANT_ACTION_EASE) {
+            return _actionEaseText;
+        }
+        if (actionVariant == CARD_VARIANT_ACTION_PUSH) {
+            return _actionPushText;
+        }
         return _actionHoldText;
     }
 
     function _setActionCardByBaseline(elapsedSec) {
         _cardMode = CARD_MODE_ACTION;
         if (_isBaselineReady()) {
-            _setCardLinesFromMessage(_resolveActionMessage());
+            _cardVariant = _resolveActionVariant();
+            _setCardLinesFromMessage(_resolveActionMessage(_cardVariant));
             return;
         }
 
@@ -2008,18 +2612,43 @@ class MarathonCoachField extends Ui.DataField {
             slot = Math.floor(elapsedSec / WARMUP_MESSAGE_ROTATE_SEC);
         }
 
-        if (slot == _warmupMessageSlot and _cardLine1 != null and _cardLine2 != null and _cardLine3 != null) {
+        if (
+            slot == _warmupMessageSlot and
+            _cardVariant == CARD_VARIANT_WARMUP and
+            _cardLine1 != null and
+            _cardLine2 != null and
+            _cardLine3 != null
+        ) {
             return;
         }
         _warmupMessageSlot = slot;
 
         if (_warmupMessages.size() == 0) {
+            _cardVariant = CARD_VARIANT_ACTION_HOLD;
             _setCardLinesFromMessage(_actionHoldText);
             return;
         }
 
         var idx = _randomMessageIndex(_warmupMessages.size(), -1, -1);
+        _cardVariant = CARD_VARIANT_WARMUP;
         _setCardLinesFromMessage(_warmupMessages[idx]);
+    }
+
+    function _setCardFixedLines(cardMode, cardVariant, line1, line2, line3) {
+        _cardMode = cardMode;
+        _cardVariant = cardVariant;
+        _cardLine1 = "";
+        _cardLine2 = "";
+        _cardLine3 = "";
+        if (line1 != null) {
+            _cardLine1 = line1.toString();
+        }
+        if (line2 != null) {
+            _cardLine2 = line2.toString();
+        }
+        if (line3 != null) {
+            _cardLine3 = line3.toString();
+        }
     }
 
     function _setCardLinesFromMessage(message) {

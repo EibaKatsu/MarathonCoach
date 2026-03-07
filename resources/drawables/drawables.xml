@@ -1,3 +1,11 @@
 <resources>
     <bitmap id="LauncherIcon" filename="launcher_icon.png"/>
+    <bitmap id="CardBgWarmupSmall" filename="card_bg_warmup_sm.png"/>
+    <bitmap id="CardBgActionPushSmall" filename="card_bg_action_push_sm.png"/>
+    <bitmap id="CardBgActionHoldSmall" filename="card_bg_action_hold_sm.png"/>
+    <bitmap id="CardBgActionEaseSmall" filename="card_bg_action_ease_sm.png"/>
+    <bitmap id="CardBgFuelSoonSmall" filename="card_bg_fuel_soon_sm.png"/>
+    <bitmap id="CardBgFuelNowSmall" filename="card_bg_fuel_now_sm.png"/>
+    <bitmap id="CardBgRecoverySmall" filename="card_bg_recovery_sm.png"/>
+    <bitmap id="CardBgHrWarningSmall" filename="card_bg_hr_warning_sm.png"/>
 </resources>
