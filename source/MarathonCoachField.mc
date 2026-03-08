@@ -1,5 +1,6 @@
 using Toybox.Application.Properties as Props;
 using Toybox.Activity;
+using Toybox.Attention;
 using Toybox.Graphics as Gfx;
 using Toybox.Lang as Lang;
 using Toybox.Math as Math;
@@ -103,6 +104,23 @@ class MarathonCoachField extends Ui.DataField {
     const FUEL_DISPLAY_DONE_FLASH = 2;
     const FUEL_DISPLAY_NO_PLAN = 3;
     const FUEL_DISPLAY_DISABLED = 4;
+    const DISTANCE_NOTIFY_EVENT_NONE = 0;
+    const DISTANCE_NOTIFY_EVENT_SPLIT = 1;
+    const DISTANCE_NOTIFY_EVENT_MILESTONE = 2;
+    const BEEP_EVENT_NONE = 0;
+    const BEEP_EVENT_DISTANCE_SPLIT = 1;
+    const BEEP_EVENT_DISTANCE_MILESTONE = 2;
+    const BEEP_EVENT_FUEL_SOON = 3;
+    const BEEP_EVENT_DRIFT_ON = 4;
+    const BEEP_EVENT_HR_OVER = 5;
+    const BEEP_EVENT_FUEL_NOW = 6;
+    const BEEP_LEVEL_INFO = 1;
+    const BEEP_LEVEL_CAUTION = 2;
+    const BEEP_LEVEL_URGENT = 3;
+    const BEEP_HR_SUPPRESS_SEC = 75;
+    const BEEP_DRIFT_SUPPRESS_SEC = 5 * 60;
+    const BEEP_FUEL_NOW_REPEAT_FIRST_SEC = 30;
+    const BEEP_FUEL_NOW_REPEAT_INTERVAL_SEC = 60;
 
     const DEFAULT_RACE_DISTANCE_KM = 42.195;
     const HR_GAUGE_ZONE_COUNT = 5;
@@ -272,6 +290,15 @@ class MarathonCoachField extends Ui.DataField {
     var _cardBgFuelNowSmall = null;
     var _cardBgRecoverySmall = null;
     var _cardBgHrWarningSmall = null;
+    var _beepStateInitialized = false;
+    var _beepPrevFuelMeterState = FUEL_METER_STATE_NORMAL;
+    var _beepPrevHrOver = false;
+    var _beepPrevDriftOn = false;
+    var _beepFuelNowActive = false;
+    var _beepFuelNowNextRepeatSec = null;
+    var _beepLastHrAlertSec = null;
+    var _beepLastDriftAlertSec = null;
+    var _beepLastElapsedSec = null;
 
     function initialize() {
         DataField.initialize();
@@ -483,6 +510,7 @@ class MarathonCoachField extends Ui.DataField {
         _resetDriftState();
         _warmupMessageSlot = -1;
         _resetDistanceNotifyState();
+        _resetBeepState();
         _setActionCardByBaseline(null);
     }
 
@@ -3061,7 +3089,8 @@ class MarathonCoachField extends Ui.DataField {
         var fuelOverdue = _isFuelOverdue();
         var hrOver = _isHeartRateOverCap();
         var driftOn = _isDriftOn(info);
-        _updateDistanceNotifyState(info, elapsedSec, fuelOverdue or hrOver or driftOn);
+        var distanceNotifyEvent = _updateDistanceNotifyState(info, elapsedSec, fuelOverdue or hrOver or driftOn);
+        _updateBeepNotifications(elapsedSec, fuelOverdue, hrOver, driftOn, distanceNotifyEvent);
 
         if (fuelOverdue) {
             _clearDistanceNotifyCard();
@@ -3136,12 +3165,12 @@ class MarathonCoachField extends Ui.DataField {
 
     function _updateDistanceNotifyState(info, elapsedSec, suppressDisplay) {
         if (elapsedSec == null) {
-            return;
+            return DISTANCE_NOTIFY_EVENT_NONE;
         }
 
         var distanceKm = _extractElapsedDistanceKm(info);
         if (distanceKm == null) {
-            return;
+            return DISTANCE_NOTIFY_EVENT_NONE;
         }
 
         _ensureDistanceNotifyPlan();
@@ -3149,6 +3178,7 @@ class MarathonCoachField extends Ui.DataField {
         var notifyLine1 = null;
         var notifyLine2 = null;
         var notifyLine3 = null;
+        var notifyEvent = DISTANCE_NOTIFY_EVENT_NONE;
 
         var checkpointCount = _getDistanceCheckpointCount(_distanceNotifyRaceType);
         while (_distanceNotifyNextCheckpointIdx < checkpointCount) {
@@ -3165,6 +3195,7 @@ class MarathonCoachField extends Ui.DataField {
             notifyLine1 = _getDistanceCheckpointLine1(_distanceNotifyRaceType, _distanceNotifyNextCheckpointIdx);
             notifyLine2 = _getDistanceCheckpointLine2(_distanceNotifyRaceType, _distanceNotifyNextCheckpointIdx);
             notifyLine3 = _getDistanceCheckpointLine3(_distanceNotifyRaceType, _distanceNotifyNextCheckpointIdx);
+            notifyEvent = DISTANCE_NOTIFY_EVENT_MILESTONE;
             _distanceNotifyNextCheckpointIdx += 1;
         }
 
@@ -3178,20 +3209,193 @@ class MarathonCoachField extends Ui.DataField {
                 notifyLine1 = splitLines[0];
                 notifyLine2 = splitLines[1];
                 notifyLine3 = splitLines[2];
+                notifyEvent = DISTANCE_NOTIFY_EVENT_SPLIT;
                 _distanceNotifyNextSplitKm += 1;
             }
         }
 
         if (notifyLine1 == null) {
-            return;
+            return DISTANCE_NOTIFY_EVENT_NONE;
         }
 
         if (suppressDisplay) {
             _clearDistanceNotifyCard();
-            return;
+            return notifyEvent;
         }
 
         _setDistanceNotifyCard(notifyLine1, notifyLine2, notifyLine3, elapsedSec);
+        return notifyEvent;
+    }
+
+    function _resetBeepState() {
+        _beepStateInitialized = false;
+        _beepPrevFuelMeterState = FUEL_METER_STATE_NORMAL;
+        _beepPrevHrOver = false;
+        _beepPrevDriftOn = false;
+        _beepFuelNowActive = false;
+        _beepFuelNowNextRepeatSec = null;
+        _beepLastHrAlertSec = null;
+        _beepLastDriftAlertSec = null;
+        _beepLastElapsedSec = null;
+    }
+
+    function _updateBeepNotifications(elapsedSec, fuelOverdue, hrOver, driftOn, distanceNotifyEvent) {
+        if (elapsedSec == null) {
+            _resetBeepState();
+            return;
+        }
+        if (_beepLastElapsedSec != null and elapsedSec < _beepLastElapsedSec) {
+            _resetBeepState();
+        }
+        _beepLastElapsedSec = elapsedSec;
+
+        var fuelMeterState = _resolveFuelMeterState();
+        if (!_beepStateInitialized) {
+            _beepPrevFuelMeterState = fuelMeterState;
+            _beepPrevHrOver = hrOver;
+            _beepPrevDriftOn = driftOn;
+            _beepFuelNowActive = fuelOverdue;
+            if (fuelOverdue) {
+                _beepFuelNowNextRepeatSec = elapsedSec + BEEP_FUEL_NOW_REPEAT_FIRST_SEC;
+            } else {
+                _beepFuelNowNextRepeatSec = null;
+            }
+            _beepStateInitialized = true;
+            return;
+        }
+
+        var beepEvent = BEEP_EVENT_NONE;
+
+        if (fuelOverdue) {
+            if (!_beepFuelNowActive) {
+                beepEvent = _selectHigherPriorityBeepEvent(beepEvent, BEEP_EVENT_FUEL_NOW);
+                _beepFuelNowActive = true;
+                _beepFuelNowNextRepeatSec = elapsedSec + BEEP_FUEL_NOW_REPEAT_FIRST_SEC;
+            } else if (_beepFuelNowNextRepeatSec != null and elapsedSec >= _beepFuelNowNextRepeatSec) {
+                beepEvent = _selectHigherPriorityBeepEvent(beepEvent, BEEP_EVENT_FUEL_NOW);
+                _beepFuelNowNextRepeatSec = elapsedSec + BEEP_FUEL_NOW_REPEAT_INTERVAL_SEC;
+            }
+        } else {
+            _beepFuelNowActive = false;
+            _beepFuelNowNextRepeatSec = null;
+        }
+
+        if (!fuelOverdue) {
+            if (hrOver and !_beepPrevHrOver) {
+                if (_beepLastHrAlertSec == null or (elapsedSec - _beepLastHrAlertSec) >= BEEP_HR_SUPPRESS_SEC) {
+                    beepEvent = _selectHigherPriorityBeepEvent(beepEvent, BEEP_EVENT_HR_OVER);
+                    _beepLastHrAlertSec = elapsedSec;
+                }
+            }
+
+            if (driftOn and !_beepPrevDriftOn) {
+                if (
+                    _beepLastDriftAlertSec == null or
+                    (elapsedSec - _beepLastDriftAlertSec) >= BEEP_DRIFT_SUPPRESS_SEC
+                ) {
+                    beepEvent = _selectHigherPriorityBeepEvent(beepEvent, BEEP_EVENT_DRIFT_ON);
+                    _beepLastDriftAlertSec = elapsedSec;
+                }
+            }
+
+            if (
+                fuelMeterState == FUEL_METER_STATE_CAUTION and
+                _beepPrevFuelMeterState != FUEL_METER_STATE_CAUTION
+            ) {
+                beepEvent = _selectHigherPriorityBeepEvent(beepEvent, BEEP_EVENT_FUEL_SOON);
+            }
+
+            if (distanceNotifyEvent == DISTANCE_NOTIFY_EVENT_MILESTONE) {
+                beepEvent = _selectHigherPriorityBeepEvent(beepEvent, BEEP_EVENT_DISTANCE_MILESTONE);
+            } else if (distanceNotifyEvent == DISTANCE_NOTIFY_EVENT_SPLIT) {
+                beepEvent = _selectHigherPriorityBeepEvent(beepEvent, BEEP_EVENT_DISTANCE_SPLIT);
+            }
+        }
+
+        _playBeepEvent(beepEvent);
+        _beepPrevFuelMeterState = fuelMeterState;
+        _beepPrevHrOver = hrOver;
+        _beepPrevDriftOn = driftOn;
+    }
+
+    function _selectHigherPriorityBeepEvent(currentEvent, candidateEvent) {
+        if (_resolveBeepEventPriority(candidateEvent) > _resolveBeepEventPriority(currentEvent)) {
+            return candidateEvent;
+        }
+        return currentEvent;
+    }
+
+    function _resolveBeepEventPriority(beepEvent) {
+        if (beepEvent == BEEP_EVENT_FUEL_NOW) {
+            return 600;
+        }
+        if (beepEvent == BEEP_EVENT_HR_OVER) {
+            return 500;
+        }
+        if (beepEvent == BEEP_EVENT_DRIFT_ON) {
+            return 400;
+        }
+        if (beepEvent == BEEP_EVENT_FUEL_SOON) {
+            return 350;
+        }
+        if (beepEvent == BEEP_EVENT_DISTANCE_MILESTONE) {
+            return 300;
+        }
+        if (beepEvent == BEEP_EVENT_DISTANCE_SPLIT) {
+            return 200;
+        }
+        return 0;
+    }
+
+    function _resolveBeepLevel(beepEvent) {
+        if (beepEvent == BEEP_EVENT_DISTANCE_SPLIT) {
+            return BEEP_LEVEL_INFO;
+        }
+        if (
+            beepEvent == BEEP_EVENT_DISTANCE_MILESTONE or
+            beepEvent == BEEP_EVENT_FUEL_SOON or
+            beepEvent == BEEP_EVENT_HR_OVER or
+            beepEvent == BEEP_EVENT_DRIFT_ON
+        ) {
+            return BEEP_LEVEL_CAUTION;
+        }
+        if (beepEvent == BEEP_EVENT_FUEL_NOW) {
+            return BEEP_LEVEL_URGENT;
+        }
+        return 0;
+    }
+
+    function _playBeepEvent(beepEvent) {
+        var beepLevel = _resolveBeepLevel(beepEvent);
+        if (beepLevel <= 0) {
+            return;
+        }
+        _playBeepPattern(beepLevel);
+    }
+
+    function _playBeepPattern(beepCount) {
+        if (beepCount <= 0 or !(Attention has :playTone)) {
+            return;
+        }
+
+        try {
+            if (Attention has :ToneProfile) {
+                var toneProfile = [];
+                for (var i = 0; i < beepCount; i += 1) {
+                    toneProfile.add(new Attention.ToneProfile(5200, 80));
+                    if (i < (beepCount - 1)) {
+                        toneProfile.add(new Attention.ToneProfile(2200, 50));
+                    }
+                }
+                Attention.playTone({:toneProfile => toneProfile});
+                return;
+            }
+
+            for (var j = 0; j < beepCount; j += 1) {
+                Attention.playTone(Attention.TONE_LOUD_BEEP);
+            }
+        } catch (e) {
+        }
     }
 
     function _applyDistanceNotifyCard(elapsedSec) {
