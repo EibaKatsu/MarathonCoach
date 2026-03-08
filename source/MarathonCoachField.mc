@@ -15,6 +15,8 @@ class MarathonCoachField extends Ui.DataField {
     const FUEL_INTERVAL_SEC = 35 * 60;
     const LAP_DEBOUNCE_SEC = 20;
     const CARD_TOGGLE_SEC = 3;
+    const DISTANCE_CARD_DISPLAY_SEC = 3;
+    const DISTANCE_EVENT_EPSILON_KM = 0.02;
     const FUEL_TOGGLE_LEAD_SEC = 2 * 60;
     const FUEL_METER_WARNING_LEAD_SEC = 0;
     const FUEL_METER_LABEL_TOGGLE_SEC = 2;
@@ -57,6 +59,15 @@ class MarathonCoachField extends Ui.DataField {
     const SHORT_DISTANCE_MAX_KM = 10.5;
     const HALF_DISTANCE_KM = 21.0975;
     const HALF_DISTANCE_TOLERANCE_KM = 0.25;
+    const TEN_DISTANCE_KM = 10.0;
+    const FIVE_DISTANCE_KM = 5.0;
+    const DIST_NOTIFY_RACE_FULL = 0;
+    const DIST_NOTIFY_RACE_HALF = 1;
+    const DIST_NOTIFY_RACE_TEN = 2;
+    const DIST_NOTIFY_RACE_FIVE = 3;
+    const DIST_NOTIFY_PHASE_EARLY = 0;
+    const DIST_NOTIFY_PHASE_MID = 1;
+    const DIST_NOTIFY_PHASE_LATE = 2;
     const CARDIAC_COST_PUSH_MAX_RATIO_FULL = 1.06;
     const CARDIAC_COST_PUSH_MAX_RATIO_HALF = 1.08;
     const CARDIAC_COST_PUSH_MAX_RATIO_SHORT = 1.10;
@@ -75,6 +86,7 @@ class MarathonCoachField extends Ui.DataField {
     const CARD_MODE_FUEL_OVERDUE = 2;
     const CARD_MODE_HR_OVER = 3;
     const CARD_MODE_DRIFT = 4;
+    const CARD_MODE_DISTANCE = 5;
     const CARD_VARIANT_WARMUP = 0;
     const CARD_VARIANT_ACTION_PUSH = 1;
     const CARD_VARIANT_ACTION_HOLD = 2;
@@ -136,6 +148,24 @@ class MarathonCoachField extends Ui.DataField {
     var _fuelMeterMinuteSuffixText = "m";
     var _fuelMeterDoneText = "Done";
     var _fuelMeterNoPlanText = "No plan";
+    var _distanceLabelFullText = "FULL";
+    var _distanceLabelHalfText = "HALF";
+    var _distanceLabel10kText = "10km";
+    var _distanceLabel5kText = "5km";
+    var _distanceSplitEarlyLine2 as Lang.Array = ["Early", "Relax", "No rush"];
+    var _distanceSplitEarlyLine3 as Lang.Array = ["Settle", "Rhythm", "Smooth"];
+    var _distanceSplitMidLine2 as Lang.Array = ["Flow", "Stable", "Steady"];
+    var _distanceSplitMidLine3 as Lang.Array = ["Keep", "No slip", "Rhythm"];
+    var _distanceSplitLateLine2 as Lang.Array = ["Go now", "Hang on", "Almost"];
+    var _distanceSplitLateLine3 as Lang.Array = ["Step", "Forward", "No slip"];
+    var _distanceMilestoneHalfLine2Text = "To back";
+    var _distanceMilestoneHalfLine3Text = "Rhythm";
+    var _distanceMilestone10kLine2Text = "To back";
+    var _distanceMilestone10kLine3Text = "Steady";
+    var _distanceMilestone5kLine2Text = "To back";
+    var _distanceMilestone5kLine3Text = "Keep";
+    var _distanceGoalLine2Text = "Done";
+    var _distanceGoalLine3Text = "Nice";
     var _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
     var _targetTimeHms = null;
     var _targetTimeSec = null;
@@ -222,6 +252,13 @@ class MarathonCoachField extends Ui.DataField {
     var _lastDistanceProbeLogLine = null;
     var _warmupMessages as Lang.Array = [];
     var _warmupMessageSlot = -1;
+    var _distanceNotifyRaceType = -1;
+    var _distanceNotifyNextSplitKm = 1;
+    var _distanceNotifyNextCheckpointIdx = 0;
+    var _distanceNotifyLine1 = "";
+    var _distanceNotifyLine2 = "";
+    var _distanceNotifyLine3 = "";
+    var _distanceNotifyUntilSec = null;
     var _cardMode = CARD_MODE_ACTION;
     var _cardVariant = CARD_VARIANT_ACTION_HOLD;
     var _cardLine1 = "EASE";
@@ -272,6 +309,50 @@ class MarathonCoachField extends Ui.DataField {
         _fuelMeterMinuteSuffixText = Ui.loadResource(Rez.Strings.FuelMeterMinuteSuffix);
         _fuelMeterDoneText = Ui.loadResource(Rez.Strings.FuelMeterDoneText);
         _fuelMeterNoPlanText = Ui.loadResource(Rez.Strings.FuelMeterNoPlanText);
+        _distanceLabelFullText = Ui.loadResource(Rez.Strings.DistanceLabelFull);
+        _distanceLabelHalfText = Ui.loadResource(Rez.Strings.DistanceLabelHalf);
+        _distanceLabel10kText = Ui.loadResource(Rez.Strings.DistanceLabel10k);
+        _distanceLabel5kText = Ui.loadResource(Rez.Strings.DistanceLabel5k);
+
+        _distanceSplitEarlyLine2 = [
+            Ui.loadResource(Rez.Strings.DistanceSplitEarly1Line2),
+            Ui.loadResource(Rez.Strings.DistanceSplitEarly2Line2),
+            Ui.loadResource(Rez.Strings.DistanceSplitEarly3Line2)
+        ];
+        _distanceSplitEarlyLine3 = [
+            Ui.loadResource(Rez.Strings.DistanceSplitEarly1Line3),
+            Ui.loadResource(Rez.Strings.DistanceSplitEarly2Line3),
+            Ui.loadResource(Rez.Strings.DistanceSplitEarly3Line3)
+        ];
+        _distanceSplitMidLine2 = [
+            Ui.loadResource(Rez.Strings.DistanceSplitMid1Line2),
+            Ui.loadResource(Rez.Strings.DistanceSplitMid2Line2),
+            Ui.loadResource(Rez.Strings.DistanceSplitMid3Line2)
+        ];
+        _distanceSplitMidLine3 = [
+            Ui.loadResource(Rez.Strings.DistanceSplitMid1Line3),
+            Ui.loadResource(Rez.Strings.DistanceSplitMid2Line3),
+            Ui.loadResource(Rez.Strings.DistanceSplitMid3Line3)
+        ];
+        _distanceSplitLateLine2 = [
+            Ui.loadResource(Rez.Strings.DistanceSplitLate1Line2),
+            Ui.loadResource(Rez.Strings.DistanceSplitLate2Line2),
+            Ui.loadResource(Rez.Strings.DistanceSplitLate3Line2)
+        ];
+        _distanceSplitLateLine3 = [
+            Ui.loadResource(Rez.Strings.DistanceSplitLate1Line3),
+            Ui.loadResource(Rez.Strings.DistanceSplitLate2Line3),
+            Ui.loadResource(Rez.Strings.DistanceSplitLate3Line3)
+        ];
+
+        _distanceMilestoneHalfLine2Text = Ui.loadResource(Rez.Strings.DistanceMilestoneHalfLine2);
+        _distanceMilestoneHalfLine3Text = Ui.loadResource(Rez.Strings.DistanceMilestoneHalfLine3);
+        _distanceMilestone10kLine2Text = Ui.loadResource(Rez.Strings.DistanceMilestone10kLine2);
+        _distanceMilestone10kLine3Text = Ui.loadResource(Rez.Strings.DistanceMilestone10kLine3);
+        _distanceMilestone5kLine2Text = Ui.loadResource(Rez.Strings.DistanceMilestone5kLine2);
+        _distanceMilestone5kLine3Text = Ui.loadResource(Rez.Strings.DistanceMilestone5kLine3);
+        _distanceGoalLine2Text = Ui.loadResource(Rez.Strings.DistanceGoalLine2);
+        _distanceGoalLine3Text = Ui.loadResource(Rez.Strings.DistanceGoalLine3);
 
         _warmupMessages = [
             Ui.loadResource(Rez.Strings.WarmupMsg1),
@@ -401,6 +482,7 @@ class MarathonCoachField extends Ui.DataField {
         _lastDistanceProbeLogLine = null;
         _resetDriftState();
         _warmupMessageSlot = -1;
+        _resetDistanceNotifyState();
         _setActionCardByBaseline(null);
     }
 
@@ -2977,8 +3059,12 @@ class MarathonCoachField extends Ui.DataField {
 
         var elapsedSec = _extractElapsedSec(info);
         var fuelOverdue = _isFuelOverdue();
+        var hrOver = _isHeartRateOverCap();
+        var driftOn = _isDriftOn(info);
+        _updateDistanceNotifyState(info, elapsedSec, fuelOverdue or hrOver or driftOn);
 
         if (fuelOverdue) {
+            _clearDistanceNotifyCard();
             _setCardFixedLines(
                 CARD_MODE_FUEL_OVERDUE,
                 CARD_VARIANT_FUEL_NOW,
@@ -2989,7 +3075,8 @@ class MarathonCoachField extends Ui.DataField {
             return;
         }
 
-        if (_isHeartRateOverCap()) {
+        if (hrOver) {
+            _clearDistanceNotifyCard();
             _setCardFixedLines(
                 CARD_MODE_HR_OVER,
                 CARD_VARIANT_HR_WARNING,
@@ -3000,7 +3087,8 @@ class MarathonCoachField extends Ui.DataField {
             return;
         }
 
-        if (_isDriftOn(info)) {
+        if (driftOn) {
+            _clearDistanceNotifyCard();
             _setCardFixedLines(
                 CARD_MODE_DRIFT,
                 CARD_VARIANT_RECOVERY,
@@ -3013,6 +3101,10 @@ class MarathonCoachField extends Ui.DataField {
 
         if (elapsedSec == null) {
             _setActionCardByBaseline(null);
+            return;
+        }
+
+        if (_applyDistanceNotifyCard(elapsedSec)) {
             return;
         }
 
@@ -3040,6 +3132,352 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         _setActionCardByBaseline(elapsedSec);
+    }
+
+    function _updateDistanceNotifyState(info, elapsedSec, suppressDisplay) {
+        if (elapsedSec == null) {
+            return;
+        }
+
+        var distanceKm = _extractElapsedDistanceKm(info);
+        if (distanceKm == null) {
+            return;
+        }
+
+        _ensureDistanceNotifyPlan();
+
+        var notifyLine1 = null;
+        var notifyLine2 = null;
+        var notifyLine3 = null;
+
+        var checkpointCount = _getDistanceCheckpointCount(_distanceNotifyRaceType);
+        while (_distanceNotifyNextCheckpointIdx < checkpointCount) {
+            var checkpointKm = _getDistanceCheckpointKm(_distanceNotifyRaceType, _distanceNotifyNextCheckpointIdx);
+            if (checkpointKm == null or (distanceKm + DISTANCE_EVENT_EPSILON_KM) < checkpointKm) {
+                break;
+            }
+
+            var checkpointFloorKm = Math.floor(checkpointKm + DISTANCE_EVENT_EPSILON_KM);
+            if (_distanceNotifyNextSplitKm <= checkpointFloorKm) {
+                _distanceNotifyNextSplitKm = checkpointFloorKm + 1;
+            }
+
+            notifyLine1 = _getDistanceCheckpointLine1(_distanceNotifyRaceType, _distanceNotifyNextCheckpointIdx);
+            notifyLine2 = _getDistanceCheckpointLine2(_distanceNotifyRaceType, _distanceNotifyNextCheckpointIdx);
+            notifyLine3 = _getDistanceCheckpointLine3(_distanceNotifyRaceType, _distanceNotifyNextCheckpointIdx);
+            _distanceNotifyNextCheckpointIdx += 1;
+        }
+
+        if (notifyLine1 == null) {
+            var maxSplitKm = _getDistanceMaxSplitKm(_distanceNotifyRaceType);
+            while (
+                _distanceNotifyNextSplitKm <= maxSplitKm and
+                (distanceKm + DISTANCE_EVENT_EPSILON_KM) >= _distanceNotifyNextSplitKm
+            ) {
+                var splitLines = _buildDistanceSplitLines(_distanceNotifyNextSplitKm);
+                notifyLine1 = splitLines[0];
+                notifyLine2 = splitLines[1];
+                notifyLine3 = splitLines[2];
+                _distanceNotifyNextSplitKm += 1;
+            }
+        }
+
+        if (notifyLine1 == null) {
+            return;
+        }
+
+        if (suppressDisplay) {
+            _clearDistanceNotifyCard();
+            return;
+        }
+
+        _setDistanceNotifyCard(notifyLine1, notifyLine2, notifyLine3, elapsedSec);
+    }
+
+    function _applyDistanceNotifyCard(elapsedSec) {
+        if (_distanceNotifyUntilSec == null) {
+            return false;
+        }
+        if (elapsedSec == null or elapsedSec >= _distanceNotifyUntilSec) {
+            _clearDistanceNotifyCard();
+            return false;
+        }
+
+        _setCardFixedLines(
+            CARD_MODE_DISTANCE,
+            CARD_VARIANT_ACTION_HOLD,
+            _distanceNotifyLine1,
+            _distanceNotifyLine2,
+            _distanceNotifyLine3
+        );
+        return true;
+    }
+
+    function _setDistanceNotifyCard(line1, line2, line3, elapsedSec) {
+        _distanceNotifyLine1 = "";
+        _distanceNotifyLine2 = "";
+        _distanceNotifyLine3 = "";
+
+        if (line1 != null) {
+            _distanceNotifyLine1 = line1.toString();
+        }
+        if (line2 != null) {
+            _distanceNotifyLine2 = line2.toString();
+        }
+        if (line3 != null) {
+            _distanceNotifyLine3 = line3.toString();
+        }
+        _distanceNotifyUntilSec = elapsedSec + DISTANCE_CARD_DISPLAY_SEC;
+    }
+
+    function _clearDistanceNotifyCard() {
+        _distanceNotifyLine1 = "";
+        _distanceNotifyLine2 = "";
+        _distanceNotifyLine3 = "";
+        _distanceNotifyUntilSec = null;
+    }
+
+    function _resetDistanceNotifyState() {
+        _distanceNotifyRaceType = -1;
+        _distanceNotifyNextSplitKm = 1;
+        _distanceNotifyNextCheckpointIdx = 0;
+        _clearDistanceNotifyCard();
+    }
+
+    function _ensureDistanceNotifyPlan() {
+        var raceType = _resolveDistanceNotifyRaceType();
+        if (_distanceNotifyRaceType == raceType) {
+            return;
+        }
+
+        _distanceNotifyRaceType = raceType;
+        _distanceNotifyNextSplitKm = 1;
+        _distanceNotifyNextCheckpointIdx = 0;
+        _clearDistanceNotifyCard();
+    }
+
+    function _resolveDistanceNotifyRaceType() {
+        if (_raceDistanceKm <= 7.0) {
+            return DIST_NOTIFY_RACE_FIVE;
+        }
+        if (_abs(_raceDistanceKm - HALF_DISTANCE_KM) <= HALF_DISTANCE_TOLERANCE_KM) {
+            return DIST_NOTIFY_RACE_HALF;
+        }
+        if (_raceDistanceKm <= 15.0) {
+            return DIST_NOTIFY_RACE_TEN;
+        }
+        return DIST_NOTIFY_RACE_FULL;
+    }
+
+    function _getDistanceCheckpointCount(raceType) {
+        if (raceType == DIST_NOTIFY_RACE_FIVE) {
+            return 1;
+        }
+        return 2;
+    }
+
+    function _getDistanceCheckpointKm(raceType, checkpointIdx) {
+        if (raceType == DIST_NOTIFY_RACE_FULL) {
+            if (checkpointIdx == 0) {
+                return 21.1;
+            }
+            if (checkpointIdx == 1) {
+                return 42.2;
+            }
+            return null;
+        }
+
+        if (raceType == DIST_NOTIFY_RACE_HALF) {
+            if (checkpointIdx == 0) {
+                return 10.0;
+            }
+            if (checkpointIdx == 1) {
+                return 21.1;
+            }
+            return null;
+        }
+
+        if (raceType == DIST_NOTIFY_RACE_TEN) {
+            if (checkpointIdx == 0) {
+                return 5.0;
+            }
+            if (checkpointIdx == 1) {
+                return 10.0;
+            }
+            return null;
+        }
+
+        if (checkpointIdx == 0) {
+            return 5.0;
+        }
+        return null;
+    }
+
+    function _getDistanceCheckpointLine1(raceType, checkpointIdx) {
+        if (raceType == DIST_NOTIFY_RACE_FULL) {
+            if (checkpointIdx == 0) {
+                return _distanceLabelHalfText;
+            }
+            if (checkpointIdx == 1) {
+                return _distanceLabelFullText;
+            }
+            return "";
+        }
+
+        if (raceType == DIST_NOTIFY_RACE_HALF) {
+            if (checkpointIdx == 0) {
+                return _distanceLabel10kText;
+            }
+            if (checkpointIdx == 1) {
+                return _distanceLabelHalfText;
+            }
+            return "";
+        }
+
+        if (raceType == DIST_NOTIFY_RACE_TEN) {
+            if (checkpointIdx == 0) {
+                return _distanceLabel5kText;
+            }
+            if (checkpointIdx == 1) {
+                return _distanceLabel10kText;
+            }
+            return "";
+        }
+
+        return _distanceLabel5kText;
+    }
+
+    function _getDistanceCheckpointLine2(raceType, checkpointIdx) {
+        if (raceType == DIST_NOTIFY_RACE_FULL) {
+            if (checkpointIdx == 0) {
+                return _distanceMilestoneHalfLine2Text;
+            }
+            if (checkpointIdx == 1) {
+                return _distanceGoalLine2Text;
+            }
+            return "";
+        }
+
+        if (raceType == DIST_NOTIFY_RACE_HALF) {
+            if (checkpointIdx == 0) {
+                return _distanceMilestone10kLine2Text;
+            }
+            if (checkpointIdx == 1) {
+                return _distanceGoalLine2Text;
+            }
+            return "";
+        }
+
+        if (raceType == DIST_NOTIFY_RACE_TEN) {
+            if (checkpointIdx == 0) {
+                return _distanceMilestone5kLine2Text;
+            }
+            if (checkpointIdx == 1) {
+                return _distanceGoalLine2Text;
+            }
+            return "";
+        }
+
+        if (checkpointIdx == 0) {
+            return _distanceGoalLine2Text;
+        }
+        return "";
+    }
+
+    function _getDistanceCheckpointLine3(raceType, checkpointIdx) {
+        if (raceType == DIST_NOTIFY_RACE_FULL) {
+            if (checkpointIdx == 0) {
+                return _distanceMilestoneHalfLine3Text;
+            }
+            if (checkpointIdx == 1) {
+                return _distanceGoalLine3Text;
+            }
+            return "";
+        }
+
+        if (raceType == DIST_NOTIFY_RACE_HALF) {
+            if (checkpointIdx == 0) {
+                return _distanceMilestone10kLine3Text;
+            }
+            if (checkpointIdx == 1) {
+                return _distanceGoalLine3Text;
+            }
+            return "";
+        }
+
+        if (raceType == DIST_NOTIFY_RACE_TEN) {
+            if (checkpointIdx == 0) {
+                return _distanceMilestone5kLine3Text;
+            }
+            if (checkpointIdx == 1) {
+                return _distanceGoalLine3Text;
+            }
+            return "";
+        }
+
+        if (checkpointIdx == 0) {
+            return _distanceGoalLine3Text;
+        }
+        return "";
+    }
+
+    function _getDistanceMaxSplitKm(raceType) {
+        if (raceType == DIST_NOTIFY_RACE_FULL) {
+            return 42;
+        }
+        if (raceType == DIST_NOTIFY_RACE_HALF) {
+            return 21;
+        }
+        if (raceType == DIST_NOTIFY_RACE_TEN) {
+            return 9;
+        }
+        return 4;
+    }
+
+    function _buildDistanceSplitLines(splitKm) as Lang.Array {
+        var line1 = splitKm.format("%d") + "km";
+        var phase = _resolveDistanceSplitPhase(splitKm);
+        var line2Templates = _distanceSplitEarlyLine2;
+        var line3Templates = _distanceSplitEarlyLine3;
+        if (phase == DIST_NOTIFY_PHASE_MID) {
+            line2Templates = _distanceSplitMidLine2;
+            line3Templates = _distanceSplitMidLine3;
+        } else if (phase == DIST_NOTIFY_PHASE_LATE) {
+            line2Templates = _distanceSplitLateLine2;
+            line3Templates = _distanceSplitLateLine3;
+        }
+
+        var templateCount = line2Templates.size();
+        if (templateCount <= 0) {
+            return [line1, "", ""];
+        }
+
+        var templateIdx = (splitKm - 1) % templateCount;
+        if (templateIdx < 0) {
+            templateIdx += templateCount;
+        }
+
+        var line2 = line2Templates[templateIdx];
+        var line3 = "";
+        if (templateIdx < line3Templates.size()) {
+            line3 = line3Templates[templateIdx];
+        }
+        return [line1, line2, line3];
+    }
+
+    function _resolveDistanceSplitPhase(splitKm) {
+        if (_raceDistanceKm == null or _raceDistanceKm <= 0) {
+            return DIST_NOTIFY_PHASE_EARLY;
+        }
+
+        var progress = splitKm / _raceDistanceKm;
+        if (progress < 0.34) {
+            return DIST_NOTIFY_PHASE_EARLY;
+        }
+        if (progress < 0.80) {
+            return DIST_NOTIFY_PHASE_MID;
+        }
+        return DIST_NOTIFY_PHASE_LATE;
     }
 
     function _applyCardVariantPreview() {
