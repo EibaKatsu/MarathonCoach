@@ -263,43 +263,79 @@
 
 ---
 
+## レースプロファイル判定（現在実装）
+`raceDistanceKm` の設定値でプロファイルを決める。
+
+- `SHORT`：`raceDistanceKm <= 10.5`（5km/10km想定）
+- `HALF`：`abs(raceDistanceKm - 21.0975) <= 0.25`
+- `FULL`：上記以外（フルマラソン想定）
+
 ## ZONE（心拍上限）ロジック（Garmin心拍ゾーン基準）
-Garminの心拍ゾーンを取得できる場合、距離帯で許容上限を切り替える。
+距離の絶対値ではなく、`progress = elapsedDistance / raceDistanceKm` の進捗率で5フェーズに分割する。
 
-- 0–10km：`Z2上限`
-- 10–25km：`Z3上限`
-- 25–35km：`Z3上限 +2bpm`
-- 35–40km：`Z4上限`
-- 40km–Finish：`Z4上限 +3bpm`（警告は弱め）
+- `S1`: `< 24%`
+- `S2`: `24%〜59%`
+- `S3`: `59%〜83%`
+- `S4`: `83%〜95%`
+- `S5`: `95%〜Finish`
 
-HR超過判定はバタつき防止のため、
-- Over開始：上限`+1bpm`を継続
-  - 0–35km：`12秒`
-  - 35–40km：`10秒`
-  - 40km–Finish：`20秒`
-- Over解除：回復閾値を `5秒` 継続
-  - 0–35km / 40km–Finish：`HR <= 許容上限 -2bpm`
-  - 35–40km：`HR <= 許容上限 -1bpm`
+許容ゾーン（`allowedZoneNumber`）とオフセット（`allowedZoneOffsetBpm`）：
+
+| Profile | S1 | S2 | S3 | S4 | S5 |
+| --- | --- | --- | --- | --- | --- |
+| FULL | Z2 +0 | Z3 +0 | Z3 +2 | Z4 +0 | Z4 +3 |
+| HALF | Z3 +0 | Z4 -2 | Z4 +0 | Z4 +2 | Z4 +4 |
+| SHORT | Z4 +0 | Z5 +2 | Z5 +3 | Z5 +4 | Z5 +5 |
+
+HR超過判定（`HR > allowed + 1bpm`）：
+- Over開始継続秒数：
+  - `S1/S2/S3`: `12秒`
+  - `S4`: `10秒`
+  - `S5`: `20秒`
+- Over解除：
+  - 回復継続 `5秒`
+  - 解除閾値は `S4` のみ `allowed -1bpm`、それ以外は `allowed -2bpm`
 
 ---
 
-## ちょい上げ判定（現在実装）
-「ちょい上げ」は、遅れがあり、かつ心拍余裕がある場合にのみ発火する。
+## ACTION判定（現在実装）
+「ちょい上げ」は、遅れがあり、かつ心拍余裕があり、Cardiac Costが悪化していない場合のみ発火する。
+
+- フェーズ定義は ZONE と同じ（`S1..S5`）。
+- Cardiac Cost比：
+  - `baseCost = baseHR * basePace`
+  - `curCost = curHR * curPace`
+  - `ccRatio = curCost / baseCost`
+  - `ccRatio` は次の条件を満たす場合のみ有効（それ以外は `null` 扱い）：
+    - ドリフト基準確定済み（`baseHR/basePace` が有効）
+    - rollingサンプル数 `>= 30`
+    - `abs(curPace - basePace) <= 5秒/km`（pace stability 条件）
 
 - 前提条件（1つでも満たさない場合は発火しない）：
   - FUEL期限超過でない
   - HR超過状態でない
   - DRIFT ONでない
   - `paceNowSecPerKm` / `targetPaceSecPerKm` / `allowedMaxHeartRate` / `currentHeartRate` が有効
-- 距離帯ごとの発火閾値：
-  - 0–10km：`paceDelta >= +12秒/km` かつ `headroom >= 8bpm`
-  - 10–25km：`paceDelta >= +8秒/km` かつ `headroom >= 6bpm`
-  - 25–35km：`paceDelta >= +6秒/km` かつ `headroom >= 4bpm`
-  - 35–40km：`paceDelta >= +4秒/km` かつ `headroom >= 3bpm`
-  - 40km–Finish：`paceDelta >= +3秒/km` かつ `headroom >= 2bpm`
+- ちょい上げ発火閾値（`paceDelta >=` かつ `headroom >=`）：
+
+| Profile | S1 | S2 | S3 | S4 | S5 |
+| --- | --- | --- | --- | --- | --- |
+| FULL | `+12s, 8bpm` | `+8s, 6bpm` | `+6s, 4bpm` | `+4s, 3bpm` | `+3s, 2bpm` |
+| HALF | `+10s, 7bpm` | `+6s, 5bpm` | `+4s, 3bpm` | `+3s, 2bpm` | `+2s, 1bpm` |
+| SHORT | `+8s, 6bpm` | `+5s, 4bpm` | `+3s, 2bpm` | `+2s, 1bpm` | `+1s, 0bpm` |
+
+- Cardiac Costゲート（ちょい上げ時）：
+  - `FULL`: `ccRatio <= 1.06`
+  - `HALF`: `ccRatio <= 1.08`
+  - `SHORT`: `ccRatio <= 1.10`
+  - `ccRatio == null` の場合はゲート未適用（発火可）
 - ヒステリシス：
   - ON：条件成立が `6秒` 継続
-  - OFF：`paceDelta < (閾値 -2秒)` または `headroom < (閾値 -1bpm)` が `5秒` 継続
+  - OFF：`paceDelta < (閾値 -2秒)` または `headroom < (閾値 -1bpm)` または Cardiac Costゲート不成立が `5秒` 継続
+- ちょい落とし（Ease）判定：
+  - `paceDelta <= -8秒/km` または `headroom <= 閾値` または `baselineHrDelta >= 閾値` または `ccRatio >= 閾値`
+  - `headroom` / `baselineHrDelta` / `ccRatio` の閾値はプロファイル・フェーズ別に可変
+    - `ccRatio` 閾値：`FULL 1.10 / HALF 1.12 / SHORT 1.15`
 
 ---
 
