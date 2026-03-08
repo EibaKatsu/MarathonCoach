@@ -30,6 +30,7 @@ class MarathonCoachField extends Ui.DataField {
     const DRIFT_HR_OFF_DELTA = 6;
     const DRIFT_OFF_CONFIRM_SEC = 60;
     const MIN_DISTANCE_FOR_PREDICTION_KM = 0.5;
+    const PREDICTION_ON_PACE_THRESHOLD_SEC = 60;
     const ACTION_EASE_PACE_DELTA_SEC = -8;
     const ACTION_PUSH_TRIGGER_SEC = 6;
     const ACTION_PUSH_RELEASE_SEC = 5;
@@ -100,7 +101,11 @@ class MarathonCoachField extends Ui.DataField {
     var _statusText = "Step3 Layout";
     var _fuelLabelText = "Fuel";
     var _goalTimeLabelText = "Tgt";
-    var _goalDeltaText = "Tgt 05:00";
+    var _goalDeltaText = "--:--(waiting)";
+    var _predictionWaitingText = "waiting";
+    var _predictionOnPaceText = "on pace";
+    var _predictionAheadSuffixText = "m ahead";
+    var _predictionBehindSuffixText = "m behind";
     var _actionPushText = "Push a bit";
     var _actionHoldText = "Hold pace";
     var _actionEaseText = "Ease down";
@@ -227,6 +232,10 @@ class MarathonCoachField extends Ui.DataField {
         _statusText = Ui.loadResource(Rez.Strings.Step3Status);
         _fuelLabelText = Ui.loadResource(Rez.Strings.FuelLabel);
         _goalTimeLabelText = Ui.loadResource(Rez.Strings.GoalTimeLabel);
+        _predictionWaitingText = Ui.loadResource(Rez.Strings.PredictionWaiting);
+        _predictionOnPaceText = Ui.loadResource(Rez.Strings.PredictionOnPace);
+        _predictionAheadSuffixText = Ui.loadResource(Rez.Strings.PredictionAheadSuffix);
+        _predictionBehindSuffixText = Ui.loadResource(Rez.Strings.PredictionBehindSuffix);
         _goalDeltaText = _buildGoalDeltaText(null);
         _actionPushText = Ui.loadResource(Rez.Strings.ActionPushText);
         _actionHoldText = Ui.loadResource(Rez.Strings.ActionHoldText);
@@ -1627,7 +1636,7 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         _distanceTimeText = distanceText + "  " + elapsedText;
-        var predictionDeltaText = null;
+        var predictedTotalSec = null;
         var displayPaceSecPerKm = null;
         if (_paceNowSecPerKm != null) {
             // Keep delta calculation aligned with the pace value shown on screen.
@@ -1645,12 +1654,10 @@ class MarathonCoachField extends Ui.DataField {
             if (remainingDistanceKm < 0) {
                 remainingDistanceKm = 0;
             }
-            var predictedTotalSec = elapsedSec + (remainingDistanceKm * displayPaceSecPerKm);
-            var deltaSec = predictedTotalSec - _targetTimeSec;
-            predictionDeltaText = _formatSignedDeltaMinSec(deltaSec);
+            predictedTotalSec = elapsedSec + (remainingDistanceKm * displayPaceSecPerKm);
         }
 
-        _goalDeltaText = _buildGoalDeltaText(predictionDeltaText);
+        _goalDeltaText = _buildGoalDeltaText(predictedTotalSec);
     }
 
     function _updateHeartRate(info) {
@@ -3449,81 +3456,48 @@ class MarathonCoachField extends Ui.DataField {
         return kmWhole.format("%d") + "." + kmDecimal.format("%d") + " km";
     }
 
-    function _buildGoalDeltaText(deltaText) {
-        var targetTimeText = _formatTargetTimeHourMin();
-        if (deltaText == null or deltaText.length() == 0) {
-            return targetTimeText + " / " + _formatGoalDistanceKm();
+    function _buildGoalDeltaText(predictedTotalSec) {
+        var predictedText = "--:--";
+        if (predictedTotalSec != null and predictedTotalSec >= 0) {
+            predictedText = _formatHourMin(predictedTotalSec);
         }
-        return targetTimeText + " (" + deltaText + ")";
+
+        if (
+            predictedTotalSec == null or
+            _targetTimeSec == null or
+            _targetTimeSec <= 0
+        ) {
+            return predictedText + "(" + _predictionWaitingText + ")";
+        }
+
+        var deltaSec = predictedTotalSec - _targetTimeSec;
+        if (_abs(deltaSec) <= PREDICTION_ON_PACE_THRESHOLD_SEC) {
+            return predictedText + "(" + _predictionOnPaceText + ")";
+        }
+
+        var roundedMinuteDelta = Math.floor((_abs(deltaSec) + 30.0) / 60.0);
+        if (roundedMinuteDelta < 1) {
+            roundedMinuteDelta = 1;
+        }
+        var deltaText = roundedMinuteDelta.format("%d") + _predictionBehindSuffixText;
+        if (deltaSec < 0) {
+            deltaText = roundedMinuteDelta.format("%d") + _predictionAheadSuffixText;
+        }
+        return predictedText + "(" + deltaText + ")";
     }
 
-    function _formatGoalDistanceKm() {
-        if (_raceDistanceKm == null or _raceDistanceKm <= 0) {
-            return "--.- km";
-        }
-
-        // Canonical labels for supported race distances.
-        if (_abs(_raceDistanceKm - 42.195) < 0.0006) {
-            return "42.195 km";
-        }
-        if (_abs(_raceDistanceKm - 21.0975) < 0.0006) {
-            return "21.0975 km";
-        }
-        if (_abs(_raceDistanceKm - 10.0) < 0.0006) {
-            return "10 km";
-        }
-        if (_abs(_raceDistanceKm - 5.0) < 0.0006) {
-            return "5 km";
-        }
-
-        var roundedTenThousandth = Math.floor((_raceDistanceKm * 10000.0) + 0.5);
-        if (roundedTenThousandth < 0) {
-            roundedTenThousandth = 0;
-        }
-
-        var whole = Math.floor(roundedTenThousandth / 10000);
-        var fractional = roundedTenThousandth - (whole * 10000);
-        if (fractional == 0) {
-            return whole.format("%d") + " km";
-        }
-
-        var fractionalText = fractional.format("%04d");
-        while (fractionalText.length() > 0) {
-            var tail = fractionalText.substring(fractionalText.length() - 1, fractionalText.length());
-            if (tail != "0") {
-                break;
-            }
-            fractionalText = fractionalText.substring(0, fractionalText.length() - 1);
-        }
-
-        return whole.format("%d") + "." + fractionalText + " km";
-    }
-
-    function _formatTargetTimeHourMin() {
-        var sec = _targetTimeSec;
-        if (sec == null or sec < 0) {
-            sec = _parseTimeToSec(_targetTimeHms);
-        }
-        if (sec == null or sec < 0) {
+    function _formatHourMin(totalSec) {
+        if (totalSec == null) {
             return "--:--";
         }
 
-        var totalSec = Math.floor(sec);
-        var hourPart = Math.floor(totalSec / 3600);
-        var minPart = Math.floor((totalSec - (hourPart * 3600)) / 60);
-        return hourPart.format("%d") + ":" + minPart.format("%02d");
-    }
-
-    function _formatSignedDeltaMinSec(deltaSec) {
-        var absSec = _abs(deltaSec);
-        var roundedAbsSec = Math.floor((absSec + 2.5) / 5) * 5;
-        var sign = "+";
-        if (deltaSec < -2.5) {
-            sign = "-";
+        var roundedTotalMinutes = Math.floor((totalSec + 30.0) / 60.0);
+        if (roundedTotalMinutes < 0) {
+            roundedTotalMinutes = 0;
         }
-        var minPart = Math.floor(roundedAbsSec / 60);
-        var secPart = roundedAbsSec - (minPart * 60);
-        return sign + minPart.format("%02d") + "m" + secPart.format("%02d") + "s";
+        var hourPart = Math.floor(roundedTotalMinutes / 60);
+        var minPart = roundedTotalMinutes - (hourPart * 60);
+        return hourPart.format("%d") + ":" + minPart.format("%02d");
     }
 
     function _textYByRatio(blockTop, blockHeight, ratioPct, fontHeight) {
