@@ -9,7 +9,8 @@ using Toybox.WatchUi as Ui;
 
 class MarathonCoachField extends Ui.DataField {
     const KEY_RACE_DISTANCE_KM = "race_distance_km";
-    const KEY_TARGET_TIME_HMS = "target_time_hms";
+    const KEY_TARGET_TIME_HOUR = "target_time_hour";
+    const KEY_TARGET_TIME_MINUTE = "target_time_minute";
     const LAYOUT_DEBUG_OVERLAY = false;
     const FUEL_INTERVAL_SEC = 35 * 60;
     const LAP_DEBOUNCE_SEC = 20;
@@ -36,8 +37,9 @@ class MarathonCoachField extends Ui.DataField {
     const ACTION_PUSH_RELEASE_HR_HYSTERESIS_BPM = 1;
     const ACTION_EASE_MIN_HEADROOM_BPM = 3;
     const ACTION_EASE_BASELINE_HR_DELTA_BPM = 6;
-    const CARD_VARIANT_PREVIEW_ENABLED = true;
-    const CARD_VARIANT_PREVIEW_SEC = 15;
+    const CARD_VARIANT_PREVIEW_ENABLED = false;
+    const CARD_VARIANT_PREVIEW_SEC = 3;
+    const SETTINGS_LOG = false;
     const FIT_FACT_LOG = true;
     const DIST_PROBE_LOG = true;
 
@@ -59,7 +61,6 @@ class MarathonCoachField extends Ui.DataField {
     const FUEL_METER_STATE_WARNING = 2;
 
     const DEFAULT_RACE_DISTANCE_KM = 42.195;
-    const DEFAULT_TARGET_TIME_HMS = "05:00:00";
     const HR_GAUGE_ZONE_COUNT = 5;
     const HR_ZONE_COLOR_1 = 0x9E9E9E; // gray
     const HR_ZONE_COLOR_2 = 0x52B7E8; // light blue
@@ -74,31 +75,31 @@ class MarathonCoachField extends Ui.DataField {
     const FUEL_RING_WARNING_TRACK_COLOR = 0x6B2121;
     const FUEL_RING_WARNING_FILL_COLOR = 0xF01818;
 
-    var _statusText = "STEP3 LAYOUT";
-    var _fuelLabelText = "FUEL";
-    var _goalTimeLabelText = "TGT";
-    var _goalDeltaText = "TGT 05:00";
+    var _statusText = "Step3 Layout";
+    var _fuelLabelText = "Fuel";
+    var _goalTimeLabelText = "Tgt";
+    var _goalDeltaText = "Tgt 05:00";
     var _actionPushText = "Push a bit";
     var _actionHoldText = "Hold pace";
     var _actionEaseText = "Ease down";
     var _hrOverLine1Text = "HR";
-    var _hrOverLine2Text = "OVER";
-    var _hrOverLine3Text = "ZONE";
-    var _driftLine1Text = "WATER";
+    var _hrOverLine2Text = "Over";
+    var _hrOverLine3Text = "Zone";
+    var _driftLine1Text = "Water";
     var _driftLine2Text = "+";
-    var _driftLine3Text = "FUEL";
-    var _fuelSoonLine2Text = "IN";
-    var _fuelNowLine2Text = "NOW";
+    var _driftLine3Text = "Fuel";
+    var _fuelSoonLine2Text = "Soon";
+    var _fuelNowLine2Text = "Now";
     var _fuelNowLine3Text = "!";
-    var _fuelMeterPrimaryLabelText = "FUEL";
-    var _fuelMeterAltLabelText = "IN";
-    var _fuelMeterWarningText = "FUEL NOW";
-    var _fuelMeterWarningSubText = "PRESS LAP";
-    var _fuelMeterCautionPrefixText = "IN ";
+    var _fuelMeterPrimaryLabelText = "Fuel";
+    var _fuelMeterAltLabelText = "Soon";
+    var _fuelMeterWarningText = "Fuel now";
+    var _fuelMeterWarningSubText = "Press lap";
+    var _fuelMeterCautionPrefixText = "In ";
     var _fuelMeterCautionSuffixText = "m";
     var _fuelMeterMinuteSuffixText = "m";
     var _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
-    var _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
+    var _targetTimeHms = null;
     var _targetTimeSec = null;
     var _targetPaceSecPerKm = null;
     var _distanceTimeText = "--.- km  --:--:--";
@@ -171,6 +172,7 @@ class MarathonCoachField extends Ui.DataField {
     var _sampleHeartRateSource = "null";
     var _sampleCurrentLocationSource = "null";
     var _lastFactLogLine = null;
+    var _lastSettingsLogLine = null;
     var _probeLocDistanceM = 0.0;
     var _probeLocLastLocation = null;
     var _probeLocLastElapsedSec = null;
@@ -376,35 +378,108 @@ class MarathonCoachField extends Ui.DataField {
 
     function _loadSettings() {
         _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
-        _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
+        _targetTimeHms = null;
         _targetTimeSec = null;
         _targetPaceSecPerKm = null;
 
-        var raceDistance = Props.getValue(KEY_RACE_DISTANCE_KM);
-        if (raceDistance != null and raceDistance instanceof Number and raceDistance > 0) {
-            _raceDistanceKm = raceDistance;
-        }
-
-        var targetTime = Props.getValue(KEY_TARGET_TIME_HMS);
-        if (targetTime != null) {
-            var targetTimeText = _normalizeTimeText(targetTime.toString());
-            if (targetTimeText.length() > 0) {
-                _targetTimeHms = targetTimeText;
+        var raceDistance = _getPropertyValue(KEY_RACE_DISTANCE_KM);
+        if (raceDistance != null) {
+            var raceDistanceKm = null;
+            if (raceDistance instanceof Number) {
+                var raceDistanceIdx = Math.floor(raceDistance + 0.5);
+                raceDistanceKm = _mapRaceDistanceIndexToKm(raceDistanceIdx);
+                if (raceDistanceKm == null and raceDistance > 0) {
+                    // Backward compatibility for older numeric-km saved values.
+                    raceDistanceKm = raceDistance;
+                }
+            } else {
+                raceDistanceKm = _parsePositiveDecimal(raceDistance.toString());
+            }
+            if (raceDistanceKm != null and raceDistanceKm > 0) {
+                _raceDistanceKm = raceDistanceKm;
             }
         }
 
-        _targetTimeSec = _parseTimeToSec(_targetTimeHms);
-        if (_targetTimeSec == null or _targetTimeSec <= 0) {
-            _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
-            _targetTimeSec = _parseTimeToSec(DEFAULT_TARGET_TIME_HMS);
-        }
-        if (_targetTimeSec == null or _targetTimeSec <= 0) {
-            _targetTimeSec = 5 * 3600;
-            _targetTimeHms = DEFAULT_TARGET_TIME_HMS;
+        var targetHour = _loadTargetTimeHour();
+        var targetMinute = _loadTargetTimeMinute();
+        if (targetHour != null and targetMinute != null) {
+            var hourInt = Math.floor(targetHour + 0.5);
+            var minuteInt = Math.floor(targetMinute + 0.5);
+            _targetTimeHms = _formatHourMinuteSecond(hourInt, minuteInt);
+            _targetTimeSec = (hourInt * 3600) + (minuteInt * 60);
         }
         if (_targetTimeSec != null and _targetTimeSec > 0 and _raceDistanceKm > 0) {
             _targetPaceSecPerKm = _targetTimeSec / _raceDistanceKm;
         }
+        _logSettingsState(targetHour, targetMinute);
+    }
+
+    function _loadTargetTimeHour() {
+        var hour = _loadIntSettingValue(KEY_TARGET_TIME_HOUR);
+        if (hour == null or hour < 0 or hour > 8) {
+            return null;
+        }
+        return hour;
+    }
+
+    function _loadTargetTimeMinute() {
+        var minute = _loadIntSettingValue(KEY_TARGET_TIME_MINUTE);
+        if (minute == null) {
+            return null;
+        }
+        if (minute == 0 or minute == 15 or minute == 30 or minute == 45) {
+            return minute;
+        }
+        return null;
+    }
+
+    function _loadIntSettingValue(key) {
+        var value = _getPropertyValue(key);
+        if (value == null) {
+            return null;
+        }
+
+        if (value instanceof Number) {
+            return Math.floor(value + 0.5);
+        }
+
+        var parsed = _parsePositiveInt(value.toString());
+        if (parsed == null) {
+            var parsedDecimal = _parsePositiveDecimal(value.toString());
+            if (parsedDecimal == null) {
+                return null;
+            }
+            return Math.floor(parsedDecimal + 0.5);
+        }
+        return parsed;
+    }
+
+    function _getPropertyValue(key) {
+        try {
+            return Props.getValue(key);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function _formatHourMinuteSecond(hourPart, minutePart) {
+        return hourPart.format("%02d") + ":" + minutePart.format("%02d") + ":00";
+    }
+
+    function _mapRaceDistanceIndexToKm(index) {
+        if (index == 0) {
+            return 42.195;
+        }
+        if (index == 1) {
+            return 21.0975;
+        }
+        if (index == 2) {
+            return 10.0;
+        }
+        if (index == 3) {
+            return 5.0;
+        }
+        return null;
     }
 
     function _drawStep3Layout(dc as Gfx.Dc) {
@@ -588,10 +663,7 @@ class MarathonCoachField extends Ui.DataField {
             textAreaH = cardFontH;
         }
 
-        var cardGap = 0;
-        if (cardLineCount >= 2) {
-            cardGap = _max((textAreaH - (cardFontH * cardLineCount)) / (cardLineCount - 1), 1);
-        }
+        var cardGap = _resolveCardLineGap(cardLineCount, cardFontH, textAreaH);
         var textTotalH = (cardFontH * cardLineCount) + (cardGap * (cardLineCount - 1));
         var cardLineY = textAreaY + _max((textAreaH - textTotalH) / 2, 0);
         var textLeft = bodyX + _clamp((bodyW * 15) / 100, 10, 24);
@@ -662,19 +734,6 @@ class MarathonCoachField extends Ui.DataField {
 
         var cardLines = _getCardDisplayLines();
         var cardLineCount = cardLines.size();
-        var cardFont = Gfx.FONT_TINY;
-        if (sizeClass == 0) {
-            if (cardLineCount <= 1) {
-                cardFont = Gfx.FONT_SMALL;
-            } else if (cardLineCount == 2) {
-                cardFont = Gfx.FONT_SMALL;
-            } else if (cardLineCount >= 3) {
-                cardFont = Gfx.FONT_TINY;
-            }
-        } else {
-            cardFont = _resolveCardFont(sizeClass, cardLineCount);
-        }
-        var fontH = dc.getFontHeight(cardFont);
         var textPadX = _clamp((innerW * 12) / 100, 8, 12);
         var textAreaX = innerX + textPadX;
         var textAreaW = innerW - (textPadX * 2);
@@ -684,15 +743,14 @@ class MarathonCoachField extends Ui.DataField {
         }
         var textAreaY = innerY + _clamp((innerH * 14) / 100, 5, 11);
         var textAreaH = innerH - (_clamp((innerH * 14) / 100, 5, 11) * 2);
+        var cardFont = _resolveCardFontToFit(dc, sizeClass, cardLines, textAreaW, textAreaH);
+        var fontH = dc.getFontHeight(cardFont);
         if (textAreaH < fontH) {
             textAreaY = innerY + _max((innerH - fontH) / 2, 1);
             textAreaH = fontH;
         }
 
-        var gap = 0;
-        if (cardLineCount > 1) {
-            gap = _max((textAreaH - (fontH * cardLineCount)) / (cardLineCount - 1), 1);
-        }
+        var gap = _resolveCardLineGap(cardLineCount, fontH, textAreaH);
         var totalH = (fontH * cardLineCount) + (gap * (cardLineCount - 1));
         var textY = textAreaY + _max((textAreaH - totalH) / 2, 0);
         var textX = textAreaX + (textAreaW / 2);
@@ -726,7 +784,7 @@ class MarathonCoachField extends Ui.DataField {
             return _cardBgActionHoldSmall;
         }
         if (cardVariant == CARD_VARIANT_ACTION_EASE) {
-            return _cardBgActionEaseSmall;
+            return _cardBgActionPushSmall;
         }
         if (cardVariant == CARD_VARIANT_FUEL_SOON) {
             return _cardBgFuelSoonSmall;
@@ -735,7 +793,7 @@ class MarathonCoachField extends Ui.DataField {
             return _cardBgFuelNowSmall;
         }
         if (cardVariant == CARD_VARIANT_RECOVERY) {
-            return _cardBgRecoverySmall;
+            return _cardBgFuelSoonSmall;
         }
         if (cardVariant == CARD_VARIANT_HR_WARNING) {
             return _cardBgHrWarningSmall;
@@ -972,6 +1030,75 @@ class MarathonCoachField extends Ui.DataField {
             return Gfx.FONT_SMALL;
         }
         return Gfx.FONT_TINY;
+    }
+
+    function _resolveCardLineGap(cardLineCount, fontH, areaH) {
+        if (cardLineCount <= 1) {
+            return 0;
+        }
+
+        var desiredGap = 1;
+        if (cardLineCount == 2) {
+            desiredGap = _clamp(fontH / 3, 2, 8);
+        } else {
+            desiredGap = _clamp(fontH / 5, 1, 5);
+        }
+
+        var maxGap = _max((areaH - (fontH * cardLineCount)) / (cardLineCount - 1), 1);
+        if (desiredGap > maxGap) {
+            desiredGap = maxGap;
+        }
+        return desiredGap;
+    }
+
+    function _resolveCardFontToFit(dc as Gfx.Dc, sizeClass, cardLines as Lang.Array, textAreaW, textAreaH) {
+        var candidates = [];
+        if (sizeClass == 2) {
+            candidates = [Gfx.FONT_MEDIUM, Gfx.FONT_SMALL, Gfx.FONT_TINY, Gfx.FONT_XTINY];
+        } else if (sizeClass == 0) {
+            candidates = [Gfx.FONT_SMALL, Gfx.FONT_TINY, Gfx.FONT_XTINY];
+        } else {
+            candidates = [Gfx.FONT_SMALL, Gfx.FONT_TINY, Gfx.FONT_XTINY];
+        }
+
+        for (var i = 0; i < candidates.size(); i += 1) {
+            var font = candidates[i];
+            if (_isCardTextFit(dc, font, cardLines, textAreaW, textAreaH)) {
+                return font;
+            }
+        }
+
+        return candidates[candidates.size() - 1];
+    }
+
+    function _isCardTextFit(dc as Gfx.Dc, font, cardLines as Lang.Array, textAreaW, textAreaH) as Lang.Boolean {
+        if (textAreaW <= 0 or textAreaH <= 0) {
+            return false;
+        }
+
+        var lineCount = cardLines.size();
+        var fontH = dc.getFontHeight(font);
+        var minTotalH = fontH * lineCount;
+        if (lineCount > 1) {
+            minTotalH += (lineCount - 1);
+        }
+        if (minTotalH > textAreaH) {
+            return false;
+        }
+
+        for (var i = 0; i < lineCount; i += 1) {
+            var line = "";
+            if (cardLines[i] != null) {
+                line = cardLines[i].toString();
+            }
+            var lineW = dc.getTextWidthInPixels(line, font);
+            // Keep headroom for bold stroke around text.
+            if ((lineW + 2) > textAreaW) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     function _fillRoundedGradient(dc as Gfx.Dc, x, y, width, height, corner, topColor, midColor, bottomColor) {
@@ -1918,6 +2045,28 @@ class MarathonCoachField extends Ui.DataField {
         Sys.println(line);
     }
 
+    function _logSettingsState(targetHour, targetMinute) {
+        if (!SETTINGS_LOG) {
+            return;
+        }
+        var rawRace = _getPropertyValue(KEY_RACE_DISTANCE_KM);
+        var rawHour = _getPropertyValue(KEY_TARGET_TIME_HOUR);
+        var rawMinute = _getPropertyValue(KEY_TARGET_TIME_MINUTE);
+        var line =
+            "[SETTINGS] raceRaw=" + _factValue(rawRace) +
+            " hourRaw=" + _factValue(rawHour) +
+            " minuteRaw=" + _factValue(rawMinute) +
+            " hourNorm=" + _factValue(targetHour) +
+            " minuteNorm=" + _factValue(targetMinute) +
+            " hms=" + _factValue(_targetTimeHms) +
+            " sec=" + _factValue(_targetTimeSec);
+        if (_lastSettingsLogLine == line) {
+            return;
+        }
+        _lastSettingsLogLine = line;
+        Sys.println(line);
+    }
+
     function _logDistanceProbe(info) {
         if (!DIST_PROBE_LOG) {
             return;
@@ -2269,9 +2418,9 @@ class MarathonCoachField extends Ui.DataField {
             _setCardFixedLines(
                 CARD_MODE_FUEL_OVERDUE,
                 CARD_VARIANT_FUEL_NOW,
-                _fuelLabelText,
                 _fuelNowLine2Text,
-                _fuelNowLine3Text
+                _fuelLabelText + _fuelNowLine3Text,
+                ""
             );
             return;
         }
@@ -2316,8 +2465,8 @@ class MarathonCoachField extends Ui.DataField {
                     CARD_MODE_FUEL,
                     CARD_VARIANT_FUEL_SOON,
                     _fuelLabelText,
-                    _fuelSoonLine2Text,
-                    _fuelRemainingText
+                    _resolveFuelSoonCardLine2(),
+                    ""
                 );
                 return;
             }
@@ -2332,58 +2481,63 @@ class MarathonCoachField extends Ui.DataField {
         if (CARD_VARIANT_PREVIEW_SEC > 0) {
             slot = Math.floor(tickSec / CARD_VARIANT_PREVIEW_SEC);
         }
-        var pattern = slot % 8;
-
-        if (pattern == 0) {
-            _cardMode = CARD_MODE_ACTION;
-            _cardVariant = CARD_VARIANT_WARMUP;
-            if (_warmupMessages.size() > 0) {
-                var warmupIdx = slot % _warmupMessages.size();
-                _setCardLinesFromMessage(_warmupMessages[warmupIdx]);
-            } else {
-                _setCardLinesFromMessage(_actionHoldText);
-            }
-            return;
-        }
-        if (pattern == 1) {
-            _cardMode = CARD_MODE_ACTION;
-            _cardVariant = CARD_VARIANT_ACTION_PUSH;
-            _setCardLinesFromMessage(_actionPushText);
-            return;
-        }
-        if (pattern == 2) {
+        var warmupCount = _warmupMessages.size();
+        var totalPatterns = warmupCount + 7;
+        if (totalPatterns <= 0) {
             _cardMode = CARD_MODE_ACTION;
             _cardVariant = CARD_VARIANT_ACTION_HOLD;
             _setCardLinesFromMessage(_actionHoldText);
             return;
         }
-        if (pattern == 3) {
+
+        var pattern = slot % totalPatterns;
+        if (pattern < warmupCount) {
+            _cardMode = CARD_MODE_ACTION;
+            _cardVariant = CARD_VARIANT_WARMUP;
+            _setCardLinesFromMessage(_warmupMessages[pattern]);
+            return;
+        }
+
+        var fixedPattern = pattern - warmupCount;
+        if (fixedPattern == 0) {
+            _cardMode = CARD_MODE_ACTION;
+            _cardVariant = CARD_VARIANT_ACTION_PUSH;
+            _setCardLinesFromMessage(_actionPushText);
+            return;
+        }
+        if (fixedPattern == 1) {
+            _cardMode = CARD_MODE_ACTION;
+            _cardVariant = CARD_VARIANT_ACTION_HOLD;
+            _setCardLinesFromMessage(_actionHoldText);
+            return;
+        }
+        if (fixedPattern == 2) {
             _cardMode = CARD_MODE_ACTION;
             _cardVariant = CARD_VARIANT_ACTION_EASE;
             _setCardLinesFromMessage(_actionEaseText);
             return;
         }
-        if (pattern == 4) {
+        if (fixedPattern == 3) {
             _setCardFixedLines(
                 CARD_MODE_FUEL,
                 CARD_VARIANT_FUEL_SOON,
                 _fuelLabelText,
-                _fuelSoonLine2Text,
-                _formatMinSec(14 * 60)
+                _resolveFuelSoonCardLine2(),
+                ""
             );
             return;
         }
-        if (pattern == 5) {
+        if (fixedPattern == 4) {
             _setCardFixedLines(
                 CARD_MODE_FUEL_OVERDUE,
                 CARD_VARIANT_FUEL_NOW,
-                _fuelLabelText,
                 _fuelNowLine2Text,
-                _fuelNowLine3Text
+                _fuelLabelText + _fuelNowLine3Text,
+                ""
             );
             return;
         }
-        if (pattern == 6) {
+        if (fixedPattern == 5) {
             _setCardFixedLines(
                 CARD_MODE_DRIFT,
                 CARD_VARIANT_RECOVERY,
@@ -2404,6 +2558,20 @@ class MarathonCoachField extends Ui.DataField {
 
     function _isFuelOverdue() {
         return _fuelRemainingSec != null and _fuelRemainingSec <= 0;
+    }
+
+    function _resolveFuelSoonCardLine2() {
+        if (_fuelSoonLine2Text == null) {
+            return "あと少し";
+        }
+        var text = _fuelSoonLine2Text.toString();
+        if (text.length() == 0) {
+            return "あと少し";
+        }
+        if (text == "あと") {
+            return "あと少し";
+        }
+        return text;
     }
 
     function _isHeartRateOverCap() {
@@ -2822,6 +2990,48 @@ class MarathonCoachField extends Ui.DataField {
         return value;
     }
 
+    function _parsePositiveDecimal(text) {
+        var rawText = _normalizeTimeText(text);
+        if (rawText == null or rawText.length() == 0) {
+            return null;
+        }
+
+        var intPart = 0;
+        var fracPart = 0.0;
+        var fracDivisor = 1.0;
+        var seenDot = false;
+        var hasDigit = false;
+
+        for (var i = 0; i < rawText.length(); i += 1) {
+            var ch = rawText.substring(i, i + 1);
+            if (ch == "." or ch == "．") {
+                if (seenDot) {
+                    return null;
+                }
+                seenDot = true;
+                continue;
+            }
+
+            var digit = _digitValue(ch);
+            if (digit == null) {
+                return null;
+            }
+
+            hasDigit = true;
+            if (!seenDot) {
+                intPart = (intPart * 10) + digit;
+            } else {
+                fracPart = (fracPart * 10.0) + digit;
+                fracDivisor *= 10.0;
+            }
+        }
+
+        if (!hasDigit) {
+            return null;
+        }
+        return intPart + (fracPart / fracDivisor);
+    }
+
     function _normalizeTimeText(text) {
         if (text == null) {
             return "";
@@ -2958,10 +3168,7 @@ class MarathonCoachField extends Ui.DataField {
             sec = _parseTimeToSec(_targetTimeHms);
         }
         if (sec == null or sec < 0) {
-            sec = _parseTimeToSec(DEFAULT_TARGET_TIME_HMS);
-        }
-        if (sec == null or sec < 0) {
-            return "05:00";
+            return "--:--";
         }
 
         var totalSec = Math.floor(sec);

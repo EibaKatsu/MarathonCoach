@@ -1,20 +1,45 @@
 <resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
     <properties>
-        <property id="race_distance_km" type="float">42.195</property>
-        <property id="target_time_hms" type="string">05:00:00</property>
+        <property id="race_distance_km" type="number">0</property>
+        <property id="target_time_hour" type="number">4</property>
+        <property id="target_time_minute" type="number">0</property>
     </properties>
 
     <strings>
         <string id="setting_race_distance">Race Distance (km)</string>
-        <string id="setting_target_time">Target Time (HH:MM:SS)</string>
+        <string id="setting_target_hour">Target Time Hour</string>
+        <string id="setting_target_minute">Target Time Minute</string>
     </strings>
 
     <settings>
         <setting propertyKey="@Properties.race_distance_km" title="@Strings.setting_race_distance">
-            <settingConfig type="numeric" />
+            <settingConfig type="list">
+                <listEntry value="0">42.195 km (Full Marathon)</listEntry>
+                <listEntry value="1">21.0975 km (Half Marathon)</listEntry>
+                <listEntry value="2">10 km</listEntry>
+                <listEntry value="3">5 km</listEntry>
+            </settingConfig>
         </setting>
-        <setting propertyKey="@Properties.target_time_hms" title="@Strings.setting_target_time">
-            <settingConfig type="alphaNumeric" />
+        <setting propertyKey="@Properties.target_time_hour" title="@Strings.setting_target_hour">
+            <settingConfig type="list">
+                <listEntry value="0">0</listEntry>
+                <listEntry value="1">1</listEntry>
+                <listEntry value="2">2</listEntry>
+                <listEntry value="3">3</listEntry>
+                <listEntry value="4">4</listEntry>
+                <listEntry value="5">5</listEntry>
+                <listEntry value="6">6</listEntry>
+                <listEntry value="7">7</listEntry>
+                <listEntry value="8">8</listEntry>
+            </settingConfig>
+        </setting>
+        <setting propertyKey="@Properties.target_time_minute" title="@Strings.setting_target_minute">
+            <settingConfig type="list">
+                <listEntry value="0">00</listEntry>
+                <listEntry value="15">15</listEntry>
+                <listEntry value="30">30</listEntry>
+                <listEntry value="45">45</listEntry>
+            </settingConfig>
         </setting>
     </settings>
 </resources>
