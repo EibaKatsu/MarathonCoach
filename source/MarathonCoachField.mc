@@ -39,6 +39,7 @@ class MarathonCoachField extends Ui.DataField {
     const ACTION_EASE_BASELINE_HR_DELTA_BPM = 6;
     const RACE_PROFILE_FULL = 0;
     const RACE_PROFILE_HALF = 1;
+    const RACE_PROFILE_SHORT = 2;
     const RACE_PHASE_1 = 0;
     const RACE_PHASE_2 = 1;
     const RACE_PHASE_3 = 2;
@@ -48,12 +49,15 @@ class MarathonCoachField extends Ui.DataField {
     const RACE_PHASE_2_END_PROGRESS = 0.59;
     const RACE_PHASE_3_END_PROGRESS = 0.83;
     const RACE_PHASE_4_END_PROGRESS = 0.95;
+    const SHORT_DISTANCE_MAX_KM = 10.5;
     const HALF_DISTANCE_KM = 21.0975;
     const HALF_DISTANCE_TOLERANCE_KM = 0.25;
     const CARDIAC_COST_PUSH_MAX_RATIO_FULL = 1.06;
     const CARDIAC_COST_PUSH_MAX_RATIO_HALF = 1.08;
+    const CARDIAC_COST_PUSH_MAX_RATIO_SHORT = 1.10;
     const CARDIAC_COST_EASE_MIN_RATIO_FULL = 1.10;
     const CARDIAC_COST_EASE_MIN_RATIO_HALF = 1.12;
+    const CARDIAC_COST_EASE_MIN_RATIO_SHORT = 1.15;
     const CARDIAC_COST_MIN_SAMPLES = 30;
     const CARD_VARIANT_PREVIEW_ENABLED = false;
     const CARD_VARIANT_PREVIEW_SEC = 3;
@@ -2156,6 +2160,9 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveRaceProfile() {
+        if (_raceDistanceKm != null and _raceDistanceKm <= SHORT_DISTANCE_MAX_KM) {
+            return RACE_PROFILE_SHORT;
+        }
         if (
             _raceDistanceKm != null and
             _abs(_raceDistanceKm - HALF_DISTANCE_KM) <= HALF_DISTANCE_TOLERANCE_KM
@@ -2201,7 +2208,17 @@ class MarathonCoachField extends Ui.DataField {
 
     function _getAllowedZoneNumber(distanceKm) {
         var phase = _resolveRacePhase(distanceKm);
-        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+        var profile = _resolveRaceProfile();
+        if (profile == RACE_PROFILE_SHORT) {
+            if (phase == RACE_PHASE_1) {
+                return 4;
+            }
+            if (phase == RACE_PHASE_2 or phase == RACE_PHASE_3) {
+                return 5;
+            }
+            return 5;
+        }
+        if (profile == RACE_PROFILE_HALF) {
             if (phase == RACE_PHASE_1) {
                 return 3;
             }
@@ -2219,7 +2236,23 @@ class MarathonCoachField extends Ui.DataField {
 
     function _getAllowedZoneOffsetBpm(distanceKm) {
         var phase = _resolveRacePhase(distanceKm);
-        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+        var profile = _resolveRaceProfile();
+        if (profile == RACE_PROFILE_SHORT) {
+            if (phase == RACE_PHASE_1) {
+                return 0;
+            }
+            if (phase == RACE_PHASE_2) {
+                return 2;
+            }
+            if (phase == RACE_PHASE_3) {
+                return 3;
+            }
+            if (phase == RACE_PHASE_4) {
+                return 4;
+            }
+            return 5;
+        }
+        if (profile == RACE_PROFILE_HALF) {
             if (phase == RACE_PHASE_2) {
                 return -2;
             }
@@ -2265,7 +2298,23 @@ class MarathonCoachField extends Ui.DataField {
 
     function _getPushPaceDeltaThresholdSec(distanceKm) {
         var phase = _resolveRacePhase(distanceKm);
-        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+        var profile = _resolveRaceProfile();
+        if (profile == RACE_PROFILE_SHORT) {
+            if (phase == RACE_PHASE_1) {
+                return 8;
+            }
+            if (phase == RACE_PHASE_2) {
+                return 5;
+            }
+            if (phase == RACE_PHASE_3) {
+                return 3;
+            }
+            if (phase == RACE_PHASE_4) {
+                return 2;
+            }
+            return 1;
+        }
+        if (profile == RACE_PROFILE_HALF) {
             if (phase == RACE_PHASE_1) {
                 return 10;
             }
@@ -2298,7 +2347,23 @@ class MarathonCoachField extends Ui.DataField {
 
     function _getPushHeadroomThresholdBpm(distanceKm) {
         var phase = _resolveRacePhase(distanceKm);
-        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+        var profile = _resolveRaceProfile();
+        if (profile == RACE_PROFILE_SHORT) {
+            if (phase == RACE_PHASE_1) {
+                return 6;
+            }
+            if (phase == RACE_PHASE_2) {
+                return 4;
+            }
+            if (phase == RACE_PHASE_3) {
+                return 2;
+            }
+            if (phase == RACE_PHASE_4) {
+                return 1;
+            }
+            return 0;
+        }
+        if (profile == RACE_PROFILE_HALF) {
             if (phase == RACE_PHASE_1) {
                 return 7;
             }
@@ -2330,7 +2395,11 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _getActionEaseMinHeadroomBpm(distanceKm) {
-        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+        var profile = _resolveRaceProfile();
+        if (profile == RACE_PROFILE_SHORT) {
+            return 1;
+        }
+        if (profile == RACE_PROFILE_HALF) {
             return 2;
         }
         return ACTION_EASE_MIN_HEADROOM_BPM;
@@ -2338,7 +2407,23 @@ class MarathonCoachField extends Ui.DataField {
 
     function _getActionEaseBaselineHrDeltaBpm(distanceKm) {
         var phase = _resolveRacePhase(distanceKm);
-        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+        var profile = _resolveRaceProfile();
+        if (profile == RACE_PROFILE_SHORT) {
+            if (phase == RACE_PHASE_1) {
+                return 8;
+            }
+            if (phase == RACE_PHASE_2) {
+                return 9;
+            }
+            if (phase == RACE_PHASE_3) {
+                return 10;
+            }
+            if (phase == RACE_PHASE_4) {
+                return 11;
+            }
+            return 12;
+        }
+        if (profile == RACE_PROFILE_HALF) {
             if (phase == RACE_PHASE_1) {
                 return 6;
             }
@@ -2367,14 +2452,22 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _getCardiacCostPushMaxRatio(distanceKm) {
-        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+        var profile = _resolveRaceProfile();
+        if (profile == RACE_PROFILE_SHORT) {
+            return CARDIAC_COST_PUSH_MAX_RATIO_SHORT;
+        }
+        if (profile == RACE_PROFILE_HALF) {
             return CARDIAC_COST_PUSH_MAX_RATIO_HALF;
         }
         return CARDIAC_COST_PUSH_MAX_RATIO_FULL;
     }
 
     function _getCardiacCostEaseMinRatio(distanceKm) {
-        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+        var profile = _resolveRaceProfile();
+        if (profile == RACE_PROFILE_SHORT) {
+            return CARDIAC_COST_EASE_MIN_RATIO_SHORT;
+        }
+        if (profile == RACE_PROFILE_HALF) {
             return CARDIAC_COST_EASE_MIN_RATIO_HALF;
         }
         return CARDIAC_COST_EASE_MIN_RATIO_FULL;
