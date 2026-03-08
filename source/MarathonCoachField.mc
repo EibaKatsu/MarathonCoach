@@ -60,7 +60,7 @@ class MarathonCoachField extends Ui.DataField {
     const CARDIAC_COST_EASE_MIN_RATIO_HALF = 1.12;
     const CARDIAC_COST_EASE_MIN_RATIO_SHORT = 1.15;
     const CARDIAC_COST_MIN_SAMPLES = 30;
-    const CARD_VARIANT_PREVIEW_ENABLED = false;
+    const CARD_VARIANT_PREVIEW_ENABLED = true;
     const CARD_VARIANT_PREVIEW_SEC = 3;
     const SETTINGS_LOG = false;
     const FIT_FACT_LOG = true;
@@ -783,6 +783,7 @@ class MarathonCoachField extends Ui.DataField {
         var textAreaY = innerY + _clamp((innerH * 14) / 100, 5, 11);
         var textAreaH = innerH - (_clamp((innerH * 14) / 100, 5, 11) * 2);
         var cardFont = _resolveCardFont(sizeClass, cardLineCount);
+        cardFont = _adjustCardFontForSingleLineLimit(cardFont, cardLineCount, cardLines);
         var fontH = dc.getFontHeight(cardFont);
         if (textAreaH < fontH) {
             textAreaY = innerY + _max((innerH - fontH) / 2, 1);
@@ -1054,7 +1055,8 @@ class MarathonCoachField extends Ui.DataField {
 
         if (sizeClass == 2) {
             if (cardLineCount <= 1) {
-                return Gfx.FONT_MEDIUM;
+                // Large layout card width is still narrow; medium often overflows with CJK text.
+                return Gfx.FONT_SMALL;
             }
             if (cardLineCount == 2) {
                 return Gfx.FONT_SMALL;
@@ -1069,6 +1071,54 @@ class MarathonCoachField extends Ui.DataField {
             return Gfx.FONT_SMALL;
         }
         return Gfx.FONT_TINY;
+    }
+
+    function _adjustCardFontForSingleLineLimit(font, cardLineCount, cardLines as Lang.Array) {
+        if (cardLineCount != 1 or cardLines.size() <= 0 or cardLines[0] == null) {
+            return font;
+        }
+
+        var line = cardLines[0].toString();
+        if (line.length() <= 0) {
+            return font;
+        }
+
+        var limit = 7;
+        if (_containsNonAscii(line)) {
+            limit = 4;
+        }
+
+        if (line.length() >= limit) {
+            return _shrinkCardFont(font);
+        }
+        return font;
+    }
+
+    function _shrinkCardFont(font) {
+        if (font == Gfx.FONT_MEDIUM) {
+            return Gfx.FONT_SMALL;
+        }
+        if (font == Gfx.FONT_SMALL) {
+            return Gfx.FONT_TINY;
+        }
+        if (font == Gfx.FONT_TINY) {
+            return Gfx.FONT_XTINY;
+        }
+        return Gfx.FONT_XTINY;
+    }
+
+    function _containsNonAscii(text) as Lang.Boolean {
+        if (text == null) {
+            return false;
+        }
+
+        var chars = text.toString().toCharArray();
+        for (var i = 0; i < chars.size(); i += 1) {
+            if (chars[i].toNumber() > 127) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function _resolveCardLineGap(cardLineCount, fontH, areaH) {

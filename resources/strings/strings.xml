@@ -26,7 +26,7 @@
     <string id="CardFuelNowLine2">Now</string>
     <string id="CardFuelNowLine3">!</string>
     <string id="FuelMeterPrimaryLabel">Fuel</string>
-    <string id="FuelMeterAltLabel">Soon</string>
+    <string id="FuelMeterAltLabel">In</string>
     <string id="FuelMeterWarningText">Fuel now</string>
     <string id="FuelMeterWarningSubText">Press lap</string>
     <string id="FuelMeterCautionPrefix">In </string>
@@ -39,7 +39,7 @@
     <string id="WarmupMsg5">No rush</string>
     <string id="WarmupMsg6">Smooth form</string>
     <string id="WarmupMsg7">Save your legs</string>
-    <string id="WarmupMsg8">Relax shoulders</string>
+    <string id="WarmupMsg8">Relax Relax</string>
     <string id="WarmupMsg9">Keep rhythm</string>
     <string id="WarmupMsg10">Quiet form</string>
     <string id="WarmupMsg11">Do not rush</string>

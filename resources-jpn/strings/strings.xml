@@ -36,13 +36,13 @@
     <string id="FuelMeterCautionSuffix">分</string>
     <string id="FuelMeterMinuteSuffix">m</string>
     <string id="WarmupMsg1">まだ序盤</string>
-    <string id="WarmupMsg2">落ち着いて</string>
+    <string id="WarmupMsg2">落ち着け</string>
     <string id="WarmupMsg3">力ぬいて</string>
     <string id="WarmupMsg4">深呼吸</string>
     <string id="WarmupMsg5">急がない</string>
     <string id="WarmupMsg6">丁寧に</string>
     <string id="WarmupMsg7">脚ためて</string>
-    <string id="WarmupMsg8">肩の力</string>
+    <string id="WarmupMsg8">肩、楽に</string>
     <string id="WarmupMsg9">リズムで</string>
     <string id="WarmupMsg10">静かに</string>
     <string id="WarmupMsg11">焦らない</string>
