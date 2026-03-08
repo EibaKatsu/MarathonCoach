@@ -2,7 +2,7 @@
     <properties>
         <property id="race_distance_km" type="number">0</property>
         <property id="target_time_hour" type="number">4</property>
-        <property id="target_time_minute" type="number">0</property>
+        <property id="target_time_minute" type="number">5</property>
     </properties>
 
     <strings>
@@ -36,9 +36,17 @@
         <setting propertyKey="@Properties.target_time_minute" title="@Strings.setting_target_minute">
             <settingConfig type="list">
                 <listEntry value="0">00</listEntry>
+                <listEntry value="5">05</listEntry>
+                <listEntry value="10">10</listEntry>
                 <listEntry value="15">15</listEntry>
+                <listEntry value="20">20</listEntry>
+                <listEntry value="25">25</listEntry>
                 <listEntry value="30">30</listEntry>
+                <listEntry value="35">35</listEntry>
+                <listEntry value="40">40</listEntry>
                 <listEntry value="45">45</listEntry>
+                <listEntry value="50">50</listEntry>
+                <listEntry value="55">55</listEntry>
             </settingConfig>
         </setting>
     </settings>

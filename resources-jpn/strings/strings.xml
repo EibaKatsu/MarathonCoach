@@ -23,8 +23,8 @@
     <string id="CardHrOverLine2">高め</string>
     <string id="CardHrOverLine3">落とそ</string>
     <string id="CardDriftLine1">ドリフト?</string>
-    <string id="CardDriftLine2">水＋補給</string>
-    <string id="CardDriftLine3"></string>
+    <string id="CardDriftLine2">水＋</string>
+    <string id="CardDriftLine3">補給</string>
     <string id="CardFuelSoonLine2">あと少し</string>
     <string id="CardFuelNowLine2">いま</string>
     <string id="CardFuelNowLine3">!</string>
