@@ -48,6 +48,8 @@ class MarathonCoachField extends Ui.DataField {
     const RACE_PHASE_2_END_PROGRESS = 0.59;
     const RACE_PHASE_3_END_PROGRESS = 0.83;
     const RACE_PHASE_4_END_PROGRESS = 0.95;
+    const HALF_DISTANCE_KM = 21.0975;
+    const HALF_DISTANCE_TOLERANCE_KM = 0.25;
     const CARDIAC_COST_PUSH_MAX_RATIO_FULL = 1.06;
     const CARDIAC_COST_PUSH_MAX_RATIO_HALF = 1.08;
     const CARDIAC_COST_EASE_MIN_RATIO_FULL = 1.10;
@@ -2154,7 +2156,10 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveRaceProfile() {
-        if (_raceDistanceKm != null and _raceDistanceKm <= 21.2) {
+        if (
+            _raceDistanceKm != null and
+            _abs(_raceDistanceKm - HALF_DISTANCE_KM) <= HALF_DISTANCE_TOLERANCE_KM
+        ) {
             return RACE_PROFILE_HALF;
         }
         return RACE_PROFILE_FULL;
@@ -2389,6 +2394,10 @@ class MarathonCoachField extends Ui.DataField {
         var curHr = _driftRingHrSum / _driftRingCount;
         var curPace = _driftRingPaceSum / _driftRingCount;
         if (curHr == null or curPace == null or curHr <= 0 or curPace <= 0) {
+            return null;
+        }
+        var paceDiffAbs = _abs(curPace - _driftBasePace);
+        if (paceDiffAbs > DRIFT_PACE_STABLE_THRESHOLD_SEC) {
             return null;
         }
 
