@@ -731,13 +731,30 @@ class MarathonCoachField extends Ui.DataField {
                     innerW = bgW - 4;
                     innerH = bgH - 4;
                 } else {
-                    var fallbackX = cardX + ((cardW - bgW) / 2);
-                    var fallbackY = cardY + ((cardH - bgH) / 2);
-                    dc.drawBitmap(fallbackX, fallbackY, bgBitmap);
-                    innerX = fallbackX + 2;
-                    innerY = fallbackY + 2;
-                    innerW = bgW - 4;
-                    innerH = bgH - 4;
+                    var scaledDrawn = false;
+                    if (dc has :drawScaledBitmap) {
+                        try {
+                            dc.drawScaledBitmap(cardX, cardY, cardW, cardH, bgBitmap);
+                            var inset = _clamp((cardW * 3) / 100, 2, 7);
+                            innerX = cardX + inset;
+                            innerY = cardY + inset;
+                            innerW = cardW - (inset * 2);
+                            innerH = cardH - (inset * 2);
+                            scaledDrawn = true;
+                        } catch (e) {
+                            scaledDrawn = false;
+                        }
+                    }
+
+                    if (!scaledDrawn) {
+                        var fallbackX = cardX + ((cardW - bgW) / 2);
+                        var fallbackY = cardY + ((cardH - bgH) / 2);
+                        dc.drawBitmap(fallbackX, fallbackY, bgBitmap);
+                        innerX = fallbackX + 2;
+                        innerY = fallbackY + 2;
+                        innerW = bgW - 4;
+                        innerH = bgH - 4;
+                    }
                 }
             } else {
                 dc.drawBitmap(cardX, cardY, bgBitmap);
@@ -765,7 +782,7 @@ class MarathonCoachField extends Ui.DataField {
         }
         var textAreaY = innerY + _clamp((innerH * 14) / 100, 5, 11);
         var textAreaH = innerH - (_clamp((innerH * 14) / 100, 5, 11) * 2);
-        var cardFont = _resolveCardFontToFit(dc, sizeClass, cardLines, textAreaW, textAreaH);
+        var cardFont = _resolveCardFont(sizeClass, cardLineCount);
         var fontH = dc.getFontHeight(cardFont);
         if (textAreaH < fontH) {
             textAreaY = innerY + _max((innerH - fontH) / 2, 1);
