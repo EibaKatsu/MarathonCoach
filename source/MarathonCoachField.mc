@@ -37,6 +37,22 @@ class MarathonCoachField extends Ui.DataField {
     const ACTION_PUSH_RELEASE_HR_HYSTERESIS_BPM = 1;
     const ACTION_EASE_MIN_HEADROOM_BPM = 3;
     const ACTION_EASE_BASELINE_HR_DELTA_BPM = 6;
+    const RACE_PROFILE_FULL = 0;
+    const RACE_PROFILE_HALF = 1;
+    const RACE_PHASE_1 = 0;
+    const RACE_PHASE_2 = 1;
+    const RACE_PHASE_3 = 2;
+    const RACE_PHASE_4 = 3;
+    const RACE_PHASE_5 = 4;
+    const RACE_PHASE_1_END_PROGRESS = 0.24;
+    const RACE_PHASE_2_END_PROGRESS = 0.59;
+    const RACE_PHASE_3_END_PROGRESS = 0.83;
+    const RACE_PHASE_4_END_PROGRESS = 0.95;
+    const CARDIAC_COST_PUSH_MAX_RATIO_FULL = 1.06;
+    const CARDIAC_COST_PUSH_MAX_RATIO_HALF = 1.08;
+    const CARDIAC_COST_EASE_MIN_RATIO_FULL = 1.10;
+    const CARDIAC_COST_EASE_MIN_RATIO_HALF = 1.12;
+    const CARDIAC_COST_MIN_SAMPLES = 30;
     const CARD_VARIANT_PREVIEW_ENABLED = false;
     const CARD_VARIANT_PREVIEW_SEC = 3;
     const SETTINGS_LOG = false;
@@ -700,22 +716,13 @@ class MarathonCoachField extends Ui.DataField {
                     innerW = bgW - 4;
                     innerH = bgH - 4;
                 } else {
-                    try {
-                        dc.drawScaledBitmap(cardX, cardY, cardW, cardH, bgBitmap);
-                        var inset = _clamp((cardW * 3) / 100, 2, 7);
-                        innerX = cardX + inset;
-                        innerY = cardY + inset;
-                        innerW = cardW - (inset * 2);
-                        innerH = cardH - (inset * 2);
-                    } catch (e) {
-                        var fallbackX = cardX + ((cardW - bgW) / 2);
-                        var fallbackY = cardY + ((cardH - bgH) / 2);
-                        dc.drawBitmap(fallbackX, fallbackY, bgBitmap);
-                        innerX = fallbackX + 2;
-                        innerY = fallbackY + 2;
-                        innerW = bgW - 4;
-                        innerH = bgH - 4;
-                    }
+                    var fallbackX = cardX + ((cardW - bgW) / 2);
+                    var fallbackY = cardY + ((cardH - bgH) / 2);
+                    dc.drawBitmap(fallbackX, fallbackY, bgBitmap);
+                    innerX = fallbackX + 2;
+                    innerY = fallbackY + 2;
+                    innerW = bgW - 4;
+                    innerH = bgH - 4;
                 }
             } else {
                 dc.drawBitmap(cardX, cardY, bgBitmap);
@@ -2146,35 +2153,96 @@ class MarathonCoachField extends Ui.DataField {
         return value.toString();
     }
 
+    function _resolveRaceProfile() {
+        if (_raceDistanceKm != null and _raceDistanceKm <= 21.2) {
+            return RACE_PROFILE_HALF;
+        }
+        return RACE_PROFILE_FULL;
+    }
+
+    function _resolveRaceProgress(distanceKm) {
+        if (distanceKm == null or _raceDistanceKm == null or _raceDistanceKm <= 0) {
+            return null;
+        }
+        var progress = distanceKm / _raceDistanceKm;
+        if (progress < 0) {
+            progress = 0;
+        }
+        if (progress > 1.0) {
+            progress = 1.0;
+        }
+        return progress;
+    }
+
+    function _resolveRacePhase(distanceKm) {
+        var progress = _resolveRaceProgress(distanceKm);
+        if (progress == null) {
+            return RACE_PHASE_1;
+        }
+        if (progress < RACE_PHASE_1_END_PROGRESS) {
+            return RACE_PHASE_1;
+        }
+        if (progress < RACE_PHASE_2_END_PROGRESS) {
+            return RACE_PHASE_2;
+        }
+        if (progress < RACE_PHASE_3_END_PROGRESS) {
+            return RACE_PHASE_3;
+        }
+        if (progress < RACE_PHASE_4_END_PROGRESS) {
+            return RACE_PHASE_4;
+        }
+        return RACE_PHASE_5;
+    }
+
     function _getAllowedZoneNumber(distanceKm) {
-        if (distanceKm == null or distanceKm < 10.0) {
+        var phase = _resolveRacePhase(distanceKm);
+        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+            if (phase == RACE_PHASE_1) {
+                return 3;
+            }
+            return 4;
+        }
+
+        if (phase == RACE_PHASE_1) {
             return 2;
         }
-        if (distanceKm < 35.0) {
+        if (phase == RACE_PHASE_2 or phase == RACE_PHASE_3) {
             return 3;
         }
         return 4;
     }
 
     function _getAllowedZoneOffsetBpm(distanceKm) {
-        if (distanceKm == null or distanceKm < 25.0) {
+        var phase = _resolveRacePhase(distanceKm);
+        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+            if (phase == RACE_PHASE_2) {
+                return -2;
+            }
+            if (phase == RACE_PHASE_4) {
+                return 2;
+            }
+            if (phase == RACE_PHASE_5) {
+                return 4;
+            }
             return 0;
         }
-        if (distanceKm < 35.0) {
+
+        if (phase == RACE_PHASE_3) {
             return 2;
         }
-        if (distanceKm < 40.0) {
-            return 0;
+        if (phase == RACE_PHASE_5) {
+            return 3;
         }
-        return 3;
+        return 0;
     }
 
     function _getHrOverTriggerSec(distanceKm) {
-        if (distanceKm != null and distanceKm >= 40.0) {
-            return 20;
-        }
-        if (distanceKm != null and distanceKm >= 35.0) {
+        var phase = _resolveRacePhase(distanceKm);
+        if (phase == RACE_PHASE_4) {
             return 10;
+        }
+        if (phase == RACE_PHASE_5) {
+            return 20;
         }
         return 12;
     }
@@ -2184,42 +2252,152 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _getHrOverReleaseOffsetBpm(distanceKm) {
-        if (distanceKm != null and distanceKm >= 35.0 and distanceKm < 40.0) {
+        if (_resolveRacePhase(distanceKm) == RACE_PHASE_4) {
             return 1;
         }
         return 2;
     }
 
     function _getPushPaceDeltaThresholdSec(distanceKm) {
-        if (distanceKm == null or distanceKm < 10.0) {
+        var phase = _resolveRacePhase(distanceKm);
+        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+            if (phase == RACE_PHASE_1) {
+                return 10;
+            }
+            if (phase == RACE_PHASE_2) {
+                return 6;
+            }
+            if (phase == RACE_PHASE_3) {
+                return 4;
+            }
+            if (phase == RACE_PHASE_4) {
+                return 3;
+            }
+            return 2;
+        }
+
+        if (phase == RACE_PHASE_1) {
             return 12;
         }
-        if (distanceKm < 25.0) {
+        if (phase == RACE_PHASE_2) {
             return 8;
         }
-        if (distanceKm < 35.0) {
+        if (phase == RACE_PHASE_3) {
             return 6;
         }
-        if (distanceKm < 40.0) {
+        if (phase == RACE_PHASE_4) {
             return 4;
         }
         return 3;
     }
 
     function _getPushHeadroomThresholdBpm(distanceKm) {
-        if (distanceKm == null or distanceKm < 10.0) {
+        var phase = _resolveRacePhase(distanceKm);
+        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+            if (phase == RACE_PHASE_1) {
+                return 7;
+            }
+            if (phase == RACE_PHASE_2) {
+                return 5;
+            }
+            if (phase == RACE_PHASE_3) {
+                return 3;
+            }
+            if (phase == RACE_PHASE_4) {
+                return 2;
+            }
+            return 1;
+        }
+
+        if (phase == RACE_PHASE_1) {
             return 8;
         }
-        if (distanceKm < 25.0) {
+        if (phase == RACE_PHASE_2) {
             return 6;
         }
-        if (distanceKm < 35.0) {
+        if (phase == RACE_PHASE_3) {
             return 4;
         }
-        if (distanceKm < 40.0) {
+        if (phase == RACE_PHASE_4) {
             return 3;
         }
         return 2;
+    }
+
+    function _getActionEaseMinHeadroomBpm(distanceKm) {
+        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+            return 2;
+        }
+        return ACTION_EASE_MIN_HEADROOM_BPM;
+    }
+
+    function _getActionEaseBaselineHrDeltaBpm(distanceKm) {
+        var phase = _resolveRacePhase(distanceKm);
+        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+            if (phase == RACE_PHASE_1) {
+                return 6;
+            }
+            if (phase == RACE_PHASE_2) {
+                return 7;
+            }
+            if (phase == RACE_PHASE_3) {
+                return 8;
+            }
+            if (phase == RACE_PHASE_4) {
+                return 9;
+            }
+            return 10;
+        }
+
+        if (phase == RACE_PHASE_1) {
+            return 5;
+        }
+        if (phase == RACE_PHASE_4) {
+            return 5;
+        }
+        if (phase == RACE_PHASE_5) {
+            return 4;
+        }
+        return ACTION_EASE_BASELINE_HR_DELTA_BPM;
+    }
+
+    function _getCardiacCostPushMaxRatio(distanceKm) {
+        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+            return CARDIAC_COST_PUSH_MAX_RATIO_HALF;
+        }
+        return CARDIAC_COST_PUSH_MAX_RATIO_FULL;
+    }
+
+    function _getCardiacCostEaseMinRatio(distanceKm) {
+        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
+            return CARDIAC_COST_EASE_MIN_RATIO_HALF;
+        }
+        return CARDIAC_COST_EASE_MIN_RATIO_FULL;
+    }
+
+    function _resolveCardiacCostRatio() {
+        if (
+            _driftBaseHr == null or _driftBasePace == null or
+            _driftRingCount < CARDIAC_COST_MIN_SAMPLES
+        ) {
+            return null;
+        }
+        if (_driftBaseHr <= 0 or _driftBasePace <= 0) {
+            return null;
+        }
+
+        var curHr = _driftRingHrSum / _driftRingCount;
+        var curPace = _driftRingPaceSum / _driftRingCount;
+        if (curHr == null or curPace == null or curHr <= 0 or curPace <= 0) {
+            return null;
+        }
+
+        var baseCost = _driftBaseHr * _driftBasePace;
+        if (baseCost <= 0) {
+            return null;
+        }
+        var curCost = curHr * curPace;
+        return curCost / baseCost;
     }
 
     function _updateDriftState(info) {
@@ -2665,9 +2843,13 @@ class MarathonCoachField extends Ui.DataField {
         var headroomBpm = _allowedMaxHeartRate - _currentHeartRate;
         var paceTriggerThreshold = _getPushPaceDeltaThresholdSec(distanceKm);
         var headroomTriggerThreshold = _getPushHeadroomThresholdBpm(distanceKm);
+        var ccRatio = _resolveCardiacCostRatio();
+        var ccPushMaxRatio = _getCardiacCostPushMaxRatio(distanceKm);
+        var cardiacCostAllowsPush = (ccRatio == null or ccRatio <= ccPushMaxRatio);
         var canTrigger = (
             paceDeltaSec >= paceTriggerThreshold and
-            headroomBpm >= headroomTriggerThreshold
+            headroomBpm >= headroomTriggerThreshold and
+            cardiacCostAllowsPush
         );
 
         if (!_pushActive) {
@@ -2694,7 +2876,8 @@ class MarathonCoachField extends Ui.DataField {
         }
         var shouldRelease = (
             paceDeltaSec < paceReleaseThreshold or
-            headroomBpm < headroomReleaseThreshold
+            headroomBpm < headroomReleaseThreshold or
+            !cardiacCostAllowsPush
         );
         if (!shouldRelease) {
             _pushRecoverStartSec = null;
@@ -2717,6 +2900,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveActionVariant() {
+        var distanceKm = _extractElapsedDistanceKm(_fallbackActivityInfo);
         var paceDeltaSec = null;
         if (_paceNowSecPerKm != null and _targetPaceSecPerKm != null) {
             paceDeltaSec = _paceNowSecPerKm - _targetPaceSecPerKm;
@@ -2732,14 +2916,22 @@ class MarathonCoachField extends Ui.DataField {
             baselineHrDelta = _currentHeartRate - _driftBaseHr;
         }
 
+        var ccRatio = _resolveCardiacCostRatio();
+        var easeHeadroomThreshold = _getActionEaseMinHeadroomBpm(distanceKm);
+        var easeBaselineHrDeltaThreshold = _getActionEaseBaselineHrDeltaBpm(distanceKm);
+        var easeCardiacCostThreshold = _getCardiacCostEaseMinRatio(distanceKm);
+
         var shouldEase = false;
         if (paceDeltaSec != null and paceDeltaSec <= ACTION_EASE_PACE_DELTA_SEC) {
             shouldEase = true;
         }
-        if (hrHeadroom != null and hrHeadroom <= ACTION_EASE_MIN_HEADROOM_BPM) {
+        if (hrHeadroom != null and hrHeadroom <= easeHeadroomThreshold) {
             shouldEase = true;
         }
-        if (baselineHrDelta != null and baselineHrDelta >= ACTION_EASE_BASELINE_HR_DELTA_BPM) {
+        if (baselineHrDelta != null and baselineHrDelta >= easeBaselineHrDeltaThreshold) {
+            shouldEase = true;
+        }
+        if (ccRatio != null and ccRatio >= easeCardiacCostThreshold) {
             shouldEase = true;
         }
         if (shouldEase) {
@@ -3156,10 +3348,53 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _buildGoalDeltaText(deltaText) {
+        var targetTimeText = _formatTargetTimeHourMin();
         if (deltaText == null or deltaText.length() == 0) {
-            return _goalTimeLabelText + " " + _formatTargetTimeHourMin();
+            return targetTimeText + " / " + _formatGoalDistanceKm();
         }
-        return _goalTimeLabelText + " " + _formatTargetTimeHourMin() + " (" + deltaText + ")";
+        return targetTimeText + " (" + deltaText + ")";
+    }
+
+    function _formatGoalDistanceKm() {
+        if (_raceDistanceKm == null or _raceDistanceKm <= 0) {
+            return "--.- km";
+        }
+
+        // Canonical labels for supported race distances.
+        if (_abs(_raceDistanceKm - 42.195) < 0.0006) {
+            return "42.195 km";
+        }
+        if (_abs(_raceDistanceKm - 21.0975) < 0.0006) {
+            return "21.0975 km";
+        }
+        if (_abs(_raceDistanceKm - 10.0) < 0.0006) {
+            return "10 km";
+        }
+        if (_abs(_raceDistanceKm - 5.0) < 0.0006) {
+            return "5 km";
+        }
+
+        var roundedTenThousandth = Math.floor((_raceDistanceKm * 10000.0) + 0.5);
+        if (roundedTenThousandth < 0) {
+            roundedTenThousandth = 0;
+        }
+
+        var whole = Math.floor(roundedTenThousandth / 10000);
+        var fractional = roundedTenThousandth - (whole * 10000);
+        if (fractional == 0) {
+            return whole.format("%d") + " km";
+        }
+
+        var fractionalText = fractional.format("%04d");
+        while (fractionalText.length() > 0) {
+            var tail = fractionalText.substring(fractionalText.length() - 1, fractionalText.length());
+            if (tail != "0") {
+                break;
+            }
+            fractionalText = fractionalText.substring(0, fractionalText.length() - 1);
+        }
+
+        return whole.format("%d") + "." + fractionalText + " km";
     }
 
     function _formatTargetTimeHourMin() {
