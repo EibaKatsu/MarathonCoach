@@ -1,4 +1,3 @@
-using Toybox.Application.Properties as Props;
 using Toybox.Activity;
 using Toybox.Attention;
 using Toybox.Graphics as Gfx;
@@ -7,6 +6,8 @@ using Toybox.Math as Math;
 using Toybox.System as Sys;
 using Toybox.UserProfile;
 using Toybox.WatchUi as Ui;
+using CoachUtils;
+using SettingsLoader;
 
 class MarathonCoachField extends Ui.DataField {
     const KEY_RACE_DISTANCE_KM = "race_distance_km";
@@ -547,106 +548,26 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _loadSettings() {
-        _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
+        _raceDistanceKm = SettingsLoader.loadRaceDistanceKm(
+            DEFAULT_RACE_DISTANCE_KM,
+            KEY_RACE_DISTANCE_KM
+        );
         _targetTimeHms = null;
         _targetTimeSec = null;
         _targetPaceSecPerKm = null;
 
-        var raceDistance = _getPropertyValue(KEY_RACE_DISTANCE_KM);
-        if (raceDistance != null) {
-            var raceDistanceKm = null;
-            if (raceDistance instanceof Number) {
-                var raceDistanceIdx = Math.floor(raceDistance + 0.5);
-                raceDistanceKm = _mapRaceDistanceIndexToKm(raceDistanceIdx);
-                if (raceDistanceKm == null and raceDistance > 0) {
-                    // Backward compatibility for older numeric-km saved values.
-                    raceDistanceKm = raceDistance;
-                }
-            } else {
-                raceDistanceKm = _parsePositiveDecimal(raceDistance.toString());
-            }
-            if (raceDistanceKm != null and raceDistanceKm > 0) {
-                _raceDistanceKm = raceDistanceKm;
-            }
-        }
-
-        var targetHour = _loadTargetTimeHour();
-        var targetMinute = _loadTargetTimeMinute();
+        var targetHour = SettingsLoader.loadTargetTimeHour(KEY_TARGET_TIME_HOUR);
+        var targetMinute = SettingsLoader.loadTargetTimeMinute(KEY_TARGET_TIME_MINUTE);
         if (targetHour != null and targetMinute != null) {
             var hourInt = Math.floor(targetHour + 0.5);
             var minuteInt = Math.floor(targetMinute + 0.5);
-            _targetTimeHms = _formatHourMinuteSecond(hourInt, minuteInt);
+            _targetTimeHms = CoachUtils.formatHourMinuteSecond(hourInt, minuteInt);
             _targetTimeSec = (hourInt * 3600) + (minuteInt * 60);
         }
         if (_targetTimeSec != null and _targetTimeSec > 0 and _raceDistanceKm > 0) {
             _targetPaceSecPerKm = _targetTimeSec / _raceDistanceKm;
         }
         _logSettingsState(targetHour, targetMinute);
-    }
-
-    function _loadTargetTimeHour() {
-        var hour = _loadIntSettingValue(KEY_TARGET_TIME_HOUR);
-        if (hour == null or hour < 0 or hour > 8) {
-            return null;
-        }
-        return hour;
-    }
-
-    function _loadTargetTimeMinute() {
-        var minute = _loadIntSettingValue(KEY_TARGET_TIME_MINUTE);
-        if (minute == null or minute < 0 or minute > 59) {
-            return null;
-        }
-        return minute;
-    }
-
-    function _loadIntSettingValue(key) {
-        var value = _getPropertyValue(key);
-        if (value == null) {
-            return null;
-        }
-
-        if (value instanceof Number) {
-            return Math.floor(value + 0.5);
-        }
-
-        var parsed = _parsePositiveInt(value.toString());
-        if (parsed == null) {
-            var parsedDecimal = _parsePositiveDecimal(value.toString());
-            if (parsedDecimal == null) {
-                return null;
-            }
-            return Math.floor(parsedDecimal + 0.5);
-        }
-        return parsed;
-    }
-
-    function _getPropertyValue(key) {
-        try {
-            return Props.getValue(key);
-        } catch (e) {
-            return null;
-        }
-    }
-
-    function _formatHourMinuteSecond(hourPart, minutePart) {
-        return hourPart.format("%02d") + ":" + minutePart.format("%02d") + ":00";
-    }
-
-    function _mapRaceDistanceIndexToKm(index) {
-        if (index == 0) {
-            return 42.195;
-        }
-        if (index == 1) {
-            return 21.0975;
-        }
-        if (index == 2) {
-            return 10.0;
-        }
-        if (index == 3) {
-            return 5.0;
-        }
-        return null;
     }
 
     function _drawStep3Layout(dc as Gfx.Dc) {
@@ -1244,21 +1165,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _containsNonAscii(text) as Lang.Boolean {
-        if (text == null) {
-            return false;
-        }
-
-        var chars = text.toString().toCharArray();
-        if (!(chars instanceof Lang.Array)) {
-            return false;
-        }
-        for (var i = 0; i < chars.size(); i += 1) {
-            var ch = chars[i];
-            if (ch != null and ch instanceof Lang.Char and ch.toNumber() > 127) {
-                return true;
-            }
-        }
-        return false;
+        return CoachUtils.containsNonAscii(text);
     }
 
     function _resolveCardLineGap(cardLineCount, fontH, areaH) {
@@ -1762,17 +1669,11 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _min(a, b) {
-        if (a < b) {
-            return a;
-        }
-        return b;
+        return CoachUtils.min(a, b);
     }
 
     function _max(a, b) {
-        if (a > b) {
-            return a;
-        }
-        return b;
+        return CoachUtils.max(a, b);
     }
 
     function _getSizeClass(minDim) {
@@ -2305,9 +2206,9 @@ class MarathonCoachField extends Ui.DataField {
         if (!SETTINGS_LOG) {
             return;
         }
-        var rawRace = _getPropertyValue(KEY_RACE_DISTANCE_KM);
-        var rawHour = _getPropertyValue(KEY_TARGET_TIME_HOUR);
-        var rawMinute = _getPropertyValue(KEY_TARGET_TIME_MINUTE);
+        var rawRace = SettingsLoader.getPropertyValue(KEY_RACE_DISTANCE_KM);
+        var rawHour = SettingsLoader.getPropertyValue(KEY_TARGET_TIME_HOUR);
+        var rawMinute = SettingsLoader.getPropertyValue(KEY_TARGET_TIME_MINUTE);
         var line =
             "[SETTINGS] raceRaw=" + _factValue(rawRace) +
             " hourRaw=" + _factValue(rawHour) +
@@ -4083,41 +3984,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _splitWords(text) as Lang.Array {
-        var words = [];
-        var remaining = text;
-
-        while (remaining != null and remaining.length() > 0) {
-            var spaceIndex = remaining.find(" ");
-            if (spaceIndex == null) {
-                if (remaining.length() > 0) {
-                    words.add(remaining);
-                }
-                break;
-            }
-
-            if (spaceIndex > 0) {
-                words.add(remaining.substring(0, spaceIndex));
-            }
-
-            if ((spaceIndex + 1) >= remaining.length()) {
-                break;
-            }
-            remaining = remaining.substring(spaceIndex + 1, remaining.length());
-            while (remaining.length() > 0 and remaining.substring(0, 1) == " ") {
-                if (remaining.length() == 1) {
-                    remaining = "";
-                    break;
-                }
-                remaining = remaining.substring(1, remaining.length());
-            }
-            if (remaining.length() == 0) {
-                break;
-            } else {
-                continue;
-            }
-        }
-
-        return words;
+        return CoachUtils.splitWords(text);
     }
 
     function _getCardDisplayLines() as Lang.Array {
@@ -4138,202 +4005,31 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _randomMessageIndex(size, avoid1, avoid2) {
-        if (size <= 0) {
-            return 0;
-        }
-
-        var idx = 0;
-        for (var i = 0; i < 10; i += 1) {
-            idx = Math.floor(Math.rand()) % size;
-            if (idx < 0) {
-                idx += size;
-            }
-            if (idx != avoid1 and idx != avoid2) {
-                return idx;
-            }
-        }
-
-        // Fallback scan in case random values kept colliding.
-        for (var j = 0; j < size; j += 1) {
-            if (j != avoid1 and j != avoid2) {
-                return j;
-            }
-        }
-        return 0;
+        return CoachUtils.randomMessageIndex(size, avoid1, avoid2);
     }
 
     function _parseTimeToSec(text) {
-        if (text == null) {
-            return null;
-        }
-
-        var raw = _normalizeTimeText(text.toString());
-        if (raw.length() == 0) {
-            return null;
-        }
-
-        var p1 = raw.find(":");
-        if (p1 == null or p1 < 0) {
-            return null;
-        }
-
-        var tail = raw.substring(p1 + 1, raw.length());
-        var p2rel = tail.find(":");
-        var hourText = raw.substring(0, p1);
-        var minText = "";
-        var secText = "0";
-        if (p2rel == null or p2rel < 0) {
-            minText = tail;
-        } else {
-            var p2 = p1 + 1 + p2rel;
-            minText = raw.substring(p1 + 1, p2);
-            secText = raw.substring(p2 + 1, raw.length());
-        }
-
-        var h = _parsePositiveInt(hourText);
-        var m = _parsePositiveInt(minText);
-        var s = _parsePositiveInt(secText);
-        if (h == null or m == null or s == null) {
-            return null;
-        }
-        if (m >= 60 or s >= 60) {
-            return null;
-        }
-        return (h * 3600) + (m * 60) + s;
+        return CoachUtils.parseTimeToSec(text);
     }
 
     function _parsePositiveInt(text) {
-        var rawText = _normalizeTimeText(text);
-        if (rawText == null or rawText.length() == 0) {
-            return null;
-        }
-
-        var value = 0;
-        for (var i = 0; i < rawText.length(); i += 1) {
-            var ch = rawText.substring(i, i + 1);
-            var digit = _digitValue(ch);
-            if (digit == null) {
-                return null;
-            }
-            value = (value * 10) + digit;
-        }
-        return value;
+        return CoachUtils.parsePositiveInt(text);
     }
 
     function _parsePositiveDecimal(text) {
-        var rawText = _normalizeTimeText(text);
-        if (rawText == null or rawText.length() == 0) {
-            return null;
-        }
-
-        var intPart = 0;
-        var fracPart = 0.0;
-        var fracDivisor = 1.0;
-        var seenDot = false;
-        var hasDigit = false;
-
-        for (var i = 0; i < rawText.length(); i += 1) {
-            var ch = rawText.substring(i, i + 1);
-            if (ch == "." or ch == "．") {
-                if (seenDot) {
-                    return null;
-                }
-                seenDot = true;
-                continue;
-            }
-
-            var digit = _digitValue(ch);
-            if (digit == null) {
-                return null;
-            }
-
-            hasDigit = true;
-            if (!seenDot) {
-                intPart = (intPart * 10) + digit;
-            } else {
-                fracPart = (fracPart * 10.0) + digit;
-                fracDivisor *= 10.0;
-            }
-        }
-
-        if (!hasDigit) {
-            return null;
-        }
-        return intPart + (fracPart / fracDivisor);
+        return CoachUtils.parsePositiveDecimal(text);
     }
 
     function _normalizeTimeText(text) {
-        if (text == null) {
-            return "";
-        }
-
-        var raw = text.toString();
-        var normalized = "";
-        for (var i = 0; i < raw.length(); i += 1) {
-            var ch = raw.substring(i, i + 1);
-            if (ch == "：" or ch == "∶") {
-                normalized += ":";
-                continue;
-            }
-
-            var asciiDigit = _fullWidthDigitToAscii(ch);
-            if (asciiDigit != null) {
-                normalized += asciiDigit;
-                continue;
-            }
-            normalized += ch;
-        }
-
-        var start = 0;
-        while (start < normalized.length()) {
-            var first = normalized.substring(start, start + 1);
-            if (first != " " and first != "\t" and first != "　") {
-                break;
-            }
-            start += 1;
-        }
-
-        var endExclusive = normalized.length();
-        while (endExclusive > start) {
-            var last = normalized.substring(endExclusive - 1, endExclusive);
-            if (last != " " and last != "\t" and last != "　") {
-                break;
-            }
-            endExclusive -= 1;
-        }
-
-        if (start >= endExclusive) {
-            return "";
-        }
-        return normalized.substring(start, endExclusive);
+        return CoachUtils.normalizeTimeText(text);
     }
 
     function _fullWidthDigitToAscii(ch) {
-        if (ch == "０") { return "0"; }
-        if (ch == "１") { return "1"; }
-        if (ch == "２") { return "2"; }
-        if (ch == "３") { return "3"; }
-        if (ch == "４") { return "4"; }
-        if (ch == "５") { return "5"; }
-        if (ch == "６") { return "6"; }
-        if (ch == "７") { return "7"; }
-        if (ch == "８") { return "8"; }
-        if (ch == "９") { return "9"; }
-        return null;
+        return CoachUtils.fullWidthDigitToAscii(ch);
     }
 
     function _digitValue(ch) {
-        if (ch == "0") { return 0; }
-        if (ch == "1") { return 1; }
-        if (ch == "2") { return 2; }
-        if (ch == "3") { return 3; }
-        if (ch == "4") { return 4; }
-        if (ch == "5") { return 5; }
-        if (ch == "6") { return 6; }
-        if (ch == "7") { return 7; }
-        if (ch == "8") { return 8; }
-        if (ch == "9") { return 9; }
-        return null;
+        return CoachUtils.digitValue(ch);
     }
 
     function _extractElapsedSec(info) {
@@ -4350,39 +4046,19 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _formatPaceSecPerKm(paceSecPerKm) {
-        var roundedSec = Math.floor(paceSecPerKm + 0.5);
-        var minPart = Math.floor(roundedSec / 60);
-        var secPart = roundedSec - (minPart * 60);
-        return minPart.format("%d") + ":" + secPart.format("%02d");
+        return CoachUtils.formatPaceSecPerKm(paceSecPerKm);
     }
 
     function _formatMinSec(totalSec) {
-        var roundedSec = Math.floor(totalSec + 0.5);
-        var minPart = Math.floor(roundedSec / 60);
-        var secPart = roundedSec - (minPart * 60);
-        return minPart.format("%d") + ":" + secPart.format("%02d");
+        return CoachUtils.formatMinSec(totalSec);
     }
 
     function _formatElapsedTime(totalSec) {
-        var sec = Math.floor(totalSec);
-        if (sec < 0) {
-            sec = 0;
-        }
-        var hourPart = Math.floor(sec / 3600);
-        var remain = sec - (hourPart * 3600);
-        var minPart = Math.floor(remain / 60);
-        var secPart = remain - (minPart * 60);
-        return hourPart.format("%d") + ":" + minPart.format("%02d") + ":" + secPart.format("%02d");
+        return CoachUtils.formatElapsedTime(totalSec);
     }
 
     function _formatDistanceKm(distanceKm) {
-        var roundedTenth = Math.floor((distanceKm * 10.0) + 0.5);
-        if (roundedTenth < 0) {
-            roundedTenth = 0;
-        }
-        var kmWhole = Math.floor(roundedTenth / 10);
-        var kmDecimal = roundedTenth - (kmWhole * 10);
-        return kmWhole.format("%d") + "." + kmDecimal.format("%d") + " km";
+        return CoachUtils.formatDistanceKm(distanceKm);
     }
 
     function _buildGoalDeltaText(predictedTotalSec) {
@@ -4416,37 +4092,18 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _formatHourMin(totalSec) {
-        if (totalSec == null) {
-            return "--:--";
-        }
-
-        var roundedTotalMinutes = Math.floor((totalSec + 30.0) / 60.0);
-        if (roundedTotalMinutes < 0) {
-            roundedTotalMinutes = 0;
-        }
-        var hourPart = Math.floor(roundedTotalMinutes / 60);
-        var minPart = roundedTotalMinutes - (hourPart * 60);
-        return hourPart.format("%d") + ":" + minPart.format("%02d");
+        return CoachUtils.formatHourMin(totalSec);
     }
 
     function _textYByRatio(blockTop, blockHeight, ratioPct, fontHeight) {
-        return blockTop + ((blockHeight * ratioPct) / 100) - (fontHeight / 2);
+        return CoachUtils.textYByRatio(blockTop, blockHeight, ratioPct, fontHeight);
     }
 
     function _clamp(value, minValue, maxValue) {
-        if (value < minValue) {
-            return minValue;
-        }
-        if (value > maxValue) {
-            return maxValue;
-        }
-        return value;
+        return CoachUtils.clamp(value, minValue, maxValue);
     }
 
     function _abs(value) {
-        if (value < 0) {
-            return -value;
-        }
-        return value;
+        return CoachUtils.abs(value);
     }
 }
