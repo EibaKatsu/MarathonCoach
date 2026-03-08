@@ -15,7 +15,7 @@ class MarathonCoachField extends Ui.DataField {
     const FUEL_INTERVAL_SEC = 35 * 60;
     const LAP_DEBOUNCE_SEC = 20;
     const CARD_TOGGLE_SEC = 3;
-    const DISTANCE_CARD_DISPLAY_SEC = 3;
+    const DISTANCE_CARD_DISPLAY_SEC = 7;
     const DISTANCE_EVENT_EPSILON_KM = 0.02;
     const FUEL_TOGGLE_LEAD_SEC = 2 * 60;
     const FUEL_METER_WARNING_LEAD_SEC = 0;
