@@ -56,11 +56,11 @@
     <string id="DistanceSplitLate2Line3">Forward</string>
     <string id="DistanceSplitLate3Line2">Almost</string>
     <string id="DistanceSplitLate3Line3">No slip</string>
-    <string id="DistanceMilestoneHalfLine2">To back</string>
+    <string id="DistanceMilestoneHalfLine2">2nd half</string>
     <string id="DistanceMilestoneHalfLine3">Rhythm</string>
-    <string id="DistanceMilestone10kLine2">To back</string>
+    <string id="DistanceMilestone10kLine2">2nd half</string>
     <string id="DistanceMilestone10kLine3">Steady</string>
-    <string id="DistanceMilestone5kLine2">To back</string>
+    <string id="DistanceMilestone5kLine2">2nd half</string>
     <string id="DistanceMilestone5kLine3">Keep</string>
     <string id="DistanceGoalLine2">Finish</string>
     <string id="DistanceGoalLine3">Nice</string>

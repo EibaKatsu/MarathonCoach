@@ -158,11 +158,11 @@ class MarathonCoachField extends Ui.DataField {
     var _distanceSplitMidLine3 as Lang.Array = ["Keep", "No slip", "Rhythm"];
     var _distanceSplitLateLine2 as Lang.Array = ["Go now", "Hang on", "Almost"];
     var _distanceSplitLateLine3 as Lang.Array = ["Step", "Forward", "No slip"];
-    var _distanceMilestoneHalfLine2Text = "To back";
+    var _distanceMilestoneHalfLine2Text = "2nd half";
     var _distanceMilestoneHalfLine3Text = "Rhythm";
-    var _distanceMilestone10kLine2Text = "To back";
+    var _distanceMilestone10kLine2Text = "2nd half";
     var _distanceMilestone10kLine3Text = "Steady";
-    var _distanceMilestone5kLine2Text = "To back";
+    var _distanceMilestone5kLine2Text = "2nd half";
     var _distanceMilestone5kLine3Text = "Keep";
     var _distanceGoalLine2Text = "Done";
     var _distanceGoalLine3Text = "Nice";
@@ -3153,7 +3153,7 @@ class MarathonCoachField extends Ui.DataField {
         var checkpointCount = _getDistanceCheckpointCount(_distanceNotifyRaceType);
         while (_distanceNotifyNextCheckpointIdx < checkpointCount) {
             var checkpointKm = _getDistanceCheckpointKm(_distanceNotifyRaceType, _distanceNotifyNextCheckpointIdx);
-            if (checkpointKm == null or (distanceKm + DISTANCE_EVENT_EPSILON_KM) < checkpointKm) {
+            if (checkpointKm == null or !_hasReachedDistanceTarget(distanceKm, checkpointKm)) {
                 break;
             }
 
@@ -3172,7 +3172,7 @@ class MarathonCoachField extends Ui.DataField {
             var maxSplitKm = _getDistanceMaxSplitKm(_distanceNotifyRaceType);
             while (
                 _distanceNotifyNextSplitKm <= maxSplitKm and
-                (distanceKm + DISTANCE_EVENT_EPSILON_KM) >= _distanceNotifyNextSplitKm
+                _hasReachedDistanceTarget(distanceKm, _distanceNotifyNextSplitKm)
             ) {
                 var splitLines = _buildDistanceSplitLines(_distanceNotifyNextSplitKm);
                 notifyLine1 = splitLines[0];
@@ -3478,6 +3478,13 @@ class MarathonCoachField extends Ui.DataField {
             return DIST_NOTIFY_PHASE_MID;
         }
         return DIST_NOTIFY_PHASE_LATE;
+    }
+
+    function _hasReachedDistanceTarget(distanceKm, targetKm) {
+        if (distanceKm == null or targetKm == null) {
+            return false;
+        }
+        return distanceKm >= (targetKm - DISTANCE_EVENT_EPSILON_KM);
     }
 
     function _applyCardVariantPreview() {
