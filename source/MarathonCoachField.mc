@@ -11,11 +11,6 @@ class MarathonCoachField extends Ui.DataField {
     const KEY_RACE_DISTANCE_KM = "race_distance_km";
     const KEY_TARGET_TIME_HOUR = "target_time_hour";
     const KEY_TARGET_TIME_MINUTE = "target_time_minute";
-    const DEBUG_FORCE_PROPERTIES_DEFAULTS = true;
-    // Mirror values in resources/properties.xml for simulator-only validation without settings UI.
-    const DEBUG_DEFAULT_RACE_DISTANCE_PROP = 1;
-    const DEBUG_DEFAULT_TARGET_TIME_HOUR_PROP = 1;
-    const DEBUG_DEFAULT_TARGET_TIME_MINUTE_PROP = 55;
     const LAYOUT_DEBUG_OVERLAY = false;
     const FUEL_INTERVAL_SEC = 35 * 60;
     const LAP_DEBOUNCE_SEC = 20;
@@ -73,7 +68,7 @@ class MarathonCoachField extends Ui.DataField {
     const CARD_VARIANT_PREVIEW_SEC = 3;
     const SETTINGS_LOG = true;
     const FIT_FACT_LOG = false;
-    const DIST_PROBE_LOG = true;
+    const DIST_PROBE_LOG = false;
 
     const CARD_MODE_ACTION = 0;
     const CARD_MODE_FUEL = 1;
@@ -517,31 +512,11 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _getPropertyValue(key) {
-        if (DEBUG_FORCE_PROPERTIES_DEFAULTS) {
-            return _getDebugForcedPropertyValue(key);
-        }
         try {
             return Props.getValue(key);
         } catch (e) {
             return null;
         }
-    }
-
-    function _getDebugForcedPropertyValue(key) {
-        var keyText = null;
-        if (key != null) {
-            keyText = key.toString();
-        }
-        if (keyText != null and keyText.find(KEY_RACE_DISTANCE_KM) != null) {
-            return DEBUG_DEFAULT_RACE_DISTANCE_PROP;
-        }
-        if (keyText != null and keyText.find(KEY_TARGET_TIME_HOUR) != null) {
-            return DEBUG_DEFAULT_TARGET_TIME_HOUR_PROP;
-        }
-        if (keyText != null and keyText.find(KEY_TARGET_TIME_MINUTE) != null) {
-            return DEBUG_DEFAULT_TARGET_TIME_MINUTE_PROP;
-        }
-        return null;
     }
 
     function _formatHourMinuteSecond(hourPart, minutePart) {

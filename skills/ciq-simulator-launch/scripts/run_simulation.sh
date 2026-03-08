@@ -20,9 +20,12 @@ fi
 cd "$PROJECT_ROOT"
 mkdir -p bin
 
+APP_PRG_PATH="bin/marathoncoach.prg"
+APP_SETTINGS_PATH="${APP_PRG_PATH%.prg}-settings.json"
+
 "$CONNECTIQ_HOME/bin/monkeyc" \
   -f monkey.jungle \
-  -o bin/marathoncoach.prg \
+  -o "$APP_PRG_PATH" \
   -d "$DEVICE_ID" \
   -y "$DEV_KEY" \
   -w
@@ -33,4 +36,15 @@ fi
 
 echo "Waiting 10 seconds for simulator startup..."
 sleep 10
-"$CONNECTIQ_HOME/bin/monkeydo" "bin/marathoncoach.prg" "$DEVICE_ID"
+
+MONKEYDO_ARGS=("$APP_PRG_PATH" "$DEVICE_ID")
+if [[ -f "$APP_SETTINGS_PATH" ]]; then
+  SETTINGS_BASENAME="${APP_SETTINGS_PATH##*/}"
+  SETTINGS_DEST_PATH="GARMIN/Settings/$SETTINGS_BASENAME"
+  MONKEYDO_ARGS+=("-a" "$APP_SETTINGS_PATH:$SETTINGS_DEST_PATH")
+  echo "Sending settings file: $APP_SETTINGS_PATH -> $SETTINGS_DEST_PATH"
+else
+  echo "WARNING: settings file not found: $APP_SETTINGS_PATH"
+fi
+
+"$CONNECTIQ_HOME/bin/monkeydo" "${MONKEYDO_ARGS[@]}"
