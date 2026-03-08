@@ -32,6 +32,8 @@
     <string id="FuelMeterCautionPrefix">In </string>
     <string id="FuelMeterCautionSuffix">m</string>
     <string id="FuelMeterMinuteSuffix">m</string>
+    <string id="FuelMeterDoneText">Done</string>
+    <string id="FuelMeterNoPlanText">No plan</string>
     <string id="WarmupMsg1">Early phase</string>
     <string id="WarmupMsg2">Stay calm</string>
     <string id="WarmupMsg3">Stay loose</string>
@@ -39,7 +41,7 @@
     <string id="WarmupMsg5">No rush</string>
     <string id="WarmupMsg6">Smooth form</string>
     <string id="WarmupMsg7">Save your legs</string>
-    <string id="WarmupMsg8">Relax Relax</string>
+    <string id="WarmupMsg8">Relax</string>
     <string id="WarmupMsg9">Keep rhythm</string>
     <string id="WarmupMsg10">Quiet form</string>
     <string id="WarmupMsg11">Do not rush</string>

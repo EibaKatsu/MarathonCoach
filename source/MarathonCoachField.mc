@@ -11,6 +11,11 @@ class MarathonCoachField extends Ui.DataField {
     const KEY_RACE_DISTANCE_KM = "race_distance_km";
     const KEY_TARGET_TIME_HOUR = "target_time_hour";
     const KEY_TARGET_TIME_MINUTE = "target_time_minute";
+    const DEBUG_FORCE_PROPERTIES_DEFAULTS = true;
+    // Mirror values in resources/properties.xml for simulator-only validation without settings UI.
+    const DEBUG_DEFAULT_RACE_DISTANCE_PROP = 1;
+    const DEBUG_DEFAULT_TARGET_TIME_HOUR_PROP = 1;
+    const DEBUG_DEFAULT_TARGET_TIME_MINUTE_PROP = 55;
     const LAYOUT_DEBUG_OVERLAY = false;
     const FUEL_INTERVAL_SEC = 35 * 60;
     const LAP_DEBOUNCE_SEC = 20;
@@ -20,6 +25,10 @@ class MarathonCoachField extends Ui.DataField {
     const FUEL_METER_LABEL_TOGGLE_SEC = 2;
     const FUEL_WARNING_BLINK_PERIOD_SEC = 2;
     const FUEL_WARNING_BLINK_ON_SEC = 1;
+    const HALF_FUEL_DONE_FLASH_SEC = 10;
+    const HALF_FUEL_POINT_1_KM = 10.0;
+    const HALF_FUEL_POINT_2_KM = 15.0;
+    const HALF_FUEL_POINT_COUNT = 2;
     const HR_OVER_TRIGGER_MARGIN_BPM = 1;
     const WARMUP_MESSAGE_ROTATE_SEC = 15;
     const DRIFT_BASELINE_START_SEC = 20 * 60;
@@ -60,10 +69,10 @@ class MarathonCoachField extends Ui.DataField {
     const CARDIAC_COST_EASE_MIN_RATIO_HALF = 1.12;
     const CARDIAC_COST_EASE_MIN_RATIO_SHORT = 1.15;
     const CARDIAC_COST_MIN_SAMPLES = 30;
-    const CARD_VARIANT_PREVIEW_ENABLED = true;
+    const CARD_VARIANT_PREVIEW_ENABLED = false;
     const CARD_VARIANT_PREVIEW_SEC = 3;
-    const SETTINGS_LOG = false;
-    const FIT_FACT_LOG = true;
+    const SETTINGS_LOG = true;
+    const FIT_FACT_LOG = false;
     const DIST_PROBE_LOG = true;
 
     const CARD_MODE_ACTION = 0;
@@ -82,6 +91,11 @@ class MarathonCoachField extends Ui.DataField {
     const FUEL_METER_STATE_NORMAL = 0;
     const FUEL_METER_STATE_CAUTION = 1;
     const FUEL_METER_STATE_WARNING = 2;
+    const FUEL_DISPLAY_COUNTDOWN = 0;
+    const FUEL_DISPLAY_DUE = 1;
+    const FUEL_DISPLAY_DONE_FLASH = 2;
+    const FUEL_DISPLAY_NO_PLAN = 3;
+    const FUEL_DISPLAY_DISABLED = 4;
 
     const DEFAULT_RACE_DISTANCE_KM = 42.195;
     const HR_GAUGE_ZONE_COUNT = 5;
@@ -125,6 +139,8 @@ class MarathonCoachField extends Ui.DataField {
     var _fuelMeterCautionPrefixText = "In ";
     var _fuelMeterCautionSuffixText = "m";
     var _fuelMeterMinuteSuffixText = "m";
+    var _fuelMeterDoneText = "Done";
+    var _fuelMeterNoPlanText = "No plan";
     var _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
     var _targetTimeHms = null;
     var _targetTimeSec = null;
@@ -143,6 +159,9 @@ class MarathonCoachField extends Ui.DataField {
     var _fuelDueTimeSec = null;
     var _fuelRemainingSec = null;
     var _fuelRemainingText = "--:--";
+    var _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
+    var _halfFuelNextPointIndex = 0;
+    var _halfFuelDoneFlashUntilSec = null;
     var _timerRunning = false;
     var _lastElapsedSec = null;
     var _lastLapResetSec = null;
@@ -256,6 +275,8 @@ class MarathonCoachField extends Ui.DataField {
         _fuelMeterCautionPrefixText = Ui.loadResource(Rez.Strings.FuelMeterCautionPrefix);
         _fuelMeterCautionSuffixText = Ui.loadResource(Rez.Strings.FuelMeterCautionSuffix);
         _fuelMeterMinuteSuffixText = Ui.loadResource(Rez.Strings.FuelMeterMinuteSuffix);
+        _fuelMeterDoneText = Ui.loadResource(Rez.Strings.FuelMeterDoneText);
+        _fuelMeterNoPlanText = Ui.loadResource(Rez.Strings.FuelMeterNoPlanText);
 
         _warmupMessages = [
             Ui.loadResource(Rez.Strings.WarmupMsg1),
@@ -331,6 +352,9 @@ class MarathonCoachField extends Ui.DataField {
         _fuelDueTimeSec = null;
         _fuelRemainingSec = null;
         _fuelRemainingText = "--:--";
+        _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
+        _halfFuelNextPointIndex = 0;
+        _halfFuelDoneFlashUntilSec = null;
         _resetPaceWindow();
         _paceNowSecPerKm = null;
         _paceNowText = "--:--";
@@ -394,10 +418,20 @@ class MarathonCoachField extends Ui.DataField {
             return;
         }
 
+        var profile = _resolveRaceProfile();
+        if (profile == RACE_PROFILE_SHORT) {
+            return;
+        }
+        if (profile == RACE_PROFILE_HALF) {
+            _markHalfFuelPointIfDue();
+            return;
+        }
+
         _lastFuelTimeSec = _lastElapsedSec;
         _fuelDueTimeSec = _lastFuelTimeSec + FUEL_INTERVAL_SEC;
         _fuelRemainingSec = FUEL_INTERVAL_SEC;
         _fuelRemainingText = _formatMinSec(_fuelRemainingSec);
+        _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
         _lastLapResetSec = _lastElapsedSec;
     }
 
@@ -455,13 +489,10 @@ class MarathonCoachField extends Ui.DataField {
 
     function _loadTargetTimeMinute() {
         var minute = _loadIntSettingValue(KEY_TARGET_TIME_MINUTE);
-        if (minute == null) {
+        if (minute == null or minute < 0 or minute > 59) {
             return null;
         }
-        if (minute == 0 or minute == 15 or minute == 30 or minute == 45) {
-            return minute;
-        }
-        return null;
+        return minute;
     }
 
     function _loadIntSettingValue(key) {
@@ -486,11 +517,31 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _getPropertyValue(key) {
+        if (DEBUG_FORCE_PROPERTIES_DEFAULTS) {
+            return _getDebugForcedPropertyValue(key);
+        }
         try {
             return Props.getValue(key);
         } catch (e) {
             return null;
         }
+    }
+
+    function _getDebugForcedPropertyValue(key) {
+        var keyText = null;
+        if (key != null) {
+            keyText = key.toString();
+        }
+        if (keyText != null and keyText.find(KEY_RACE_DISTANCE_KM) != null) {
+            return DEBUG_DEFAULT_RACE_DISTANCE_PROP;
+        }
+        if (keyText != null and keyText.find(KEY_TARGET_TIME_HOUR) != null) {
+            return DEBUG_DEFAULT_TARGET_TIME_HOUR_PROP;
+        }
+        if (keyText != null and keyText.find(KEY_TARGET_TIME_MINUTE) != null) {
+            return DEBUG_DEFAULT_TARGET_TIME_MINUTE_PROP;
+        }
+        return null;
     }
 
     function _formatHourMinuteSecond(hourPart, minutePart) {
@@ -1113,8 +1164,12 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         var chars = text.toString().toCharArray();
+        if (!(chars instanceof Lang.Array)) {
+            return false;
+        }
         for (var i = 0; i < chars.size(); i += 1) {
-            if (chars[i].toNumber() > 127) {
+            var ch = chars[i];
+            if (ch != null and ch instanceof Lang.Char and ch.toNumber() > 127) {
                 return true;
             }
         }
@@ -1221,8 +1276,11 @@ class MarathonCoachField extends Ui.DataField {
 
     function _drawFuelMeter(dc as Gfx.Dc, sizeClass, centerX, centerY, radius, labelFont, valueFont) {
         var meterState = _resolveFuelMeterState();
+        var fuelDisplayMode = _fuelDisplayMode;
         var showCenterText = true;
-        if (meterState == FUEL_METER_STATE_WARNING) {
+        if (fuelDisplayMode == FUEL_DISPLAY_DISABLED) {
+            showCenterText = false;
+        } else if (meterState == FUEL_METER_STATE_WARNING) {
             showCenterText = _isFuelWarningBlinkVisible();
         }
 
@@ -1234,7 +1292,7 @@ class MarathonCoachField extends Ui.DataField {
         var meterLabelText = _resolveFuelMeterLabelText();
 
         var ringThickness = _clamp(radius / 4, 4, 11);
-        if (meterState != FUEL_METER_STATE_NORMAL) {
+        if (fuelDisplayMode == FUEL_DISPLAY_DUE and meterState != FUEL_METER_STATE_NORMAL) {
             ringThickness = _clamp(ringThickness + 1, 4, 12);
         }
         var orbitRadius = radius - Math.floor(ringThickness / 2);
@@ -1283,7 +1341,7 @@ class MarathonCoachField extends Ui.DataField {
         }
         var warningSubTextFont = Gfx.FONT_XTINY;
 
-        var showTopLabel = (meterState != FUEL_METER_STATE_WARNING);
+        var showTopLabel = !(fuelDisplayMode == FUEL_DISPLAY_DUE and meterState == FUEL_METER_STATE_WARNING);
         var labelY = _textYByRatio(
             centerY - radius,
             radius * 2,
@@ -1320,7 +1378,7 @@ class MarathonCoachField extends Ui.DataField {
         if (showTopLabel) {
             dc.drawText(centerX, labelY, labelFont, meterLabelText, Gfx.TEXT_JUSTIFY_CENTER);
         }
-        if (showCenterText) {
+        if (showCenterText and centerText != null and centerText.length() > 0) {
             dc.drawText(centerX, centerTextY, centerTextFont, centerText, Gfx.TEXT_JUSTIFY_CENTER);
             if (warningSubText != null) {
                 dc.drawText(centerX, warningSubTextY, warningSubTextFont, warningSubText, Gfx.TEXT_JUSTIFY_CENTER);
@@ -1344,11 +1402,11 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveFuelMeterState() {
-        if (
-            _isFuelOverdue() or
-            (_fuelRemainingSec != null and _fuelRemainingSec <= FUEL_METER_WARNING_LEAD_SEC)
-        ) {
+        if (_fuelDisplayMode == FUEL_DISPLAY_DUE) {
             return FUEL_METER_STATE_WARNING;
+        }
+        if (_fuelDisplayMode != FUEL_DISPLAY_COUNTDOWN) {
+            return FUEL_METER_STATE_NORMAL;
         }
         if (_fuelRemainingSec != null and _fuelRemainingSec <= FUEL_TOGGLE_LEAD_SEC) {
             return FUEL_METER_STATE_CAUTION;
@@ -1377,6 +1435,15 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveFuelMeterProgressRatio(meterState) {
+        if (_fuelDisplayMode == FUEL_DISPLAY_DISABLED) {
+            return 0.0;
+        }
+        if (_fuelDisplayMode == FUEL_DISPLAY_DUE) {
+            return 1.0;
+        }
+        if (_fuelDisplayMode != FUEL_DISPLAY_COUNTDOWN) {
+            return 0.0;
+        }
         if (meterState == FUEL_METER_STATE_WARNING) {
             return 1.0;
         }
@@ -1389,6 +1456,15 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveFuelMeterCenterText(meterState) {
+        if (_fuelDisplayMode == FUEL_DISPLAY_DISABLED) {
+            return null;
+        }
+        if (_fuelDisplayMode == FUEL_DISPLAY_DONE_FLASH) {
+            return _fuelMeterDoneText;
+        }
+        if (_fuelDisplayMode == FUEL_DISPLAY_NO_PLAN) {
+            return _fuelMeterNoPlanText;
+        }
         if (meterState == FUEL_METER_STATE_WARNING) {
             return _fuelMeterWarningText;
         }
@@ -1401,7 +1477,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveFuelMeterWarningSubText(meterState) {
-        if (meterState == FUEL_METER_STATE_WARNING) {
+        if (_fuelDisplayMode == FUEL_DISPLAY_DUE and meterState == FUEL_METER_STATE_WARNING) {
             return _fuelMeterWarningSubText;
         }
         return null;
@@ -1423,6 +1499,10 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveFuelMeterLabelText() {
+        var raceProfile = _resolveRaceProfile();
+        if (raceProfile != RACE_PROFILE_FULL) {
+            return _fuelMeterPrimaryLabelText;
+        }
         var uptimeSec = Math.floor(Sys.getTimer() / 1000.0);
         var slot = Math.floor(uptimeSec / FUEL_METER_LABEL_TOGGLE_SEC);
         var halfSlot = Math.floor(slot / 2);
@@ -1946,11 +2026,14 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _getElapsedTimeRaw(info) {
-        // Match MessageInGarmin: use timerTime, and fall back to system uptime when unavailable.
+        // Keep elapsed time on Activity.Info stream only.
+        if (_sampleElapsedRaw != null) {
+            return _sampleElapsedRaw;
+        }
         if (_sampleTimerRaw != null) {
             return _sampleTimerRaw;
         }
-        return Sys.getTimer();
+        return null;
     }
 
     function _getFallbackActivityInfo() {
@@ -1968,55 +2051,51 @@ class MarathonCoachField extends Ui.DataField {
     function _captureInfoSample(info) {
         var fallbackInfo = _getFallbackActivityInfo();
 
-        _sampleElapsedRaw = _pickSampleNumber(
-            (info != null) ? info.elapsedTime : null,
-            (fallbackInfo != null) ? fallbackInfo.elapsedTime : null,
-            "elapsedTime"
-        );
-        _sampleElapsedSource = _pickSampleSource(
-            (info != null) ? info.elapsedTime : null,
-            (fallbackInfo != null) ? fallbackInfo.elapsedTime : null
-        );
+        var infoElapsedTime = (info != null) ? info.elapsedTime : null;
+        if (_isNumericSample(infoElapsedTime)) {
+            _sampleElapsedRaw = infoElapsedTime;
+            _sampleElapsedSource = "info";
+        } else {
+            _sampleElapsedRaw = null;
+            _sampleElapsedSource = "none";
+        }
 
-        _sampleTimerRaw = _pickSampleNumber(
-            (info != null) ? info.timerTime : null,
-            (fallbackInfo != null) ? fallbackInfo.timerTime : null,
-            "timerTime"
-        );
-        _sampleTimerSource = _pickSampleSource(
-            (info != null) ? info.timerTime : null,
-            (fallbackInfo != null) ? fallbackInfo.timerTime : null
-        );
+        var infoTimerTime = (info != null) ? info.timerTime : null;
+        if (_isNumericSample(infoTimerTime)) {
+            _sampleTimerRaw = infoTimerTime;
+            _sampleTimerSource = "info";
+        } else {
+            _sampleTimerRaw = null;
+            _sampleTimerSource = "none";
+        }
 
-        _sampleDistanceRawM = _pickSampleNumber(
-            (info != null) ? info.elapsedDistance : null,
-            (fallbackInfo != null) ? fallbackInfo.elapsedDistance : null,
-            "elapsedDistance"
-        );
-        _sampleDistanceSource = _pickSampleSource(
-            (info != null) ? info.elapsedDistance : null,
-            (fallbackInfo != null) ? fallbackInfo.elapsedDistance : null
-        );
+        // Keep distance strictly on Activity.Info stream; do not mix with fallback source.
+        var infoElapsedDistance = (info != null) ? info.elapsedDistance : null;
+        if (_isNumericSample(infoElapsedDistance)) {
+            _sampleDistanceRawM = infoElapsedDistance;
+            _sampleDistanceSource = "info";
+        } else {
+            _sampleDistanceRawM = null;
+            _sampleDistanceSource = "none";
+        }
 
-        _sampleCurrentSpeedRaw = _pickSampleNumber(
-            (info != null) ? info.currentSpeed : null,
-            (fallbackInfo != null) ? fallbackInfo.currentSpeed : null,
-            "currentSpeed"
-        );
-        _sampleCurrentSpeedSource = _pickSampleSource(
-            (info != null) ? info.currentSpeed : null,
-            (fallbackInfo != null) ? fallbackInfo.currentSpeed : null
-        );
+        var infoCurrentSpeed = (info != null) ? info.currentSpeed : null;
+        if (_isNumericSample(infoCurrentSpeed)) {
+            _sampleCurrentSpeedRaw = infoCurrentSpeed;
+            _sampleCurrentSpeedSource = "info";
+        } else {
+            _sampleCurrentSpeedRaw = null;
+            _sampleCurrentSpeedSource = "none";
+        }
 
-        _sampleAverageSpeedRaw = _pickSampleNumber(
-            (info != null) ? info.averageSpeed : null,
-            (fallbackInfo != null) ? fallbackInfo.averageSpeed : null,
-            "averageSpeed"
-        );
-        _sampleAverageSpeedSource = _pickSampleSource(
-            (info != null) ? info.averageSpeed : null,
-            (fallbackInfo != null) ? fallbackInfo.averageSpeed : null
-        );
+        var infoAverageSpeed = (info != null) ? info.averageSpeed : null;
+        if (_isNumericSample(infoAverageSpeed)) {
+            _sampleAverageSpeedRaw = infoAverageSpeed;
+            _sampleAverageSpeedSource = "info";
+        } else {
+            _sampleAverageSpeedRaw = null;
+            _sampleAverageSpeedSource = "none";
+        }
 
         _sampleSpeedMps = _sampleCurrentSpeedRaw;
         _sampleSpeedSource = _sampleCurrentSpeedSource;
@@ -2085,7 +2164,12 @@ class MarathonCoachField extends Ui.DataField {
         try {
             var fromRad = fromLocation.toRadians();
             var toRad = toLocation.toRadians();
-            if (fromRad == null or toRad == null or fromRad.size() < 2 or toRad.size() < 2) {
+            if (
+                !(fromRad instanceof Lang.Array) or
+                !(toRad instanceof Lang.Array) or
+                fromRad.size() < 2 or
+                toRad.size() < 2
+            ) {
                 return null;
             }
 
@@ -2145,8 +2229,10 @@ class MarathonCoachField extends Ui.DataField {
             " minuteRaw=" + _factValue(rawMinute) +
             " hourNorm=" + _factValue(targetHour) +
             " minuteNorm=" + _factValue(targetMinute) +
+            " raceKm=" + _factValue(_raceDistanceKm) +
             " hms=" + _factValue(_targetTimeHms) +
-            " sec=" + _factValue(_targetTimeSec);
+            " sec=" + _factValue(_targetTimeSec) +
+            " paceSecPerKm=" + _factValue(_targetPaceSecPerKm);
         if (_lastSettingsLogLine == line) {
             return;
         }
@@ -2735,9 +2821,25 @@ class MarathonCoachField extends Ui.DataField {
 
     function _updateFuelTimer(info) {
         var elapsedSec = _extractElapsedSec(info);
+        var raceProfile = _resolveRaceProfile();
+
+        if (raceProfile == RACE_PROFILE_SHORT) {
+            _fuelDueTimeSec = null;
+            _fuelRemainingSec = null;
+            _fuelRemainingText = "--:--";
+            _fuelDisplayMode = FUEL_DISPLAY_DISABLED;
+            return;
+        }
+
+        if (raceProfile == RACE_PROFILE_HALF) {
+            _updateHalfFuelTimer(elapsedSec, _extractElapsedDistanceKm(info));
+            return;
+        }
+
         if (elapsedSec == null) {
             _fuelRemainingSec = null;
             _fuelRemainingText = "--:--";
+            _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
             return;
         }
 
@@ -2749,14 +2851,147 @@ class MarathonCoachField extends Ui.DataField {
             _lastFuelTimeSec = 0;
             _lastLapResetSec = null;
         }
-
         _fuelDueTimeSec = _lastFuelTimeSec + FUEL_INTERVAL_SEC;
         _fuelRemainingSec = _fuelDueTimeSec - elapsedSec;
         if (_fuelRemainingSec < 0) {
             _fuelRemainingSec = 0;
         }
-
         _fuelRemainingText = _formatMinSec(_fuelRemainingSec);
+        if (_fuelRemainingSec <= 0) {
+            _fuelDisplayMode = FUEL_DISPLAY_DUE;
+        } else {
+            _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
+        }
+    }
+
+    function _updateHalfFuelTimer(elapsedSec, distanceKm) {
+        if (_halfFuelNextPointIndex >= HALF_FUEL_POINT_COUNT) {
+            _fuelDueTimeSec = null;
+            _fuelRemainingSec = null;
+            _fuelRemainingText = "--:--";
+            if (
+                _halfFuelDoneFlashUntilSec != null and
+                elapsedSec != null and
+                elapsedSec < _halfFuelDoneFlashUntilSec
+            ) {
+                _fuelDisplayMode = FUEL_DISPLAY_DONE_FLASH;
+            } else {
+                _fuelDisplayMode = FUEL_DISPLAY_NO_PLAN;
+            }
+            return;
+        }
+
+        if (elapsedSec == null) {
+            _fuelDueTimeSec = null;
+            _fuelRemainingSec = null;
+            _fuelRemainingText = "--:--";
+            _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
+            return;
+        }
+
+        var nextFuelKm = _getHalfFuelPointKm(_halfFuelNextPointIndex);
+        if (nextFuelKm == null) {
+            _fuelDueTimeSec = null;
+            _fuelRemainingSec = null;
+            _fuelRemainingText = "--:--";
+            _fuelDisplayMode = FUEL_DISPLAY_NO_PLAN;
+            return;
+        }
+
+        if (distanceKm != null and distanceKm >= nextFuelKm) {
+            _fuelDueTimeSec = elapsedSec;
+            _fuelRemainingSec = 0;
+            _fuelRemainingText = _formatMinSec(0);
+            _fuelDisplayMode = FUEL_DISPLAY_DUE;
+            return;
+        }
+
+        var etaSec = _estimateFuelEtaSec(distanceKm, nextFuelKm);
+        _fuelDueTimeSec = null;
+        if (etaSec != null) {
+            _fuelRemainingSec = etaSec;
+            _fuelRemainingText = _formatMinSec(_fuelRemainingSec);
+        } else {
+            _fuelRemainingSec = null;
+            _fuelRemainingText = "--:--";
+        }
+        _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
+    }
+
+    function _getHalfFuelPointKm(index) {
+        if (index == 0) {
+            return HALF_FUEL_POINT_1_KM;
+        }
+        if (index == 1) {
+            return HALF_FUEL_POINT_2_KM;
+        }
+        return null;
+    }
+
+    function _estimateFuelEtaSec(distanceKm, nextFuelKm) {
+        if (distanceKm == null or nextFuelKm == null) {
+            return null;
+        }
+        var remainingKm = nextFuelKm - distanceKm;
+        if (remainingKm <= 0) {
+            return 0;
+        }
+
+        var paceSecPerKm = _paceNowSecPerKm;
+        if (paceSecPerKm == null or paceSecPerKm <= 0) {
+            paceSecPerKm = _targetPaceSecPerKm;
+        }
+        if (paceSecPerKm == null or paceSecPerKm <= 0) {
+            return null;
+        }
+
+        var etaSec = Math.floor((remainingKm * paceSecPerKm) + 0.5);
+        if (etaSec < 0) {
+            etaSec = 0;
+        }
+        return etaSec;
+    }
+
+    function _markHalfFuelPointIfDue() {
+        if (_halfFuelNextPointIndex >= HALF_FUEL_POINT_COUNT) {
+            return;
+        }
+
+        var distanceKm = _extractElapsedDistanceKm(_fallbackActivityInfo);
+        var nextFuelKm = _getHalfFuelPointKm(_halfFuelNextPointIndex);
+        if (distanceKm == null or nextFuelKm == null or distanceKm < nextFuelKm) {
+            return;
+        }
+
+        _halfFuelNextPointIndex += 1;
+        _lastLapResetSec = _lastElapsedSec;
+        if (_halfFuelNextPointIndex >= HALF_FUEL_POINT_COUNT) {
+            _fuelDisplayMode = FUEL_DISPLAY_DONE_FLASH;
+            _fuelDueTimeSec = null;
+            _fuelRemainingSec = null;
+            _fuelRemainingText = "--:--";
+            if (_lastElapsedSec != null) {
+                _halfFuelDoneFlashUntilSec = _lastElapsedSec + HALF_FUEL_DONE_FLASH_SEC;
+            } else {
+                _halfFuelDoneFlashUntilSec = null;
+            }
+        } else {
+            _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
+            _fuelDueTimeSec = null;
+            _fuelRemainingSec = null;
+            _fuelRemainingText = "--:--";
+        }
+    }
+
+    function _isFuelCardEnabled() {
+        var raceProfile = _resolveRaceProfile();
+        if (raceProfile == RACE_PROFILE_SHORT) {
+            return false;
+        }
+        if (raceProfile == RACE_PROFILE_HALF and _halfFuelNextPointIndex >= HALF_FUEL_POINT_COUNT) {
+            return false;
+        }
+        return true;
     }
 
     function _updateCardDisplay(info) {
@@ -2808,7 +3043,10 @@ class MarathonCoachField extends Ui.DataField {
 
         // Toggle starts in the final 2 minutes before fuel due.
         var inFuelToggleWindow = (
-            _fuelRemainingSec != null and _fuelRemainingSec <= FUEL_TOGGLE_LEAD_SEC
+            _isFuelCardEnabled() and
+            _fuelRemainingSec != null and
+            _fuelRemainingSec > 0 and
+            _fuelRemainingSec <= FUEL_TOGGLE_LEAD_SEC
         );
         if (inFuelToggleWindow) {
             var toggleSlot = Math.floor(elapsedSec / CARD_TOGGLE_SEC);
@@ -2911,7 +3149,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _isFuelOverdue() {
-        return _fuelRemainingSec != null and _fuelRemainingSec <= 0;
+        return _isFuelCardEnabled() and _fuelRemainingSec != null and _fuelRemainingSec <= 0;
     }
 
     function _resolveFuelSoonCardLine2() {

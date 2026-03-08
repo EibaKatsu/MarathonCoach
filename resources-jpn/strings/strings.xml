@@ -35,6 +35,8 @@
     <string id="FuelMeterCautionPrefix">あと</string>
     <string id="FuelMeterCautionSuffix">分</string>
     <string id="FuelMeterMinuteSuffix">m</string>
+    <string id="FuelMeterDoneText">完了</string>
+    <string id="FuelMeterNoPlanText">予定なし</string>
     <string id="WarmupMsg1">まだ序盤</string>
     <string id="WarmupMsg2">落ち着け</string>
     <string id="WarmupMsg3">力ぬいて</string>
