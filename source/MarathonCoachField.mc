@@ -7,6 +7,7 @@ using Toybox.System as Sys;
 using Toybox.UserProfile;
 using Toybox.WatchUi as Ui;
 using CoachUtils;
+using DistanceNotifyUtils;
 using SettingsLoader;
 
 class MarathonCoachField extends Ui.DataField {
@@ -63,13 +64,6 @@ class MarathonCoachField extends Ui.DataField {
     const HALF_DISTANCE_TOLERANCE_KM = 0.25;
     const TEN_DISTANCE_KM = 10.0;
     const FIVE_DISTANCE_KM = 5.0;
-    const DIST_NOTIFY_RACE_FULL = 0;
-    const DIST_NOTIFY_RACE_HALF = 1;
-    const DIST_NOTIFY_RACE_TEN = 2;
-    const DIST_NOTIFY_RACE_FIVE = 3;
-    const DIST_NOTIFY_PHASE_EARLY = 0;
-    const DIST_NOTIFY_PHASE_MID = 1;
-    const DIST_NOTIFY_PHASE_LATE = 2;
     const CARDIAC_COST_PUSH_MAX_RATIO_FULL = 1.06;
     const CARDIAC_COST_PUSH_MAX_RATIO_HALF = 1.08;
     const CARDIAC_COST_PUSH_MAX_RATIO_SHORT = 1.10;
@@ -3081,10 +3075,16 @@ class MarathonCoachField extends Ui.DataField {
         var notifyLine3 = null;
         var notifyEvent = DISTANCE_NOTIFY_EVENT_NONE;
 
-        var checkpointCount = _getDistanceCheckpointCount(_distanceNotifyRaceType);
+        var checkpointCount = DistanceNotifyUtils.getCheckpointCount(_distanceNotifyRaceType);
         while (_distanceNotifyNextCheckpointIdx < checkpointCount) {
-            var checkpointKm = _getDistanceCheckpointKm(_distanceNotifyRaceType, _distanceNotifyNextCheckpointIdx);
-            if (checkpointKm == null or !_hasReachedDistanceTarget(distanceKm, checkpointKm)) {
+            var checkpointKm = DistanceNotifyUtils.getCheckpointKm(
+                _distanceNotifyRaceType,
+                _distanceNotifyNextCheckpointIdx
+            );
+            if (
+                checkpointKm == null or
+                !DistanceNotifyUtils.hasReachedTarget(distanceKm, checkpointKm, DISTANCE_EVENT_EPSILON_KM)
+            ) {
                 break;
             }
 
@@ -3101,10 +3101,14 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         if (notifyLine1 == null) {
-            var maxSplitKm = _getDistanceMaxSplitKm(_distanceNotifyRaceType);
+            var maxSplitKm = DistanceNotifyUtils.getMaxSplitKm(_distanceNotifyRaceType);
             while (
                 _distanceNotifyNextSplitKm <= maxSplitKm and
-                _hasReachedDistanceTarget(distanceKm, _distanceNotifyNextSplitKm)
+                DistanceNotifyUtils.hasReachedTarget(
+                    distanceKm,
+                    _distanceNotifyNextSplitKm,
+                    DISTANCE_EVENT_EPSILON_KM
+                )
             ) {
                 var splitLines = _buildDistanceSplitLines(_distanceNotifyNextSplitKm);
                 notifyLine1 = splitLines[0];
@@ -3350,7 +3354,11 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _ensureDistanceNotifyPlan() {
-        var raceType = _resolveDistanceNotifyRaceType();
+        var raceType = DistanceNotifyUtils.resolveRaceType(
+            _raceDistanceKm,
+            HALF_DISTANCE_KM,
+            HALF_DISTANCE_TOLERANCE_KM
+        );
         if (_distanceNotifyRaceType == raceType) {
             return;
         }
@@ -3361,65 +3369,8 @@ class MarathonCoachField extends Ui.DataField {
         _clearDistanceNotifyCard();
     }
 
-    function _resolveDistanceNotifyRaceType() {
-        if (_raceDistanceKm <= 7.0) {
-            return DIST_NOTIFY_RACE_FIVE;
-        }
-        if (_abs(_raceDistanceKm - HALF_DISTANCE_KM) <= HALF_DISTANCE_TOLERANCE_KM) {
-            return DIST_NOTIFY_RACE_HALF;
-        }
-        if (_raceDistanceKm <= 15.0) {
-            return DIST_NOTIFY_RACE_TEN;
-        }
-        return DIST_NOTIFY_RACE_FULL;
-    }
-
-    function _getDistanceCheckpointCount(raceType) {
-        if (raceType == DIST_NOTIFY_RACE_FIVE) {
-            return 1;
-        }
-        return 2;
-    }
-
-    function _getDistanceCheckpointKm(raceType, checkpointIdx) {
-        if (raceType == DIST_NOTIFY_RACE_FULL) {
-            if (checkpointIdx == 0) {
-                return 21.1;
-            }
-            if (checkpointIdx == 1) {
-                return 42.2;
-            }
-            return null;
-        }
-
-        if (raceType == DIST_NOTIFY_RACE_HALF) {
-            if (checkpointIdx == 0) {
-                return 10.0;
-            }
-            if (checkpointIdx == 1) {
-                return 21.1;
-            }
-            return null;
-        }
-
-        if (raceType == DIST_NOTIFY_RACE_TEN) {
-            if (checkpointIdx == 0) {
-                return 5.0;
-            }
-            if (checkpointIdx == 1) {
-                return 10.0;
-            }
-            return null;
-        }
-
-        if (checkpointIdx == 0) {
-            return 5.0;
-        }
-        return null;
-    }
-
     function _getDistanceCheckpointLine1(raceType, checkpointIdx) {
-        if (raceType == DIST_NOTIFY_RACE_FULL) {
+        if (raceType == DistanceNotifyUtils.RACE_FULL) {
             if (checkpointIdx == 0) {
                 return _distanceLabelHalfText;
             }
@@ -3429,7 +3380,7 @@ class MarathonCoachField extends Ui.DataField {
             return "";
         }
 
-        if (raceType == DIST_NOTIFY_RACE_HALF) {
+        if (raceType == DistanceNotifyUtils.RACE_HALF) {
             if (checkpointIdx == 0) {
                 return _distanceLabel10kText;
             }
@@ -3439,7 +3390,7 @@ class MarathonCoachField extends Ui.DataField {
             return "";
         }
 
-        if (raceType == DIST_NOTIFY_RACE_TEN) {
+        if (raceType == DistanceNotifyUtils.RACE_TEN) {
             if (checkpointIdx == 0) {
                 return _distanceLabel5kText;
             }
@@ -3453,7 +3404,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _getDistanceCheckpointLine2(raceType, checkpointIdx) {
-        if (raceType == DIST_NOTIFY_RACE_FULL) {
+        if (raceType == DistanceNotifyUtils.RACE_FULL) {
             if (checkpointIdx == 0) {
                 return _distanceMilestoneHalfLine2Text;
             }
@@ -3463,7 +3414,7 @@ class MarathonCoachField extends Ui.DataField {
             return "";
         }
 
-        if (raceType == DIST_NOTIFY_RACE_HALF) {
+        if (raceType == DistanceNotifyUtils.RACE_HALF) {
             if (checkpointIdx == 0) {
                 return _distanceMilestone10kLine2Text;
             }
@@ -3473,7 +3424,7 @@ class MarathonCoachField extends Ui.DataField {
             return "";
         }
 
-        if (raceType == DIST_NOTIFY_RACE_TEN) {
+        if (raceType == DistanceNotifyUtils.RACE_TEN) {
             if (checkpointIdx == 0) {
                 return _distanceMilestone5kLine2Text;
             }
@@ -3490,7 +3441,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _getDistanceCheckpointLine3(raceType, checkpointIdx) {
-        if (raceType == DIST_NOTIFY_RACE_FULL) {
+        if (raceType == DistanceNotifyUtils.RACE_FULL) {
             if (checkpointIdx == 0) {
                 return _distanceMilestoneHalfLine3Text;
             }
@@ -3500,7 +3451,7 @@ class MarathonCoachField extends Ui.DataField {
             return "";
         }
 
-        if (raceType == DIST_NOTIFY_RACE_HALF) {
+        if (raceType == DistanceNotifyUtils.RACE_HALF) {
             if (checkpointIdx == 0) {
                 return _distanceMilestone10kLine3Text;
             }
@@ -3510,7 +3461,7 @@ class MarathonCoachField extends Ui.DataField {
             return "";
         }
 
-        if (raceType == DIST_NOTIFY_RACE_TEN) {
+        if (raceType == DistanceNotifyUtils.RACE_TEN) {
             if (checkpointIdx == 0) {
                 return _distanceMilestone5kLine3Text;
             }
@@ -3526,28 +3477,15 @@ class MarathonCoachField extends Ui.DataField {
         return "";
     }
 
-    function _getDistanceMaxSplitKm(raceType) {
-        if (raceType == DIST_NOTIFY_RACE_FULL) {
-            return 42;
-        }
-        if (raceType == DIST_NOTIFY_RACE_HALF) {
-            return 21;
-        }
-        if (raceType == DIST_NOTIFY_RACE_TEN) {
-            return 9;
-        }
-        return 4;
-    }
-
     function _buildDistanceSplitLines(splitKm) as Lang.Array {
         var line1 = splitKm.format("%d") + "km";
-        var phase = _resolveDistanceSplitPhase(splitKm);
+        var phase = DistanceNotifyUtils.resolveSplitPhase(splitKm, _raceDistanceKm);
         var line2Templates = _distanceSplitEarlyLine2;
         var line3Templates = _distanceSplitEarlyLine3;
-        if (phase == DIST_NOTIFY_PHASE_MID) {
+        if (phase == DistanceNotifyUtils.PHASE_MID) {
             line2Templates = _distanceSplitMidLine2;
             line3Templates = _distanceSplitMidLine3;
-        } else if (phase == DIST_NOTIFY_PHASE_LATE) {
+        } else if (phase == DistanceNotifyUtils.PHASE_LATE) {
             line2Templates = _distanceSplitLateLine2;
             line3Templates = _distanceSplitLateLine3;
         }
@@ -3568,28 +3506,6 @@ class MarathonCoachField extends Ui.DataField {
             line3 = line3Templates[templateIdx];
         }
         return [line1, line2, line3];
-    }
-
-    function _resolveDistanceSplitPhase(splitKm) {
-        if (_raceDistanceKm == null or _raceDistanceKm <= 0) {
-            return DIST_NOTIFY_PHASE_EARLY;
-        }
-
-        var progress = splitKm / _raceDistanceKm;
-        if (progress < 0.34) {
-            return DIST_NOTIFY_PHASE_EARLY;
-        }
-        if (progress < 0.80) {
-            return DIST_NOTIFY_PHASE_MID;
-        }
-        return DIST_NOTIFY_PHASE_LATE;
-    }
-
-    function _hasReachedDistanceTarget(distanceKm, targetKm) {
-        if (distanceKm == null or targetKm == null) {
-            return false;
-        }
-        return distanceKm >= (targetKm - DISTANCE_EVENT_EPSILON_KM);
     }
 
     function _applyCardVariantPreview() {
