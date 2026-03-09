@@ -10,6 +10,7 @@ using BeepUtils;
 using CoachUtils;
 using DistanceNotifyUtils;
 using FuelMeterUtils;
+using RaceStrategyUtils;
 using SettingsLoader;
 
 class MarathonCoachField extends Ui.DataField {
@@ -2226,317 +2227,161 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveRaceProfile() {
-        if (_raceDistanceKm != null and _raceDistanceKm <= SHORT_DISTANCE_MAX_KM) {
-            return RACE_PROFILE_SHORT;
-        }
-        if (
-            _raceDistanceKm != null and
-            _abs(_raceDistanceKm - HALF_DISTANCE_KM) <= HALF_DISTANCE_TOLERANCE_KM
-        ) {
-            return RACE_PROFILE_HALF;
-        }
-        return RACE_PROFILE_FULL;
+        return RaceStrategyUtils.resolveRaceProfile(
+            _raceDistanceKm,
+            SHORT_DISTANCE_MAX_KM,
+            HALF_DISTANCE_KM,
+            HALF_DISTANCE_TOLERANCE_KM
+        );
     }
 
     function _resolveRaceProgress(distanceKm) {
-        if (distanceKm == null or _raceDistanceKm == null or _raceDistanceKm <= 0) {
-            return null;
-        }
-        var progress = distanceKm / _raceDistanceKm;
-        if (progress < 0) {
-            progress = 0;
-        }
-        if (progress > 1.0) {
-            progress = 1.0;
-        }
-        return progress;
+        return RaceStrategyUtils.resolveRaceProgress(distanceKm, _raceDistanceKm);
     }
 
     function _resolveRacePhase(distanceKm) {
-        var progress = _resolveRaceProgress(distanceKm);
-        if (progress == null) {
-            return RACE_PHASE_1;
-        }
-        if (progress < RACE_PHASE_1_END_PROGRESS) {
-            return RACE_PHASE_1;
-        }
-        if (progress < RACE_PHASE_2_END_PROGRESS) {
-            return RACE_PHASE_2;
-        }
-        if (progress < RACE_PHASE_3_END_PROGRESS) {
-            return RACE_PHASE_3;
-        }
-        if (progress < RACE_PHASE_4_END_PROGRESS) {
-            return RACE_PHASE_4;
-        }
-        return RACE_PHASE_5;
+        return RaceStrategyUtils.resolveRacePhase(
+            distanceKm,
+            _raceDistanceKm,
+            RACE_PHASE_1_END_PROGRESS,
+            RACE_PHASE_2_END_PROGRESS,
+            RACE_PHASE_3_END_PROGRESS,
+            RACE_PHASE_4_END_PROGRESS
+        );
     }
 
     function _getAllowedZoneNumber(distanceKm) {
-        var phase = _resolveRacePhase(distanceKm);
-        var profile = _resolveRaceProfile();
-        if (profile == RACE_PROFILE_SHORT) {
-            if (phase == RACE_PHASE_1) {
-                return 4;
-            }
-            if (phase == RACE_PHASE_2 or phase == RACE_PHASE_3) {
-                return 5;
-            }
-            return 5;
-        }
-        if (profile == RACE_PROFILE_HALF) {
-            if (phase == RACE_PHASE_1) {
-                return 3;
-            }
-            return 4;
-        }
-
-        if (phase == RACE_PHASE_1) {
-            return 2;
-        }
-        if (phase == RACE_PHASE_2 or phase == RACE_PHASE_3) {
-            return 3;
-        }
-        return 4;
+        return RaceStrategyUtils.getAllowedZoneNumber(
+            distanceKm,
+            _raceDistanceKm,
+            SHORT_DISTANCE_MAX_KM,
+            HALF_DISTANCE_KM,
+            HALF_DISTANCE_TOLERANCE_KM,
+            RACE_PHASE_1_END_PROGRESS,
+            RACE_PHASE_2_END_PROGRESS,
+            RACE_PHASE_3_END_PROGRESS,
+            RACE_PHASE_4_END_PROGRESS
+        );
     }
 
     function _getAllowedZoneOffsetBpm(distanceKm) {
-        var phase = _resolveRacePhase(distanceKm);
-        var profile = _resolveRaceProfile();
-        if (profile == RACE_PROFILE_SHORT) {
-            if (phase == RACE_PHASE_1) {
-                return 0;
-            }
-            if (phase == RACE_PHASE_2) {
-                return 2;
-            }
-            if (phase == RACE_PHASE_3) {
-                return 3;
-            }
-            if (phase == RACE_PHASE_4) {
-                return 4;
-            }
-            return 5;
-        }
-        if (profile == RACE_PROFILE_HALF) {
-            if (phase == RACE_PHASE_2) {
-                return -2;
-            }
-            if (phase == RACE_PHASE_4) {
-                return 2;
-            }
-            if (phase == RACE_PHASE_5) {
-                return 4;
-            }
-            return 0;
-        }
-
-        if (phase == RACE_PHASE_3) {
-            return 2;
-        }
-        if (phase == RACE_PHASE_5) {
-            return 3;
-        }
-        return 0;
+        return RaceStrategyUtils.getAllowedZoneOffsetBpm(
+            distanceKm,
+            _raceDistanceKm,
+            SHORT_DISTANCE_MAX_KM,
+            HALF_DISTANCE_KM,
+            HALF_DISTANCE_TOLERANCE_KM,
+            RACE_PHASE_1_END_PROGRESS,
+            RACE_PHASE_2_END_PROGRESS,
+            RACE_PHASE_3_END_PROGRESS,
+            RACE_PHASE_4_END_PROGRESS
+        );
     }
 
     function _getHrOverTriggerSec(distanceKm) {
-        var phase = _resolveRacePhase(distanceKm);
-        if (phase == RACE_PHASE_4) {
-            return 10;
-        }
-        if (phase == RACE_PHASE_5) {
-            return 20;
-        }
-        return 12;
+        return RaceStrategyUtils.getHrOverTriggerSec(
+            distanceKm,
+            _raceDistanceKm,
+            RACE_PHASE_1_END_PROGRESS,
+            RACE_PHASE_2_END_PROGRESS,
+            RACE_PHASE_3_END_PROGRESS,
+            RACE_PHASE_4_END_PROGRESS
+        );
     }
 
     function _getHrOverReleaseSec(distanceKm) {
-        return 5;
+        return RaceStrategyUtils.getHrOverReleaseSec(distanceKm);
     }
 
     function _getHrOverReleaseOffsetBpm(distanceKm) {
-        if (_resolveRacePhase(distanceKm) == RACE_PHASE_4) {
-            return 1;
-        }
-        return 2;
+        return RaceStrategyUtils.getHrOverReleaseOffsetBpm(
+            distanceKm,
+            _raceDistanceKm,
+            RACE_PHASE_1_END_PROGRESS,
+            RACE_PHASE_2_END_PROGRESS,
+            RACE_PHASE_3_END_PROGRESS,
+            RACE_PHASE_4_END_PROGRESS
+        );
     }
 
     function _getPushPaceDeltaThresholdSec(distanceKm) {
-        var phase = _resolveRacePhase(distanceKm);
-        var profile = _resolveRaceProfile();
-        if (profile == RACE_PROFILE_SHORT) {
-            if (phase == RACE_PHASE_1) {
-                return 8;
-            }
-            if (phase == RACE_PHASE_2) {
-                return 5;
-            }
-            if (phase == RACE_PHASE_3) {
-                return 3;
-            }
-            if (phase == RACE_PHASE_4) {
-                return 2;
-            }
-            return 1;
-        }
-        if (profile == RACE_PROFILE_HALF) {
-            if (phase == RACE_PHASE_1) {
-                return 10;
-            }
-            if (phase == RACE_PHASE_2) {
-                return 6;
-            }
-            if (phase == RACE_PHASE_3) {
-                return 4;
-            }
-            if (phase == RACE_PHASE_4) {
-                return 3;
-            }
-            return 2;
-        }
-
-        if (phase == RACE_PHASE_1) {
-            return 12;
-        }
-        if (phase == RACE_PHASE_2) {
-            return 8;
-        }
-        if (phase == RACE_PHASE_3) {
-            return 6;
-        }
-        if (phase == RACE_PHASE_4) {
-            return 4;
-        }
-        return 3;
+        return RaceStrategyUtils.getPushPaceDeltaThresholdSec(
+            distanceKm,
+            _raceDistanceKm,
+            SHORT_DISTANCE_MAX_KM,
+            HALF_DISTANCE_KM,
+            HALF_DISTANCE_TOLERANCE_KM,
+            RACE_PHASE_1_END_PROGRESS,
+            RACE_PHASE_2_END_PROGRESS,
+            RACE_PHASE_3_END_PROGRESS,
+            RACE_PHASE_4_END_PROGRESS
+        );
     }
 
     function _getPushHeadroomThresholdBpm(distanceKm) {
-        var phase = _resolveRacePhase(distanceKm);
-        var profile = _resolveRaceProfile();
-        if (profile == RACE_PROFILE_SHORT) {
-            if (phase == RACE_PHASE_1) {
-                return 6;
-            }
-            if (phase == RACE_PHASE_2) {
-                return 4;
-            }
-            if (phase == RACE_PHASE_3) {
-                return 2;
-            }
-            if (phase == RACE_PHASE_4) {
-                return 1;
-            }
-            return 0;
-        }
-        if (profile == RACE_PROFILE_HALF) {
-            if (phase == RACE_PHASE_1) {
-                return 7;
-            }
-            if (phase == RACE_PHASE_2) {
-                return 5;
-            }
-            if (phase == RACE_PHASE_3) {
-                return 3;
-            }
-            if (phase == RACE_PHASE_4) {
-                return 2;
-            }
-            return 1;
-        }
-
-        if (phase == RACE_PHASE_1) {
-            return 8;
-        }
-        if (phase == RACE_PHASE_2) {
-            return 6;
-        }
-        if (phase == RACE_PHASE_3) {
-            return 4;
-        }
-        if (phase == RACE_PHASE_4) {
-            return 3;
-        }
-        return 2;
+        return RaceStrategyUtils.getPushHeadroomThresholdBpm(
+            distanceKm,
+            _raceDistanceKm,
+            SHORT_DISTANCE_MAX_KM,
+            HALF_DISTANCE_KM,
+            HALF_DISTANCE_TOLERANCE_KM,
+            RACE_PHASE_1_END_PROGRESS,
+            RACE_PHASE_2_END_PROGRESS,
+            RACE_PHASE_3_END_PROGRESS,
+            RACE_PHASE_4_END_PROGRESS
+        );
     }
 
     function _getActionEaseMinHeadroomBpm(distanceKm) {
-        var profile = _resolveRaceProfile();
-        if (profile == RACE_PROFILE_SHORT) {
-            return 1;
-        }
-        if (profile == RACE_PROFILE_HALF) {
-            return 2;
-        }
-        return ACTION_EASE_MIN_HEADROOM_BPM;
+        return RaceStrategyUtils.getActionEaseMinHeadroomBpm(
+            distanceKm,
+            _raceDistanceKm,
+            SHORT_DISTANCE_MAX_KM,
+            HALF_DISTANCE_KM,
+            HALF_DISTANCE_TOLERANCE_KM,
+            ACTION_EASE_MIN_HEADROOM_BPM
+        );
     }
 
     function _getActionEaseBaselineHrDeltaBpm(distanceKm) {
-        var phase = _resolveRacePhase(distanceKm);
-        var profile = _resolveRaceProfile();
-        if (profile == RACE_PROFILE_SHORT) {
-            if (phase == RACE_PHASE_1) {
-                return 8;
-            }
-            if (phase == RACE_PHASE_2) {
-                return 9;
-            }
-            if (phase == RACE_PHASE_3) {
-                return 10;
-            }
-            if (phase == RACE_PHASE_4) {
-                return 11;
-            }
-            return 12;
-        }
-        if (profile == RACE_PROFILE_HALF) {
-            if (phase == RACE_PHASE_1) {
-                return 6;
-            }
-            if (phase == RACE_PHASE_2) {
-                return 7;
-            }
-            if (phase == RACE_PHASE_3) {
-                return 8;
-            }
-            if (phase == RACE_PHASE_4) {
-                return 9;
-            }
-            return 10;
-        }
-
-        if (phase == RACE_PHASE_1) {
-            return 5;
-        }
-        if (phase == RACE_PHASE_4) {
-            return 5;
-        }
-        if (phase == RACE_PHASE_5) {
-            return 4;
-        }
-        return ACTION_EASE_BASELINE_HR_DELTA_BPM;
+        return RaceStrategyUtils.getActionEaseBaselineHrDeltaBpm(
+            distanceKm,
+            _raceDistanceKm,
+            SHORT_DISTANCE_MAX_KM,
+            HALF_DISTANCE_KM,
+            HALF_DISTANCE_TOLERANCE_KM,
+            RACE_PHASE_1_END_PROGRESS,
+            RACE_PHASE_2_END_PROGRESS,
+            RACE_PHASE_3_END_PROGRESS,
+            RACE_PHASE_4_END_PROGRESS,
+            ACTION_EASE_BASELINE_HR_DELTA_BPM
+        );
     }
 
     function _getCardiacCostPushMaxRatio(distanceKm) {
-        var profile = _resolveRaceProfile();
-        if (profile == RACE_PROFILE_SHORT) {
-            return CARDIAC_COST_PUSH_MAX_RATIO_SHORT;
-        }
-        if (profile == RACE_PROFILE_HALF) {
-            return CARDIAC_COST_PUSH_MAX_RATIO_HALF;
-        }
-        return CARDIAC_COST_PUSH_MAX_RATIO_FULL;
+        return RaceStrategyUtils.getCardiacCostPushMaxRatio(
+            distanceKm,
+            _raceDistanceKm,
+            SHORT_DISTANCE_MAX_KM,
+            HALF_DISTANCE_KM,
+            HALF_DISTANCE_TOLERANCE_KM,
+            CARDIAC_COST_PUSH_MAX_RATIO_FULL,
+            CARDIAC_COST_PUSH_MAX_RATIO_HALF,
+            CARDIAC_COST_PUSH_MAX_RATIO_SHORT
+        );
     }
 
     function _getCardiacCostEaseMinRatio(distanceKm) {
-        var profile = _resolveRaceProfile();
-        if (profile == RACE_PROFILE_SHORT) {
-            return CARDIAC_COST_EASE_MIN_RATIO_SHORT;
-        }
-        if (profile == RACE_PROFILE_HALF) {
-            return CARDIAC_COST_EASE_MIN_RATIO_HALF;
-        }
-        return CARDIAC_COST_EASE_MIN_RATIO_FULL;
+        return RaceStrategyUtils.getCardiacCostEaseMinRatio(
+            distanceKm,
+            _raceDistanceKm,
+            SHORT_DISTANCE_MAX_KM,
+            HALF_DISTANCE_KM,
+            HALF_DISTANCE_TOLERANCE_KM,
+            CARDIAC_COST_EASE_MIN_RATIO_FULL,
+            CARDIAC_COST_EASE_MIN_RATIO_HALF,
+            CARDIAC_COST_EASE_MIN_RATIO_SHORT
+        );
     }
 
     function _resolveCardiacCostRatio() {
