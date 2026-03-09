@@ -11,6 +11,7 @@ using CoachUtils;
 using DistanceNotifyUtils;
 using FuelMeterUtils;
 using RaceStrategyUtils;
+using RenderUtils;
 using SettingsLoader;
 
 class MarathonCoachField extends Ui.DataField {
@@ -846,411 +847,162 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _drawCardSmallTextBold(dc as Gfx.Dc, x, y, font, text, textColor) {
-        // Outline + dual white pass gives readable text on bright/saturated cards.
-        dc.setColor(0x131A25, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(x - 1, y, font, text, Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(x + 1, y, font, text, Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(x, y - 1, font, text, Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(x, y + 1, font, text, Gfx.TEXT_JUSTIFY_CENTER);
-        dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(x, y, font, text, Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(x + 1, y, font, text, Gfx.TEXT_JUSTIFY_CENTER);
+        RenderUtils.drawCardSmallTextBold(dc, x, y, font, text, textColor);
     }
 
     function _getCardBgBitmapSmall(cardVariant) {
-        if (cardVariant == CARD_VARIANT_WARMUP) {
-            return _cardBgWarmupSmall;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
-            return _cardBgActionPushSmall;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_HOLD) {
-            return _cardBgActionHoldSmall;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
-            return _cardBgActionPushSmall;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
-            return _cardBgFuelSoonSmall;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
-            return _cardBgFuelNowSmall;
-        }
-        if (cardVariant == CARD_VARIANT_RECOVERY) {
-            return _cardBgFuelSoonSmall;
-        }
-        if (cardVariant == CARD_VARIANT_HR_WARNING) {
-            return _cardBgHrWarningSmall;
-        }
-        return _cardBgActionHoldSmall;
+        return RenderUtils.getCardBgBitmapSmall(
+            cardVariant,
+            CARD_VARIANT_WARMUP,
+            CARD_VARIANT_ACTION_PUSH,
+            CARD_VARIANT_ACTION_HOLD,
+            CARD_VARIANT_ACTION_EASE,
+            CARD_VARIANT_FUEL_SOON,
+            CARD_VARIANT_FUEL_NOW,
+            CARD_VARIANT_RECOVERY,
+            CARD_VARIANT_HR_WARNING,
+            _cardBgWarmupSmall,
+            _cardBgActionPushSmall,
+            _cardBgActionHoldSmall,
+            _cardBgFuelSoonSmall,
+            _cardBgFuelNowSmall,
+            _cardBgHrWarningSmall
+        );
     }
 
     function _getBitmapWidth(bitmap) {
-        if (bitmap == null) {
-            return 0;
-        }
-        try {
-            return bitmap.getWidth();
-        } catch (e) {
-            return 0;
-        }
+        return RenderUtils.getBitmapWidth(bitmap);
     }
 
     function _getBitmapHeight(bitmap) {
-        if (bitmap == null) {
-            return 0;
-        }
-        try {
-            return bitmap.getHeight();
-        } catch (e) {
-            return 0;
-        }
+        return RenderUtils.getBitmapHeight(bitmap);
     }
 
     function _getCardBorderColor(cardVariant) {
-        if (cardVariant == CARD_VARIANT_WARMUP) {
-            return 0x56728F;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
-            return 0x4C7898;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
-            return 0x7F694F;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
-            return 0x926E49;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
-            return 0xA14B58;
-        }
-        if (cardVariant == CARD_VARIANT_RECOVERY) {
-            return 0x4F7480;
-        }
-        if (cardVariant == CARD_VARIANT_HR_WARNING) {
-            return 0x97554A;
-        }
-        return 0x516684;
+        return RenderUtils.getCardBorderColor(
+            cardVariant,
+            CARD_VARIANT_WARMUP,
+            CARD_VARIANT_ACTION_PUSH,
+            CARD_VARIANT_ACTION_EASE,
+            CARD_VARIANT_FUEL_SOON,
+            CARD_VARIANT_FUEL_NOW,
+            CARD_VARIANT_RECOVERY,
+            CARD_VARIANT_HR_WARNING
+        );
     }
 
     function _getCardGradientTopColor(cardVariant) {
-        if (cardVariant == CARD_VARIANT_WARMUP) {
-            return 0x315B7D;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
-            return 0x275778;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
-            return 0x5E4B36;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
-            return 0x70543A;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
-            return 0x883744;
-        }
-        if (cardVariant == CARD_VARIANT_RECOVERY) {
-            return 0x2D5A66;
-        }
-        if (cardVariant == CARD_VARIANT_HR_WARNING) {
-            return 0x7B342F;
-        }
-        return 0x274A6A;
+        return RenderUtils.getCardGradientTopColor(
+            cardVariant,
+            CARD_VARIANT_WARMUP,
+            CARD_VARIANT_ACTION_PUSH,
+            CARD_VARIANT_ACTION_EASE,
+            CARD_VARIANT_FUEL_SOON,
+            CARD_VARIANT_FUEL_NOW,
+            CARD_VARIANT_RECOVERY,
+            CARD_VARIANT_HR_WARNING
+        );
     }
 
     function _getCardGradientBottomColor(cardVariant) {
-        if (cardVariant == CARD_VARIANT_WARMUP) {
-            return 0x182F47;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
-            return 0x16324B;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
-            return 0x2E2418;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
-            return 0x3D2D20;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
-            return 0x461925;
-        }
-        if (cardVariant == CARD_VARIANT_RECOVERY) {
-            return 0x183640;
-        }
-        if (cardVariant == CARD_VARIANT_HR_WARNING) {
-            return 0x401B18;
-        }
-        return 0x182E45;
+        return RenderUtils.getCardGradientBottomColor(
+            cardVariant,
+            CARD_VARIANT_WARMUP,
+            CARD_VARIANT_ACTION_PUSH,
+            CARD_VARIANT_ACTION_EASE,
+            CARD_VARIANT_FUEL_SOON,
+            CARD_VARIANT_FUEL_NOW,
+            CARD_VARIANT_RECOVERY,
+            CARD_VARIANT_HR_WARNING
+        );
     }
 
     function _getCardGradientMidColor(cardVariant) {
-        if (cardVariant == CARD_VARIANT_WARMUP) {
-            return 0x244767;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
-            return 0x204765;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
-            return 0x463726;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
-            return 0x594230;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
-            return 0x6A2835;
-        }
-        if (cardVariant == CARD_VARIANT_RECOVERY) {
-            return 0x234A56;
-        }
-        if (cardVariant == CARD_VARIANT_HR_WARNING) {
-            return 0x5C2722;
-        }
-        return 0x22415F;
+        return RenderUtils.getCardGradientMidColor(
+            cardVariant,
+            CARD_VARIANT_WARMUP,
+            CARD_VARIANT_ACTION_PUSH,
+            CARD_VARIANT_ACTION_EASE,
+            CARD_VARIANT_FUEL_SOON,
+            CARD_VARIANT_FUEL_NOW,
+            CARD_VARIANT_RECOVERY,
+            CARD_VARIANT_HR_WARNING
+        );
     }
 
     function _getCardSheenColor(cardVariant) {
-        if (cardVariant == CARD_VARIANT_WARMUP) {
-            return 0x7FA8D0;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
-            return 0x7CAED6;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
-            return 0xB08A61;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
-            return 0xC39A70;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
-            return 0xD97983;
-        }
-        if (cardVariant == CARD_VARIANT_RECOVERY) {
-            return 0x79AAB9;
-        }
-        if (cardVariant == CARD_VARIANT_HR_WARNING) {
-            return 0xCE8476;
-        }
-        return 0x779DC1;
+        return RenderUtils.getCardSheenColor(
+            cardVariant,
+            CARD_VARIANT_WARMUP,
+            CARD_VARIANT_ACTION_PUSH,
+            CARD_VARIANT_ACTION_EASE,
+            CARD_VARIANT_FUEL_SOON,
+            CARD_VARIANT_FUEL_NOW,
+            CARD_VARIANT_RECOVERY,
+            CARD_VARIANT_HR_WARNING
+        );
     }
 
     function _getCardAccentColor(cardVariant) {
-        if (cardVariant == CARD_VARIANT_WARMUP) {
-            return 0x9ED7FF;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
-            return 0x9CD8FF;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
-            return 0xF1CC95;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
-            return 0xFFD29A;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
-            return 0xFFC2B0;
-        }
-        if (cardVariant == CARD_VARIANT_RECOVERY) {
-            return 0x9DE5EE;
-        }
-        if (cardVariant == CARD_VARIANT_HR_WARNING) {
-            return 0xFFB99B;
-        }
-        return 0xA9D0F8;
+        return RenderUtils.getCardAccentColor(
+            cardVariant,
+            CARD_VARIANT_WARMUP,
+            CARD_VARIANT_ACTION_PUSH,
+            CARD_VARIANT_ACTION_EASE,
+            CARD_VARIANT_FUEL_SOON,
+            CARD_VARIANT_FUEL_NOW,
+            CARD_VARIANT_RECOVERY,
+            CARD_VARIANT_HR_WARNING
+        );
     }
 
     function _getCardTopBandColor(cardVariant) {
-        if (cardVariant == CARD_VARIANT_WARMUP) {
-            return 0x6EAED8;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
-            return 0x6ABCE3;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
-            return 0xC39A6E;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
-            return 0xD7AA76;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
-            return 0xD96E7E;
-        }
-        if (cardVariant == CARD_VARIANT_RECOVERY) {
-            return 0x63B9C8;
-        }
-        if (cardVariant == CARD_VARIANT_HR_WARNING) {
-            return 0xD97B6A;
-        }
-        return 0x6AA3CF;
+        return RenderUtils.getCardTopBandColor(
+            cardVariant,
+            CARD_VARIANT_WARMUP,
+            CARD_VARIANT_ACTION_PUSH,
+            CARD_VARIANT_ACTION_EASE,
+            CARD_VARIANT_FUEL_SOON,
+            CARD_VARIANT_FUEL_NOW,
+            CARD_VARIANT_RECOVERY,
+            CARD_VARIANT_HR_WARNING
+        );
     }
 
     function _getCardTextColor(cardVariant) {
-        return Gfx.COLOR_WHITE;
+        return RenderUtils.getCardTextColor(cardVariant);
     }
 
     function _resolveCardFont(sizeClass, cardLineCount) {
-        if (sizeClass == 0) {
-            if (cardLineCount <= 1) {
-                return Gfx.FONT_SMALL;
-            }
-            if (cardLineCount == 2) {
-                return Gfx.FONT_TINY;
-            }
-            return Gfx.FONT_XTINY;
-        }
-
-        if (sizeClass == 2) {
-            if (cardLineCount <= 1) {
-                // Large layout card width is still narrow; medium often overflows with CJK text.
-                return Gfx.FONT_SMALL;
-            }
-            if (cardLineCount == 2) {
-                return Gfx.FONT_SMALL;
-            }
-            return Gfx.FONT_TINY;
-        }
-
-        if (cardLineCount <= 1) {
-            return Gfx.FONT_SMALL;
-        }
-        if (cardLineCount == 2) {
-            return Gfx.FONT_SMALL;
-        }
-        return Gfx.FONT_TINY;
+        return RenderUtils.resolveCardFont(sizeClass, cardLineCount);
     }
 
     function _adjustCardFontForSingleLineLimit(font, cardLineCount, cardLines as Lang.Array) {
-        if (cardLineCount != 1 or cardLines.size() <= 0 or cardLines[0] == null) {
-            return font;
-        }
-
-        var line = cardLines[0].toString();
-        if (line.length() <= 0) {
-            return font;
-        }
-
-        var limit = 7;
-        if (_containsNonAscii(line)) {
-            limit = 4;
-        }
-
-        if (line.length() >= limit) {
-            return _shrinkCardFont(font);
-        }
-        return font;
+        return RenderUtils.adjustCardFontForSingleLineLimit(font, cardLineCount, cardLines);
     }
 
     function _shrinkCardFont(font) {
-        if (font == Gfx.FONT_MEDIUM) {
-            return Gfx.FONT_SMALL;
-        }
-        if (font == Gfx.FONT_SMALL) {
-            return Gfx.FONT_TINY;
-        }
-        if (font == Gfx.FONT_TINY) {
-            return Gfx.FONT_XTINY;
-        }
-        return Gfx.FONT_XTINY;
+        return RenderUtils.shrinkCardFont(font);
     }
 
     function _containsNonAscii(text) as Lang.Boolean {
-        return CoachUtils.containsNonAscii(text);
+        return RenderUtils.containsNonAscii(text);
     }
 
     function _resolveCardLineGap(cardLineCount, fontH, areaH) {
-        if (cardLineCount <= 1) {
-            return 0;
-        }
-
-        var desiredGap = 1;
-        if (cardLineCount == 2) {
-            desiredGap = _clamp(fontH / 3, 2, 8);
-        } else {
-            desiredGap = _clamp(fontH / 5, 1, 5);
-        }
-
-        var maxGap = _max((areaH - (fontH * cardLineCount)) / (cardLineCount - 1), 1);
-        if (desiredGap > maxGap) {
-            desiredGap = maxGap;
-        }
-        return desiredGap;
+        return RenderUtils.resolveCardLineGap(cardLineCount, fontH, areaH);
     }
 
     function _resolveCardFontToFit(dc as Gfx.Dc, sizeClass, cardLines as Lang.Array, textAreaW, textAreaH) {
-        var candidates = [];
-        if (sizeClass == 2) {
-            candidates = [Gfx.FONT_MEDIUM, Gfx.FONT_SMALL, Gfx.FONT_TINY, Gfx.FONT_XTINY];
-        } else if (sizeClass == 0) {
-            candidates = [Gfx.FONT_SMALL, Gfx.FONT_TINY, Gfx.FONT_XTINY];
-        } else {
-            candidates = [Gfx.FONT_SMALL, Gfx.FONT_TINY, Gfx.FONT_XTINY];
-        }
-
-        for (var i = 0; i < candidates.size(); i += 1) {
-            var font = candidates[i];
-            if (_isCardTextFit(dc, font, cardLines, textAreaW, textAreaH)) {
-                return font;
-            }
-        }
-
-        return candidates[candidates.size() - 1];
+        return RenderUtils.resolveCardFontToFit(dc, sizeClass, cardLines, textAreaW, textAreaH);
     }
 
     function _isCardTextFit(dc as Gfx.Dc, font, cardLines as Lang.Array, textAreaW, textAreaH) as Lang.Boolean {
-        if (textAreaW <= 0 or textAreaH <= 0) {
-            return false;
-        }
-
-        var lineCount = cardLines.size();
-        var fontH = dc.getFontHeight(font);
-        var minTotalH = fontH * lineCount;
-        if (lineCount > 1) {
-            minTotalH += (lineCount - 1);
-        }
-        if (minTotalH > textAreaH) {
-            return false;
-        }
-
-        for (var i = 0; i < lineCount; i += 1) {
-            var line = "";
-            if (cardLines[i] != null) {
-                line = cardLines[i].toString();
-            }
-            var lineW = dc.getTextWidthInPixels(line, font);
-            // Keep headroom for bold stroke around text.
-            if ((lineW + 2) > textAreaW) {
-                return false;
-            }
-        }
-
-        return true;
+        return RenderUtils.isCardTextFit(dc, font, cardLines, textAreaW, textAreaH);
     }
 
     function _fillRoundedGradient(dc as Gfx.Dc, x, y, width, height, corner, topColor, midColor, bottomColor) {
-        dc.setColor(bottomColor, Gfx.COLOR_BLACK);
-        dc.fillRoundedRectangle(x, y, width, height, corner);
-
-        var innerX = x + 1;
-        var innerY = y + 1;
-        var innerW = width - 2;
-        var innerH = height - 2;
-        if (innerW < 2 or innerH < 2) {
-            return;
-        }
-
-        var topH = _clamp((innerH * 38) / 100, 2, innerH - 1);
-        var midY = innerY + topH;
-        var midH = _clamp((innerH * 34) / 100, 2, innerH - topH);
-        var maxMidH = innerH - topH;
-        if (midH > maxMidH) {
-            midH = maxMidH;
-        }
-        if (midH < 1) {
-            midH = 1;
-        }
-
-        dc.setColor(topColor, Gfx.COLOR_BLACK);
-        dc.fillRectangle(innerX, innerY, innerW, topH);
-        dc.setColor(midColor, Gfx.COLOR_BLACK);
-        dc.fillRectangle(innerX, midY, innerW, midH);
+        RenderUtils.fillRoundedGradient(dc, x, y, width, height, corner, topColor, midColor, bottomColor);
     }
 
     function _drawFuelMeter(dc as Gfx.Dc, sizeClass, centerX, centerY, radius, labelFont, valueFont) {
@@ -1511,31 +1263,18 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _drawUpTriangleMarker(dc as Gfx.Dc, centerX, tipY, halfWidth, height) {
-        var markerHeight = _max(height, 1);
-        var markerHalfWidth = _max(halfWidth, 1);
-        for (var row = 0; row < markerHeight; row += 1) {
-            var span = Math.floor((markerHalfWidth * (row + 1)) / markerHeight);
-            if (span < 1) {
-                span = 1;
-            }
-            dc.drawLine(centerX - span, tipY + row, centerX + span, tipY + row);
-        }
+        RenderUtils.drawUpTriangleMarker(dc, centerX, tipY, halfWidth, height);
     }
 
     function _getHeartRateZoneGaugeColor(zoneNumber) {
-        if (zoneNumber <= 1) {
-            return HR_ZONE_COLOR_1;
-        }
-        if (zoneNumber == 2) {
-            return HR_ZONE_COLOR_2;
-        }
-        if (zoneNumber == 3) {
-            return HR_ZONE_COLOR_3;
-        }
-        if (zoneNumber == 4) {
-            return HR_ZONE_COLOR_4;
-        }
-        return HR_ZONE_COLOR_5;
+        return RenderUtils.getHeartRateZoneGaugeColor(
+            zoneNumber,
+            HR_ZONE_COLOR_1,
+            HR_ZONE_COLOR_2,
+            HR_ZONE_COLOR_3,
+            HR_ZONE_COLOR_4,
+            HR_ZONE_COLOR_5
+        );
     }
 
     function _resolveHeartRateGaugeRatio() {
@@ -1578,15 +1317,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveHeartRateGaugeRatioFallback(heartRate) {
-        if (heartRate == null) {
-            return 0.5;
-        }
-        var minHr = 80;
-        var maxHr = 200;
-        if (maxHr <= minHr) {
-            return 0.5;
-        }
-        return _clamp(((heartRate - minHr) * 1.0) / ((maxHr - minHr) * 1.0), 0.0, 1.0);
+        return RenderUtils.resolveHeartRateGaugeRatioFallback(heartRate, 80, 200);
     }
 
     function _min(a, b) {
@@ -1598,13 +1329,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _getSizeClass(minDim) {
-        if (minDim >= 261) {
-            return 2; // large
-        }
-        if (minDim <= 218) {
-            return 0; // small
-        }
-        return 1; // medium
+        return RenderUtils.getSizeClass(minDim, 261, 218);
     }
 
     function _updatePaceWindow(info) {
