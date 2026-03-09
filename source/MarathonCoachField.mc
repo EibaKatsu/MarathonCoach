@@ -6,6 +6,7 @@ using Toybox.Math as Math;
 using Toybox.System as Sys;
 using Toybox.UserProfile;
 using Toybox.WatchUi as Ui;
+using BeepUtils;
 using CoachUtils;
 using DistanceNotifyUtils;
 using SettingsLoader;
@@ -102,16 +103,6 @@ class MarathonCoachField extends Ui.DataField {
     const DISTANCE_NOTIFY_EVENT_NONE = 0;
     const DISTANCE_NOTIFY_EVENT_SPLIT = 1;
     const DISTANCE_NOTIFY_EVENT_MILESTONE = 2;
-    const BEEP_EVENT_NONE = 0;
-    const BEEP_EVENT_DISTANCE_SPLIT = 1;
-    const BEEP_EVENT_DISTANCE_MILESTONE = 2;
-    const BEEP_EVENT_FUEL_SOON = 3;
-    const BEEP_EVENT_DRIFT_ON = 4;
-    const BEEP_EVENT_HR_OVER = 5;
-    const BEEP_EVENT_FUEL_NOW = 6;
-    const BEEP_LEVEL_INFO = 1;
-    const BEEP_LEVEL_CAUTION = 2;
-    const BEEP_LEVEL_URGENT = 3;
     const BEEP_HR_SUPPRESS_SEC = 75;
     const BEEP_DRIFT_SUPPRESS_SEC = 5 * 60;
     const BEEP_FUEL_NOW_REPEAT_FIRST_SEC = 30;
@@ -3169,15 +3160,15 @@ class MarathonCoachField extends Ui.DataField {
             return;
         }
 
-        var beepEvent = BEEP_EVENT_NONE;
+        var beepEvent = BeepUtils.EVENT_NONE;
 
         if (fuelOverdue) {
             if (!_beepFuelNowActive) {
-                beepEvent = _selectHigherPriorityBeepEvent(beepEvent, BEEP_EVENT_FUEL_NOW);
+                beepEvent = BeepUtils.selectHigherPriorityEvent(beepEvent, BeepUtils.EVENT_FUEL_NOW);
                 _beepFuelNowActive = true;
                 _beepFuelNowNextRepeatSec = elapsedSec + BEEP_FUEL_NOW_REPEAT_FIRST_SEC;
             } else if (_beepFuelNowNextRepeatSec != null and elapsedSec >= _beepFuelNowNextRepeatSec) {
-                beepEvent = _selectHigherPriorityBeepEvent(beepEvent, BEEP_EVENT_FUEL_NOW);
+                beepEvent = BeepUtils.selectHigherPriorityEvent(beepEvent, BeepUtils.EVENT_FUEL_NOW);
                 _beepFuelNowNextRepeatSec = elapsedSec + BEEP_FUEL_NOW_REPEAT_INTERVAL_SEC;
             }
         } else {
@@ -3188,7 +3179,7 @@ class MarathonCoachField extends Ui.DataField {
         if (!fuelOverdue) {
             if (hrOver and !_beepPrevHrOver) {
                 if (_beepLastHrAlertSec == null or (elapsedSec - _beepLastHrAlertSec) >= BEEP_HR_SUPPRESS_SEC) {
-                    beepEvent = _selectHigherPriorityBeepEvent(beepEvent, BEEP_EVENT_HR_OVER);
+                    beepEvent = BeepUtils.selectHigherPriorityEvent(beepEvent, BeepUtils.EVENT_HR_OVER);
                     _beepLastHrAlertSec = elapsedSec;
                 }
             }
@@ -3198,7 +3189,7 @@ class MarathonCoachField extends Ui.DataField {
                     _beepLastDriftAlertSec == null or
                     (elapsedSec - _beepLastDriftAlertSec) >= BEEP_DRIFT_SUPPRESS_SEC
                 ) {
-                    beepEvent = _selectHigherPriorityBeepEvent(beepEvent, BEEP_EVENT_DRIFT_ON);
+                    beepEvent = BeepUtils.selectHigherPriorityEvent(beepEvent, BeepUtils.EVENT_DRIFT_ON);
                     _beepLastDriftAlertSec = elapsedSec;
                 }
             }
@@ -3207,13 +3198,13 @@ class MarathonCoachField extends Ui.DataField {
                 fuelMeterState == FUEL_METER_STATE_CAUTION and
                 _beepPrevFuelMeterState != FUEL_METER_STATE_CAUTION
             ) {
-                beepEvent = _selectHigherPriorityBeepEvent(beepEvent, BEEP_EVENT_FUEL_SOON);
+                beepEvent = BeepUtils.selectHigherPriorityEvent(beepEvent, BeepUtils.EVENT_FUEL_SOON);
             }
 
             if (distanceNotifyEvent == DISTANCE_NOTIFY_EVENT_MILESTONE) {
-                beepEvent = _selectHigherPriorityBeepEvent(beepEvent, BEEP_EVENT_DISTANCE_MILESTONE);
+                beepEvent = BeepUtils.selectHigherPriorityEvent(beepEvent, BeepUtils.EVENT_DISTANCE_MILESTONE);
             } else if (distanceNotifyEvent == DISTANCE_NOTIFY_EVENT_SPLIT) {
-                beepEvent = _selectHigherPriorityBeepEvent(beepEvent, BEEP_EVENT_DISTANCE_SPLIT);
+                beepEvent = BeepUtils.selectHigherPriorityEvent(beepEvent, BeepUtils.EVENT_DISTANCE_SPLIT);
             }
         }
 
@@ -3223,55 +3214,8 @@ class MarathonCoachField extends Ui.DataField {
         _beepPrevDriftOn = driftOn;
     }
 
-    function _selectHigherPriorityBeepEvent(currentEvent, candidateEvent) {
-        if (_resolveBeepEventPriority(candidateEvent) > _resolveBeepEventPriority(currentEvent)) {
-            return candidateEvent;
-        }
-        return currentEvent;
-    }
-
-    function _resolveBeepEventPriority(beepEvent) {
-        if (beepEvent == BEEP_EVENT_FUEL_NOW) {
-            return 600;
-        }
-        if (beepEvent == BEEP_EVENT_HR_OVER) {
-            return 500;
-        }
-        if (beepEvent == BEEP_EVENT_DRIFT_ON) {
-            return 400;
-        }
-        if (beepEvent == BEEP_EVENT_FUEL_SOON) {
-            return 350;
-        }
-        if (beepEvent == BEEP_EVENT_DISTANCE_MILESTONE) {
-            return 300;
-        }
-        if (beepEvent == BEEP_EVENT_DISTANCE_SPLIT) {
-            return 200;
-        }
-        return 0;
-    }
-
-    function _resolveBeepLevel(beepEvent) {
-        if (beepEvent == BEEP_EVENT_DISTANCE_SPLIT) {
-            return BEEP_LEVEL_INFO;
-        }
-        if (
-            beepEvent == BEEP_EVENT_DISTANCE_MILESTONE or
-            beepEvent == BEEP_EVENT_FUEL_SOON or
-            beepEvent == BEEP_EVENT_HR_OVER or
-            beepEvent == BEEP_EVENT_DRIFT_ON
-        ) {
-            return BEEP_LEVEL_CAUTION;
-        }
-        if (beepEvent == BEEP_EVENT_FUEL_NOW) {
-            return BEEP_LEVEL_URGENT;
-        }
-        return 0;
-    }
-
     function _playBeepEvent(beepEvent) {
-        var beepLevel = _resolveBeepLevel(beepEvent);
+        var beepLevel = BeepUtils.resolveBeepLevel(beepEvent);
         if (beepLevel <= 0) {
             return;
         }
