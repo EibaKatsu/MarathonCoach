@@ -388,7 +388,21 @@ module RenderUtils {
     }
 
     function containsNonAscii(text) as Lang.Boolean {
-        return CoachUtils.containsNonAscii(text);
+        if (text == null) {
+            return false;
+        }
+
+        var chars = text.toString().toCharArray();
+        if (!(chars instanceof Lang.Array)) {
+            return false;
+        }
+        for (var i = 0; i < chars.size(); i += 1) {
+            var ch = chars[i];
+            if (ch != null and ch instanceof Lang.Char and ch.toNumber() > 127) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function resolveCardLineGap(cardLineCount, fontH, areaH) {
