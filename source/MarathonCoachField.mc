@@ -536,7 +536,7 @@ class MarathonCoachField extends Ui.DataField {
         _lastFuelTimeSec = _lastElapsedSec;
         _fuelDueTimeSec = _lastFuelTimeSec + FUEL_INTERVAL_SEC;
         _fuelRemainingSec = FUEL_INTERVAL_SEC;
-        _fuelRemainingText = _formatMinSec(_fuelRemainingSec);
+        _fuelRemainingText = CoachUtils.formatMinSec(_fuelRemainingSec);
         _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
         _lastLapResetSec = _lastElapsedSec;
     }
@@ -652,7 +652,7 @@ class MarathonCoachField extends Ui.DataField {
 
         // 3rd row right: pace
         var paceY = row2Y;
-        var paceUnitY = _textYByRatio(row2Y, rowHeight, 86, dc.getFontHeight(Gfx.FONT_XTINY));
+        var paceUnitY = CoachUtils.textYByRatio(row2Y, rowHeight, 86, dc.getFontHeight(Gfx.FONT_XTINY));
         var paceUnitX = rightColX + rightColW - _clamp((rightColW * 4) / 100, 4, 12);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
         dc.drawText(
@@ -671,8 +671,8 @@ class MarathonCoachField extends Ui.DataField {
         );
 
         // 4th row: DIST / TIME + GOAL / prediction delta
-        var mergedY = _textYByRatio(row3Y, row4Height, 24, dc.getFontHeight(footerFont));
-        var paceDeltaY = _textYByRatio(row3Y, row4Height, 70, dc.getFontHeight(paceDeltaFont));
+        var mergedY = CoachUtils.textYByRatio(row3Y, row4Height, 24, dc.getFontHeight(footerFont));
+        var paceDeltaY = CoachUtils.textYByRatio(row3Y, row4Height, 70, dc.getFontHeight(paceDeltaFont));
         dc.drawText(width / 2, mergedY, footerFont, _distanceTimeText, Gfx.TEXT_JUSTIFY_CENTER);
         dc.drawText(width / 2, paceDeltaY, paceDeltaFont, _goalDeltaText, Gfx.TEXT_JUSTIFY_CENTER);
 
@@ -1334,7 +1334,7 @@ class MarathonCoachField extends Ui.DataField {
         var warningSubTextFont = Gfx.FONT_XTINY;
 
         var showTopLabel = !(fuelDisplayMode == FUEL_DISPLAY_DUE and meterState == FUEL_METER_STATE_WARNING);
-        var labelY = _textYByRatio(
+        var labelY = CoachUtils.textYByRatio(
             centerY - radius,
             radius * 2,
             31,
@@ -1344,7 +1344,7 @@ class MarathonCoachField extends Ui.DataField {
         if (!showTopLabel) {
             centerTextRatio = 50;
         }
-        var centerTextY = _textYByRatio(
+        var centerTextY = CoachUtils.textYByRatio(
             centerY - radius,
             radius * 2,
             centerTextRatio,
@@ -1352,13 +1352,13 @@ class MarathonCoachField extends Ui.DataField {
         );
         var warningSubTextY = centerTextY;
         if (warningSubText != null) {
-            centerTextY = _textYByRatio(
+            centerTextY = CoachUtils.textYByRatio(
                 centerY - radius,
                 radius * 2,
                 42,
                 dc.getFontHeight(centerTextFont)
             );
-            warningSubTextY = _textYByRatio(
+            warningSubTextY = CoachUtils.textYByRatio(
                 centerY - radius,
                 radius * 2,
                 64,
@@ -1719,7 +1719,7 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         _paceNowSecPerKm = _paceRingSum / _paceRingCount;
-        _paceNowText = _formatPaceSecPerKm(_paceNowSecPerKm);
+        _paceNowText = CoachUtils.formatPaceSecPerKm(_paceNowSecPerKm);
     }
 
     function _resetPaceWindow() {
@@ -1760,12 +1760,12 @@ class MarathonCoachField extends Ui.DataField {
 
         var distanceText = "--.- km";
         if (distanceKm != null) {
-            distanceText = _formatDistanceKm(distanceKm);
+            distanceText = CoachUtils.formatDistanceKm(distanceKm);
         }
 
         var elapsedText = "--:--:--";
         if (elapsedSec != null) {
-            elapsedText = _formatElapsedTime(elapsedSec);
+            elapsedText = CoachUtils.formatElapsedTime(elapsedSec);
         }
 
         _distanceTimeText = distanceText + "  " + elapsedText;
@@ -2842,7 +2842,7 @@ class MarathonCoachField extends Ui.DataField {
         if (_fuelRemainingSec < 0) {
             _fuelRemainingSec = 0;
         }
-        _fuelRemainingText = _formatMinSec(_fuelRemainingSec);
+        _fuelRemainingText = CoachUtils.formatMinSec(_fuelRemainingSec);
         if (_fuelRemainingSec <= 0) {
             _fuelDisplayMode = FUEL_DISPLAY_DUE;
         } else {
@@ -2887,7 +2887,7 @@ class MarathonCoachField extends Ui.DataField {
         if (distanceKm != null and distanceKm >= nextFuelKm) {
             _fuelDueTimeSec = elapsedSec;
             _fuelRemainingSec = 0;
-            _fuelRemainingText = _formatMinSec(0);
+            _fuelRemainingText = CoachUtils.formatMinSec(0);
             _fuelDisplayMode = FUEL_DISPLAY_DUE;
             return;
         }
@@ -2896,7 +2896,7 @@ class MarathonCoachField extends Ui.DataField {
         _fuelDueTimeSec = null;
         if (etaSec != null) {
             _fuelRemainingSec = etaSec;
-            _fuelRemainingText = _formatMinSec(_fuelRemainingSec);
+            _fuelRemainingText = CoachUtils.formatMinSec(_fuelRemainingSec);
         } else {
             _fuelRemainingSec = null;
             _fuelRemainingText = "--:--";
@@ -3928,7 +3928,7 @@ class MarathonCoachField extends Ui.DataField {
             return;
         }
 
-        var idx = _randomMessageIndex(_warmupMessages.size(), -1, -1);
+        var idx = CoachUtils.randomMessageIndex(_warmupMessages.size(), -1, -1);
         _cardVariant = CARD_VARIANT_WARMUP;
         _setCardLinesFromMessage(_warmupMessages[idx]);
     }
@@ -3964,7 +3964,7 @@ class MarathonCoachField extends Ui.DataField {
             return;
         }
 
-        var words = _splitWords(text);
+        var words = CoachUtils.splitWords(text);
         if (words.size() == 0) {
             return;
         }
@@ -3981,10 +3981,6 @@ class MarathonCoachField extends Ui.DataField {
                 _cardLine3 += " " + words[i];
             }
         }
-    }
-
-    function _splitWords(text) as Lang.Array {
-        return CoachUtils.splitWords(text);
     }
 
     function _getCardDisplayLines() as Lang.Array {
@@ -4004,34 +4000,6 @@ class MarathonCoachField extends Ui.DataField {
         return lines;
     }
 
-    function _randomMessageIndex(size, avoid1, avoid2) {
-        return CoachUtils.randomMessageIndex(size, avoid1, avoid2);
-    }
-
-    function _parseTimeToSec(text) {
-        return CoachUtils.parseTimeToSec(text);
-    }
-
-    function _parsePositiveInt(text) {
-        return CoachUtils.parsePositiveInt(text);
-    }
-
-    function _parsePositiveDecimal(text) {
-        return CoachUtils.parsePositiveDecimal(text);
-    }
-
-    function _normalizeTimeText(text) {
-        return CoachUtils.normalizeTimeText(text);
-    }
-
-    function _fullWidthDigitToAscii(ch) {
-        return CoachUtils.fullWidthDigitToAscii(ch);
-    }
-
-    function _digitValue(ch) {
-        return CoachUtils.digitValue(ch);
-    }
-
     function _extractElapsedSec(info) {
         // Match MessageInGarmin time semantics: use raw timer milliseconds as the time source.
         var rawElapsed = _getElapsedTimeRaw(info);
@@ -4045,26 +4013,10 @@ class MarathonCoachField extends Ui.DataField {
         return Math.floor(elapsedSec);
     }
 
-    function _formatPaceSecPerKm(paceSecPerKm) {
-        return CoachUtils.formatPaceSecPerKm(paceSecPerKm);
-    }
-
-    function _formatMinSec(totalSec) {
-        return CoachUtils.formatMinSec(totalSec);
-    }
-
-    function _formatElapsedTime(totalSec) {
-        return CoachUtils.formatElapsedTime(totalSec);
-    }
-
-    function _formatDistanceKm(distanceKm) {
-        return CoachUtils.formatDistanceKm(distanceKm);
-    }
-
     function _buildGoalDeltaText(predictedTotalSec) {
         var predictedText = "--:--";
         if (predictedTotalSec != null and predictedTotalSec >= 0) {
-            predictedText = _formatHourMin(predictedTotalSec);
+            predictedText = CoachUtils.formatHourMin(predictedTotalSec);
         }
 
         if (
@@ -4089,14 +4041,6 @@ class MarathonCoachField extends Ui.DataField {
             deltaText = roundedMinuteDelta.format("%d") + _predictionAheadSuffixText;
         }
         return predictedText + "(" + deltaText + ")";
-    }
-
-    function _formatHourMin(totalSec) {
-        return CoachUtils.formatHourMin(totalSec);
-    }
-
-    function _textYByRatio(blockTop, blockHeight, ratioPct, fontHeight) {
-        return CoachUtils.textYByRatio(blockTop, blockHeight, ratioPct, fontHeight);
     }
 
     function _clamp(value, minValue, maxValue) {
