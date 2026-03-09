@@ -249,17 +249,29 @@ function testFuelMeterState_resolution(logger) {
     var sut = _newCardFuelSut();
 
     sut._fuelDisplayMode = TEST_FUEL_DISPLAY_DUE;
-    Test.assertEqual(TEST_FUEL_METER_STATE_WARNING, sut._resolveFuelMeterState());
+    Test.assertEqual(
+        TEST_FUEL_METER_STATE_WARNING,
+        FuelMeterUtils.resolveMeterState(sut._fuelDisplayMode, sut._fuelRemainingSec, 120)
+    );
 
     sut._fuelDisplayMode = TEST_FUEL_DISPLAY_DONE_FLASH;
-    Test.assertEqual(TEST_FUEL_METER_STATE_NORMAL, sut._resolveFuelMeterState());
+    Test.assertEqual(
+        TEST_FUEL_METER_STATE_NORMAL,
+        FuelMeterUtils.resolveMeterState(sut._fuelDisplayMode, sut._fuelRemainingSec, 120)
+    );
 
     sut._fuelDisplayMode = TEST_FUEL_DISPLAY_COUNTDOWN;
     sut._fuelRemainingSec = 120;
-    Test.assertEqual(TEST_FUEL_METER_STATE_CAUTION, sut._resolveFuelMeterState());
+    Test.assertEqual(
+        TEST_FUEL_METER_STATE_CAUTION,
+        FuelMeterUtils.resolveMeterState(sut._fuelDisplayMode, sut._fuelRemainingSec, 120)
+    );
 
     sut._fuelRemainingSec = 121;
-    Test.assertEqual(TEST_FUEL_METER_STATE_NORMAL, sut._resolveFuelMeterState());
+    Test.assertEqual(
+        TEST_FUEL_METER_STATE_NORMAL,
+        FuelMeterUtils.resolveMeterState(sut._fuelDisplayMode, sut._fuelRemainingSec, 120)
+    );
     return true;
 }
 
@@ -268,17 +280,57 @@ function testFuelMeterProgressRatio_resolution(logger) {
     var sut = _newCardFuelSut();
 
     sut._fuelDisplayMode = TEST_FUEL_DISPLAY_DISABLED;
-    _assertNear(sut._resolveFuelMeterProgressRatio(TEST_FUEL_METER_STATE_NORMAL), 0.0, 0.0001, "disabled => 0");
+    _assertNear(
+        FuelMeterUtils.resolveProgressRatio(
+            sut._fuelDisplayMode,
+            TEST_FUEL_METER_STATE_NORMAL,
+            sut._fuelRemainingSec,
+            2100
+        ),
+        0.0,
+        0.0001,
+        "disabled => 0"
+    );
 
     sut._fuelDisplayMode = TEST_FUEL_DISPLAY_DUE;
-    _assertNear(sut._resolveFuelMeterProgressRatio(TEST_FUEL_METER_STATE_WARNING), 1.0, 0.0001, "due => 1");
+    _assertNear(
+        FuelMeterUtils.resolveProgressRatio(
+            sut._fuelDisplayMode,
+            TEST_FUEL_METER_STATE_WARNING,
+            sut._fuelRemainingSec,
+            2100
+        ),
+        1.0,
+        0.0001,
+        "due => 1"
+    );
 
     sut._fuelDisplayMode = TEST_FUEL_DISPLAY_COUNTDOWN;
     sut._fuelRemainingSec = 1050; // 35 min interval => 0.5
-    _assertNear(sut._resolveFuelMeterProgressRatio(TEST_FUEL_METER_STATE_NORMAL), 0.5, 0.0001, "half remaining => 0.5");
+    _assertNear(
+        FuelMeterUtils.resolveProgressRatio(
+            sut._fuelDisplayMode,
+            TEST_FUEL_METER_STATE_NORMAL,
+            sut._fuelRemainingSec,
+            2100
+        ),
+        0.5,
+        0.0001,
+        "half remaining => 0.5"
+    );
 
     sut._fuelRemainingSec = null;
-    _assertNear(sut._resolveFuelMeterProgressRatio(TEST_FUEL_METER_STATE_NORMAL), 0.0, 0.0001, "countdown/null => 0");
+    _assertNear(
+        FuelMeterUtils.resolveProgressRatio(
+            sut._fuelDisplayMode,
+            TEST_FUEL_METER_STATE_NORMAL,
+            sut._fuelRemainingSec,
+            2100
+        ),
+        0.0,
+        0.0001,
+        "countdown/null => 0"
+    );
     return true;
 }
 
@@ -287,23 +339,89 @@ function testFuelMeterText_resolution(logger) {
     var sut = _newCardFuelSut();
 
     sut._fuelDisplayMode = TEST_FUEL_DISPLAY_DISABLED;
-    Test.assertMessage(sut._resolveFuelMeterCenterText(TEST_FUEL_METER_STATE_NORMAL) == null, "disabled center text should be null");
+    Test.assertMessage(
+        FuelMeterUtils.resolveCenterText(
+            sut._fuelDisplayMode,
+            TEST_FUEL_METER_STATE_NORMAL,
+            sut._fuelRemainingSec,
+            sut._fuelMeterMinuteSuffixText,
+            sut._fuelMeterDoneText,
+            sut._fuelMeterNoPlanText,
+            sut._fuelMeterWarningText
+        ) == null,
+        "disabled center text should be null"
+    );
 
     sut._fuelDisplayMode = TEST_FUEL_DISPLAY_DONE_FLASH;
-    Test.assertEqual(sut._fuelMeterDoneText, sut._resolveFuelMeterCenterText(TEST_FUEL_METER_STATE_NORMAL));
+    Test.assertEqual(
+        sut._fuelMeterDoneText,
+        FuelMeterUtils.resolveCenterText(
+            sut._fuelDisplayMode,
+            TEST_FUEL_METER_STATE_NORMAL,
+            sut._fuelRemainingSec,
+            sut._fuelMeterMinuteSuffixText,
+            sut._fuelMeterDoneText,
+            sut._fuelMeterNoPlanText,
+            sut._fuelMeterWarningText
+        )
+    );
 
     sut._fuelDisplayMode = TEST_FUEL_DISPLAY_NO_PLAN;
-    Test.assertEqual(sut._fuelMeterNoPlanText, sut._resolveFuelMeterCenterText(TEST_FUEL_METER_STATE_NORMAL));
+    Test.assertEqual(
+        sut._fuelMeterNoPlanText,
+        FuelMeterUtils.resolveCenterText(
+            sut._fuelDisplayMode,
+            TEST_FUEL_METER_STATE_NORMAL,
+            sut._fuelRemainingSec,
+            sut._fuelMeterMinuteSuffixText,
+            sut._fuelMeterDoneText,
+            sut._fuelMeterNoPlanText,
+            sut._fuelMeterWarningText
+        )
+    );
 
     sut._fuelDisplayMode = TEST_FUEL_DISPLAY_DUE;
-    Test.assertEqual(sut._fuelMeterWarningText, sut._resolveFuelMeterCenterText(TEST_FUEL_METER_STATE_WARNING));
+    Test.assertEqual(
+        sut._fuelMeterWarningText,
+        FuelMeterUtils.resolveCenterText(
+            sut._fuelDisplayMode,
+            TEST_FUEL_METER_STATE_WARNING,
+            sut._fuelRemainingSec,
+            sut._fuelMeterMinuteSuffixText,
+            sut._fuelMeterDoneText,
+            sut._fuelMeterNoPlanText,
+            sut._fuelMeterWarningText
+        )
+    );
 
     sut._fuelDisplayMode = TEST_FUEL_DISPLAY_COUNTDOWN;
     sut._fuelRemainingSec = 61;
-    Test.assertEqual("2" + sut._fuelMeterMinuteSuffixText, sut._resolveFuelMeterCenterText(TEST_FUEL_METER_STATE_CAUTION));
+    Test.assertEqual(
+        "2" + sut._fuelMeterMinuteSuffixText,
+        FuelMeterUtils.resolveCenterText(
+            sut._fuelDisplayMode,
+            TEST_FUEL_METER_STATE_CAUTION,
+            sut._fuelRemainingSec,
+            sut._fuelMeterMinuteSuffixText,
+            sut._fuelMeterDoneText,
+            sut._fuelMeterNoPlanText,
+            sut._fuelMeterWarningText
+        )
+    );
 
     sut._fuelRemainingSec = null;
-    Test.assertEqual("--", sut._resolveFuelMeterCenterText(TEST_FUEL_METER_STATE_NORMAL));
+    Test.assertEqual(
+        "--",
+        FuelMeterUtils.resolveCenterText(
+            sut._fuelDisplayMode,
+            TEST_FUEL_METER_STATE_NORMAL,
+            sut._fuelRemainingSec,
+            sut._fuelMeterMinuteSuffixText,
+            sut._fuelMeterDoneText,
+            sut._fuelMeterNoPlanText,
+            sut._fuelMeterWarningText
+        )
+    );
     return true;
 }
 
@@ -312,10 +430,24 @@ function testFuelMeterWarningSubText_resolution(logger) {
     var sut = _newCardFuelSut();
 
     sut._fuelDisplayMode = TEST_FUEL_DISPLAY_DUE;
-    Test.assertEqual(sut._fuelMeterWarningSubText, sut._resolveFuelMeterWarningSubText(TEST_FUEL_METER_STATE_WARNING));
+    Test.assertEqual(
+        sut._fuelMeterWarningSubText,
+        FuelMeterUtils.resolveWarningSubText(
+            sut._fuelDisplayMode,
+            TEST_FUEL_METER_STATE_WARNING,
+            sut._fuelMeterWarningSubText
+        )
+    );
 
     sut._fuelDisplayMode = TEST_FUEL_DISPLAY_COUNTDOWN;
-    Test.assertMessage(sut._resolveFuelMeterWarningSubText(TEST_FUEL_METER_STATE_CAUTION) == null, "countdown should not have warning sub text");
+    Test.assertMessage(
+        FuelMeterUtils.resolveWarningSubText(
+            sut._fuelDisplayMode,
+            TEST_FUEL_METER_STATE_CAUTION,
+            sut._fuelMeterWarningSubText
+        ) == null,
+        "countdown should not have warning sub text"
+    );
     return true;
 }
 

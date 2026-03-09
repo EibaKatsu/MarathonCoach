@@ -9,6 +9,7 @@ using Toybox.WatchUi as Ui;
 using BeepUtils;
 using CoachUtils;
 using DistanceNotifyUtils;
+using FuelMeterUtils;
 using SettingsLoader;
 
 class MarathonCoachField extends Ui.DataField {
@@ -92,14 +93,14 @@ class MarathonCoachField extends Ui.DataField {
     const CARD_VARIANT_FUEL_NOW = 5;
     const CARD_VARIANT_RECOVERY = 6;
     const CARD_VARIANT_HR_WARNING = 7;
-    const FUEL_METER_STATE_NORMAL = 0;
-    const FUEL_METER_STATE_CAUTION = 1;
-    const FUEL_METER_STATE_WARNING = 2;
-    const FUEL_DISPLAY_COUNTDOWN = 0;
-    const FUEL_DISPLAY_DUE = 1;
-    const FUEL_DISPLAY_DONE_FLASH = 2;
-    const FUEL_DISPLAY_NO_PLAN = 3;
-    const FUEL_DISPLAY_DISABLED = 4;
+    const FUEL_METER_STATE_NORMAL = FuelMeterUtils.STATE_NORMAL;
+    const FUEL_METER_STATE_CAUTION = FuelMeterUtils.STATE_CAUTION;
+    const FUEL_METER_STATE_WARNING = FuelMeterUtils.STATE_WARNING;
+    const FUEL_DISPLAY_COUNTDOWN = FuelMeterUtils.DISPLAY_COUNTDOWN;
+    const FUEL_DISPLAY_DUE = FuelMeterUtils.DISPLAY_DUE;
+    const FUEL_DISPLAY_DONE_FLASH = FuelMeterUtils.DISPLAY_DONE_FLASH;
+    const FUEL_DISPLAY_NO_PLAN = FuelMeterUtils.DISPLAY_NO_PLAN;
+    const FUEL_DISPLAY_DISABLED = FuelMeterUtils.DISPLAY_DISABLED;
     const DISTANCE_NOTIFY_EVENT_NONE = 0;
     const DISTANCE_NOTIFY_EVENT_SPLIT = 1;
     const DISTANCE_NOTIFY_EVENT_MILESTONE = 2;
@@ -1252,7 +1253,11 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _drawFuelMeter(dc as Gfx.Dc, sizeClass, centerX, centerY, radius, labelFont, valueFont) {
-        var meterState = _resolveFuelMeterState();
+        var meterState = FuelMeterUtils.resolveMeterState(
+            _fuelDisplayMode,
+            _fuelRemainingSec,
+            FUEL_TOGGLE_LEAD_SEC
+        );
         var fuelDisplayMode = _fuelDisplayMode;
         var showCenterText = true;
         if (fuelDisplayMode == FUEL_DISPLAY_DISABLED) {
@@ -1261,11 +1266,38 @@ class MarathonCoachField extends Ui.DataField {
             showCenterText = _isFuelWarningBlinkVisible();
         }
 
-        var ringTrackColor = _getFuelMeterTrackColor(meterState);
-        var ringFillColor = _getFuelMeterFillColor(meterState);
-        var ringProgress = _resolveFuelMeterProgressRatio(meterState);
-        var centerText = _resolveFuelMeterCenterText(meterState);
-        var warningSubText = _resolveFuelMeterWarningSubText(meterState);
+        var ringTrackColor = FuelMeterUtils.resolveTrackColor(
+            meterState,
+            FUEL_RING_NORMAL_TRACK_COLOR,
+            FUEL_RING_CAUTION_TRACK_COLOR,
+            FUEL_RING_WARNING_TRACK_COLOR
+        );
+        var ringFillColor = FuelMeterUtils.resolveFillColor(
+            meterState,
+            FUEL_RING_NORMAL_FILL_COLOR,
+            FUEL_RING_CAUTION_FILL_COLOR,
+            FUEL_RING_WARNING_FILL_COLOR
+        );
+        var ringProgress = FuelMeterUtils.resolveProgressRatio(
+            _fuelDisplayMode,
+            meterState,
+            _fuelRemainingSec,
+            FUEL_INTERVAL_SEC
+        );
+        var centerText = FuelMeterUtils.resolveCenterText(
+            _fuelDisplayMode,
+            meterState,
+            _fuelRemainingSec,
+            _fuelMeterMinuteSuffixText,
+            _fuelMeterDoneText,
+            _fuelMeterNoPlanText,
+            _fuelMeterWarningText
+        );
+        var warningSubText = FuelMeterUtils.resolveWarningSubText(
+            _fuelDisplayMode,
+            meterState,
+            _fuelMeterWarningSubText
+        );
         var meterLabelText = _resolveFuelMeterLabelText();
 
         var ringThickness = _clamp(radius / 4, 4, 11);
@@ -1376,103 +1408,6 @@ class MarathonCoachField extends Ui.DataField {
         var periodStartSec = elapsedPeriods * FUEL_WARNING_BLINK_PERIOD_SEC;
         var inPeriodSec = blinkSec - periodStartSec;
         return inPeriodSec < FUEL_WARNING_BLINK_ON_SEC;
-    }
-
-    function _resolveFuelMeterState() {
-        if (_fuelDisplayMode == FUEL_DISPLAY_DUE) {
-            return FUEL_METER_STATE_WARNING;
-        }
-        if (_fuelDisplayMode != FUEL_DISPLAY_COUNTDOWN) {
-            return FUEL_METER_STATE_NORMAL;
-        }
-        if (_fuelRemainingSec != null and _fuelRemainingSec <= FUEL_TOGGLE_LEAD_SEC) {
-            return FUEL_METER_STATE_CAUTION;
-        }
-        return FUEL_METER_STATE_NORMAL;
-    }
-
-    function _getFuelMeterTrackColor(meterState) {
-        if (meterState == FUEL_METER_STATE_WARNING) {
-            return FUEL_RING_WARNING_TRACK_COLOR;
-        }
-        if (meterState == FUEL_METER_STATE_CAUTION) {
-            return FUEL_RING_CAUTION_TRACK_COLOR;
-        }
-        return FUEL_RING_NORMAL_TRACK_COLOR;
-    }
-
-    function _getFuelMeterFillColor(meterState) {
-        if (meterState == FUEL_METER_STATE_WARNING) {
-            return FUEL_RING_WARNING_FILL_COLOR;
-        }
-        if (meterState == FUEL_METER_STATE_CAUTION) {
-            return FUEL_RING_CAUTION_FILL_COLOR;
-        }
-        return FUEL_RING_NORMAL_FILL_COLOR;
-    }
-
-    function _resolveFuelMeterProgressRatio(meterState) {
-        if (_fuelDisplayMode == FUEL_DISPLAY_DISABLED) {
-            return 0.0;
-        }
-        if (_fuelDisplayMode == FUEL_DISPLAY_DUE) {
-            return 1.0;
-        }
-        if (_fuelDisplayMode != FUEL_DISPLAY_COUNTDOWN) {
-            return 0.0;
-        }
-        if (meterState == FUEL_METER_STATE_WARNING) {
-            return 1.0;
-        }
-        if (_fuelRemainingSec == null) {
-            return 0.0;
-        }
-
-        var remainingSec = _clamp(_fuelRemainingSec, 0, FUEL_INTERVAL_SEC);
-        return _clamp((remainingSec * 1.0) / (FUEL_INTERVAL_SEC * 1.0), 0.0, 1.0);
-    }
-
-    function _resolveFuelMeterCenterText(meterState) {
-        if (_fuelDisplayMode == FUEL_DISPLAY_DISABLED) {
-            return null;
-        }
-        if (_fuelDisplayMode == FUEL_DISPLAY_DONE_FLASH) {
-            return _fuelMeterDoneText;
-        }
-        if (_fuelDisplayMode == FUEL_DISPLAY_NO_PLAN) {
-            return _fuelMeterNoPlanText;
-        }
-        if (meterState == FUEL_METER_STATE_WARNING) {
-            return _fuelMeterWarningText;
-        }
-
-        var remainingMin = _resolveFuelMeterRemainingMin();
-        if (remainingMin != null) {
-            return remainingMin.format("%d") + _fuelMeterMinuteSuffixText;
-        }
-        return "--";
-    }
-
-    function _resolveFuelMeterWarningSubText(meterState) {
-        if (_fuelDisplayMode == FUEL_DISPLAY_DUE and meterState == FUEL_METER_STATE_WARNING) {
-            return _fuelMeterWarningSubText;
-        }
-        return null;
-    }
-
-    function _resolveFuelMeterRemainingMin() {
-        if (_fuelRemainingSec == null) {
-            return null;
-        }
-
-        var remainingSec = _fuelRemainingSec;
-        if (remainingSec < 0) {
-            remainingSec = 0;
-        }
-        if (remainingSec == 0) {
-            return 0;
-        }
-        return Math.floor((remainingSec + 59) / 60);
     }
 
     function _resolveFuelMeterLabelText() {
@@ -3145,7 +3080,11 @@ class MarathonCoachField extends Ui.DataField {
         }
         _beepLastElapsedSec = elapsedSec;
 
-        var fuelMeterState = _resolveFuelMeterState();
+        var fuelMeterState = FuelMeterUtils.resolveMeterState(
+            _fuelDisplayMode,
+            _fuelRemainingSec,
+            FUEL_TOGGLE_LEAD_SEC
+        );
         if (!_beepStateInitialized) {
             _beepPrevFuelMeterState = fuelMeterState;
             _beepPrevHrOver = hrOver;
