@@ -218,6 +218,28 @@
 ## データ定義（内部）
 - `raceDistanceKm`（設定）
 - `targetTimeSec`（設定）
+
+---
+
+## カスタムモード（MVP）
+
+カスタムモードでは、通常版で扱わないランナー個人の特性を設定できるようにする。  
+初期実装では、意味が伝わりやすく、体感差が出やすい次の7項目に限定する。
+
+- `fuelIntervalMin` : 補給間隔
+- `firstFuelAfterMin` : 初回補給タイミング
+- `fuelAlertLeadMin` : 補給予告の早さ
+- `phaseAggressiveness` : 走り方タイプ（守り / 標準 / 攻め）
+- `hrCapBiasBpm` : 心拍上限バイアス
+- `driftSensitivity` : ドリフト感度（鈍感 / 標準 / 敏感）
+- `beepLevel` : 通知強度
+
+設計方針は次の通り。
+
+- ユーザーが直接触る項目は上記7項目に絞る
+- 細かな閾値は内部パラメタとして保持する
+- `走り方タイプ` や `ドリフト感度` は複数の内部制御値に展開する
+- 通常版はシンプル設計を維持し、個別最適化はカスタムモードに集約する
 - `targetPaceSecPerKm` = `targetTimeSec / raceDistanceKm`
 - `fuelIntervalSec`（通常版は固定 `35 * 60`。カスタムモードのみ個別値）
 - `lastFuelTimeSec`（LAP押下で更新）
