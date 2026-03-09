@@ -636,7 +636,11 @@ class MarathonCoachField extends Ui.DataField {
         if (cardCorner > maxCardCorner) {
             cardCorner = maxCardCorner;
         }
-        _drawCoachCardWithPng(dc, sizeClass, cardX, cardY, cardW, cardH, cardCorner);
+        try {
+            _drawCoachCardWithPng(dc, sizeClass, cardX, cardY, cardW, cardH, cardCorner);
+        } catch (e) {
+            _drawCoachCard(dc, sizeClass, cardX, cardY, cardW, cardH, cardCorner);
+        }
 
         // 3rd row right: pace
         var paceY = row2Y;
@@ -871,11 +875,25 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _getBitmapWidth(bitmap) {
-        return RenderUtils.getBitmapWidth(bitmap);
+        if (bitmap == null) {
+            return 0;
+        }
+        try {
+            return bitmap.getWidth();
+        } catch (e) {
+            return 0;
+        }
     }
 
     function _getBitmapHeight(bitmap) {
-        return RenderUtils.getBitmapHeight(bitmap);
+        if (bitmap == null) {
+            return 0;
+        }
+        try {
+            return bitmap.getHeight();
+        } catch (e) {
+            return 0;
+        }
     }
 
     function _getCardBorderColor(cardVariant) {
