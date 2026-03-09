@@ -32,10 +32,6 @@ class MarathonCoachField extends Ui.DataField {
     const FUEL_METER_LABEL_TOGGLE_SEC = 2;
     const FUEL_WARNING_BLINK_PERIOD_SEC = 2;
     const FUEL_WARNING_BLINK_ON_SEC = 1;
-    const HALF_FUEL_DONE_FLASH_SEC = 10;
-    const HALF_FUEL_POINT_1_KM = 10.0;
-    const HALF_FUEL_POINT_2_KM = 15.0;
-    const HALF_FUEL_POINT_COUNT = 2;
     const HR_OVER_TRIGGER_MARGIN_BPM = 1;
     const WARMUP_MESSAGE_ROTATE_SEC = 15;
     const DRIFT_BASELINE_START_SEC = 20 * 60;
@@ -209,8 +205,6 @@ class MarathonCoachField extends Ui.DataField {
     var _fuelRemainingSec = null;
     var _fuelRemainingText = "--:--";
     var _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
-    var _halfFuelNextPointIndex = 0;
-    var _halfFuelDoneFlashUntilSec = null;
     var _timerRunning = false;
     var _lastElapsedSec = null;
     var _lastLapResetSec = null;
@@ -462,8 +456,6 @@ class MarathonCoachField extends Ui.DataField {
         _fuelRemainingSec = null;
         _fuelRemainingText = "--:--";
         _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
-        _halfFuelNextPointIndex = 0;
-        _halfFuelDoneFlashUntilSec = null;
         _resetPaceWindow();
         _paceNowSecPerKm = null;
         _paceNowText = "--:--";
@@ -617,8 +609,6 @@ class MarathonCoachField extends Ui.DataField {
         _fuelRemainingSec = null;
         _fuelRemainingText = "--:--";
         _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
-        _halfFuelNextPointIndex = 0;
-        _halfFuelDoneFlashUntilSec = null;
         _lastLapResetSec = null;
     }
 
@@ -2607,125 +2597,6 @@ class MarathonCoachField extends Ui.DataField {
             _fuelDisplayMode = FUEL_DISPLAY_DUE;
         } else {
             _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
-        }
-    }
-
-    function _updateHalfFuelTimer(elapsedSec, distanceKm) {
-        if (_halfFuelNextPointIndex >= HALF_FUEL_POINT_COUNT) {
-            _fuelDueTimeSec = null;
-            _fuelRemainingSec = null;
-            _fuelRemainingText = "--:--";
-            if (
-                _halfFuelDoneFlashUntilSec != null and
-                elapsedSec != null and
-                elapsedSec < _halfFuelDoneFlashUntilSec
-            ) {
-                _fuelDisplayMode = FUEL_DISPLAY_DONE_FLASH;
-            } else {
-                _fuelDisplayMode = FUEL_DISPLAY_NO_PLAN;
-            }
-            return;
-        }
-
-        if (elapsedSec == null) {
-            _fuelDueTimeSec = null;
-            _fuelRemainingSec = null;
-            _fuelRemainingText = "--:--";
-            _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
-            return;
-        }
-
-        var nextFuelKm = _getHalfFuelPointKm(_halfFuelNextPointIndex);
-        if (nextFuelKm == null) {
-            _fuelDueTimeSec = null;
-            _fuelRemainingSec = null;
-            _fuelRemainingText = "--:--";
-            _fuelDisplayMode = FUEL_DISPLAY_NO_PLAN;
-            return;
-        }
-
-        if (distanceKm != null and distanceKm >= nextFuelKm) {
-            _fuelDueTimeSec = elapsedSec;
-            _fuelRemainingSec = 0;
-            _fuelRemainingText = CoachUtils.formatMinSec(0);
-            _fuelDisplayMode = FUEL_DISPLAY_DUE;
-            return;
-        }
-
-        var etaSec = _estimateFuelEtaSec(distanceKm, nextFuelKm);
-        _fuelDueTimeSec = null;
-        if (etaSec != null) {
-            _fuelRemainingSec = etaSec;
-            _fuelRemainingText = CoachUtils.formatMinSec(_fuelRemainingSec);
-        } else {
-            _fuelRemainingSec = null;
-            _fuelRemainingText = "--:--";
-        }
-        _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
-    }
-
-    function _getHalfFuelPointKm(index) {
-        if (index == 0) {
-            return HALF_FUEL_POINT_1_KM;
-        }
-        if (index == 1) {
-            return HALF_FUEL_POINT_2_KM;
-        }
-        return null;
-    }
-
-    function _estimateFuelEtaSec(distanceKm, nextFuelKm) {
-        if (distanceKm == null or nextFuelKm == null) {
-            return null;
-        }
-        var remainingKm = nextFuelKm - distanceKm;
-        if (remainingKm <= 0) {
-            return 0;
-        }
-
-        var paceSecPerKm = _paceNowSecPerKm;
-        if (paceSecPerKm == null or paceSecPerKm <= 0) {
-            paceSecPerKm = _targetPaceSecPerKm;
-        }
-        if (paceSecPerKm == null or paceSecPerKm <= 0) {
-            return null;
-        }
-
-        var etaSec = Math.floor((remainingKm * paceSecPerKm) + 0.5);
-        if (etaSec < 0) {
-            etaSec = 0;
-        }
-        return etaSec;
-    }
-
-    function _markHalfFuelPointIfDue() {
-        if (_halfFuelNextPointIndex >= HALF_FUEL_POINT_COUNT) {
-            return;
-        }
-
-        var distanceKm = _extractElapsedDistanceKm(_fallbackActivityInfo);
-        var nextFuelKm = _getHalfFuelPointKm(_halfFuelNextPointIndex);
-        if (distanceKm == null or nextFuelKm == null or distanceKm < nextFuelKm) {
-            return;
-        }
-
-        _halfFuelNextPointIndex += 1;
-        _lastLapResetSec = _lastElapsedSec;
-        if (_halfFuelNextPointIndex >= HALF_FUEL_POINT_COUNT) {
-            _fuelDisplayMode = FUEL_DISPLAY_DONE_FLASH;
-            _fuelDueTimeSec = null;
-            _fuelRemainingSec = null;
-            _fuelRemainingText = "--:--";
-            if (_lastElapsedSec != null) {
-                _halfFuelDoneFlashUntilSec = _lastElapsedSec + HALF_FUEL_DONE_FLASH_SEC;
-            } else {
-                _halfFuelDoneFlashUntilSec = null;
-            }
-        } else {
-            _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
-            _fuelDueTimeSec = null;
-            _fuelRemainingSec = null;
-            _fuelRemainingText = "--:--";
         }
     }
 

@@ -56,8 +56,6 @@ class MarathonCoachFieldCardFuelTestDouble extends MarathonCoachField {
         _customHrCapBiasBpm = CustomModeUtils.DEFAULT_HR_CAP_BIAS_BPM;
         _customDriftSensitivity = CustomModeUtils.DEFAULT_DRIFT_SENSITIVITY;
         _fuelPlanSignature = null;
-        _halfFuelNextPointIndex = 0;
-        _halfFuelDoneFlashUntilSec = null;
         _fuelDueTimeSec = null;
         _fuelRemainingSec = null;
         _fuelRemainingText = "--:--";
