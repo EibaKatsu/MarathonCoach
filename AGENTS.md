@@ -3,6 +3,7 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
 
 ### Available skills
 - ciq-simulator-launch: Connect IQ のシミュレーション起動用。`シミュレーション起動` や `run simulator` の指示で、`monkeyc` ビルド -> `connectiq` 起動 -> `monkeydo` 実行を行う。 (file: /Users/eibakatsu/Documents/codex/MarathonCoach/skills/ciq-simulator-launch/SKILL.md)
+- custom-code-generator: MarathonCoach のカスタムコード生成用。`カスタムコード` の指示で、1〜7項目テンプレート提示と、入力値からカスタムコード生成を行う。 (file: /Users/eibakatsu/Documents/codex/MarathonCoach/skills/custom-code-generator/SKILL.md)
 
 ### How to use skills
 - Trigger rules: ユーザーがスキル名やトリガー文言を指定したらそのスキルを使う。
@@ -55,6 +56,16 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
 4. 独立レビュー
 5. マージ
 
+### 実行ポリシー（必須）
+- デフォルト運用：修正依頼は、原則として上記 `1〜5` をすべて実施する。
+- 例外条件：ユーザーが **「ローカルのみ」** と明示した場合のみ、`3〜5` を省略できる。
+- 完了条件：`5. マージ` まで完了していない作業は「完了」として扱わない。
+
+### 最終報告の必須項目（必須）
+- `PR URL`
+- `独立レビュー結果`（指摘有無、主な指摘、対応状況）
+- `マージコミット`（`main` に入った commit SHA）
+
 ### 各ステップの作業内容と目的
 1. **修正**
    - 作業内容：要件に沿ってコードを変更し、必要なリファクタや関連ファイル更新を行う。
@@ -71,6 +82,11 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
 5. **マージ**
    - 作業内容：レビュー結果を反映後、PRをmainに統合し、ブランチ整理と同期確認を行う。
    - 目的：品質担保済みの変更を正式反映し、次作業の基準線を更新する。
+
+### GitHubブランチ保護（必須）
+`main` ブランチには、GitHub側で次を必ず設定する。
+- `Require a pull request before merging`（main直push禁止）
+- `Require approvals`（承認レビュー必須）
 
 ---
 

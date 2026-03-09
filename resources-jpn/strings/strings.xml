@@ -6,6 +6,7 @@
     <string id="setting_race_distance">Race Distance (km)</string>
     <string id="setting_target_hour">Target Time Hour</string>
     <string id="setting_target_minute">Target Time Minute</string>
+    <string id="setting_custom_mode_code">Custom Mode Code</string>
     <string id="FuelLabel">補給</string>
     <string id="GoalTimeLabel">TGT</string>
     <string id="PredictedDeltaLabel">差</string>

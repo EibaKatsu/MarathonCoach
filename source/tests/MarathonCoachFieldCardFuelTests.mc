@@ -46,6 +46,16 @@ class MarathonCoachFieldCardFuelTestDouble extends MarathonCoachField {
         _testActionCardCalledCount = 0;
 
         _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
+        _customMode = CUSTOM_MODE_CORE;
+        _customCodeValid = false;
+        _customFuelMode = CUSTOM_FUEL_MODE_TIME;
+        _customFirstFuelAfterMin = CustomModeUtils.DEFAULT_FIRST_FUEL_AFTER_MIN;
+        _customFuelIntervalMin = CustomModeUtils.DEFAULT_FUEL_INTERVAL_MIN;
+        _customFuelAlertLeadMin = CustomModeUtils.DEFAULT_FUEL_ALERT_LEAD_MIN;
+        _customPhaseAggressiveness = CustomModeUtils.DEFAULT_PHASE_AGGRESSIVENESS;
+        _customHrCapBiasBpm = CustomModeUtils.DEFAULT_HR_CAP_BIAS_BPM;
+        _customDriftSensitivity = CustomModeUtils.DEFAULT_DRIFT_SENSITIVITY;
+        _fuelPlanSignature = null;
         _halfFuelNextPointIndex = 0;
         _halfFuelDoneFlashUntilSec = null;
         _fuelDueTimeSec = null;
@@ -483,20 +493,64 @@ function testUpdateFuelTimer_fullRaceCountdownAndDue(logger) {
 }
 
 (:test)
-function testUpdateFuelTimer_halfRaceByDistance(logger) {
+function testUpdateFuelTimer_halfRaceUses60MinInterval(logger) {
     var sut = _newCardFuelSut();
     sut._raceDistanceKm = 21.0975;
-    sut._paceNowSecPerKm = 300;
+    sut._lastFuelTimeSec = 0;
 
     sut._testElapsedSec = 1000;
-    sut._testElapsedDistanceKm = 9.0;
     sut._updateFuelTimer(null);
     Test.assertEqual(TEST_FUEL_DISPLAY_COUNTDOWN, sut._fuelDisplayMode);
-    _assertNear(sut._fuelRemainingSec, 300, 0.0001, "half race eta should be 300 sec");
+    Test.assertEqual(2600, sut._fuelRemainingSec);
 
-    sut._testElapsedDistanceKm = 10.0;
+    sut._testElapsedSec = 3600;
     sut._updateFuelTimer(null);
     Test.assertEqual(TEST_FUEL_DISPLAY_DUE, sut._fuelDisplayMode);
     Test.assertEqual(0, sut._fuelRemainingSec);
+    return true;
+}
+
+(:test)
+function testUpdateFuelTimer_customModeFuelOffDisablesFuelMeter(logger) {
+    var sut = _newCardFuelSut();
+    sut._customMode = CustomModeUtils.MODE_CUSTOM;
+    sut._customFuelMode = CustomModeUtils.FUEL_MODE_OFF;
+    sut._testElapsedSec = 100;
+
+    sut._updateFuelTimer(null);
+
+    Test.assertEqual(TEST_FUEL_DISPLAY_DISABLED, sut._fuelDisplayMode);
+    Test.assertMessage(sut._fuelRemainingSec == null, "custom fuel off remaining should be null");
+    return true;
+}
+
+(:test)
+function testUpdateFuelTimer_customModeTimeUsesFirstFuelOffset(logger) {
+    var sut = _newCardFuelSut();
+    sut._customMode = CustomModeUtils.MODE_CUSTOM;
+    sut._customFuelMode = CustomModeUtils.FUEL_MODE_TIME;
+    sut._customFirstFuelAfterMin = 20;
+    sut._customFuelIntervalMin = 30;
+    sut._lastFuelTimeSec = null;
+
+    sut._testElapsedSec = 600; // 10:00
+    sut._updateFuelTimer(null);
+    Test.assertEqual(TEST_FUEL_DISPLAY_COUNTDOWN, sut._fuelDisplayMode);
+    Test.assertEqual(600, sut._fuelRemainingSec); // due at 20:00
+
+    sut._testElapsedSec = 1200; // 20:00
+    sut._updateFuelTimer(null);
+    Test.assertEqual(TEST_FUEL_DISPLAY_DUE, sut._fuelDisplayMode);
+    Test.assertEqual(0, sut._fuelRemainingSec);
+    return true;
+}
+
+(:test)
+function testIsFuelCardEnabled_customModeFuelOff(logger) {
+    var sut = _newCardFuelSut();
+    sut._customMode = CustomModeUtils.MODE_CUSTOM;
+    sut._customFuelMode = CustomModeUtils.FUEL_MODE_OFF;
+
+    Test.assertEqual(false, sut._isFuelCardEnabled());
     return true;
 }
