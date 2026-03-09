@@ -150,7 +150,7 @@ module CoachUtils {
 
         var value = 0;
         for (var i = 0; i < rawText.length(); i += 1) {
-            var ch = rawText.substring(i, i + 1);
+            var ch = rawText.substring(i, i + 1).toString();
             var digit = digitValue(ch);
             if (digit == null) {
                 return null;
@@ -166,40 +166,52 @@ module CoachUtils {
             return null;
         }
 
-        var intPart = 0;
-        var fracPart = 0.0;
-        var fracDivisor = 1.0;
-        var seenDot = false;
-        var hasDigit = false;
-
-        for (var i = 0; i < rawText.length(); i += 1) {
-            var ch = rawText.substring(i, i + 1);
-            if (ch == "." or ch == "．") {
-                if (seenDot) {
-                    return null;
-                }
-                seenDot = true;
-                continue;
-            }
-
-            var digit = digitValue(ch);
-            if (digit == null) {
-                return null;
-            }
-
-            hasDigit = true;
-            if (!seenDot) {
-                intPart = (intPart * 10) + digit;
-            } else {
-                fracPart = (fracPart * 10.0) + digit;
-                fracDivisor *= 10.0;
-            }
-        }
-
-        if (!hasDigit) {
+        var dotPos = rawText.find(".");
+        var fullDotPos = rawText.find("．");
+        if (dotPos != null and dotPos >= 0 and fullDotPos != null and fullDotPos >= 0) {
             return null;
         }
-        return intPart + (fracPart / fracDivisor);
+        if (dotPos == null or dotPos < 0) {
+            dotPos = fullDotPos;
+        }
+
+        if (dotPos == null or dotPos < 0) {
+            return parsePositiveInt(rawText);
+        }
+
+        var tail = rawText.substring(dotPos + 1, rawText.length());
+        if (tail.find(".") != null or tail.find("．") != null) {
+            return null;
+        }
+
+        var intText = rawText.substring(0, dotPos);
+        var fracText = rawText.substring(dotPos + 1, rawText.length());
+        if (intText.length() == 0 and fracText.length() == 0) {
+            return null;
+        }
+
+        var intPart = 0;
+        if (intText.length() > 0) {
+            intPart = parsePositiveInt(intText);
+            if (intPart == null) {
+                return null;
+            }
+        }
+
+        if (fracText.length() == 0) {
+            return intPart * 1.0;
+        }
+
+        var fracPartInt = parsePositiveInt(fracText);
+        if (fracPartInt == null) {
+            return null;
+        }
+
+        var divisor = 1.0;
+        for (var i = 0; i < fracText.length(); i += 1) {
+            divisor *= 10.0;
+        }
+        return intPart + (fracPartInt / divisor);
     }
 
     function normalizeTimeText(text) {
@@ -208,35 +220,24 @@ module CoachUtils {
         }
 
         var raw = text.toString();
-        var normalized = "";
-        for (var i = 0; i < raw.length(); i += 1) {
-            var ch = raw.substring(i, i + 1);
-            if (ch == "：" or ch == "∶") {
-                normalized += ":";
-                continue;
-            }
-
-            var asciiDigit = fullWidthDigitToAscii(ch);
-            if (asciiDigit != null) {
-                normalized += asciiDigit;
-                continue;
-            }
-            normalized += ch;
+        var chars = raw.toCharArray();
+        if (!(chars instanceof Lang.Array)) {
+            return raw;
         }
 
         var start = 0;
-        while (start < normalized.length()) {
-            var first = normalized.substring(start, start + 1);
-            if (first != " " and first != "\t" and first != "　") {
+        while (start < chars.size()) {
+            var firstCode = chars[start].toNumber();
+            if (firstCode != 32 and firstCode != 9 and firstCode != 12288) {
                 break;
             }
             start += 1;
         }
 
-        var endExclusive = normalized.length();
+        var endExclusive = chars.size();
         while (endExclusive > start) {
-            var last = normalized.substring(endExclusive - 1, endExclusive);
-            if (last != " " and last != "\t" and last != "　") {
+            var lastCode = chars[endExclusive - 1].toNumber();
+            if (lastCode != 32 and lastCode != 9 and lastCode != 12288) {
                 break;
             }
             endExclusive -= 1;
@@ -245,35 +246,66 @@ module CoachUtils {
         if (start >= endExclusive) {
             return "";
         }
-        return normalized.substring(start, endExclusive);
+
+        var normalized = "";
+        for (var i = start; i < endExclusive; i += 1) {
+            var ch = chars[i];
+            if (ch == null) {
+                continue;
+            }
+
+            var code = ch.toNumber();
+            if (code == 65306 or code == 8758) {
+                normalized += ":";
+                continue;
+            }
+            if (code == 65294) {
+                normalized += ".";
+                continue;
+            }
+            if (code >= 65296 and code <= 65305) {
+                normalized += (code - 65296).format("%d");
+                continue;
+            }
+            normalized += ch.toString();
+        }
+        return normalized;
     }
 
     function fullWidthDigitToAscii(ch) {
-        if (ch == "０") { return "0"; }
-        if (ch == "１") { return "1"; }
-        if (ch == "２") { return "2"; }
-        if (ch == "３") { return "3"; }
-        if (ch == "４") { return "4"; }
-        if (ch == "５") { return "5"; }
-        if (ch == "６") { return "6"; }
-        if (ch == "７") { return "7"; }
-        if (ch == "８") { return "8"; }
-        if (ch == "９") { return "9"; }
-        return null;
+        if (ch == null) {
+            return null;
+        }
+
+        var raw = ch.toString();
+        if (raw.length() != 1) {
+            return null;
+        }
+
+        var fullWidthDigits = "０１２３４５６７８９";
+        var idx = fullWidthDigits.find(raw);
+        if (idx == null or idx < 0) {
+            return null;
+        }
+        return idx.format("%d");
     }
 
     function digitValue(ch) {
-        if (ch == "0") { return 0; }
-        if (ch == "1") { return 1; }
-        if (ch == "2") { return 2; }
-        if (ch == "3") { return 3; }
-        if (ch == "4") { return 4; }
-        if (ch == "5") { return 5; }
-        if (ch == "6") { return 6; }
-        if (ch == "7") { return 7; }
-        if (ch == "8") { return 8; }
-        if (ch == "9") { return 9; }
-        return null;
+        if (ch == null) {
+            return null;
+        }
+
+        var raw = ch.toString();
+        if (raw.length() != 1) {
+            return null;
+        }
+
+        var asciiDigits = "0123456789";
+        var idx = asciiDigits.find(raw);
+        if (idx == null or idx < 0) {
+            return null;
+        }
+        return idx;
     }
 
     function formatPaceSecPerKm(paceSecPerKm) {
