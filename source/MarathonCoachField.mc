@@ -32,6 +32,8 @@ class MarathonCoachField extends Ui.DataField {
     const FUEL_METER_LABEL_TOGGLE_SEC = 2;
     const FUEL_WARNING_BLINK_PERIOD_SEC = 2;
     const FUEL_WARNING_BLINK_ON_SEC = 1;
+    const LAP_DIAG_LOG = false;
+    const FUEL_PLAN_DIAG_LOG = false;
     const HR_OVER_TRIGGER_MARGIN_BPM = 1;
     const WARMUP_MESSAGE_ROTATE_SEC = 15;
     const DRIFT_BASELINE_START_SEC = 20 * 60;
@@ -513,16 +515,20 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function onTimerLap() {
+        _logLapDiag("enter", "onTimerLap", _lastElapsedSec, null);
         if (_lastElapsedSec == null) {
+            _logLapDiag("reject", "elapsed_null", null, null);
             return;
         }
 
         if (_lastLapResetSec != null and (_lastElapsedSec - _lastLapResetSec) < LAP_DEBOUNCE_SEC) {
+            _logLapDiag("reject", "debounce", _lastElapsedSec, null);
             return;
         }
 
         if (_isCustomModeEnabled()) {
             if (_customFuelMode == CUSTOM_FUEL_MODE_OFF) {
+                _logLapDiag("reject", "custom_fuel_off", _lastElapsedSec, null);
                 return;
             }
             var customIntervalSec = _resolveFuelIntervalSec();
@@ -532,11 +538,13 @@ class MarathonCoachField extends Ui.DataField {
             _fuelRemainingText = CoachUtils.formatMinSec(_fuelRemainingSec);
             _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
             _lastLapResetSec = _lastElapsedSec;
+            _logLapDiag("apply", "custom_reset", _lastElapsedSec, customIntervalSec);
             return;
         }
 
         var profile = _resolveRaceProfile();
         if (profile == RACE_PROFILE_SHORT) {
+            _logLapDiag("reject", "short_profile", _lastElapsedSec, null);
             return;
         }
 
@@ -547,6 +555,27 @@ class MarathonCoachField extends Ui.DataField {
         _fuelRemainingText = CoachUtils.formatMinSec(_fuelRemainingSec);
         _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
         _lastLapResetSec = _lastElapsedSec;
+        _logLapDiag("apply", "core_reset", _lastElapsedSec, coreIntervalSec);
+    }
+
+    function _logLapDiag(stage, reason, elapsedSec, intervalSec) {
+        if (!LAP_DIAG_LOG) {
+            return;
+        }
+        var line =
+            "[LAP_DIAG] stage=" + _factValue(stage) +
+            " reason=" + _factValue(reason) +
+            " elapsed=" + _factValue(elapsedSec) +
+            " lastElapsed=" + _factValue(_lastElapsedSec) +
+            " lastLapReset=" + _factValue(_lastLapResetSec) +
+            " mode=" + _factValue(_customMode) +
+            " fuelMode=" + _factValue(_customFuelMode) +
+            " intervalSec=" + _factValue(intervalSec) +
+            " fuelDue=" + _factValue(_fuelDueTimeSec) +
+            " fuelRem=" + _factValue(_fuelRemainingSec) +
+            " fuelDisp=" + _factValue(_fuelDisplayMode) +
+            " fuelText=" + _factValue(_fuelRemainingText);
+        Sys.println(line);
     }
 
     function onUpdate(dc as Gfx.Dc) {
@@ -599,8 +628,19 @@ class MarathonCoachField extends Ui.DataField {
 
     function _syncFuelPlanStateWithSettings() {
         var signature = _buildFuelPlanSignature();
-        if (signature == _fuelPlanSignature) {
+        if (_isSameText(signature, _fuelPlanSignature)) {
             return;
+        }
+        if (FUEL_PLAN_DIAG_LOG) {
+            Sys.println(
+                "[FUEL_PLAN_DIAG] changed prev=" + _factValue(_fuelPlanSignature) +
+                " next=" + _factValue(signature) +
+                " mode=" + _factValue(_customMode) +
+                " fuelMode=" + _factValue(_customFuelMode) +
+                " first=" + _factValue(_customFirstFuelAfterMin) +
+                " interval=" + _factValue(_customFuelIntervalMin) +
+                " lead=" + _factValue(_customFuelAlertLeadMin)
+            );
         }
 
         _fuelPlanSignature = signature;
@@ -610,6 +650,34 @@ class MarathonCoachField extends Ui.DataField {
         _fuelRemainingText = "--:--";
         _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
         _lastLapResetSec = null;
+    }
+
+    function _isSameText(left, right) {
+        if (left == null or right == null) {
+            return left == right;
+        }
+        var leftChars = left.toCharArray();
+        var rightChars = right.toCharArray();
+        if (!(leftChars instanceof Lang.Array) or !(rightChars instanceof Lang.Array)) {
+            return false;
+        }
+        if (leftChars.size() != rightChars.size()) {
+            return false;
+        }
+        for (var i = 0; i < leftChars.size(); i += 1) {
+            var leftCh = leftChars[i];
+            var rightCh = rightChars[i];
+            if (leftCh == null or rightCh == null) {
+                if (leftCh != rightCh) {
+                    return false;
+                }
+                continue;
+            }
+            if (leftCh.toNumber() != rightCh.toNumber()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     function _buildFuelPlanSignature() {
@@ -2047,7 +2115,7 @@ class MarathonCoachField extends Ui.DataField {
             " spd=" + _factValue(_sampleSpeedMps) + "(" + _sampleSpeedSource + ")" +
             " hr=" + _factValue(_sampleHeartRate) + "(" + _sampleHeartRateSource + ")" +
             " loc=" + _sampleCurrentLocationSource;
-        if (_lastFactLogLine == line) {
+        if (_isSameText(_lastFactLogLine, line)) {
             return;
         }
         _lastFactLogLine = line;
@@ -2082,7 +2150,7 @@ class MarathonCoachField extends Ui.DataField {
             " aggr=" + _factValue(_customPhaseAggressiveness) +
             " hrBias=" + _factValue(_customHrCapBiasBpm) +
             " driftSens=" + _factValue(_customDriftSensitivity);
-        if (_lastSettingsLogLine == line) {
+        if (_isSameText(_lastSettingsLogLine, line)) {
             return;
         }
         _lastSettingsLogLine = line;
@@ -2154,7 +2222,7 @@ class MarathonCoachField extends Ui.DataField {
             " spd=" + _factValue(_sampleSpeedMps) + "(" + _sampleSpeedSource + ")" +
             " spdDeltaM=" + _factValue(speedDeltaM) +
             " spdAccumM=" + _factValue(_probeSpeedDistanceM);
-        if (_lastDistanceProbeLogLine == line) {
+        if (_isSameText(_lastDistanceProbeLogLine, line)) {
             return;
         }
         _lastDistanceProbeLogLine = line;
