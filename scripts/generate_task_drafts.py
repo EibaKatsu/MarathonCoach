@@ -12,7 +12,6 @@ from __future__ import annotations
 import re
 import shutil
 from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -362,12 +361,11 @@ def parse_tasks(md_text: str) -> Dict[str, Dict[str, object]]:
 
 
 def render_folder_doc(heading: Heading, tasks: List[TaskItem]) -> str:
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
     lines: List[str] = []
     lines.append(f"# {heading.key}. {heading.title}")
     lines.append("")
     lines.append(f"- Source: `TASKS.md`")
-    lines.append(f"- Generated: `{now}`")
+    lines.append("- Generated: `scripts/generate_task_drafts.py`")
     lines.append("- Note: 草案のため、最終決定は人間が行う前提")
     lines.append("")
 

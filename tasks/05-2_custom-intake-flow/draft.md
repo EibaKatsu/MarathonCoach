@@ -1,7 +1,7 @@
 # 5-2. 受付フロー
 
 - Source: `TASKS.md`
-- Generated: `2026-03-10 11:17`
+- Generated: `scripts/generate_task_drafts.py`
 - Note: 草案のため、最終決定は人間が行う前提
 
 ## T01 [P0] 申込フォームを作る
