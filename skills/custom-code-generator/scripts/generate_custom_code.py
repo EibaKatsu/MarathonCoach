@@ -46,6 +46,8 @@ def normalize_text(text: str) -> str:
             "：": ":",
             "－": "-",
             "ー": "-",
+            "（": "(",
+            "）": ")",
             "，": ",",
             "　": " ",
             "０": "0",
@@ -66,7 +68,9 @@ def normalize_text(text: str) -> str:
 def parse_key_values(text: str) -> Dict[str, str]:
     normalized = normalize_text(text)
     out: Dict[str, str] = {}
-    pattern = re.compile(r"^\s*(?:[1-7]\s*[\.\)]\s*)?([A-Za-z][A-Za-z0-9_]*)\s*:\s*(.*?)\s*$")
+    pattern = re.compile(
+        r"^\s*(?:[1-7]\s*[\.\)]\s*)?([A-Za-z][A-Za-z0-9_]*)\s*(?:\([^)]*\))?\s*:\s*(.*?)\s*$"
+    )
     for line in normalized.splitlines():
         m = pattern.match(line)
         if not m:
