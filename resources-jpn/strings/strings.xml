@@ -1,5 +1,5 @@
 <resources>
-    <string id="AppName">マラソンコーチ</string>
+    <string id="AppName">レースナビ</string>
     <string id="Step1Status">STEP1 READY</string>
     <string id="Step2Status">STEP2 SETTINGS</string>
     <string id="Step3Status">STEP3 LAYOUT</string>
