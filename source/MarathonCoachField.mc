@@ -19,7 +19,6 @@ class MarathonCoachField extends Ui.DataField {
     const KEY_RACE_DISTANCE_KM = "race_distance_km";
     const KEY_TARGET_TIME_HOUR = "target_time_hour";
     const KEY_TARGET_TIME_MINUTE = "target_time_minute";
-    const KEY_CUSTOM_MODE_CODE = "custom_mode_code";
     const LAYOUT_DEBUG_OVERLAY = false;
     const FUEL_INTERVAL_SEC = 35 * 60;
     const HALF_FUEL_INTERVAL_SEC = 60 * 60;
@@ -592,7 +591,7 @@ class MarathonCoachField extends Ui.DataField {
         _targetTimeHms = null;
         _targetTimeSec = null;
         _targetPaceSecPerKm = null;
-        _applyCustomModeConfig(SettingsLoader.getPropertyValue(KEY_CUSTOM_MODE_CODE));
+        _applyCustomModeConfig(null);
 
         var targetHour = SettingsLoader.loadTargetTimeHour(KEY_TARGET_TIME_HOUR);
         var targetMinute = SettingsLoader.loadTargetTimeMinute(KEY_TARGET_TIME_MINUTE);
@@ -2129,12 +2128,10 @@ class MarathonCoachField extends Ui.DataField {
         var rawRace = SettingsLoader.getPropertyValue(KEY_RACE_DISTANCE_KM);
         var rawHour = SettingsLoader.getPropertyValue(KEY_TARGET_TIME_HOUR);
         var rawMinute = SettingsLoader.getPropertyValue(KEY_TARGET_TIME_MINUTE);
-        var rawCustomCode = SettingsLoader.getPropertyValue(KEY_CUSTOM_MODE_CODE);
         var line =
             "[SETTINGS] raceRaw=" + _factValue(rawRace) +
             " hourRaw=" + _factValue(rawHour) +
             " minuteRaw=" + _factValue(rawMinute) +
-            " customRaw=" + _factValue(rawCustomCode) +
             " hourNorm=" + _factValue(targetHour) +
             " minuteNorm=" + _factValue(targetMinute) +
             " raceKm=" + _factValue(_raceDistanceKm) +
