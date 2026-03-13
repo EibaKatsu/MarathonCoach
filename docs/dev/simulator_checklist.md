@@ -1,5 +1,7 @@
 # simulator_checklist
 
+通常 QA 全体の観点は `docs/dev/qa_checklist.md` を参照し、本ファイルではシミュレーターで先に潰せる項目に絞って確認する。
+
 ## シミュレーション確認観点（STEP13時点）
 1. タイマー基準は `Data Field Timer Controls` の `Start/Pause/Lap` を使う
 2. FUELが `35:00` から減る / Pause中停止 / Lapで `35:00` リセット
