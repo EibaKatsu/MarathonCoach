@@ -20,7 +20,6 @@ class MarathonCoachField extends Ui.DataField {
     const KEY_TARGET_TIME_HOUR = "target_time_hour";
     const KEY_TARGET_TIME_MINUTE = "target_time_minute";
     const KEY_CUSTOM_MODE_CODE = "custom_mode_code";
-    const LAYOUT_DEBUG_OVERLAY = false;
     const FUEL_INTERVAL_SEC = 35 * 60;
     const HALF_FUEL_INTERVAL_SEC = 60 * 60;
     const LAP_DEBOUNCE_SEC = 20;
@@ -76,8 +75,6 @@ class MarathonCoachField extends Ui.DataField {
     const CARDIAC_COST_EASE_MIN_RATIO_HALF = 1.12;
     const CARDIAC_COST_EASE_MIN_RATIO_SHORT = 1.15;
     const CARDIAC_COST_MIN_SAMPLES = 30;
-    const CARD_VARIANT_PREVIEW_ENABLED = false;
-    const CARD_VARIANT_PREVIEW_SEC = 3;
     const SETTINGS_LOG = false;
     const FIT_FACT_LOG = false;
     const DIST_PROBE_LOG = false;
@@ -922,13 +919,6 @@ class MarathonCoachField extends Ui.DataField {
         dc.drawText(width / 2, mergedY, footerFont, _distanceTimeText, Gfx.TEXT_JUSTIFY_CENTER);
         dc.drawText(width / 2, paceDeltaY, paceDeltaFont, _goalDeltaText, Gfx.TEXT_JUSTIFY_CENTER);
 
-        if (LAYOUT_DEBUG_OVERLAY) {
-            dc.setColor(Gfx.COLOR_BLUE, Gfx.COLOR_BLACK);
-            dc.drawLine(centerX, top, centerX, bottomY);
-            dc.drawLine(left, row1Y, right, row1Y);
-            dc.drawLine(left, row2Y, right, row2Y);
-            dc.drawLine(left, row3Y, right, row3Y);
-        }
     }
 
     function _drawCoachCard(dc as Gfx.Dc, sizeClass, cardX, cardY, cardW, cardH, cardCorner) {
@@ -1255,10 +1245,6 @@ class MarathonCoachField extends Ui.DataField {
 
     function _shrinkCardFont(font) {
         return RenderUtils.shrinkCardFont(font);
-    }
-
-    function _containsNonAscii(text) as Lang.Boolean {
-        return RenderUtils.containsNonAscii(text);
     }
 
     function _resolveCardLineGap(cardLineCount, fontH, areaH) {
@@ -2681,11 +2667,6 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _updateCardDisplay(info) {
-        if (CARD_VARIANT_PREVIEW_ENABLED) {
-            _applyCardVariantPreview();
-            return;
-        }
-
         var elapsedSec = _extractElapsedSec(info);
         var fuelOverdue = _isFuelOverdue();
         var hrOver = _isHeartRateOverCap();
@@ -3171,87 +3152,6 @@ class MarathonCoachField extends Ui.DataField {
             line3 = line3Templates[templateIdx];
         }
         return [line1, line2, line3];
-    }
-
-    function _applyCardVariantPreview() {
-        var tickSec = Math.floor(Sys.getTimer() / 1000);
-        var slot = 0;
-        if (CARD_VARIANT_PREVIEW_SEC > 0) {
-            slot = Math.floor(tickSec / CARD_VARIANT_PREVIEW_SEC);
-        }
-        var warmupCount = _warmupMessages.size();
-        var totalPatterns = warmupCount + 7;
-        if (totalPatterns <= 0) {
-            _cardMode = CARD_MODE_ACTION;
-            _cardVariant = CARD_VARIANT_ACTION_HOLD;
-            _setCardLinesFromMessage(_actionHoldText);
-            return;
-        }
-
-        var pattern = slot % totalPatterns;
-        if (pattern < warmupCount) {
-            _cardMode = CARD_MODE_ACTION;
-            _cardVariant = CARD_VARIANT_WARMUP;
-            _setCardLinesFromMessage(_warmupMessages[pattern]);
-            return;
-        }
-
-        var fixedPattern = pattern - warmupCount;
-        if (fixedPattern == 0) {
-            _cardMode = CARD_MODE_ACTION;
-            _cardVariant = CARD_VARIANT_ACTION_PUSH;
-            _setCardLinesFromMessage(_actionPushText);
-            return;
-        }
-        if (fixedPattern == 1) {
-            _cardMode = CARD_MODE_ACTION;
-            _cardVariant = CARD_VARIANT_ACTION_HOLD;
-            _setCardLinesFromMessage(_actionHoldText);
-            return;
-        }
-        if (fixedPattern == 2) {
-            _cardMode = CARD_MODE_ACTION;
-            _cardVariant = CARD_VARIANT_ACTION_EASE;
-            _setCardLinesFromMessage(_actionEaseText);
-            return;
-        }
-        if (fixedPattern == 3) {
-            _setCardFixedLines(
-                CARD_MODE_FUEL,
-                CARD_VARIANT_FUEL_SOON,
-                _fuelLabelText,
-                _resolveFuelSoonCardLine2(),
-                ""
-            );
-            return;
-        }
-        if (fixedPattern == 4) {
-            _setCardFixedLines(
-                CARD_MODE_FUEL_OVERDUE,
-                CARD_VARIANT_FUEL_NOW,
-                _fuelNowLine2Text,
-                _fuelLabelText + _fuelNowLine3Text,
-                ""
-            );
-            return;
-        }
-        if (fixedPattern == 5) {
-            _setCardFixedLines(
-                CARD_MODE_DRIFT,
-                CARD_VARIANT_RECOVERY,
-                _driftLine1Text,
-                _driftLine2Text,
-                _driftLine3Text
-            );
-            return;
-        }
-        _setCardFixedLines(
-            CARD_MODE_HR_OVER,
-            CARD_VARIANT_HR_WARNING,
-            _hrOverLine1Text,
-            _hrOverLine2Text,
-            _hrOverLine3Text
-        );
     }
 
     function _isFuelOverdue() {
