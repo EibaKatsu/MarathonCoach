@@ -78,7 +78,7 @@ class MarathonCoachField extends Ui.DataField {
     const CARDIAC_COST_MIN_SAMPLES = 30;
     const CARD_VARIANT_PREVIEW_ENABLED = false;
     const CARD_VARIANT_PREVIEW_SEC = 3;
-    const SETTINGS_LOG = true;
+    const SETTINGS_LOG = false;
     const FIT_FACT_LOG = false;
     const DIST_PROBE_LOG = false;
 
