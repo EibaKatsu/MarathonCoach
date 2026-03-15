@@ -252,7 +252,7 @@
     - ビルド記録: `bin/releases/0.0.1/BUILD.md`
     - manifest全機種ビルド記録: `bin/releases/0.0.1/manifest_build_summary.tsv`
 
-- [x] `P0` ストア申請フォームへ登録する  
+- [ ] `P0` ストア申請フォームへ登録する  
   - ステータス: 保留  
   - 担当: 自分
   - メモ:
