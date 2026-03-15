@@ -125,7 +125,7 @@
   - 出力仕様: Store推奨サイズ、PNG、文字は画面幅の20%以上で可読性確保。
   - 注意点: 実画面と一致しないモック文言は使わない。
 - 結果:
-  - `4枚構成で確定。1枚目のみ日本語メイン、2〜4枚目は英語メインで作成。出力は shot01_value.png / shot02_one_screen.png / shot03_fuel_alerts.png / shot04_two_settings.png。`
+  - `4枚構成で確定。1枚目のみ日本語メイン、2〜4枚目は英語メインで作成。出力は shot01_value.jpg / shot02_one_screen.jpg / shot03_fuel_alerts.jpg / shot04_three_settings.jpg。`
 
 ## T08 [P1] アプリアイコンを最終化する
 
