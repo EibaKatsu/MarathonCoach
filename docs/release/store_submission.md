@@ -46,11 +46,14 @@
 - `.iq` ファイル出力
 - ストア申請フォーム登録
 - 審査前チェックリスト実施
+- チェック記録: `docs/release/store_review_checklist.md`
+- 提出ログ: `docs/release/store_submission_log.md`
+- 差し戻し対応: `docs/release/store_rejection_flow.md`
 
 ## 素材ファイル
 - 通常版カバー画像: `assets/store_shots/cover_normal.png`
 - ベータ版カバー画像: `assets/store_shots/cover_beta.png`
-- 共通スクリーンショット: `assets/store_shots/shot01_value.png` / `assets/store_shots/shot02_one_screen.png` / `assets/store_shots/shot03_fuel_alerts.png` / `assets/store_shots/shot04_three_settings.png`
+- 共通スクリーンショット: `assets/store_shots/shot01_value.jpg` / `assets/store_shots/shot02_one_screen.jpg` / `assets/store_shots/shot03_fuel_alerts.jpg` / `assets/store_shots/shot04_three_settings.jpg`
 - 共通アイコン: `assets/icon_output/launcher_icon_512.png`
 
 ## 参照
