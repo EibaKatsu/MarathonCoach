@@ -223,7 +223,7 @@
     - 2枚目: レース中の表示
     - 3枚目: 補給や通知のイメージ
     - 4枚目: 設定画面
-    - 出力: `shot01_value.png` / `shot02_one_screen.png` / `shot03_fuel_alerts.png` / `shot04_two_settings.png`
+    - 出力: `shot01_value.jpg` / `shot02_one_screen.jpg` / `shot03_fuel_alerts.jpg` / `shot04_three_settings.jpg`
 
 - [x] `P1` アプリアイコンを最終化する  
   - ステータス: 完了  
@@ -235,25 +235,43 @@
 
 ### 3-2. パッケージ作成と申請
 
-- [ ] `P0` manifest の内容を最終確認する  
-  - ステータス: 未着手  
+- [x] `P0` manifest の内容を最終確認する  
+  - ステータス: 完了  
   - 担当: 自分
+  - メモ:
+    - app id=`12e1a6ba-4da8-47a1-b9ef-710f630f7c73`
+    - BETA 申請版として version=`0.0.1` を設定
+    - 42機種 / `eng,jpn` / `UserProfile` を確認
+    - 記録: `docs/release/store_review_checklist.md`
 
-- [ ] `P0` `.iq` ファイルを出力する  
-  - ステータス: 未着手  
+- [x] `P0` `.iq` ファイルを出力する  
+  - ステータス: 完了  
   - 担当: 自分
+  - メモ:
+    - 出力先: `bin/releases/0.0.1/marathoncoach.iq`
+    - ビルド記録: `bin/releases/0.0.1/BUILD.md`
+    - manifest全機種ビルド記録: `bin/releases/0.0.1/manifest_build_summary.tsv`
 
 - [ ] `P0` ストア申請フォームへ登録する  
-  - ステータス: 未着手  
+  - ステータス: 保留  
   - 担当: 自分
+  - メモ:
+    - 入力値と添付物は `docs/release/store_submission_log.md` に整理済み
+    - 外部ログインと公開URL確定後に手動提出する
 
-- [ ] `P0` 審査前チェックリストを一度回す  
-  - ステータス: 未着手  
+- [x] `P0` 審査前チェックリストを一度回す  
+  - ステータス: 完了  
   - 担当: 自分
+  - メモ:
+    - `docs/release/store_review_checklist.md` を更新
+    - `.iq` 出力 / 57件ユニットテスト / manifest 42機種ビルドはOK
+    - サポート窓口URL / ポリシーURLは保留
 
-- [ ] `P1` 審査差し戻し時の修正フローを決める  
-  - ステータス: 未着手  
+- [x] `P1` 審査差し戻し時の修正フローを決める  
+  - ステータス: 完了  
   - 担当: 自分
+  - メモ:
+    - `docs/release/store_rejection_flow.md` を作成
 
 ---
 

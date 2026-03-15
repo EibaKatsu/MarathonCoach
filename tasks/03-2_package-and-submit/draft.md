@@ -14,7 +14,8 @@
   - 成果物: `manifest最終確認チェック表`（OK/NG/修正内容）。
   - 注意点: 申請直前に差分が出た場合は再確認を必須にする。
 - 結果:
-  - TBD
+  - `manifest.xml` で app id=`12e1a6ba-4da8-47a1-b9ef-710f630f7c73`、version=`0.0.1`、42機種、言語=`eng/jpn`、権限=`UserProfile` を確認した。
+  - `docs/release/store_review_checklist.md` に最終確認結果を記録した。
 
 ## T02 [P0] `.iq` ファイルを出力する
 
@@ -28,7 +29,9 @@
   - 保管先: `bin/releases/<version>/` に `.iq` とビルドメモを保存。
   - 注意点: 同一コミットから再生成できる状態を保つ。
 - 結果:
-  - TBD
+  - `bin/releases/0.0.1/marathoncoach.iq` を出力した。
+  - ビルド記録は `bin/releases/0.0.1/BUILD.md` に保存した。
+  - `./scripts/run_manifest_smoke.sh --build-only` の結果を `bin/releases/0.0.1/manifest_build_summary.tsv` に保存した。
 
 ## T03 [P0] ストア申請フォームへ登録する
 
@@ -42,7 +45,8 @@
   - 提出ログ: `提出日時 / 申請ID / 申請バージョン / 担当者`。
   - 注意点: 提出内容はそのまま`RELEASE.md`の公開記録に転記できる形式にする。
 - 結果:
-  - TBD
+  - `docs/release/store_submission_log.md` に提出用の入力値と添付物を整理した。
+  - 実際のストアフォーム登録は未実施。外部ログインと公開URL確定後に手動提出する。
 
 ## T04 [P0] 審査前チェックリストを一度回す
 
@@ -56,7 +60,9 @@
   - 差戻し防止: NGは修正PRを紐付け、再チェック日を記入。
   - 注意点: チェックリストは実測結果を残し、口頭確認で済ませない。
 - 結果:
-  - TBD
+  - `docs/release/store_review_checklist.md` を 2026-03-14 時点で更新した。
+  - `.iq` 出力、57件ユニットテスト、manifest 42機種ビルドは OK。
+  - サポート窓口 URL とポリシー URL は保留。
 
 ## T05 [P1] 審査差し戻し時の修正フローを決める
 
@@ -70,7 +76,7 @@
   - 記録: `指摘ID | 原因 | 修正コミット | 再提出日 | 再発防止策`。
   - 注意点: 差し戻し理由を蓄積し、次回申請の事前チェックに反映する。
 - 結果:
-  - TBD
+  - `docs/release/store_rejection_flow.md` に標準フロー、SLA、記録テンプレートを作成した。
 
 ## 追加改善（マーケ視点）
 
