@@ -202,3 +202,23 @@ function testHeartRateGaugeRatioForHeartRate_usesZoneBoundaries(logger) {
     );
     return true;
 }
+
+(:test)
+function testHeartRateCapGaugeRatio_usesCachedZoneBounds(logger) {
+    var sut = _newUtilsSut();
+    sut._allowedMaxHeartRate = 150;
+    sut._allowedMaxHeartRateZone = 4;
+    sut._allowedMaxHeartRateZoneUpper = 160;
+    sut._allowedMaxHeartRateZoneLower = 140;
+
+    _assertFloatNear(sut._resolveHeartRateCapGaugeRatio(), 0.7, 0.0001, "cached cap ratio");
+
+    sut._allowedMaxHeartRateZoneUpper = null;
+    _assertFloatNear(
+        sut._resolveHeartRateCapGaugeRatio(),
+        0.583333,
+        0.0001,
+        "missing cached bounds should fall back to generic ratio"
+    );
+    return true;
+}

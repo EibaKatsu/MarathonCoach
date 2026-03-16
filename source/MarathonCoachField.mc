@@ -219,6 +219,9 @@ class MarathonCoachField extends Ui.DataField {
     var _activeHeartRateZones as Lang.Array<Lang.Number> = [];
     var _currentHeartRateZone = null;
     var _allowedMaxHeartRate = null;
+    var _allowedMaxHeartRateZone = null;
+    var _allowedMaxHeartRateZoneUpper = null;
+    var _allowedMaxHeartRateZoneLower = null;
     var _hrZoneText = "-- / CAP --";
     var _hrOverActive = false;
     var _hrOverStartSec = null;
@@ -472,6 +475,9 @@ class MarathonCoachField extends Ui.DataField {
         _activeHeartRateZones = [];
         _currentHeartRateZone = null;
         _allowedMaxHeartRate = null;
+        _allowedMaxHeartRateZone = null;
+        _allowedMaxHeartRateZoneUpper = null;
+        _allowedMaxHeartRateZoneLower = null;
         _hrZoneText = "-- / CAP --";
         _hrOverActive = false;
         _hrOverStartSec = null;
@@ -1652,7 +1658,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveHeartRateGaugeRatio() {
-        var ratio = _resolveHeartRateGaugeRatioForHeartRate(_currentHeartRate);
+        var ratio = _resolveHeartRateGaugeRatioForHeartRateAndZone(_currentHeartRate, _currentHeartRateZone);
         if (ratio == null) {
             return 0.5;
         }
@@ -1660,35 +1666,44 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveHeartRateCapGaugeRatio() {
-        return _resolveHeartRateGaugeRatioForHeartRate(_allowedMaxHeartRate);
+        return _resolveHeartRateGaugeRatioForHeartRateAndBounds(
+            _allowedMaxHeartRate,
+            _allowedMaxHeartRateZone,
+            _allowedMaxHeartRateZoneUpper,
+            _allowedMaxHeartRateZoneLower
+        );
     }
 
     function _resolveHeartRateGaugeRatioForHeartRate(heartRate) {
+        var zoneNumber = _resolveHeartRateGaugeZoneNumber(heartRate);
+        return _resolveHeartRateGaugeRatioForHeartRateAndZone(heartRate, zoneNumber);
+    }
+
+    function _resolveHeartRateGaugeRatioForHeartRateAndZone(heartRate, zoneNumber) {
+        var upper = null;
+        var lower = null;
+        if (zoneNumber != null) {
+            upper = _getZoneUpperHeartRate(_activeHeartRateZones, zoneNumber);
+            if (zoneNumber > 1) {
+                lower = _getZoneUpperHeartRate(_activeHeartRateZones, zoneNumber - 1);
+            }
+        }
+        return _resolveHeartRateGaugeRatioForHeartRateAndBounds(heartRate, zoneNumber, upper, lower);
+    }
+
+    function _resolveHeartRateGaugeRatioForHeartRateAndBounds(heartRate, zoneNumber, upper, lower) {
         if (heartRate == null) {
             return null;
-        }
-
-        var zoneNumber = _currentHeartRateZone;
-        if (heartRate != _currentHeartRate) {
-            zoneNumber = null;
-        }
-        if (zoneNumber == null) {
-            zoneNumber = _resolveHeartRateZone(heartRate, _activeHeartRateZones);
         }
         if (zoneNumber == null) {
             return _resolveHeartRateGaugeRatioFallback(heartRate);
         }
 
         zoneNumber = _clamp(zoneNumber, 1, HR_GAUGE_ZONE_COUNT);
-        var upper = _getZoneUpperHeartRate(_activeHeartRateZones, zoneNumber);
         if (upper == null) {
             return _resolveHeartRateGaugeRatioFallback(heartRate);
         }
 
-        var lower = null;
-        if (zoneNumber > 1) {
-            lower = _getZoneUpperHeartRate(_activeHeartRateZones, zoneNumber - 1);
-        }
         if (lower == null) {
             lower = upper - 20;
             if (lower < 1) {
@@ -1702,6 +1717,32 @@ class MarathonCoachField extends Ui.DataField {
         var progress = _clamp(((heartRate - lower) * 1.0) / ((upper - lower) * 1.0), 0.0, 1.0);
         var ratio = ((zoneNumber - 1) + progress) / HR_GAUGE_ZONE_COUNT;
         return _clamp(ratio, 0.0, 1.0);
+    }
+
+    function _resolveHeartRateGaugeZoneNumber(heartRate) {
+        if (heartRate == null) {
+            return null;
+        }
+
+        if (heartRate == _currentHeartRate and _currentHeartRateZone != null) {
+            return _currentHeartRateZone;
+        }
+
+        if (_activeHeartRateZones == null or _activeHeartRateZones.size() == 0) {
+            return null;
+        }
+
+        for (var i = 0; i < _activeHeartRateZones.size(); i += 1) {
+            var upper = _normalizeHeartRateValue(_activeHeartRateZones[i]);
+            if (upper == null) {
+                continue;
+            }
+            if (heartRate <= upper) {
+                return i + 1;
+            }
+        }
+
+        return _activeHeartRateZones.size();
     }
 
     function _resolveHeartRateGaugeRatioFallback(heartRate) {
@@ -1838,6 +1879,12 @@ class MarathonCoachField extends Ui.DataField {
         _activeHeartRateZones = _resolveActiveHeartRateZones();
         _allowedMaxHeartRate = _resolveAllowedMaxHeartRate(info, _activeHeartRateZones);
         _currentHeartRateZone = _resolveHeartRateZone(_currentHeartRate, _activeHeartRateZones);
+        _allowedMaxHeartRateZone = _resolveHeartRateZone(_allowedMaxHeartRate, _activeHeartRateZones);
+        _allowedMaxHeartRateZoneUpper = _getZoneUpperHeartRate(_activeHeartRateZones, _allowedMaxHeartRateZone);
+        _allowedMaxHeartRateZoneLower = null;
+        if (_allowedMaxHeartRateZone != null and _allowedMaxHeartRateZone > 1) {
+            _allowedMaxHeartRateZoneLower = _getZoneUpperHeartRate(_activeHeartRateZones, _allowedMaxHeartRateZone - 1);
+        }
 
         var hrText = "--";
         if (_currentHeartRate != null) {
