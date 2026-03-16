@@ -147,3 +147,58 @@ function testBuildGoalDeltaText_usesMinuteDeltaLabels(logger) {
     Test.assertEqual("1:53(3 min behind)", behindText);
     return true;
 }
+
+(:test)
+function testHeartRateCapText_reflectsSizeClassAndFallback(logger) {
+    var sut = _newUtilsSut();
+
+    Test.assertEqual("CAP --", sut._resolveHeartRateCapText(1));
+    Test.assertEqual("CAP--", sut._resolveHeartRateCapText(0));
+
+    sut._allowedMaxHeartRate = 152;
+    Test.assertEqual("CAP 152", sut._resolveHeartRateCapText(1));
+    Test.assertEqual("CAP152", sut._resolveHeartRateCapText(0));
+    return true;
+}
+
+(:test)
+function testHeartRateGaugeState_boundaries(logger) {
+    var sut = _newUtilsSut();
+
+    Test.assertMessage(sut._resolveHeartRateGaugeState() == null, "state should be null without hr/cap");
+
+    sut._allowedMaxHeartRate = 152;
+    sut._currentHeartRate = 148;
+    Test.assertEqual(0, sut._resolveHeartRateGaugeState());
+
+    sut._currentHeartRate = 150;
+    Test.assertEqual(1, sut._resolveHeartRateGaugeState());
+
+    sut._currentHeartRate = 152;
+    Test.assertEqual(1, sut._resolveHeartRateGaugeState());
+
+    sut._currentHeartRate = 153;
+    Test.assertEqual(2, sut._resolveHeartRateGaugeState());
+    return true;
+}
+
+(:test)
+function testHeartRateGaugeRatioForHeartRate_usesZoneBoundaries(logger) {
+    var sut = _newUtilsSut();
+    sut._activeHeartRateZones = [100, 120, 140, 160, 180];
+    sut._currentHeartRate = 130;
+    sut._currentHeartRateZone = 3;
+    sut._allowedMaxHeartRate = 150;
+
+    _assertFloatNear(sut._resolveHeartRateGaugeRatio(), 0.5, 0.0001, "current hr ratio");
+    _assertFloatNear(sut._resolveHeartRateCapGaugeRatio(), 0.7, 0.0001, "cap ratio");
+    sut._activeHeartRateZones = [];
+    sut._currentHeartRateZone = null;
+    _assertFloatNear(
+        sut._resolveHeartRateGaugeRatioForHeartRate(140),
+        0.5,
+        0.0001,
+        "fallback ratio should use generic min/max range"
+    );
+    return true;
+}

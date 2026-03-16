@@ -120,6 +120,14 @@ class MarathonCoachField extends Ui.DataField {
     const HR_ZONE_COLOR_3 = 0x63C84A; // yellow-green
     const HR_ZONE_COLOR_4 = 0xF29F67; // orange
     const HR_ZONE_COLOR_5 = 0xF01818; // red
+    const HR_CAP_STATE_SAFE = 0;
+    const HR_CAP_STATE_CAUTION = 1;
+    const HR_CAP_STATE_OVER = 2;
+    const HR_CAP_CAUTION_MARGIN_BPM = 2;
+    const HR_CAP_MARKER_SAFE_COLOR = 0x63C84A;
+    const HR_CAP_MARKER_CAUTION_COLOR = 0xF29F67;
+    const HR_CAP_MARKER_OVER_COLOR = 0xF01818;
+    const HR_CAP_TEXT_MISSING_COLOR = 0x9E9E9E;
     const FUEL_METER_CENTER_COLOR = 0x101820;
     const FUEL_RING_NORMAL_TRACK_COLOR = 0x23425C;
     const FUEL_RING_NORMAL_FILL_COLOR = 0x52B7E8;
@@ -211,7 +219,7 @@ class MarathonCoachField extends Ui.DataField {
     var _activeHeartRateZones as Lang.Array<Lang.Number> = [];
     var _currentHeartRateZone = null;
     var _allowedMaxHeartRate = null;
-    var _hrZoneText = "-- / --";
+    var _hrZoneText = "-- / CAP --";
     var _hrOverActive = false;
     var _hrOverStartSec = null;
     var _hrRecoverStartSec = null;
@@ -464,7 +472,7 @@ class MarathonCoachField extends Ui.DataField {
         _activeHeartRateZones = [];
         _currentHeartRateZone = null;
         _allowedMaxHeartRate = null;
-        _hrZoneText = "-- / --";
+        _hrZoneText = "-- / CAP --";
         _hrOverActive = false;
         _hrOverStartSec = null;
         _hrRecoverStartSec = null;
@@ -1439,18 +1447,30 @@ class MarathonCoachField extends Ui.DataField {
 
     function _drawHeartRateGauge(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
         var valueFont = Gfx.FONT_MEDIUM;
+        var capFont = Gfx.FONT_XTINY;
         if (sizeClass == 2) {
             valueFont = Gfx.FONT_LARGE;
+            capFont = Gfx.FONT_TINY;
         } else if (sizeClass == 0) {
             valueFont = Gfx.FONT_SMALL;
+            capFont = Gfx.FONT_XTINY;
         }
 
         var valueText = "--";
         if (_currentHeartRate != null) {
             valueText = _currentHeartRate.format("%d");
         }
+        var capText = _resolveHeartRateCapText(sizeClass);
+        var gaugeState = _resolveHeartRateGaugeState();
+        var valueColor = _getHeartRateGaugeValueColor(gaugeState);
+        var markerColor = _getHeartRateGaugeMarkerColor(gaugeState);
+        var capTextColor = Gfx.COLOR_WHITE;
+        if (_allowedMaxHeartRate == null) {
+            capTextColor = HR_CAP_TEXT_MISSING_COLOR;
+        }
 
         var valueHeight = dc.getFontHeight(valueFont);
+        var capHeight = dc.getFontHeight(capFont);
         var markerHeight = _clamp((areaH * 25) / 100, 6, 12);
         var gaugeHeight = _clamp((areaH * 22) / 100, 8, 14);
         // Keep the numeric label position stable, then move only the gauge upward.
@@ -1502,24 +1522,74 @@ class MarathonCoachField extends Ui.DataField {
             dc.fillRectangle(segX, gaugeTop, segmentWidth, gaugeHeight);
         }
 
+        var capMarkerX = null;
+        var capRatio = _resolveHeartRateCapGaugeRatio();
+        if (capRatio != null) {
+            capMarkerX = gaugeX + Math.floor((capRatio * (gaugeWidth - 1)) + 0.5);
+            var capTickInset = _clamp(gaugeHeight / 3, 1, 4);
+            var capTickTop = _max(gaugeTop - capTickInset, areaY);
+            dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
+            dc.drawLine(capMarkerX, capTickTop, capMarkerX, gaugeTop + gaugeHeight + capTickInset);
+        }
+
+        var markerX = null;
         if (_currentHeartRate != null) {
             var markerRatio = _resolveHeartRateGaugeRatio();
-            var markerX = gaugeX + Math.floor((markerRatio * (gaugeWidth - 1)) + 0.5);
+            markerX = gaugeX + Math.floor((markerRatio * (gaugeWidth - 1)) + 0.5);
+            if (capMarkerX != null and markerX != capMarkerX) {
+                var gapLineY = _max(gaugeTop - 2, areaY);
+                dc.setColor(markerColor, Gfx.COLOR_BLACK);
+                dc.drawLine(_min(markerX, capMarkerX), gapLineY, _max(markerX, capMarkerX), gapLineY);
+            }
             var markerTipY = gaugeTop + gaugeHeight + 1;
             var markerHalfWidth = _clamp(segmentWidth / 3, 2, 5);
-            dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
+            dc.setColor(markerColor, Gfx.COLOR_BLACK);
             _drawUpTriangleMarker(dc, markerX, markerTipY, markerHalfWidth, markerHeight);
         }
 
-        // Draw value last so it always stays above the gauge layer.
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+        var valueCenterX = areaX + (areaW / 2);
+        var valueTextWidth = dc.getTextWidthInPixels(valueText, valueFont);
+        var capTextWidth = dc.getTextWidthInPixels(capText, capFont);
+        var capOffsetX = 12;
+        if (sizeClass == 2) {
+            capOffsetX = 18;
+        } else if (sizeClass == 0) {
+            capOffsetX = 8;
+        }
+        var capX = valueCenterX + capOffsetX;
+        if ((capX + capTextWidth) > (areaX + areaW - 1)) {
+            capX = (areaX + areaW - 1) - capTextWidth;
+        }
+        if (capX < areaX) {
+            capX = areaX;
+        }
+        var minCapX = valueCenterX - (valueTextWidth / 2) + _clamp(valueTextWidth / 2, 6, 18);
+        if (capX < minCapX) {
+            capX = minCapX;
+        }
+        if ((capX + capTextWidth) > (areaX + areaW - 1)) {
+            capX = _max(areaX, (areaX + areaW - 1) - capTextWidth);
+        }
+        var capY = valueY + valueHeight - capHeight + 2;
+        var maxCapY = gaugeTop - capHeight - 1;
+        if (capY > maxCapY) {
+            capY = maxCapY;
+        }
+        if (capY < valueY) {
+            capY = valueY;
+        }
+
+        // Draw text last so it always stays above the gauge layer.
+        dc.setColor(valueColor, Gfx.COLOR_TRANSPARENT);
         dc.drawText(
-            areaX + (areaW / 2),
+            valueCenterX,
             valueY,
             valueFont,
             valueText,
             Gfx.TEXT_JUSTIFY_CENTER
         );
+        dc.setColor(capTextColor, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(capX, capY, capFont, capText, Gfx.TEXT_JUSTIFY_LEFT);
     }
 
     function _drawUpTriangleMarker(dc as Gfx.Dc, centerX, tipY, halfWidth, height) {
@@ -1537,15 +1607,76 @@ class MarathonCoachField extends Ui.DataField {
         );
     }
 
+    function _resolveHeartRateCapText(sizeClass) {
+        var capText = "--";
+        if (_allowedMaxHeartRate != null) {
+            capText = _allowedMaxHeartRate.format("%d");
+        }
+        if (sizeClass == 0) {
+            return "CAP" + capText;
+        }
+        return "CAP " + capText;
+    }
+
+    function _resolveHeartRateGaugeState() {
+        if (_currentHeartRate == null or _allowedMaxHeartRate == null) {
+            return null;
+        }
+        if (_currentHeartRate >= (_allowedMaxHeartRate + 1)) {
+            return HR_CAP_STATE_OVER;
+        }
+        if (_currentHeartRate >= (_allowedMaxHeartRate - HR_CAP_CAUTION_MARGIN_BPM)) {
+            return HR_CAP_STATE_CAUTION;
+        }
+        return HR_CAP_STATE_SAFE;
+    }
+
+    function _getHeartRateGaugeValueColor(gaugeState) {
+        if (gaugeState == HR_CAP_STATE_CAUTION) {
+            return HR_CAP_MARKER_CAUTION_COLOR;
+        }
+        if (gaugeState == HR_CAP_STATE_OVER) {
+            return HR_CAP_MARKER_OVER_COLOR;
+        }
+        return Gfx.COLOR_WHITE;
+    }
+
+    function _getHeartRateGaugeMarkerColor(gaugeState) {
+        if (gaugeState == HR_CAP_STATE_CAUTION) {
+            return HR_CAP_MARKER_CAUTION_COLOR;
+        }
+        if (gaugeState == HR_CAP_STATE_OVER) {
+            return HR_CAP_MARKER_OVER_COLOR;
+        }
+        if (gaugeState == HR_CAP_STATE_SAFE) {
+            return HR_CAP_MARKER_SAFE_COLOR;
+        }
+        return Gfx.COLOR_WHITE;
+    }
+
     function _resolveHeartRateGaugeRatio() {
-        if (_currentHeartRate == null) {
+        var ratio = _resolveHeartRateGaugeRatioForHeartRate(_currentHeartRate);
+        if (ratio == null) {
             return 0.5;
         }
+        return ratio;
+    }
 
-        var heartRate = _currentHeartRate;
+    function _resolveHeartRateCapGaugeRatio() {
+        return _resolveHeartRateGaugeRatioForHeartRate(_allowedMaxHeartRate);
+    }
+
+    function _resolveHeartRateGaugeRatioForHeartRate(heartRate) {
+        if (heartRate == null) {
+            return null;
+        }
+
         var zoneNumber = _currentHeartRateZone;
+        if (heartRate != _currentHeartRate) {
+            zoneNumber = null;
+        }
         if (zoneNumber == null) {
-            zoneNumber = _resolveHeartRateZone(_currentHeartRate, _activeHeartRateZones);
+            zoneNumber = _resolveHeartRateZone(heartRate, _activeHeartRateZones);
         }
         if (zoneNumber == null) {
             return _resolveHeartRateGaugeRatioFallback(heartRate);
@@ -1716,12 +1847,11 @@ class MarathonCoachField extends Ui.DataField {
             hrText = _currentHeartRate.format("%d");
         }
 
-        var zoneText = "--";
-        if (_currentHeartRateZone != null) {
-            zoneText = "Z" + _currentHeartRateZone.format("%d");
+        var capText = "--";
+        if (_allowedMaxHeartRate != null) {
+            capText = _allowedMaxHeartRate.format("%d");
         }
-
-        _hrZoneText = hrText + " / " + zoneText;
+        _hrZoneText = hrText + " / CAP " + capText;
     }
 
     function _resolveActiveHeartRateZones() as Lang.Array<Lang.Number> {
