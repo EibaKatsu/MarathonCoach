@@ -222,6 +222,7 @@ class MarathonCoachField extends Ui.DataField {
     var _allowedMaxHeartRateZone = null;
     var _allowedMaxHeartRateZoneUpper = null;
     var _allowedMaxHeartRateZoneLower = null;
+    var _allowedMaxHeartRateGaugeRatio = null;
     var _hrZoneText = "-- / CAP --";
     var _hrOverActive = false;
     var _hrOverStartSec = null;
@@ -478,6 +479,7 @@ class MarathonCoachField extends Ui.DataField {
         _allowedMaxHeartRateZone = null;
         _allowedMaxHeartRateZoneUpper = null;
         _allowedMaxHeartRateZoneLower = null;
+        _allowedMaxHeartRateGaugeRatio = null;
         _hrZoneText = "-- / CAP --";
         _hrOverActive = false;
         _hrOverStartSec = null;
@@ -1666,6 +1668,9 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveHeartRateCapGaugeRatio() {
+        if (_allowedMaxHeartRateGaugeRatio != null) {
+            return _allowedMaxHeartRateGaugeRatio;
+        }
         return _resolveHeartRateGaugeRatioForHeartRateAndBounds(
             _allowedMaxHeartRate,
             _allowedMaxHeartRateZone,
@@ -1885,7 +1890,12 @@ class MarathonCoachField extends Ui.DataField {
         if (_allowedMaxHeartRateZone != null and _allowedMaxHeartRateZone > 1) {
             _allowedMaxHeartRateZoneLower = _getZoneUpperHeartRate(_activeHeartRateZones, _allowedMaxHeartRateZone - 1);
         }
-
+        _allowedMaxHeartRateGaugeRatio = _resolveHeartRateGaugeRatioForHeartRateAndBounds(
+            _allowedMaxHeartRate,
+            _allowedMaxHeartRateZone,
+            _allowedMaxHeartRateZoneUpper,
+            _allowedMaxHeartRateZoneLower
+        );
         var hrText = "--";
         if (_currentHeartRate != null) {
             hrText = _currentHeartRate.format("%d");

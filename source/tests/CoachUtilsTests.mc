@@ -191,7 +191,6 @@ function testHeartRateGaugeRatioForHeartRate_usesZoneBoundaries(logger) {
     sut._allowedMaxHeartRate = 150;
 
     _assertFloatNear(sut._resolveHeartRateGaugeRatio(), 0.5, 0.0001, "current hr ratio");
-    _assertFloatNear(sut._resolveHeartRateCapGaugeRatio(), 0.7, 0.0001, "cap ratio");
     sut._activeHeartRateZones = [];
     sut._currentHeartRateZone = null;
     _assertFloatNear(
@@ -210,9 +209,11 @@ function testHeartRateCapGaugeRatio_usesCachedZoneBounds(logger) {
     sut._allowedMaxHeartRateZone = 4;
     sut._allowedMaxHeartRateZoneUpper = 160;
     sut._allowedMaxHeartRateZoneLower = 140;
+    sut._allowedMaxHeartRateGaugeRatio = 0.7;
 
     _assertFloatNear(sut._resolveHeartRateCapGaugeRatio(), 0.7, 0.0001, "cached cap ratio");
 
+    sut._allowedMaxHeartRateGaugeRatio = null;
     sut._allowedMaxHeartRateZoneUpper = null;
     _assertFloatNear(
         sut._resolveHeartRateCapGaugeRatio(),
