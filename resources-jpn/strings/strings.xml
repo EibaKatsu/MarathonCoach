@@ -12,8 +12,8 @@
     <string id="PredictedDeltaLabel">差</string>
     <string id="PredictionWaiting">予測待ち</string>
     <string id="PredictionOnPace">ほぼ予定</string>
-    <string id="PredictionAheadSuffix">m早い</string>
-    <string id="PredictionBehindSuffix">m遅れ</string>
+    <string id="PredictionAheadSuffix">分早い</string>
+    <string id="PredictionBehindSuffix">分遅れ</string>
     <string id="ActionPushText">ちょい 上げ</string>
     <string id="ActionHoldText">そのまま</string>
     <string id="ActionEaseText">ちょい 落とし</string>

@@ -129,3 +129,21 @@ function testMathHelpers(logger) {
     Test.assertEqual(4, sut._abs(-4));
     return true;
 }
+
+(:test)
+function testBuildGoalDeltaText_usesMinuteDeltaLabels(logger) {
+    var sut = _newUtilsSut();
+    sut._targetTimeSec = 6600;
+    sut._predictionWaitingText = "waiting";
+    sut._predictionOnPaceText = "on pace";
+    sut._predictionAheadSuffixText = " min ahead";
+    sut._predictionBehindSuffixText = " min behind";
+
+    var onPaceText = sut._buildGoalDeltaText(6577);
+    var aheadText = sut._buildGoalDeltaText(6395);
+    var behindText = sut._buildGoalDeltaText(6780);
+    Test.assertEqual("1:50(on pace)", onPaceText);
+    Test.assertEqual("1:47(3 min ahead)", aheadText);
+    Test.assertEqual("1:53(3 min behind)", behindText);
+    return true;
+}
