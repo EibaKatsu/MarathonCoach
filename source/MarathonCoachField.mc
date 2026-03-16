@@ -1473,18 +1473,14 @@ class MarathonCoachField extends Ui.DataField {
         var capHeight = dc.getFontHeight(capFont);
         var markerHeight = _clamp((areaH * 25) / 100, 6, 12);
         var gaugeHeight = _clamp((areaH * 22) / 100, 8, 14);
-        // Keep the numeric label position stable, then move only the gauge upward.
+        var capReservedGap = _clamp((capHeight / 2) + 2, 3, 7);
+        // Keep the gauge anchored near the bottom and reserve a small pocket for the CAP label.
         var baseGaugeTop = areaY + areaH - markerHeight - gaugeHeight;
-        var valueY = baseGaugeTop - valueHeight;
+        var valueY = baseGaugeTop - valueHeight - capReservedGap;
         if (valueY < areaY) {
             valueY = areaY;
         }
-        var glyphBottomInset = _clamp(valueHeight / 6, 2, 6);
-        var gaugeTop = (valueY + valueHeight) - glyphBottomInset;
-        var maxGaugeTop = areaY + areaH - markerHeight - gaugeHeight;
-        if (gaugeTop > maxGaugeTop) {
-            gaugeTop = maxGaugeTop;
-        }
+        var gaugeTop = baseGaugeTop;
 
         var gaugeHorizontalInset = _clamp((areaW * 10) / 100, 6, 18);
         if (sizeClass == 0) {
@@ -1570,7 +1566,8 @@ class MarathonCoachField extends Ui.DataField {
         if ((capX + capTextWidth) > (areaX + areaW - 1)) {
             capX = _max(areaX, (areaX + areaW - 1) - capTextWidth);
         }
-        var capY = valueY + valueHeight - capHeight + 2;
+        var capBaselineDrop = _clamp((capHeight / 2) + 1, 2, 6);
+        var capY = valueY + valueHeight - capBaselineDrop;
         var maxCapY = gaugeTop - capHeight - 1;
         if (capY > maxCapY) {
             capY = maxCapY;
