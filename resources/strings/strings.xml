@@ -8,8 +8,8 @@
     <string id="PredictedDeltaLabel">Delta</string>
     <string id="PredictionWaiting">waiting</string>
     <string id="PredictionOnPace">on pace</string>
-    <string id="PredictionAheadSuffix">m ahead</string>
-    <string id="PredictionBehindSuffix">m behind</string>
+    <string id="PredictionAheadSuffix"> min ahead</string>
+    <string id="PredictionBehindSuffix"> min behind</string>
     <string id="ActionPushText">Push a bit</string>
     <string id="ActionHoldText">Hold pace</string>
     <string id="ActionEaseText">Ease down</string>

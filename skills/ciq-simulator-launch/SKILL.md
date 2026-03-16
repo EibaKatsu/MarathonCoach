@@ -12,6 +12,7 @@ description: Connect IQ アプリのシミュレーター実行を自動化す�
 2. デフォルトデバイスは `fr57042mm` を使う。
 3. `connectiq` 実行後、シミュレーター起動待ちとして約10秒待ってから `monkeydo` を実行する。
 4. 必要ならデバイスIDを引数で上書きする。
+5. 設定を固定再現したいときだけ `CIQ_SETTINGS_JSON=/path/to/settings.json` を付ける。デフォルトでは自動生成の設定JSONを送らず、シミュレーター側の現在設定を使う。
 
 ## Commands
 ```bash
