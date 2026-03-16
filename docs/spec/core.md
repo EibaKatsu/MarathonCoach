@@ -41,7 +41,7 @@
 
 ### 参照
 - UI: `docs/spec/ui.md`
-- HR/ZONE: `docs/spec/logic_hr_zone.md`
+- HR/CAP UI と許容心拍ロジック: `docs/spec/ui.md`, `docs/spec/logic_hr_zone.md`
 - ACTION: `docs/spec/logic_action.md`
 - DRIFT: `docs/spec/logic_drift.md`
 - FUEL: `docs/spec/logic_fuel.md`
