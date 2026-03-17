@@ -426,6 +426,23 @@ module RenderUtils {
         return desiredGap;
     }
 
+    function resolveCardTextBlockHeight(cardLineCount, fontH, lineGap) {
+        if (cardLineCount <= 0) {
+            return 0;
+        }
+
+        var totalH = fontH * cardLineCount;
+        if (cardLineCount > 1) {
+            totalH += lineGap * (cardLineCount - 1);
+        }
+        return totalH;
+    }
+
+    function resolveCardTextTopY(blockY, blockH, textBlockH, topPad, bottomPad) {
+        var drawBlockH = textBlockH + topPad + bottomPad;
+        return blockY + ((blockH - drawBlockH) / 2) + topPad;
+    }
+
     function resolveCardFontToFit(dc as Gfx.Dc, sizeClass, cardLines as Lang.Array, textAreaW, textAreaH) {
         var candidates = [];
         if (sizeClass == 2) {

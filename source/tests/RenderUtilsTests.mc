@@ -238,6 +238,9 @@ function testRenderUtilsLineGapAndHeartRateHelpers(logger) {
     _ruAssertNear(RenderUtils.resolveCardLineGap(2, 12, 100), 4, 0.001, "gap for 2 lines");
     _ruAssertNear(RenderUtils.resolveCardLineGap(3, 12, 40), 1, 0.001, "gap for 3 lines");
     _ruAssertNear(RenderUtils.resolveCardLineGap(3, 12, 36), 0, 0.001, "tight 3 line gap can collapse");
+    Test.assertEqual(38, RenderUtils.resolveCardTextBlockHeight(3, 12, 1));
+    Test.assertEqual(11, RenderUtils.resolveCardTextTopY(0, 60, 38, 0, 0));
+    Test.assertEqual(9, RenderUtils.resolveCardTextTopY(0, 60, 38, 0, 4));
 
     Test.assertEqual(11, RenderUtils.getHeartRateZoneGaugeColor(1, 11, 22, 33, 44, 55));
     Test.assertEqual(44, RenderUtils.getHeartRateZoneGaugeColor(4, 11, 22, 33, 44, 55));
