@@ -1671,13 +1671,21 @@ class MarathonCoachField extends Ui.DataField {
             heartGap = 5;
         }
         var topInset = _clamp((areaH / 16) + 2, 2, 7);
-        var valueY = areaY + topInset;
-        var maxValueY = areaY + areaH - valueHeight - capHeight - 1;
+        var capY = areaY + topInset;
+        var maxCapY = areaY + areaH - valueHeight - capHeight - 1;
+        if (capY > maxCapY) {
+            capY = maxCapY;
+        }
+        if (capY < areaY) {
+            capY = areaY;
+        }
+        var valueY = areaY + areaH - valueHeight;
+        if (valueY <= capY) {
+            valueY = capY + capHeight - _clamp(valueHeight / 3, 1, 5);
+        }
+        var maxValueY = areaY + areaH - valueHeight;
         if (valueY > maxValueY) {
             valueY = maxValueY;
-        }
-        if (valueY < areaY) {
-            valueY = areaY;
         }
         var valueRightX = contentX + contentW;
         var valueX = valueRightX - valueTextWidth;
@@ -1699,19 +1707,16 @@ class MarathonCoachField extends Ui.DataField {
         if ((capX + capTextWidth) > (contentX + contentW)) {
             capX = contentX + contentW - capTextWidth;
         }
-        var capY = areaY + areaH - capHeight;
-        if (capY <= valueY) {
-            capY = valueY + valueHeight - _clamp(capHeight / 2, 1, 4);
-        }
         if (sizeClass == 2) {
             capX = valueX + valueTextWidth - capTextWidth - 2;
             if (capX < contentX) {
                 capX = contentX;
             }
-            capY = valueY + valueHeight - 1;
-            var maxCapY = areaY + areaH - capHeight;
-            if (capY > maxCapY) {
-                capY = maxCapY;
+        }
+        if ((capY + capHeight) >= valueY) {
+            capY = valueY - capHeight + _clamp(capHeight / 3, 0, 2);
+            if (capY < areaY) {
+                capY = areaY;
             }
         }
 
