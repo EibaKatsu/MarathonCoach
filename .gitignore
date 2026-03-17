@@ -2,3 +2,4 @@ bin/
 .DS_Store
 assets/store_shots/~$store_shots.pptx
 assets/store_shots/_tmp/
+.deploy/*.env
