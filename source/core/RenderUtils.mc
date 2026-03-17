@@ -574,11 +574,17 @@ module RenderUtils {
     }
 
     function min(a, b) {
-        return CoachUtils.min(a, b);
+        if (a < b) {
+            return a;
+        }
+        return b;
     }
 
     function max(a, b) {
-        return CoachUtils.max(a, b);
+        if (a > b) {
+            return a;
+        }
+        return b;
     }
 
     function clamp(value, minValue, maxValue) {
