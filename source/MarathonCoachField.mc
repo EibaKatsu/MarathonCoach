@@ -931,8 +931,8 @@ class MarathonCoachField extends Ui.DataField {
         if (sizeClass == 2) {
             _drawLargePaceBlock(dc, leftColX, row1Y, leftColW, rowHeight, paceFont);
 
-            var bannerInsetX = _clamp((squareSize * 2) / 100, 4, 10);
-            var bannerInsetY = _clamp((squareSize * 2) / 100, 3, 8);
+            var bannerInsetX = _clamp(squareSize / 240, 1, 3);
+            var bannerInsetY = _clamp(squareSize / 180, 2, 6);
             var bannerX = left + bannerInsetX;
             var bannerY = row2Y + bannerInsetY;
             var bannerW = squareSize - (bannerInsetX * 2);
@@ -1176,11 +1176,11 @@ class MarathonCoachField extends Ui.DataField {
         var paceX = blockX + leftPad;
         var paceY = CoachUtils.textYByRatio(blockY, blockH, 56, dc.getFontHeight(paceFont));
         var paceTextW = dc.getTextWidthInPixels(_paceNowText, paceFont);
-        var unitFont = Gfx.FONT_SMALL;
+        var unitFont = Gfx.FONT_XTINY;
         var unitX = paceX + paceTextW + _clamp(blockW / 40, 4, 8);
-        var unitY = CoachUtils.textYByRatio(blockY, blockH, 61, dc.getFontHeight(unitFont));
+        var unitY = paceY + dc.getFontHeight(paceFont) - dc.getFontHeight(unitFont) - _clamp(blockH / 18, 1, 3);
 
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
         dc.drawText(paceX, paceY, paceFont, _paceNowText, Gfx.TEXT_JUSTIFY_LEFT);
         dc.drawText(unitX, unitY, unitFont, "/km", Gfx.TEXT_JUSTIFY_LEFT);
     }
@@ -1190,10 +1190,10 @@ class MarathonCoachField extends Ui.DataField {
             return;
         }
 
-        var borderColor = _getCardBorderColor(_cardVariant);
-        var fillColor = _getCardGradientMidColor(_cardVariant);
-        var accentColor = _getCardTopBandColor(_cardVariant);
-        var bannerCorner = _clamp(bannerH / 4, 6, 14);
+        var borderColor = _getLargeBannerBorderColor(_cardVariant);
+        var fillColor = _getLargeBannerFillColor(_cardVariant);
+        var borderInset = _clamp(bannerH / 18, 2, 4);
+        var bannerCorner = _clamp(bannerH / 5, 4, 10);
         var maxBannerCorner = _max((_min(bannerW, bannerH) / 2) - 1, 2);
         if (bannerCorner > maxBannerCorner) {
             bannerCorner = maxBannerCorner;
@@ -1202,29 +1202,26 @@ class MarathonCoachField extends Ui.DataField {
         dc.setColor(borderColor, Gfx.COLOR_BLACK);
         dc.fillRoundedRectangle(bannerX, bannerY, bannerW, bannerH, bannerCorner);
         dc.setColor(fillColor, Gfx.COLOR_BLACK);
-        dc.fillRoundedRectangle(bannerX + 2, bannerY + 2, bannerW - 4, bannerH - 4, _max(bannerCorner - 2, 2));
-
-        var accentH = _clamp(bannerH / 7, 2, 5);
-        dc.setColor(accentColor, Gfx.COLOR_BLACK);
-        dc.fillRectangle(bannerX + 2, bannerY + 2, bannerW - 4, accentH);
+        dc.fillRoundedRectangle(
+            bannerX + borderInset,
+            bannerY + borderInset,
+            bannerW - (borderInset * 2),
+            bannerH - (borderInset * 2),
+            _max(bannerCorner - borderInset, 2)
+        );
 
         var bannerText = _getLargeBannerText();
-        var panelMarginX = _clamp((bannerW * 10) / 100, 16, 32);
-        var panelMaxW = bannerW - (panelMarginX * 2);
-        var panelFont = _resolveLargeBannerFont(dc, bannerText, panelMaxW - 20);
-        var panelTextW = dc.getTextWidthInPixels(bannerText, panelFont);
-        var panelPadX = _clamp((bannerW * 3) / 100, 10, 16);
-        var panelW = panelTextW + (panelPadX * 2);
-        if (panelW > panelMaxW) {
-            panelW = panelMaxW;
-        }
-        var panelH = bannerH - (_clamp((bannerH * 24) / 100, 5, 10) * 2);
+        var panelMarginX = _clamp(bannerW / 35, 6, 12);
+        var panelMarginY = _clamp(bannerH / 6, 4, 8);
+        var panelW = bannerW - (panelMarginX * 2);
+        var panelH = bannerH - (panelMarginY * 2);
+        var panelFont = _resolveLargeBannerFont(dc, bannerText, panelW - 12);
         if (panelH < (dc.getFontHeight(panelFont) + 6)) {
             panelH = dc.getFontHeight(panelFont) + 6;
         }
-        var panelX = bannerX + ((bannerW - panelW) / 2);
+        var panelX = bannerX + panelMarginX;
         var panelY = bannerY + ((bannerH - panelH) / 2);
-        var panelCorner = _clamp(panelH / 5, 4, 10);
+        var panelCorner = _clamp(panelH / 10, 2, 5);
         var maxPanelCorner = _max((_min(panelW, panelH) / 2) - 1, 2);
         if (panelCorner > maxPanelCorner) {
             panelCorner = maxPanelCorner;
@@ -1240,6 +1237,56 @@ class MarathonCoachField extends Ui.DataField {
             bannerText,
             Gfx.TEXT_JUSTIFY_CENTER
         );
+    }
+
+    function _getLargeBannerBorderColor(cardVariant) {
+        if (cardVariant == CARD_VARIANT_WARMUP) {
+            return 0x5E93BF;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
+            return 0x63B8E7;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
+            return 0xDCA34A;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
+            return 0xF0A23D;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
+            return 0xED5B63;
+        }
+        if (cardVariant == CARD_VARIANT_RECOVERY) {
+            return 0x5ABCAF;
+        }
+        if (cardVariant == CARD_VARIANT_HR_WARNING) {
+            return 0xF26C4F;
+        }
+        return 0x4F95C2;
+    }
+
+    function _getLargeBannerFillColor(cardVariant) {
+        if (cardVariant == CARD_VARIANT_WARMUP) {
+            return 0x245C83;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
+            return 0x1A5A82;
+        }
+        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
+            return 0x775024;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
+            return 0x865218;
+        }
+        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
+            return 0x8A2433;
+        }
+        if (cardVariant == CARD_VARIANT_RECOVERY) {
+            return 0x1F6C65;
+        }
+        if (cardVariant == CARD_VARIANT_HR_WARNING) {
+            return 0x8B2B22;
+        }
+        return 0x255C82;
     }
 
     function _getLargeBannerText() {
