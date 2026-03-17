@@ -931,11 +931,10 @@ class MarathonCoachField extends Ui.DataField {
         if (sizeClass == 2) {
             _drawLargePaceBlock(dc, leftColX, row1Y, leftColW, rowHeight, paceFont);
 
-            var bannerInsetX = _clamp(squareSize / 240, 1, 3);
             var bannerInsetY = _clamp(squareSize / 180, 2, 6);
-            var bannerX = left + bannerInsetX;
+            var bannerX = 0;
             var bannerY = row2Y + bannerInsetY;
-            var bannerW = squareSize - (bannerInsetX * 2);
+            var bannerW = width;
             var bannerH = rowHeight - (bannerInsetY * 2);
             _drawLargeCoachBanner(dc, bannerX, bannerY, bannerW, bannerH);
         } else {
@@ -980,6 +979,7 @@ class MarathonCoachField extends Ui.DataField {
         // 4th row: DIST / TIME + GOAL / prediction delta
         var mergedY = CoachUtils.textYByRatio(row3Y, row4Height, 24, dc.getFontHeight(footerFont));
         var paceDeltaY = CoachUtils.textYByRatio(row3Y, row4Height, 70, dc.getFontHeight(paceDeltaFont));
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
         dc.drawText(width / 2, mergedY, footerFont, _distanceTimeText, Gfx.TEXT_JUSTIFY_CENTER);
         dc.drawText(width / 2, paceDeltaY, paceDeltaFont, _goalDeltaText, Gfx.TEXT_JUSTIFY_CENTER);
 
@@ -1191,8 +1191,7 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         var borderColor = _getLargeBannerBorderColor(_cardVariant);
-        var fillColor = _getLargeBannerFillColor(_cardVariant);
-        var borderInset = _clamp(bannerH / 18, 2, 4);
+        var borderInset = _clamp(bannerH / 10, 4, 8);
         var bannerCorner = _clamp(bannerH / 5, 4, 10);
         var maxBannerCorner = _max((_min(bannerW, bannerH) / 2) - 1, 2);
         if (bannerCorner > maxBannerCorner) {
@@ -1201,21 +1200,13 @@ class MarathonCoachField extends Ui.DataField {
 
         dc.setColor(borderColor, Gfx.COLOR_BLACK);
         dc.fillRoundedRectangle(bannerX, bannerY, bannerW, bannerH, bannerCorner);
-        dc.setColor(fillColor, Gfx.COLOR_BLACK);
-        dc.fillRoundedRectangle(
-            bannerX + borderInset,
-            bannerY + borderInset,
-            bannerW - (borderInset * 2),
-            bannerH - (borderInset * 2),
-            _max(bannerCorner - borderInset, 2)
-        );
 
         var bannerText = _getLargeBannerText();
-        var panelMarginX = _clamp(bannerW / 35, 6, 12);
-        var panelMarginY = _clamp(bannerH / 6, 4, 8);
+        var panelMarginX = borderInset + _clamp(bannerW / 160, 1, 3);
+        var panelMarginY = _max(borderInset - 1, 2);
         var panelW = bannerW - (panelMarginX * 2);
         var panelH = bannerH - (panelMarginY * 2);
-        var panelFont = _resolveLargeBannerFont(dc, bannerText, panelW - 12);
+        var panelFont = _resolveLargeBannerFont(dc, bannerText, panelW - 16);
         if (panelH < (dc.getFontHeight(panelFont) + 6)) {
             panelH = dc.getFontHeight(panelFont) + 6;
         }
@@ -1227,9 +1218,9 @@ class MarathonCoachField extends Ui.DataField {
             panelCorner = maxPanelCorner;
         }
 
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
+        dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_BLACK);
         dc.fillRoundedRectangle(panelX, panelY, panelW, panelH, panelCorner);
-        dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
         dc.drawText(
             bannerX + (bannerW / 2),
             panelY + ((panelH - dc.getFontHeight(panelFont)) / 2),
@@ -1241,52 +1232,27 @@ class MarathonCoachField extends Ui.DataField {
 
     function _getLargeBannerBorderColor(cardVariant) {
         if (cardVariant == CARD_VARIANT_WARMUP) {
-            return 0x5E93BF;
+            return 0x67A9DA;
         }
         if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
-            return 0x63B8E7;
+            return 0x4CC3FF;
         }
         if (cardVariant == CARD_VARIANT_ACTION_EASE) {
-            return 0xDCA34A;
+            return 0xF6B547;
         }
         if (cardVariant == CARD_VARIANT_FUEL_SOON) {
-            return 0xF0A23D;
+            return 0xFF9A1F;
         }
         if (cardVariant == CARD_VARIANT_FUEL_NOW) {
-            return 0xED5B63;
+            return 0xFF4F64;
         }
         if (cardVariant == CARD_VARIANT_RECOVERY) {
-            return 0x5ABCAF;
+            return 0x47D0BE;
         }
         if (cardVariant == CARD_VARIANT_HR_WARNING) {
-            return 0xF26C4F;
+            return 0xFF5A3B;
         }
-        return 0x4F95C2;
-    }
-
-    function _getLargeBannerFillColor(cardVariant) {
-        if (cardVariant == CARD_VARIANT_WARMUP) {
-            return 0x245C83;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
-            return 0x1A5A82;
-        }
-        if (cardVariant == CARD_VARIANT_ACTION_EASE) {
-            return 0x775024;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_SOON) {
-            return 0x865218;
-        }
-        if (cardVariant == CARD_VARIANT_FUEL_NOW) {
-            return 0x8A2433;
-        }
-        if (cardVariant == CARD_VARIANT_RECOVERY) {
-            return 0x1F6C65;
-        }
-        if (cardVariant == CARD_VARIANT_HR_WARNING) {
-            return 0x8B2B22;
-        }
-        return 0x255C82;
+        return 0x58AEE1;
     }
 
     function _getLargeBannerText() {
