@@ -1043,8 +1043,12 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         var cardGap = _resolveCardLineGap(cardLineCount, cardFontH, textAreaH);
-        var textTotalH = (cardFontH * cardLineCount) + (cardGap * (cardLineCount - 1));
-        var cardLineY = textAreaY + _max((textAreaH - textTotalH) / 2, 0);
+        var textBlockH = _resolveCardTextBlockHeight(cardLineCount, cardFontH, cardGap);
+        var visualBottomPad = 0;
+        if (sizeClass == 1 and cardLineCount >= 3) {
+            visualBottomPad = 4;
+        }
+        var cardLineY = _resolveCardTextTopY(textAreaY, textAreaH, textBlockH, 0, visualBottomPad);
         var textCenterX = textLeft + ((textRight - textLeft) / 2);
 
         dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
@@ -1137,8 +1141,12 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         var gap = _resolveCardLineGap(cardLineCount, fontH, textAreaH);
-        var totalH = (fontH * cardLineCount) + (gap * (cardLineCount - 1));
-        var textY = textAreaY + _max((textAreaH - totalH) / 2, 0);
+        var textBlockH = _resolveCardTextBlockHeight(cardLineCount, fontH, gap);
+        var visualBottomPad = 0;
+        if (sizeClass == 1 and cardLineCount >= 3) {
+            visualBottomPad = 4;
+        }
+        var textY = _resolveCardTextTopY(textAreaY, textAreaH, textBlockH, 0, visualBottomPad);
         var textX = textAreaX + (textAreaW / 2);
 
         for (var i = 0; i < cardLineCount; i += 1) {
@@ -1302,6 +1310,14 @@ class MarathonCoachField extends Ui.DataField {
 
     function _resolveCardLineGap(cardLineCount, fontH, areaH) {
         return RenderUtils.resolveCardLineGap(cardLineCount, fontH, areaH);
+    }
+
+    function _resolveCardTextBlockHeight(cardLineCount, fontH, lineGap) {
+        return RenderUtils.resolveCardTextBlockHeight(cardLineCount, fontH, lineGap);
+    }
+
+    function _resolveCardTextTopY(blockY, blockH, textBlockH, topPad, bottomPad) {
+        return RenderUtils.resolveCardTextTopY(blockY, blockH, textBlockH, topPad, bottomPad);
     }
 
     function _resolveCardFontToFit(dc as Gfx.Dc, sizeClass, cardLines as Lang.Array, textAreaW, textAreaH) {
