@@ -411,20 +411,22 @@ module RenderUtils {
         }
 
         var desiredGap = 1;
+        var minGap = 1;
         if (cardLineCount == 2) {
             desiredGap = clamp(fontH / 3, 2, 8);
         } else {
-            desiredGap = clamp(fontH / 5, 1, 5);
+            desiredGap = clamp(fontH / 10, 0, 2);
+            minGap = 0;
         }
 
-        var maxGap = max((areaH - (fontH * cardLineCount)) / (cardLineCount - 1), 1);
+        var maxGap = max((areaH - (fontH * cardLineCount)) / (cardLineCount - 1), minGap);
         if (desiredGap > maxGap) {
             desiredGap = maxGap;
         }
         return desiredGap;
     }
 
-    function resolveCardFontToFit(dc, sizeClass, cardLines as Lang.Array, textAreaW, textAreaH) {
+    function resolveCardFontToFit(dc as Gfx.Dc, sizeClass, cardLines as Lang.Array, textAreaW, textAreaH) {
         var candidates = [];
         if (sizeClass == 2) {
             candidates = [Gfx.FONT_MEDIUM, Gfx.FONT_SMALL, Gfx.FONT_TINY, Gfx.FONT_XTINY];
@@ -444,7 +446,7 @@ module RenderUtils {
         return candidates[candidates.size() - 1];
     }
 
-    function isCardTextFit(dc, font, cardLines as Lang.Array, textAreaW, textAreaH) as Lang.Boolean {
+    function isCardTextFit(dc as Gfx.Dc, font, cardLines as Lang.Array, textAreaW, textAreaH) as Lang.Boolean {
         if (textAreaW <= 0 or textAreaH <= 0) {
             return false;
         }
