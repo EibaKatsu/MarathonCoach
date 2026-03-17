@@ -1187,9 +1187,14 @@ class MarathonCoachField extends Ui.DataField {
         }
         var panelX = bannerX + panelMarginX;
         var panelY = bannerY + ((bannerH - panelH) / 2);
+        var panelCorner = _clamp(panelH / 6, 4, 10);
+        var maxPanelCorner = _max((_min(panelW, panelH) / 2) - 1, 2);
+        if (panelCorner > maxPanelCorner) {
+            panelCorner = maxPanelCorner;
+        }
 
         dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_BLACK);
-        dc.fillRectangle(panelX, panelY, panelW, panelH);
+        dc.fillRoundedRectangle(panelX, panelY, panelW, panelH, panelCorner);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
         dc.drawText(
             bannerX + (bannerW / 2),
