@@ -1,11 +1,11 @@
 # store_review_checklist
 
 ## 実施日
-- 2026-03-14
+- 2026-03-17
 
 ## 対象
 - リリース種別: `BETA`
-- 申請バージョン: `0.0.1`
+- 申請バージョン: `0.0.2`
 - app id: `12e1a6ba-4da8-47a1-b9ef-710f630f7c73`
 
 ## manifest 最終確認
@@ -14,7 +14,7 @@
 | --- | --- | --- |
 | アプリ名 | OK | `@Strings.AppName`。eng=`Race Navi` / jpn=`レースナビ`。 |
 | app id | OK | `manifest.xml` の app id は `12e1a6ba-4da8-47a1-b9ef-710f630f7c73`。 |
-| バージョン | OK | BETA 公開向けに `0.0.1` を設定。 |
+| バージョン | OK | BETA 公開向けに `0.0.2` を設定。 |
 | アプリ種別 | OK | `datafield`。`PRODUCT.md` の公開スコープと一致。 |
 | 対応機種 | OK | `manifest.xml` に 42 機種を定義。`./scripts/run_manifest_smoke.sh --build-only` で全件ビルド成功。 |
 | 言語 | OK | `eng` / `jpn` を定義。 |
@@ -25,9 +25,9 @@
 
 | 項目 | 判定 | 証跡 |
 | --- | --- | --- |
-| `.iq` 出力 | OK | `bin/releases/0.0.1/marathoncoach.iq` を生成。 |
-| ユニットテスト | OK | `57` 件 PASS。`./scripts/run_unit_tests.sh run fr255` 実行。 |
-| manifest 全機種ビルド | OK | `bin/releases/0.0.1/manifest_build_summary.tsv` に `42 PASS/SKIP/SKIP`。 |
+| `.iq` 出力 | OK | `bin/releases/0.0.2/marathoncoach.iq` を生成。 |
+| ユニットテスト | OK | `65` 件 PASS。`./scripts/run_unit_tests.sh run fr255` 実行。 |
+| manifest 全機種ビルド | OK | `bin/releases/0.0.2/manifest_build_summary.tsv` に `42 PASS/SKIP/SKIP`。 |
 | 初回設定導線 | OK | `tasks/03-1_store-assets/draft.md` の設定手順と `resources/properties.xml` が整合。通常版案内は `custom_mode_code` 空欄運用。 |
 | BETA ストア表示整合 | OK | アプリ名 `レースナビ BETA`、サブタイトル `公開前の実機テスト版`、`cover_beta.png` を使用。 |
 | サポート窓口 URL | 保留 | 公開 URL / フォーム URL をストアへ貼れる形で未確定。 |
