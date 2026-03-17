@@ -91,7 +91,7 @@ module RenderUtils {
         hrWarningVariant
     ) {
         if (cardVariant == warmupVariant) {
-            return 0x56728F;
+            return 0x4F7D76;
         }
         if (cardVariant == actionPushVariant) {
             return 0x4C7898;
@@ -106,12 +106,12 @@ module RenderUtils {
             return 0xA14B58;
         }
         if (cardVariant == recoveryVariant) {
-            return 0x4F7480;
+            return 0x4B7F68;
         }
         if (cardVariant == hrWarningVariant) {
             return 0x97554A;
         }
-        return 0x516684;
+        return 0x66727C;
     }
 
     function getCardGradientTopColor(
@@ -125,7 +125,7 @@ module RenderUtils {
         hrWarningVariant
     ) {
         if (cardVariant == warmupVariant) {
-            return 0x315B7D;
+            return 0x24544E;
         }
         if (cardVariant == actionPushVariant) {
             return 0x275778;
@@ -140,12 +140,12 @@ module RenderUtils {
             return 0x883744;
         }
         if (cardVariant == recoveryVariant) {
-            return 0x2D5A66;
+            return 0x245844;
         }
         if (cardVariant == hrWarningVariant) {
             return 0x7B342F;
         }
-        return 0x274A6A;
+        return 0x38424B;
     }
 
     function getCardGradientBottomColor(
@@ -159,7 +159,7 @@ module RenderUtils {
         hrWarningVariant
     ) {
         if (cardVariant == warmupVariant) {
-            return 0x182F47;
+            return 0x143732;
         }
         if (cardVariant == actionPushVariant) {
             return 0x16324B;
@@ -174,12 +174,12 @@ module RenderUtils {
             return 0x461925;
         }
         if (cardVariant == recoveryVariant) {
-            return 0x183640;
+            return 0x15382B;
         }
         if (cardVariant == hrWarningVariant) {
             return 0x401B18;
         }
-        return 0x182E45;
+        return 0x1B2228;
     }
 
     function getCardGradientMidColor(
@@ -193,7 +193,7 @@ module RenderUtils {
         hrWarningVariant
     ) {
         if (cardVariant == warmupVariant) {
-            return 0x244767;
+            return 0x1D4843;
         }
         if (cardVariant == actionPushVariant) {
             return 0x204765;
@@ -208,12 +208,12 @@ module RenderUtils {
             return 0x6A2835;
         }
         if (cardVariant == recoveryVariant) {
-            return 0x234A56;
+            return 0x1E4B39;
         }
         if (cardVariant == hrWarningVariant) {
             return 0x5C2722;
         }
-        return 0x22415F;
+        return 0x283139;
     }
 
     function getCardSheenColor(
@@ -227,7 +227,7 @@ module RenderUtils {
         hrWarningVariant
     ) {
         if (cardVariant == warmupVariant) {
-            return 0x7FA8D0;
+            return 0x84BEB4;
         }
         if (cardVariant == actionPushVariant) {
             return 0x7CAED6;
@@ -242,12 +242,12 @@ module RenderUtils {
             return 0xD97983;
         }
         if (cardVariant == recoveryVariant) {
-            return 0x79AAB9;
+            return 0x7BC1A6;
         }
         if (cardVariant == hrWarningVariant) {
             return 0xCE8476;
         }
-        return 0x779DC1;
+        return 0x9CA9B3;
     }
 
     function getCardAccentColor(
@@ -261,7 +261,7 @@ module RenderUtils {
         hrWarningVariant
     ) {
         if (cardVariant == warmupVariant) {
-            return 0x9ED7FF;
+            return 0xB3E7DB;
         }
         if (cardVariant == actionPushVariant) {
             return 0x9CD8FF;
@@ -276,12 +276,12 @@ module RenderUtils {
             return 0xFFC2B0;
         }
         if (cardVariant == recoveryVariant) {
-            return 0x9DE5EE;
+            return 0xB2F0D2;
         }
         if (cardVariant == hrWarningVariant) {
             return 0xFFB99B;
         }
-        return 0xA9D0F8;
+        return 0xDCE4EA;
     }
 
     function getCardTopBandColor(
@@ -295,7 +295,7 @@ module RenderUtils {
         hrWarningVariant
     ) {
         if (cardVariant == warmupVariant) {
-            return 0x6EAED8;
+            return 0x67B8A8;
         }
         if (cardVariant == actionPushVariant) {
             return 0x6ABCE3;
@@ -310,12 +310,12 @@ module RenderUtils {
             return 0xD96E7E;
         }
         if (cardVariant == recoveryVariant) {
-            return 0x63B9C8;
+            return 0x5CC48E;
         }
         if (cardVariant == hrWarningVariant) {
             return 0xD97B6A;
         }
-        return 0x6AA3CF;
+        return 0x8E9AA4;
     }
 
     function getCardTextColor(cardVariant) {
