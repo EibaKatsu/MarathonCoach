@@ -218,12 +218,15 @@ class MarathonCoachField extends Ui.DataField {
     var _currentHeartRate = null;
     var _activeHeartRateZones as Lang.Array<Lang.Number> = [];
     var _currentHeartRateZone = null;
+    var _currentHeartRateZoneUpper = null;
+    var _currentHeartRateZoneLower = null;
+    var _currentHeartRateGaugeRatio = null;
     var _allowedMaxHeartRate = null;
     var _allowedMaxHeartRateZone = null;
     var _allowedMaxHeartRateZoneUpper = null;
     var _allowedMaxHeartRateZoneLower = null;
     var _allowedMaxHeartRateGaugeRatio = null;
-    var _hrZoneText = "-- / CAP --";
+    var _hrZoneText = "-- / cap --";
     var _hrOverActive = false;
     var _hrOverStartSec = null;
     var _hrRecoverStartSec = null;
@@ -301,6 +304,21 @@ class MarathonCoachField extends Ui.DataField {
     var _cardBgFuelNowSmall = null;
     var _cardBgRecoverySmall = null;
     var _cardBgHrWarningSmall = null;
+    var _hrHeartSafeSmall = null;
+    var _hrHeartSafeMedium = null;
+    var _hrHeartSafeLarge = null;
+    var _hrHeartSafeXLarge = null;
+    var _hrHeartSafeXXLarge = null;
+    var _hrHeartCautionSmall = null;
+    var _hrHeartCautionMedium = null;
+    var _hrHeartCautionLarge = null;
+    var _hrHeartCautionXLarge = null;
+    var _hrHeartCautionXXLarge = null;
+    var _hrHeartOverSmall = null;
+    var _hrHeartOverMedium = null;
+    var _hrHeartOverLarge = null;
+    var _hrHeartOverXLarge = null;
+    var _hrHeartOverXXLarge = null;
     var _beepStateInitialized = false;
     var _beepPrevFuelMeterState = FUEL_METER_STATE_NORMAL;
     var _beepPrevHrOver = false;
@@ -418,6 +436,21 @@ class MarathonCoachField extends Ui.DataField {
         _cardBgFuelNowSmall = Ui.loadResource(Rez.Drawables.CardBgFuelNowSmall);
         _cardBgRecoverySmall = Ui.loadResource(Rez.Drawables.CardBgRecoverySmall);
         _cardBgHrWarningSmall = Ui.loadResource(Rez.Drawables.CardBgHrWarningSmall);
+        _hrHeartSafeSmall = Ui.loadResource(Rez.Drawables.HrHeartSafeSmall);
+        _hrHeartSafeMedium = Ui.loadResource(Rez.Drawables.HrHeartSafeMedium);
+        _hrHeartSafeLarge = Ui.loadResource(Rez.Drawables.HrHeartSafeLarge);
+        _hrHeartSafeXLarge = Ui.loadResource(Rez.Drawables.HrHeartSafeXLarge);
+        _hrHeartSafeXXLarge = Ui.loadResource(Rez.Drawables.HrHeartSafeXXLarge);
+        _hrHeartCautionSmall = Ui.loadResource(Rez.Drawables.HrHeartCautionSmall);
+        _hrHeartCautionMedium = Ui.loadResource(Rez.Drawables.HrHeartCautionMedium);
+        _hrHeartCautionLarge = Ui.loadResource(Rez.Drawables.HrHeartCautionLarge);
+        _hrHeartCautionXLarge = Ui.loadResource(Rez.Drawables.HrHeartCautionXLarge);
+        _hrHeartCautionXXLarge = Ui.loadResource(Rez.Drawables.HrHeartCautionXXLarge);
+        _hrHeartOverSmall = Ui.loadResource(Rez.Drawables.HrHeartOverSmall);
+        _hrHeartOverMedium = Ui.loadResource(Rez.Drawables.HrHeartOverMedium);
+        _hrHeartOverLarge = Ui.loadResource(Rez.Drawables.HrHeartOverLarge);
+        _hrHeartOverXLarge = Ui.loadResource(Rez.Drawables.HrHeartOverXLarge);
+        _hrHeartOverXXLarge = Ui.loadResource(Rez.Drawables.HrHeartOverXXLarge);
 
         _cardMode = CARD_MODE_ACTION;
         _cardVariant = CARD_VARIANT_ACTION_HOLD;
@@ -475,12 +508,15 @@ class MarathonCoachField extends Ui.DataField {
         _currentHeartRate = null;
         _activeHeartRateZones = [];
         _currentHeartRateZone = null;
+        _currentHeartRateZoneUpper = null;
+        _currentHeartRateZoneLower = null;
+        _currentHeartRateGaugeRatio = null;
         _allowedMaxHeartRate = null;
         _allowedMaxHeartRateZone = null;
         _allowedMaxHeartRateZoneUpper = null;
         _allowedMaxHeartRateZoneLower = null;
         _allowedMaxHeartRateGaugeRatio = null;
-        _hrZoneText = "-- / CAP --";
+        _hrZoneText = "-- / cap --";
         _hrOverActive = false;
         _hrOverStartSec = null;
         _hrRecoverStartSec = null;
@@ -875,7 +911,7 @@ class MarathonCoachField extends Ui.DataField {
         var row12Height = row2Y - top;
         var row4Height = bottomY - row3Y;
 
-        // 1st row left: HR gauge (value + Z1-Z5 bar + position marker)
+        // 1st row left: HR value + cap + heart status icon
         _drawHeartRateGauge(dc, leftColX, top, leftColW, rowHeight, sizeClass);
 
         // Right col row1-2 span: FUEL ring
@@ -1458,7 +1494,7 @@ class MarathonCoachField extends Ui.DataField {
         var capFont = Gfx.FONT_XTINY;
         if (sizeClass == 2) {
             valueFont = Gfx.FONT_LARGE;
-            capFont = Gfx.FONT_TINY;
+            capFont = Gfx.FONT_XTINY;
         } else if (sizeClass == 0) {
             valueFont = Gfx.FONT_SMALL;
             capFont = Gfx.FONT_XTINY;
@@ -1470,8 +1506,7 @@ class MarathonCoachField extends Ui.DataField {
         }
         var capText = _resolveHeartRateCapText(sizeClass);
         var gaugeState = _resolveHeartRateGaugeState();
-        var valueColor = _getHeartRateGaugeValueColor(gaugeState);
-        var markerColor = _getHeartRateGaugeMarkerColor(gaugeState);
+        var valueColor = Gfx.COLOR_WHITE;
         var capTextColor = Gfx.COLOR_WHITE;
         if (_allowedMaxHeartRate == null) {
             capTextColor = HR_CAP_TEXT_MISSING_COLOR;
@@ -1479,126 +1514,113 @@ class MarathonCoachField extends Ui.DataField {
 
         var valueHeight = dc.getFontHeight(valueFont);
         var capHeight = dc.getFontHeight(capFont);
-        var markerHeight = _clamp((areaH * 25) / 100, 6, 12);
-        var gaugeHeight = _clamp((areaH * 22) / 100, 8, 14);
-        var capReservedGap = _clamp((capHeight / 2) + 2, 3, 7);
-        // Keep the gauge anchored near the bottom and reserve a small pocket for the CAP label.
-        var baseGaugeTop = areaY + areaH - markerHeight - gaugeHeight;
-        var valueY = baseGaugeTop - valueHeight - capReservedGap;
+        var valueTextWidth = dc.getTextWidthInPixels(valueText, valueFont);
+        var capTextWidth = dc.getTextWidthInPixels(capText, capFont);
+        var innerPad = 4;
+        if (sizeClass == 0) {
+            innerPad = 2;
+        } else if (sizeClass == 2) {
+            innerPad = 6;
+        }
+        var contentX = areaX + innerPad;
+        var contentW = areaW - (innerPad * 2);
+        if (contentW < 1) {
+            contentX = areaX;
+            contentW = areaW;
+        }
+        var heartBitmap = _getHeartStatusBitmap(gaugeState, sizeClass);
+        var heartSize = valueHeight - 1;
+        if (heartBitmap != null) {
+            heartSize = heartBitmap.getWidth();
+        } else if (heartSize < 10) {
+            heartSize = 10;
+        }
+        var heartGap = 4;
+        if (sizeClass == 0) {
+            heartGap = 3;
+        } else if (sizeClass == 2) {
+            heartGap = 5;
+        }
+        var topInset = _clamp((areaH / 16) + 2, 2, 7);
+        var valueY = areaY + topInset;
+        var maxValueY = areaY + areaH - valueHeight - capHeight - 1;
+        if (valueY > maxValueY) {
+            valueY = maxValueY;
+        }
         if (valueY < areaY) {
             valueY = areaY;
         }
-        var gaugeTop = baseGaugeTop;
-
-        var gaugeHorizontalInset = _clamp((areaW * 10) / 100, 6, 18);
-        if (sizeClass == 0) {
-            gaugeHorizontalInset = _clamp((areaW * 16) / 100, 10, 24);
-        } else if (sizeClass == 2) {
-            gaugeHorizontalInset = _clamp((areaW * 8) / 100, 4, 14);
+        var valueRightX = contentX + contentW;
+        var valueX = valueRightX - valueTextWidth;
+        if (valueX < contentX) {
+            valueX = contentX;
         }
-        var gaugeAreaX = areaX + gaugeHorizontalInset;
-        var gaugeAreaW = areaW - (gaugeHorizontalInset * 2);
-        if (gaugeAreaW < 24) {
-            gaugeAreaX = areaX;
-            gaugeAreaW = areaW;
+        var heartX = valueX - heartGap - heartSize;
+        if (heartX < contentX) {
+            heartX = contentX;
         }
-
-        var segmentGap = _clamp(gaugeAreaW / 60, 1, 3);
-        var totalGap = (HR_GAUGE_ZONE_COUNT - 1) * segmentGap;
-        var segmentWidth = Math.floor((gaugeAreaW - totalGap) / HR_GAUGE_ZONE_COUNT);
-        if (segmentWidth < 4) {
-            segmentWidth = 4;
+        var heartY = valueY + Math.floor((valueHeight - heartSize) / 2) + 1;
+        if (heartY < areaY) {
+            heartY = areaY;
         }
-        var gaugeWidth = (segmentWidth * HR_GAUGE_ZONE_COUNT) + totalGap;
-        if (gaugeWidth > gaugeAreaW) {
-            gaugeWidth = gaugeAreaW;
-            segmentWidth = Math.floor((gaugeWidth - totalGap) / HR_GAUGE_ZONE_COUNT);
-            if (segmentWidth < 2) {
-                segmentWidth = 2;
-            }
-            gaugeWidth = (segmentWidth * HR_GAUGE_ZONE_COUNT) + totalGap;
+        var capX = valueRightX - capTextWidth;
+        if (capX < contentX) {
+            capX = contentX;
         }
-
-        var gaugeX = Math.floor(gaugeAreaX + ((gaugeAreaW - gaugeWidth) / 2));
-        for (var i = 0; i < HR_GAUGE_ZONE_COUNT; i += 1) {
-            var segX = gaugeX + (i * (segmentWidth + segmentGap));
-            dc.setColor(_getHeartRateZoneGaugeColor(i + 1), Gfx.COLOR_BLACK);
-            dc.fillRectangle(segX, gaugeTop, segmentWidth, gaugeHeight);
+        if ((capX + capTextWidth) > (contentX + contentW)) {
+            capX = contentX + contentW - capTextWidth;
         }
-
-        var capMarkerX = null;
-        var capRatio = _resolveHeartRateCapGaugeRatio();
-        if (capRatio != null) {
-            capMarkerX = gaugeX + Math.floor((capRatio * (gaugeWidth - 1)) + 0.5);
-            var capTickInset = _clamp(gaugeHeight / 3, 1, 4);
-            var capTickTop = _max(gaugeTop - capTickInset, areaY);
-            dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
-            dc.drawLine(capMarkerX, capTickTop, capMarkerX, gaugeTop + gaugeHeight + capTickInset);
+        var capY = areaY + areaH - capHeight;
+        if (capY <= valueY) {
+            capY = valueY + valueHeight - _clamp(capHeight / 2, 1, 4);
         }
-
-        var markerX = null;
-        if (_currentHeartRate != null) {
-            var markerRatio = _resolveHeartRateGaugeRatio();
-            markerX = gaugeX + Math.floor((markerRatio * (gaugeWidth - 1)) + 0.5);
-            if (capMarkerX != null and markerX != capMarkerX) {
-                var gapLineY = _max(gaugeTop - 2, areaY);
-                dc.setColor(markerColor, Gfx.COLOR_BLACK);
-                dc.drawLine(_min(markerX, capMarkerX), gapLineY, _max(markerX, capMarkerX), gapLineY);
-            }
-            var markerTipY = gaugeTop + gaugeHeight + 1;
-            var markerHalfWidth = _clamp(segmentWidth / 3, 2, 5);
-            dc.setColor(markerColor, Gfx.COLOR_BLACK);
-            _drawUpTriangleMarker(dc, markerX, markerTipY, markerHalfWidth, markerHeight);
-        }
-
-        var valueCenterX = areaX + (areaW / 2);
-        var valueTextWidth = dc.getTextWidthInPixels(valueText, valueFont);
-        var capTextWidth = dc.getTextWidthInPixels(capText, capFont);
-        var capOffsetX = 12;
         if (sizeClass == 2) {
-            capOffsetX = 18;
-        } else if (sizeClass == 0) {
-            capOffsetX = 8;
-        }
-        var capX = valueCenterX + capOffsetX;
-        if ((capX + capTextWidth) > (areaX + areaW - 1)) {
-            capX = (areaX + areaW - 1) - capTextWidth;
-        }
-        if (capX < areaX) {
-            capX = areaX;
-        }
-        var minCapX = valueCenterX - (valueTextWidth / 2) + _clamp(valueTextWidth / 2, 6, 18);
-        if (capX < minCapX) {
-            capX = minCapX;
-        }
-        if ((capX + capTextWidth) > (areaX + areaW - 1)) {
-            capX = _max(areaX, (areaX + areaW - 1) - capTextWidth);
-        }
-        var capBaselineDrop = _clamp((capHeight / 2) + 1, 2, 6);
-        var capY = valueY + valueHeight - capBaselineDrop;
-        var maxCapY = gaugeTop - capHeight - 1;
-        if (capY > maxCapY) {
-            capY = maxCapY;
-        }
-        if (capY < valueY) {
-            capY = valueY;
+            capX = valueX + valueTextWidth - capTextWidth - 2;
+            if (capX < contentX) {
+                capX = contentX;
+            }
+            capY = valueY + valueHeight - 1;
+            var maxCapY = areaY + areaH - capHeight;
+            if (capY > maxCapY) {
+                capY = maxCapY;
+            }
         }
 
-        // Draw text last so it always stays above the gauge layer.
         dc.setColor(valueColor, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(
-            valueCenterX,
-            valueY,
-            valueFont,
-            valueText,
-            Gfx.TEXT_JUSTIFY_CENTER
-        );
+        dc.drawText(valueX, valueY, valueFont, valueText, Gfx.TEXT_JUSTIFY_LEFT);
+        if (heartBitmap != null) {
+            dc.drawBitmap(heartX, heartY, heartBitmap);
+        }
         dc.setColor(capTextColor, Gfx.COLOR_TRANSPARENT);
         dc.drawText(capX, capY, capFont, capText, Gfx.TEXT_JUSTIFY_LEFT);
     }
 
-    function _drawUpTriangleMarker(dc as Gfx.Dc, centerX, tipY, halfWidth, height) {
-        RenderUtils.drawUpTriangleMarker(dc, centerX, tipY, halfWidth, height);
+    function _getHeartStatusBitmap(gaugeState, sizeClass) {
+        if (sizeClass == 0) {
+            if (gaugeState == HR_CAP_STATE_CAUTION) {
+                return _hrHeartCautionSmall;
+            }
+            if (gaugeState == HR_CAP_STATE_OVER) {
+                return _hrHeartOverSmall;
+            }
+            return _hrHeartSafeSmall;
+        }
+        if (sizeClass == 2) {
+            if (gaugeState == HR_CAP_STATE_CAUTION) {
+                return _hrHeartCautionXXLarge;
+            }
+            if (gaugeState == HR_CAP_STATE_OVER) {
+                return _hrHeartOverXXLarge;
+            }
+            return _hrHeartSafeXXLarge;
+        }
+        if (gaugeState == HR_CAP_STATE_CAUTION) {
+            return _hrHeartCautionLarge;
+        }
+        if (gaugeState == HR_CAP_STATE_OVER) {
+            return _hrHeartOverLarge;
+        }
+        return _hrHeartSafeLarge;
     }
 
     function _getHeartRateZoneGaugeColor(zoneNumber) {
@@ -1618,9 +1640,9 @@ class MarathonCoachField extends Ui.DataField {
             capText = _allowedMaxHeartRate.format("%d");
         }
         if (sizeClass == 0) {
-            return "CAP" + capText;
+            return "cap" + capText;
         }
-        return "CAP " + capText;
+        return "cap " + capText;
     }
 
     function _resolveHeartRateGaugeState() {
@@ -1660,7 +1682,15 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveHeartRateGaugeRatio() {
-        var ratio = _resolveHeartRateGaugeRatioForHeartRateAndZone(_currentHeartRate, _currentHeartRateZone);
+        if (_currentHeartRateGaugeRatio != null) {
+            return _currentHeartRateGaugeRatio;
+        }
+        var ratio = _resolveHeartRateGaugeRatioForHeartRateAndBounds(
+            _currentHeartRate,
+            _currentHeartRateZone,
+            _currentHeartRateZoneUpper,
+            _currentHeartRateZoneLower
+        );
         if (ratio == null) {
             return 0.5;
         }
@@ -1884,6 +1914,17 @@ class MarathonCoachField extends Ui.DataField {
         _activeHeartRateZones = _resolveActiveHeartRateZones();
         _allowedMaxHeartRate = _resolveAllowedMaxHeartRate(info, _activeHeartRateZones);
         _currentHeartRateZone = _resolveHeartRateZone(_currentHeartRate, _activeHeartRateZones);
+        _currentHeartRateZoneUpper = _getZoneUpperHeartRate(_activeHeartRateZones, _currentHeartRateZone);
+        _currentHeartRateZoneLower = null;
+        if (_currentHeartRateZone != null and _currentHeartRateZone > 1) {
+            _currentHeartRateZoneLower = _getZoneUpperHeartRate(_activeHeartRateZones, _currentHeartRateZone - 1);
+        }
+        _currentHeartRateGaugeRatio = _resolveHeartRateGaugeRatioForHeartRateAndBounds(
+            _currentHeartRate,
+            _currentHeartRateZone,
+            _currentHeartRateZoneUpper,
+            _currentHeartRateZoneLower
+        );
         _allowedMaxHeartRateZone = _resolveHeartRateZone(_allowedMaxHeartRate, _activeHeartRateZones);
         _allowedMaxHeartRateZoneUpper = _getZoneUpperHeartRate(_activeHeartRateZones, _allowedMaxHeartRateZone);
         _allowedMaxHeartRateZoneLower = null;
@@ -1905,21 +1946,75 @@ class MarathonCoachField extends Ui.DataField {
         if (_allowedMaxHeartRate != null) {
             capText = _allowedMaxHeartRate.format("%d");
         }
-        _hrZoneText = hrText + " / CAP " + capText;
+        _hrZoneText = hrText + " / cap " + capText;
     }
 
     function _resolveActiveHeartRateZones() as Lang.Array<Lang.Number> {
-        var zones = _getHeartRateZonesForCurrentSport();
+        var zones = _resolveUsableHeartRateZoneThresholds(_getHeartRateZonesForCurrentSport());
         if (zones != null and zones.size() > 0) {
             return zones;
         }
 
-        var genericZones = _getGenericHeartRateZones();
+        var genericZones = _resolveUsableHeartRateZoneThresholds(_getGenericHeartRateZones());
         if (genericZones != null and genericZones.size() > 0) {
             return genericZones;
         }
 
         return [];
+    }
+
+    function _resolveUsableHeartRateZoneThresholds(rawZones) {
+        if (rawZones == null or !(rawZones instanceof Lang.Array)) {
+            return null;
+        }
+
+        if (rawZones.size() >= 6) {
+            var docValues = [];
+            for (var i = 0; i < 6; i += 1) {
+                var docValue = _normalizeHeartRateValue(rawZones[i]);
+                if (docValue == null) {
+                    return null;
+                }
+                docValues.add(docValue);
+            }
+            if (!_isMonotonicHeartRateZoneValues(docValues)) {
+                return null;
+            }
+            var usableValues = [];
+            for (var k = 1; k < 6; k += 1) {
+                usableValues.add(docValues[k]);
+            }
+            return usableValues;
+        }
+
+        if (rawZones.size() == 5) {
+            var fiveValues = [];
+            for (var j = 0; j < 5; j += 1) {
+                var fiveValue = _normalizeHeartRateValue(rawZones[j]);
+                if (fiveValue == null) {
+                    return null;
+                }
+                fiveValues.add(fiveValue);
+            }
+            if (!_isMonotonicHeartRateZoneValues(fiveValues)) {
+                return null;
+            }
+            return fiveValues;
+        }
+
+        return null;
+    }
+
+    function _isMonotonicHeartRateZoneValues(values) {
+        if (values == null or !(values instanceof Lang.Array) or values.size() == 0) {
+            return false;
+        }
+        for (var i = 1; i < values.size(); i += 1) {
+            if (values[i] <= values[i - 1]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     function _resolveAllowedMaxHeartRate(info, zones as Lang.Array<Lang.Number>) {
@@ -1987,7 +2082,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _getZoneUpperHeartRate(zones as Lang.Array<Lang.Number>, zoneNumber) {
-        if (zones == null or zones.size() == 0 or zoneNumber <= 0) {
+        if (zones == null or zones.size() == 0 or zoneNumber == null or zoneNumber <= 0) {
             return null;
         }
 

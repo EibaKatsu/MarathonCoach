@@ -152,12 +152,12 @@ function testBuildGoalDeltaText_usesMinuteDeltaLabels(logger) {
 function testHeartRateCapText_reflectsSizeClassAndFallback(logger) {
     var sut = _newUtilsSut();
 
-    Test.assertEqual("CAP --", sut._resolveHeartRateCapText(1));
-    Test.assertEqual("CAP--", sut._resolveHeartRateCapText(0));
+    Test.assertEqual("cap --", sut._resolveHeartRateCapText(1));
+    Test.assertEqual("cap--", sut._resolveHeartRateCapText(0));
 
     sut._allowedMaxHeartRate = 152;
-    Test.assertEqual("CAP 152", sut._resolveHeartRateCapText(1));
-    Test.assertEqual("CAP152", sut._resolveHeartRateCapText(0));
+    Test.assertEqual("cap 152", sut._resolveHeartRateCapText(1));
+    Test.assertEqual("cap152", sut._resolveHeartRateCapText(0));
     return true;
 }
 
@@ -188,13 +188,19 @@ function testHeartRateGaugeRatioForHeartRate_usesZoneBoundaries(logger) {
     sut._activeHeartRateZones = [100, 120, 140, 160, 180];
     sut._currentHeartRate = 130;
     sut._currentHeartRateZone = 3;
+    sut._currentHeartRateZoneUpper = 140;
+    sut._currentHeartRateZoneLower = 120;
+    sut._currentHeartRateGaugeRatio = 0.55;
     sut._allowedMaxHeartRate = 150;
 
+    _assertFloatNear(sut._resolveHeartRateGaugeRatio(), 0.55, 0.0001, "cached current hr ratio");
+    sut._currentHeartRateGaugeRatio = null;
     _assertFloatNear(sut._resolveHeartRateGaugeRatio(), 0.5, 0.0001, "current hr ratio");
+    sut._currentHeartRateZoneUpper = null;
     sut._activeHeartRateZones = [];
     sut._currentHeartRateZone = null;
     _assertFloatNear(
-        sut._resolveHeartRateGaugeRatioForHeartRate(140),
+        sut._resolveHeartRateGaugeRatio(),
         0.5,
         0.0001,
         "fallback ratio should use generic min/max range"
@@ -220,6 +226,40 @@ function testHeartRateCapGaugeRatio_usesCachedZoneBounds(logger) {
         0.583333,
         0.0001,
         "missing cached bounds should fall back to generic ratio"
+    );
+    return true;
+}
+
+(:test)
+function testGetZoneUpperHeartRate_returnsNullForNullZone(logger) {
+    var sut = _newUtilsSut();
+    sut._activeHeartRateZones = [100, 120, 140, 160, 180];
+
+    Test.assertMessage(sut._getZoneUpperHeartRate(sut._activeHeartRateZones, null) == null, "null zone should return null");
+    return true;
+}
+
+(:test)
+function testResolveUsableHeartRateZoneThresholds_acceptsDocumentedSixElementFormat(logger) {
+    var sut = _newUtilsSut();
+    var actual = sut._resolveUsableHeartRateZoneThresholds([93, 111, 130, 148, 167, 185]);
+
+    Test.assertEqual(5, actual.size());
+    Test.assertEqual(111, actual[0]);
+    Test.assertEqual(130, actual[1]);
+    Test.assertEqual(148, actual[2]);
+    Test.assertEqual(167, actual[3]);
+    Test.assertEqual(185, actual[4]);
+    return true;
+}
+
+(:test)
+function testResolveUsableHeartRateZoneThresholds_rejectsNonMonotonicSixElementFormat(logger) {
+    var sut = _newUtilsSut();
+
+    Test.assertMessage(
+        sut._resolveUsableHeartRateZoneThresholds([128, 153, 179, 204, 230, 185]) == null,
+        "non-monotonic six-element format should be rejected"
     );
     return true;
 }
