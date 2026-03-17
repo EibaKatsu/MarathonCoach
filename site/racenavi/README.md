@@ -9,4 +9,4 @@
 2. 接続確認: `./scripts/racenavi_deploy.sh check`
 3. アップロード: `./scripts/racenavi_deploy.sh upload`
 
-公開先は `https://eibakatsu.sakura.ne.jp/racenavi/` を想定しています。
+公開先は `https://racenavi.jpn.org/` を想定しています。
