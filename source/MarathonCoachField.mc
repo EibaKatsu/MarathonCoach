@@ -932,9 +932,10 @@ class MarathonCoachField extends Ui.DataField {
             _drawLargePaceBlock(dc, leftColX, row1Y, leftColW, rowHeight, paceFont);
 
             var bannerInsetY = _clamp(squareSize / 180, 2, 6);
-            var bannerX = 0;
+            var bannerOverscanX = _clamp(width / 80, 4, 8);
+            var bannerX = -bannerOverscanX;
             var bannerY = row2Y + bannerInsetY;
-            var bannerW = width;
+            var bannerW = width + (bannerOverscanX * 2);
             var bannerH = rowHeight - (bannerInsetY * 2);
             _drawLargeCoachBanner(dc, bannerX, bannerY, bannerW, bannerH);
         } else {
@@ -1192,18 +1193,15 @@ class MarathonCoachField extends Ui.DataField {
 
         var borderColor = _getLargeBannerBorderColor(_cardVariant);
         var borderInset = _clamp(bannerH / 9, 5, 9);
-        var bannerCorner = _clamp(bannerH / 5, 4, 10);
-        var maxBannerCorner = _max((_min(bannerW, bannerH) / 2) - 1, 2);
-        if (bannerCorner > maxBannerCorner) {
-            bannerCorner = maxBannerCorner;
-        }
+        var basePanelMarginX = (borderInset * 3) + _clamp(bannerW / 180, 1, 3);
+        var basePanelMarginY = _max(borderInset, 4);
+        var panelMarginX = ((basePanelMarginX * 3) + 1) / 2;
+        var panelMarginY = basePanelMarginY * 2;
 
         dc.setColor(borderColor, Gfx.COLOR_BLACK);
-        dc.fillRoundedRectangle(bannerX, bannerY, bannerW, bannerH, bannerCorner);
+        dc.fillRectangle(bannerX, bannerY, bannerW, bannerH);
 
         var bannerText = _getLargeBannerText();
-        var panelMarginX = (borderInset * 3) + _clamp(bannerW / 180, 1, 3);
-        var panelMarginY = _max(borderInset, 4);
         var panelW = bannerW - (panelMarginX * 2);
         var panelH = bannerH - (panelMarginY * 2);
         var panelFont = _resolveLargeBannerFont(dc, bannerText, panelW - 16);
@@ -1212,14 +1210,9 @@ class MarathonCoachField extends Ui.DataField {
         }
         var panelX = bannerX + panelMarginX;
         var panelY = bannerY + ((bannerH - panelH) / 2);
-        var panelCorner = _clamp(panelH / 10, 2, 5);
-        var maxPanelCorner = _max((_min(panelW, panelH) / 2) - 1, 2);
-        if (panelCorner > maxPanelCorner) {
-            panelCorner = maxPanelCorner;
-        }
 
         dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_BLACK);
-        dc.fillRoundedRectangle(panelX, panelY, panelW, panelH, panelCorner);
+        dc.fillRectangle(panelX, panelY, panelW, panelH);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
         dc.drawText(
             bannerX + (bannerW / 2),
