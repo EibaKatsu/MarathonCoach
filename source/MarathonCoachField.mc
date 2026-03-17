@@ -928,42 +928,54 @@ class MarathonCoachField extends Ui.DataField {
         var fuelCenterY = top + (row12Height / 2);
         _drawFuelMeter(dc, sizeClass, fuelCenterX, fuelCenterY, fuelRadius, fuelLabelFont, fuelTimeFont);
 
-        // Left col row2-3 span: coach card
-        var cardInset = _clamp((squareSize * 2) / 100, 2, 10);
-        var cardX = leftColX + cardInset;
-        var cardY = row1Y + cardInset;
-        var cardW = leftColW - (cardInset * 2);
-        var cardH = (row3Y - row1Y) - (cardInset * 2);
-        var cardCorner = _clamp(cardW / 7, 8, 24);
-        var maxCardCorner = _max((_min(cardW, cardH) / 2) - 1, 2);
-        if (cardCorner > maxCardCorner) {
-            cardCorner = maxCardCorner;
-        }
-        try {
-            _drawCoachCardWithPng(dc, sizeClass, cardX, cardY, cardW, cardH, cardCorner);
-        } catch (e) {
-            _drawCoachCard(dc, sizeClass, cardX, cardY, cardW, cardH, cardCorner);
-        }
+        if (sizeClass == 2) {
+            _drawLargePaceBlock(dc, leftColX, row1Y, leftColW, rowHeight, paceFont);
 
-        // 3rd row right: pace
-        var paceY = row2Y;
-        var paceUnitY = CoachUtils.textYByRatio(row2Y, rowHeight, 86, dc.getFontHeight(Gfx.FONT_XTINY));
-        var paceUnitX = rightColX + rightColW - _clamp((rightColW * 4) / 100, 4, 12);
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
-        dc.drawText(
-            rightColX + (rightColW / 2),
-            paceY,
-            paceFont,
-            _paceNowText,
-            Gfx.TEXT_JUSTIFY_CENTER
-        );
-        dc.drawText(
-            paceUnitX,
-            paceUnitY,
-            Gfx.FONT_XTINY,
-            "/km",
-            Gfx.TEXT_JUSTIFY_RIGHT
-        );
+            var bannerInsetX = _clamp((squareSize * 2) / 100, 4, 10);
+            var bannerInsetY = _clamp((squareSize * 2) / 100, 3, 8);
+            var bannerX = left + bannerInsetX;
+            var bannerY = row2Y + bannerInsetY;
+            var bannerW = squareSize - (bannerInsetX * 2);
+            var bannerH = rowHeight - (bannerInsetY * 2);
+            _drawLargeCoachBanner(dc, bannerX, bannerY, bannerW, bannerH);
+        } else {
+            // Left col row2-3 span: coach card
+            var cardInset = _clamp((squareSize * 2) / 100, 2, 10);
+            var cardX = leftColX + cardInset;
+            var cardY = row1Y + cardInset;
+            var cardW = leftColW - (cardInset * 2);
+            var cardH = (row3Y - row1Y) - (cardInset * 2);
+            var cardCorner = _clamp(cardW / 7, 8, 24);
+            var maxCardCorner = _max((_min(cardW, cardH) / 2) - 1, 2);
+            if (cardCorner > maxCardCorner) {
+                cardCorner = maxCardCorner;
+            }
+            try {
+                _drawCoachCardWithPng(dc, sizeClass, cardX, cardY, cardW, cardH, cardCorner);
+            } catch (e) {
+                _drawCoachCard(dc, sizeClass, cardX, cardY, cardW, cardH, cardCorner);
+            }
+
+            // 3rd row right: pace
+            var paceY = row2Y;
+            var paceUnitY = CoachUtils.textYByRatio(row2Y, rowHeight, 86, dc.getFontHeight(Gfx.FONT_XTINY));
+            var paceUnitX = rightColX + rightColW - _clamp((rightColW * 4) / 100, 4, 12);
+            dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
+            dc.drawText(
+                rightColX + (rightColW / 2),
+                paceY,
+                paceFont,
+                _paceNowText,
+                Gfx.TEXT_JUSTIFY_CENTER
+            );
+            dc.drawText(
+                paceUnitX,
+                paceUnitY,
+                Gfx.FONT_XTINY,
+                "/km",
+                Gfx.TEXT_JUSTIFY_RIGHT
+            );
+        }
 
         // 4th row: DIST / TIME + GOAL / prediction delta
         var mergedY = CoachUtils.textYByRatio(row3Y, row4Height, 24, dc.getFontHeight(footerFont));
@@ -1157,6 +1169,101 @@ class MarathonCoachField extends Ui.DataField {
 
     function _drawCardSmallTextBold(dc as Gfx.Dc, x, y, font, text, textColor) {
         RenderUtils.drawCardSmallTextBold(dc, x, y, font, text, textColor);
+    }
+
+    function _drawLargePaceBlock(dc as Gfx.Dc, blockX, blockY, blockW, blockH, paceFont) {
+        var leftPad = _clamp((blockW * 10) / 100, 10, 20);
+        var paceX = blockX + leftPad;
+        var paceY = CoachUtils.textYByRatio(blockY, blockH, 56, dc.getFontHeight(paceFont));
+        var paceTextW = dc.getTextWidthInPixels(_paceNowText, paceFont);
+        var unitFont = Gfx.FONT_SMALL;
+        var unitX = paceX + paceTextW + _clamp(blockW / 40, 4, 8);
+        var unitY = CoachUtils.textYByRatio(blockY, blockH, 61, dc.getFontHeight(unitFont));
+
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
+        dc.drawText(paceX, paceY, paceFont, _paceNowText, Gfx.TEXT_JUSTIFY_LEFT);
+        dc.drawText(unitX, unitY, unitFont, "/km", Gfx.TEXT_JUSTIFY_LEFT);
+    }
+
+    function _drawLargeCoachBanner(dc as Gfx.Dc, bannerX, bannerY, bannerW, bannerH) {
+        if (bannerW < 20 or bannerH < 12) {
+            return;
+        }
+
+        var borderColor = _getCardBorderColor(_cardVariant);
+        var fillColor = _getCardGradientMidColor(_cardVariant);
+        var accentColor = _getCardTopBandColor(_cardVariant);
+        var bannerCorner = _clamp(bannerH / 4, 6, 14);
+        var maxBannerCorner = _max((_min(bannerW, bannerH) / 2) - 1, 2);
+        if (bannerCorner > maxBannerCorner) {
+            bannerCorner = maxBannerCorner;
+        }
+
+        dc.setColor(borderColor, Gfx.COLOR_BLACK);
+        dc.fillRoundedRectangle(bannerX, bannerY, bannerW, bannerH, bannerCorner);
+        dc.setColor(fillColor, Gfx.COLOR_BLACK);
+        dc.fillRoundedRectangle(bannerX + 2, bannerY + 2, bannerW - 4, bannerH - 4, _max(bannerCorner - 2, 2));
+
+        var accentH = _clamp(bannerH / 7, 2, 5);
+        dc.setColor(accentColor, Gfx.COLOR_BLACK);
+        dc.fillRectangle(bannerX + 2, bannerY + 2, bannerW - 4, accentH);
+
+        var bannerText = _getLargeBannerText();
+        var panelMarginX = _clamp((bannerW * 10) / 100, 16, 32);
+        var panelMaxW = bannerW - (panelMarginX * 2);
+        var panelFont = _resolveLargeBannerFont(dc, bannerText, panelMaxW - 20);
+        var panelTextW = dc.getTextWidthInPixels(bannerText, panelFont);
+        var panelPadX = _clamp((bannerW * 3) / 100, 10, 16);
+        var panelW = panelTextW + (panelPadX * 2);
+        if (panelW > panelMaxW) {
+            panelW = panelMaxW;
+        }
+        var panelH = bannerH - (_clamp((bannerH * 24) / 100, 5, 10) * 2);
+        if (panelH < (dc.getFontHeight(panelFont) + 6)) {
+            panelH = dc.getFontHeight(panelFont) + 6;
+        }
+        var panelX = bannerX + ((bannerW - panelW) / 2);
+        var panelY = bannerY + ((bannerH - panelH) / 2);
+        var panelCorner = _clamp(panelH / 5, 4, 10);
+        var maxPanelCorner = _max((_min(panelW, panelH) / 2) - 1, 2);
+        if (panelCorner > maxPanelCorner) {
+            panelCorner = maxPanelCorner;
+        }
+
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
+        dc.fillRoundedRectangle(panelX, panelY, panelW, panelH, panelCorner);
+        dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(
+            bannerX + (bannerW / 2),
+            panelY + ((panelH - dc.getFontHeight(panelFont)) / 2),
+            panelFont,
+            bannerText,
+            Gfx.TEXT_JUSTIFY_CENTER
+        );
+    }
+
+    function _getLargeBannerText() {
+        var lines = _getCardDisplayLines();
+        if (lines.size() == 0) {
+            return "";
+        }
+
+        var text = lines[0].toString();
+        for (var i = 1; i < lines.size(); i += 1) {
+            text += " " + lines[i].toString();
+        }
+        return text;
+    }
+
+    function _resolveLargeBannerFont(dc as Gfx.Dc, text, maxTextW) {
+        var candidates = [Gfx.FONT_LARGE, Gfx.FONT_MEDIUM, Gfx.FONT_SMALL, Gfx.FONT_TINY];
+        for (var i = 0; i < candidates.size(); i += 1) {
+            var font = candidates[i];
+            if (dc.getTextWidthInPixels(text, font) <= maxTextW) {
+                return font;
+            }
+        }
+        return Gfx.FONT_TINY;
     }
 
     function _getCardBgBitmapSmall(cardVariant) {
@@ -1493,8 +1600,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveFuelMeterLabelText() {
-        var raceProfile = _resolveRaceProfile();
-        if (raceProfile != RACE_PROFILE_FULL) {
+        if (!_isFullMarathonProfileForFuelLabel()) {
             return _fuelMeterPrimaryLabelText;
         }
         var uptimeSec = Math.floor(Sys.getTimer() / 1000.0);
@@ -1504,6 +1610,20 @@ class MarathonCoachField extends Ui.DataField {
             return _fuelMeterAltLabelText;
         }
         return _fuelMeterPrimaryLabelText;
+    }
+
+    function _isFullMarathonProfileForFuelLabel() {
+        if (_raceDistanceKm == null) {
+            return true;
+        }
+        if (_raceDistanceKm <= SHORT_DISTANCE_MAX_KM) {
+            return false;
+        }
+        var halfDelta = _raceDistanceKm - HALF_DISTANCE_KM;
+        if (halfDelta < 0) {
+            halfDelta = -halfDelta;
+        }
+        return halfDelta > HALF_DISTANCE_TOLERANCE_KM;
     }
 
     function _drawHeartRateGauge(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
