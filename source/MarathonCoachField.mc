@@ -21,7 +21,6 @@ class MarathonCoachField extends Ui.DataField {
     const KEY_TARGET_TIME_MINUTE = "target_time_minute";
     const KEY_CUSTOM_MODE_CODE = "custom_mode_code";
     const FUEL_INTERVAL_SEC = 35 * 60;
-    const HALF_FUEL_INTERVAL_SEC = 60 * 60;
     const LAP_DEBOUNCE_SEC = 20;
     const CARD_TOGGLE_SEC = 3;
     const DISTANCE_CARD_DISPLAY_SEC = 7;
@@ -749,9 +748,6 @@ class MarathonCoachField extends Ui.DataField {
                 CustomModeUtils.MIN_FUEL_INTERVAL_MIN * 60,
                 CustomModeUtils.MAX_FUEL_INTERVAL_MIN * 60
             );
-        }
-        if (_resolveRaceProfile() == RACE_PROFILE_HALF) {
-            return HALF_FUEL_INTERVAL_SEC;
         }
         return FUEL_INTERVAL_SEC;
     }
