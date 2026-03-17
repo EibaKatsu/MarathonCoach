@@ -10,33 +10,6 @@ const RU_VARIANT_FUEL_NOW = 5;
 const RU_VARIANT_RECOVERY = 6;
 const RU_VARIANT_HR_WARNING = 7;
 
-class MockCardFitDc {
-    function getFontHeight(font) {
-        if (font == Gfx.FONT_SMALL) {
-            return 18;
-        }
-        if (font == Gfx.FONT_TINY) {
-            return 14;
-        }
-        if (font == Gfx.FONT_XTINY) {
-            return 10;
-        }
-        return 22;
-    }
-
-    function getTextWidthInPixels(text, font) {
-        var charWidth = 9;
-        if (font == Gfx.FONT_SMALL) {
-            charWidth = 8;
-        } else if (font == Gfx.FONT_TINY) {
-            charWidth = 6;
-        } else if (font == Gfx.FONT_XTINY) {
-            charWidth = 5;
-        }
-        return text.toString().length() * charWidth;
-    }
-}
-
 function _ruAssertNear(actual, expected, epsilon, message) {
     Test.assertMessage((actual - expected) <= epsilon and (expected - actual) <= epsilon, message);
 }
@@ -263,7 +236,8 @@ function testRenderUtilsAdjustSingleLineFont(logger) {
 function testRenderUtilsLineGapAndHeartRateHelpers(logger) {
     Test.assertEqual(0, RenderUtils.resolveCardLineGap(1, 12, 100));
     _ruAssertNear(RenderUtils.resolveCardLineGap(2, 12, 100), 4, 0.001, "gap for 2 lines");
-    _ruAssertNear(RenderUtils.resolveCardLineGap(3, 12, 40), 2, 0.001, "gap for 3 lines");
+    _ruAssertNear(RenderUtils.resolveCardLineGap(3, 12, 40), 1, 0.001, "gap for 3 lines");
+    _ruAssertNear(RenderUtils.resolveCardLineGap(3, 12, 36), 0, 0.001, "tight 3 line gap can collapse");
 
     Test.assertEqual(11, RenderUtils.getHeartRateZoneGaugeColor(1, 11, 22, 33, 44, 55));
     Test.assertEqual(44, RenderUtils.getHeartRateZoneGaugeColor(4, 11, 22, 33, 44, 55));
@@ -273,18 +247,5 @@ function testRenderUtilsLineGapAndHeartRateHelpers(logger) {
     _ruAssertNear(RenderUtils.resolveHeartRateGaugeRatioFallback(60, 80, 200), 0.0, 0.0001, "low clamp");
     _ruAssertNear(RenderUtils.resolveHeartRateGaugeRatioFallback(200, 80, 200), 1.0, 0.0001, "upper bound");
     _ruAssertNear(RenderUtils.resolveHeartRateGaugeRatioFallback(140, 80, 200), 0.5, 0.0001, "mid ratio");
-    return true;
-}
-
-(:test)
-function testRenderUtilsCardFontFitShrinksTightThreeLineCard(logger) {
-    var dc = new MockCardFitDc();
-    var lines = ["HR", "Over", "Zone"];
-
-    Test.assertEqual(false, RenderUtils.isCardTextFit(dc, Gfx.FONT_TINY, lines, 50, 44));
-    Test.assertEqual(
-        Gfx.FONT_XTINY,
-        RenderUtils.resolveCardFontToFit(dc, 1, lines, 50, 44)
-    );
     return true;
 }

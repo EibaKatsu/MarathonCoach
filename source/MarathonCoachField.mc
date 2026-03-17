@@ -1034,14 +1034,7 @@ class MarathonCoachField extends Ui.DataField {
         var textAreaH = bodyH - textPadTop - textPadBottom;
         var textLeft = bodyX + _clamp((bodyW * 15) / 100, 10, 24);
         var textRight = bodyX + bodyW - _clamp((bodyW * 10) / 100, 8, 20);
-        var textAreaW = textRight - textLeft;
-        var cardFont = _resolveCardFontToFit(
-            dc,
-            sizeClass,
-            cardLines,
-            textAreaW,
-            _max(textAreaH - 2, 1)
-        );
+        var cardFont = _resolveCardFont(sizeClass, cardLineCount);
         cardFont = _adjustCardFontForSingleLineLimit(cardFont, cardLineCount, cardLines);
         var cardFontH = dc.getFontHeight(cardFont);
         if (textAreaH < cardFontH) {
@@ -1135,13 +1128,7 @@ class MarathonCoachField extends Ui.DataField {
         }
         var textAreaY = innerY + _clamp((innerH * 14) / 100, 5, 11);
         var textAreaH = innerH - (_clamp((innerH * 14) / 100, 5, 11) * 2);
-        var cardFont = _resolveCardFontToFit(
-            dc,
-            sizeClass,
-            cardLines,
-            textAreaW,
-            _max(textAreaH - 2, 1)
-        );
+        var cardFont = _resolveCardFont(sizeClass, cardLineCount);
         cardFont = _adjustCardFontForSingleLineLimit(cardFont, cardLineCount, cardLines);
         var fontH = dc.getFontHeight(cardFont);
         if (textAreaH < fontH) {
