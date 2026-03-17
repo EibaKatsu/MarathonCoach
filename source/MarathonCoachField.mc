@@ -1191,7 +1191,7 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         var borderColor = _getLargeBannerBorderColor(_cardVariant);
-        var borderInset = _clamp(bannerH / 10, 4, 8);
+        var borderInset = _clamp(bannerH / 9, 5, 9);
         var bannerCorner = _clamp(bannerH / 5, 4, 10);
         var maxBannerCorner = _max((_min(bannerW, bannerH) / 2) - 1, 2);
         if (bannerCorner > maxBannerCorner) {
@@ -1202,8 +1202,8 @@ class MarathonCoachField extends Ui.DataField {
         dc.fillRoundedRectangle(bannerX, bannerY, bannerW, bannerH, bannerCorner);
 
         var bannerText = _getLargeBannerText();
-        var panelMarginX = borderInset + _clamp(bannerW / 160, 1, 3);
-        var panelMarginY = _max(borderInset - 1, 2);
+        var panelMarginX = (borderInset * 3) + _clamp(bannerW / 180, 1, 3);
+        var panelMarginY = _max(borderInset, 4);
         var panelW = bannerW - (panelMarginX * 2);
         var panelH = bannerH - (panelMarginY * 2);
         var panelFont = _resolveLargeBannerFont(dc, bannerText, panelW - 16);
