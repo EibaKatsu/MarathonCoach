@@ -552,3 +552,44 @@ function testIsFuelCardEnabled_customModeFuelOff(logger) {
     Test.assertEqual(false, sut._isFuelCardEnabled());
     return true;
 }
+
+(:test)
+function testOnTimerLap_coreIgnoresEarlyLapReset(logger) {
+    var sut = _newCardFuelSut();
+    sut._customMode = CustomModeUtils.MODE_CORE;
+    sut._raceDistanceKm = 42.195;
+    sut._lastElapsedSec = 876; // 14:36 elapsed
+    sut._lastFuelTimeSec = 0;
+    sut._fuelDueTimeSec = 2100;
+    sut._fuelRemainingSec = 1224;
+    sut._fuelRemainingText = "20:24";
+
+    sut.onTimerLap();
+
+    Test.assertEqual(0, sut._lastFuelTimeSec);
+    Test.assertEqual(2100, sut._fuelDueTimeSec);
+    Test.assertEqual(1224, sut._fuelRemainingSec);
+    Test.assertMessage(sut._lastLapResetSec == null, "early lap should not set reset sec");
+    return true;
+}
+
+(:test)
+function testOnTimerLap_coreAcceptsLapResetNearFuelCue(logger) {
+    var sut = _newCardFuelSut();
+    sut._customMode = CustomModeUtils.MODE_CORE;
+    sut._raceDistanceKm = 42.195;
+    sut._lastElapsedSec = 1985; // 1:55 before due
+    sut._lastFuelTimeSec = 0;
+    sut._fuelDueTimeSec = 2100;
+    sut._fuelRemainingSec = 115;
+    sut._fuelRemainingText = "1:55";
+
+    sut.onTimerLap();
+
+    Test.assertEqual(1985, sut._lastFuelTimeSec);
+    Test.assertEqual(4085, sut._fuelDueTimeSec);
+    Test.assertEqual(2100, sut._fuelRemainingSec);
+    Test.assertEqual("35:00", sut._fuelRemainingText);
+    Test.assertEqual(1985, sut._lastLapResetSec);
+    return true;
+}

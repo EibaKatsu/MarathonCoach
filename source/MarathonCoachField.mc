@@ -580,6 +580,10 @@ class MarathonCoachField extends Ui.DataField {
                 return;
             }
             var customIntervalSec = _resolveFuelIntervalSec();
+            if (!_shouldAcceptFuelLapReset(_lastElapsedSec, customIntervalSec)) {
+                _logLapDiag("reject", "custom_too_early", _lastElapsedSec, customIntervalSec);
+                return;
+            }
             _lastFuelTimeSec = _lastElapsedSec;
             _fuelDueTimeSec = _lastFuelTimeSec + customIntervalSec;
             _fuelRemainingSec = customIntervalSec;
@@ -597,6 +601,10 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         var coreIntervalSec = _resolveFuelIntervalSec();
+        if (!_shouldAcceptFuelLapReset(_lastElapsedSec, coreIntervalSec)) {
+            _logLapDiag("reject", "core_too_early", _lastElapsedSec, coreIntervalSec);
+            return;
+        }
         _lastFuelTimeSec = _lastElapsedSec;
         _fuelDueTimeSec = _lastFuelTimeSec + coreIntervalSec;
         _fuelRemainingSec = coreIntervalSec;
@@ -624,6 +632,35 @@ class MarathonCoachField extends Ui.DataField {
             " fuelDisp=" + _factValue(_fuelDisplayMode) +
             " fuelText=" + _factValue(_fuelRemainingText);
         Sys.println(line);
+    }
+
+    function _shouldAcceptFuelLapReset(elapsedSec, intervalSec) {
+        if (elapsedSec == null or intervalSec == null or intervalSec <= 0) {
+            return false;
+        }
+
+        var anchorSec = _lastFuelTimeSec;
+        if (anchorSec == null) {
+            if (_isCustomModeEnabled()) {
+                anchorSec = _resolveFuelInitialAnchorSec(intervalSec);
+            } else {
+                anchorSec = 0;
+            }
+        } else if (elapsedSec < anchorSec) {
+            if (_isCustomModeEnabled()) {
+                anchorSec = _resolveFuelInitialAnchorSec(intervalSec);
+            } else {
+                anchorSec = 0;
+            }
+        }
+
+        var dueSec = anchorSec + intervalSec;
+        var remainingSec = dueSec - elapsedSec;
+        if (remainingSec <= 0) {
+            return true;
+        }
+
+        return remainingSec <= _resolveFuelToggleLeadSec();
     }
 
     function onUpdate(dc as Gfx.Dc) {
