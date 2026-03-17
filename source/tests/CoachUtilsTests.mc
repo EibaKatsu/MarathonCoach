@@ -201,7 +201,7 @@ function testHeartRateGaugeRatioForHeartRate_usesZoneBoundaries(logger) {
     sut._currentHeartRateZone = null;
     _assertFloatNear(
         sut._resolveHeartRateGaugeRatio(),
-        0.5,
+        0.4167,
         0.0001,
         "fallback ratio should use generic min/max range"
     );

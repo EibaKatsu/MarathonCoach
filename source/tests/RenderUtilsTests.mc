@@ -97,7 +97,7 @@ function testRenderUtilsCardBitmapSelection(logger) {
 (:test)
 function testRenderUtilsCardColorPalette(logger) {
     Test.assertEqual(
-        0x56728F,
+        0x4F7D76,
         RenderUtils.getCardBorderColor(
             RU_VARIANT_WARMUP,
             RU_VARIANT_WARMUP,
@@ -123,7 +123,7 @@ function testRenderUtilsCardColorPalette(logger) {
         )
     );
     Test.assertEqual(
-        0x22415F,
+        0x283139,
         RenderUtils.getCardGradientMidColor(
             999,
             RU_VARIANT_WARMUP,
@@ -149,7 +149,7 @@ function testRenderUtilsCardColorPalette(logger) {
         )
     );
     Test.assertEqual(
-        0x79AAB9,
+        0x7BC1A6,
         RenderUtils.getCardSheenColor(
             RU_VARIANT_RECOVERY,
             RU_VARIANT_WARMUP,

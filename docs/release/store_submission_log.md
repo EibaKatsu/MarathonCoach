@@ -2,9 +2,9 @@
 
 ## 申請レコード
 - ステータス: `未提出`
-- 実施日: `2026-03-14`
+- 実施日: `2026-03-17`
 - 申請種別: `BETA`
-- 申請バージョン: `0.0.1`
+- 申請バージョン: `0.0.2`
 - 担当: `自分`
 - 申請ID: `TBD`
 
@@ -17,8 +17,8 @@
 - 設定方法説明ベース: `tasks/03-1_store-assets/draft.md`
 
 ## 添付ファイル
-- `.iq`: `bin/releases/0.0.1/marathoncoach.iq`
-- ビルド記録: `bin/releases/0.0.1/BUILD.md`
+- `.iq`: `bin/releases/0.0.2/marathoncoach.iq`
+- ビルド記録: `bin/releases/0.0.2/BUILD.md`
 - アイコン: `assets/icon_output/launcher_icon_512.png`
 - カバー画像: `assets/store_shots/cover_beta.png`
 - スクリーンショット:
@@ -26,6 +26,7 @@
   - `assets/store_shots/shot02_one_screen.jpg`
   - `assets/store_shots/shot03_fuel_alerts.jpg`
   - `assets/store_shots/shot04_three_settings.jpg`
+- RELEASEノート: `docs/release/release_notes_0.0.2.md`
 
 ## 公開 URL
 - サポート窓口: `TBD`

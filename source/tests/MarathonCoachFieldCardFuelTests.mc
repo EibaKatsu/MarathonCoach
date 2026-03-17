@@ -491,7 +491,7 @@ function testUpdateFuelTimer_fullRaceCountdownAndDue(logger) {
 }
 
 (:test)
-function testUpdateFuelTimer_halfRaceUses60MinInterval(logger) {
+function testUpdateFuelTimer_halfRaceUses35MinInterval(logger) {
     var sut = _newCardFuelSut();
     sut._raceDistanceKm = 21.0975;
     sut._lastFuelTimeSec = 0;
@@ -499,9 +499,9 @@ function testUpdateFuelTimer_halfRaceUses60MinInterval(logger) {
     sut._testElapsedSec = 1000;
     sut._updateFuelTimer(null);
     Test.assertEqual(TEST_FUEL_DISPLAY_COUNTDOWN, sut._fuelDisplayMode);
-    Test.assertEqual(2600, sut._fuelRemainingSec);
+    Test.assertEqual(1100, sut._fuelRemainingSec);
 
-    sut._testElapsedSec = 3600;
+    sut._testElapsedSec = 2100;
     sut._updateFuelTimer(null);
     Test.assertEqual(TEST_FUEL_DISPLAY_DUE, sut._fuelDisplayMode);
     Test.assertEqual(0, sut._fuelRemainingSec);
