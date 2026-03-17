@@ -1028,12 +1028,22 @@ class MarathonCoachField extends Ui.DataField {
 
         var cardLines = _getCardDisplayLines();
         var cardLineCount = cardLines.size();
-        var cardFont = _resolveCardFont(sizeClass, cardLineCount);
-        var cardFontH = dc.getFontHeight(cardFont);
         var textPadTop = _clamp((bodyH * 14) / 100, 6, 16);
         var textPadBottom = _clamp((bodyH * 14) / 100, 6, 16);
         var textAreaY = bodyY + textPadTop;
         var textAreaH = bodyH - textPadTop - textPadBottom;
+        var textLeft = bodyX + _clamp((bodyW * 15) / 100, 10, 24);
+        var textRight = bodyX + bodyW - _clamp((bodyW * 10) / 100, 8, 20);
+        var textAreaW = textRight - textLeft;
+        var cardFont = _resolveCardFontToFit(
+            dc,
+            sizeClass,
+            cardLines,
+            textAreaW,
+            _max(textAreaH - 2, 1)
+        );
+        cardFont = _adjustCardFontForSingleLineLimit(cardFont, cardLineCount, cardLines);
+        var cardFontH = dc.getFontHeight(cardFont);
         if (textAreaH < cardFontH) {
             textAreaY = bodyY + _clamp((bodyH - cardFontH) / 2, 1, bodyH);
             textAreaH = cardFontH;
@@ -1042,8 +1052,6 @@ class MarathonCoachField extends Ui.DataField {
         var cardGap = _resolveCardLineGap(cardLineCount, cardFontH, textAreaH);
         var textTotalH = (cardFontH * cardLineCount) + (cardGap * (cardLineCount - 1));
         var cardLineY = textAreaY + _max((textAreaH - textTotalH) / 2, 0);
-        var textLeft = bodyX + _clamp((bodyW * 15) / 100, 10, 24);
-        var textRight = bodyX + bodyW - _clamp((bodyW * 10) / 100, 8, 20);
         var textCenterX = textLeft + ((textRight - textLeft) / 2);
 
         dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
@@ -1127,7 +1135,13 @@ class MarathonCoachField extends Ui.DataField {
         }
         var textAreaY = innerY + _clamp((innerH * 14) / 100, 5, 11);
         var textAreaH = innerH - (_clamp((innerH * 14) / 100, 5, 11) * 2);
-        var cardFont = _resolveCardFont(sizeClass, cardLineCount);
+        var cardFont = _resolveCardFontToFit(
+            dc,
+            sizeClass,
+            cardLines,
+            textAreaW,
+            _max(textAreaH - 2, 1)
+        );
         cardFont = _adjustCardFontForSingleLineLimit(cardFont, cardLineCount, cardLines);
         var fontH = dc.getFontHeight(cardFont);
         if (textAreaH < fontH) {

@@ -424,7 +424,7 @@ module RenderUtils {
         return desiredGap;
     }
 
-    function resolveCardFontToFit(dc as Gfx.Dc, sizeClass, cardLines as Lang.Array, textAreaW, textAreaH) {
+    function resolveCardFontToFit(dc, sizeClass, cardLines as Lang.Array, textAreaW, textAreaH) {
         var candidates = [];
         if (sizeClass == 2) {
             candidates = [Gfx.FONT_MEDIUM, Gfx.FONT_SMALL, Gfx.FONT_TINY, Gfx.FONT_XTINY];
@@ -444,16 +444,17 @@ module RenderUtils {
         return candidates[candidates.size() - 1];
     }
 
-    function isCardTextFit(dc as Gfx.Dc, font, cardLines as Lang.Array, textAreaW, textAreaH) as Lang.Boolean {
+    function isCardTextFit(dc, font, cardLines as Lang.Array, textAreaW, textAreaH) as Lang.Boolean {
         if (textAreaW <= 0 or textAreaH <= 0) {
             return false;
         }
 
         var lineCount = cardLines.size();
         var fontH = dc.getFontHeight(font);
-        var minTotalH = fontH * lineCount;
+        var outlinePad = 2;
+        var minTotalH = (fontH * lineCount) + outlinePad;
         if (lineCount > 1) {
-            minTotalH += (lineCount - 1);
+            minTotalH += resolveCardLineGap(lineCount, fontH, textAreaH) * (lineCount - 1);
         }
         if (minTotalH > textAreaH) {
             return false;
@@ -466,7 +467,7 @@ module RenderUtils {
             }
             var lineW = dc.getTextWidthInPixels(line, font);
             // Keep headroom for bold stroke around text.
-            if ((lineW + 2) > textAreaW) {
+            if ((lineW + 4) > textAreaW) {
                 return false;
             }
         }

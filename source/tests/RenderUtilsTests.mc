@@ -10,6 +10,33 @@ const RU_VARIANT_FUEL_NOW = 5;
 const RU_VARIANT_RECOVERY = 6;
 const RU_VARIANT_HR_WARNING = 7;
 
+class MockCardFitDc {
+    function getFontHeight(font) {
+        if (font == Gfx.FONT_SMALL) {
+            return 18;
+        }
+        if (font == Gfx.FONT_TINY) {
+            return 14;
+        }
+        if (font == Gfx.FONT_XTINY) {
+            return 10;
+        }
+        return 22;
+    }
+
+    function getTextWidthInPixels(text, font) {
+        var charWidth = 9;
+        if (font == Gfx.FONT_SMALL) {
+            charWidth = 8;
+        } else if (font == Gfx.FONT_TINY) {
+            charWidth = 6;
+        } else if (font == Gfx.FONT_XTINY) {
+            charWidth = 5;
+        }
+        return text.toString().length() * charWidth;
+    }
+}
+
 function _ruAssertNear(actual, expected, epsilon, message) {
     Test.assertMessage((actual - expected) <= epsilon and (expected - actual) <= epsilon, message);
 }
@@ -246,5 +273,18 @@ function testRenderUtilsLineGapAndHeartRateHelpers(logger) {
     _ruAssertNear(RenderUtils.resolveHeartRateGaugeRatioFallback(60, 80, 200), 0.0, 0.0001, "low clamp");
     _ruAssertNear(RenderUtils.resolveHeartRateGaugeRatioFallback(200, 80, 200), 1.0, 0.0001, "upper bound");
     _ruAssertNear(RenderUtils.resolveHeartRateGaugeRatioFallback(140, 80, 200), 0.5, 0.0001, "mid ratio");
+    return true;
+}
+
+(:test)
+function testRenderUtilsCardFontFitShrinksTightThreeLineCard(logger) {
+    var dc = new MockCardFitDc();
+    var lines = ["HR", "Over", "Zone"];
+
+    Test.assertEqual(false, RenderUtils.isCardTextFit(dc, Gfx.FONT_TINY, lines, 50, 44));
+    Test.assertEqual(
+        Gfx.FONT_XTINY,
+        RenderUtils.resolveCardFontToFit(dc, 1, lines, 50, 44)
+    );
     return true;
 }
