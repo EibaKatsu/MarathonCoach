@@ -1225,7 +1225,7 @@ class MarathonCoachField extends Ui.DataField {
 
     function _getLargeBannerBorderColor(cardVariant) {
         if (cardVariant == CARD_VARIANT_WARMUP) {
-            return 0x67A9DA;
+            return 0x55C3AA;
         }
         if (cardVariant == CARD_VARIANT_ACTION_PUSH) {
             return 0x4CC3FF;
@@ -1240,12 +1240,12 @@ class MarathonCoachField extends Ui.DataField {
             return 0xFF4F64;
         }
         if (cardVariant == CARD_VARIANT_RECOVERY) {
-            return 0x47D0BE;
+            return 0x49DB8F;
         }
         if (cardVariant == CARD_VARIANT_HR_WARNING) {
             return 0xFF5A3B;
         }
-        return 0x58AEE1;
+        return 0xA6B2BC;
     }
 
     function _getLargeBannerText() {
