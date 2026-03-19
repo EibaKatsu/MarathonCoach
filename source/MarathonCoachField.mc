@@ -1673,7 +1673,7 @@ class MarathonCoachField extends Ui.DataField {
             valueBottomAllowance = _clamp(areaH / 10, 3, 6);
             rightMargin = _clamp(areaW / 14, 6, 10);
             capLabelFont = Gfx.FONT_XTINY;
-            capValueFont = Gfx.FONT_TINY;
+            capValueFont = Gfx.FONT_SMALL;
         } else if (sizeClass == 0) {
             valueFont = Gfx.FONT_SMALL;
             capLabelFont = Gfx.FONT_XTINY;
