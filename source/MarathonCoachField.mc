@@ -1659,9 +1659,15 @@ class MarathonCoachField extends Ui.DataField {
     function _drawHeartRateGauge(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
         var valueFont = Gfx.FONT_MEDIUM;
         var capFont = Gfx.FONT_XTINY;
+        var verticalShift = 0;
+        var capVerticalShift = 0;
         if (sizeClass == 2) {
             valueFont = Gfx.FONT_LARGE;
             capFont = Gfx.FONT_XTINY;
+        } else if (sizeClass == 1) {
+            capFont = Gfx.FONT_TINY;
+            verticalShift = _clamp(areaH / 14, 1, 3);
+            capVerticalShift = verticalShift + 1;
         } else if (sizeClass == 0) {
             valueFont = Gfx.FONT_SMALL;
             capFont = Gfx.FONT_XTINY;
@@ -1734,10 +1740,6 @@ class MarathonCoachField extends Ui.DataField {
         if (heartX < contentX) {
             heartX = contentX;
         }
-        var heartY = valueY + Math.floor((valueHeight - heartSize) / 2) + 1;
-        if (heartY < areaY) {
-            heartY = areaY;
-        }
         var capX = valueRightX - capTextWidth;
         if (capX < contentX) {
             capX = contentX;
@@ -1756,6 +1758,16 @@ class MarathonCoachField extends Ui.DataField {
             if (capY < areaY) {
                 capY = areaY;
             }
+        }
+        if (verticalShift > 0) {
+            valueY = _min(valueY + verticalShift, areaY + areaH - 1);
+        }
+        if (capVerticalShift > 0) {
+            capY = _min(capY + capVerticalShift, valueY - 1);
+        }
+        var heartY = valueY + Math.floor((valueHeight - heartSize) / 2) + 1;
+        if (heartY < areaY) {
+            heartY = areaY;
         }
 
         dc.setColor(valueColor, Gfx.COLOR_TRANSPARENT);
