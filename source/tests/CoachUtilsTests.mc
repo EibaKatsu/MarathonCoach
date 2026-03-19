@@ -1,4 +1,5 @@
 using Toybox.Test;
+using Toybox.System as Sys;
 
 class MarathonCoachFieldUtilsHarness extends MarathonCoachField {
     function initialize() {
@@ -136,15 +137,16 @@ function testBuildGoalDeltaText_usesMinuteDeltaLabels(logger) {
     sut._targetTimeSec = 6600;
     sut._predictionWaitingText = "waiting";
     sut._predictionOnPaceText = "on pace";
-    sut._predictionAheadSuffixText = " min ahead";
-    sut._predictionBehindSuffixText = " min behind";
+    sut._predictionAheadSuffixText = "min.";
+    sut._predictionBehindSuffixText = "min.";
+    sut._predictionSystemLanguage = Sys.LANGUAGE_ENG;
 
     var onPaceText = sut._buildGoalDeltaText(6577);
     var aheadText = sut._buildGoalDeltaText(6395);
     var behindText = sut._buildGoalDeltaText(6780);
     Test.assertEqual("1:50(on pace)", onPaceText);
-    Test.assertEqual("1:47(3 min ahead)", aheadText);
-    Test.assertEqual("1:53(3 min behind)", behindText);
+    Test.assertEqual("1:47(-3min.)", aheadText);
+    Test.assertEqual("1:53(+3min.)", behindText);
     return true;
 }
 
