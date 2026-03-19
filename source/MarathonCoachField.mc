@@ -1666,7 +1666,7 @@ class MarathonCoachField extends Ui.DataField {
             capFont = Gfx.FONT_XTINY;
         } else if (sizeClass == 1) {
             capFont = Gfx.FONT_TINY;
-            verticalShift = _clamp(areaH / 14, 1, 3);
+            verticalShift = _clamp(areaH / 8, 3, 6);
             capVerticalShift = verticalShift + 1;
         } else if (sizeClass == 0) {
             valueFont = Gfx.FONT_SMALL;
