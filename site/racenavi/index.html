@@ -3,130 +3,137 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Race Navi | レース中に迷わないためのランニングガイド</title>
+    <title>Race Navi | レースの判断を、ひと目で。</title>
     <meta
       name="description"
-      content="Race Navi は、目標タイムに合わせたペース判断と補給タイミングの通知で、市民ランナーのレース中の迷いを減らす Garmin Connect IQ データフィールドです。"
+      content="Race Navi は、ペース・心拍・補給タイミングを 1 画面にまとめ、レース中の迷いを減らす Garmin Connect IQ データフィールドです。"
     >
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
     <div class="page-shell" id="top">
-      <header class="hero">
-        <p class="eyebrow">Garmin Connect IQ Data Field</p>
-        <div class="hero-grid">
-          <section class="hero-copy">
-            <span class="hero-badge">BETA PREVIEW</span>
-            <h1>レース中に迷わない。<br>目標達成に集中できる。</h1>
+      <header class="site-header">
+        <a class="brand" href="#top">Race Navi</a>
+        <nav class="site-nav" aria-label="Primary">
+          <a href="#concept">コンセプト</a>
+          <a href="#features">機能</a>
+          <a href="#modes">2つの提供形態</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow">Garmin Connect IQ Data Field</p>
+            <span class="hero-badge">NORMAL EDITION PREVIEW</span>
+            <h1>レースの判断を、<br>ひと目で。</h1>
             <p class="hero-lead">
-              Race Navi は、ペースの迷い・補給忘れ・失速の兆候をひとつの画面で受け止め、
-              次の一手を短い言葉で返すランナー向けガイドです。
+              Race Navi は、ペースの迷い、補給の後回し、崩れの見逃しを
+              ひとつの画面で受け止めるランナー向けガイドです。
             </p>
+            <div class="hero-points" aria-label="Race Navi highlights">
+              <p>1画面で判断材料を集約</p>
+              <p>ACTION と FUEL を短文で提示</p>
+              <p>設定は距離と目標タイムだけ</p>
+            </div>
             <div class="hero-actions">
               <a class="button button-primary" href="#features">できることを見る</a>
               <a class="button button-secondary" href="#modes">通常版とカスタム版</a>
             </div>
-          </section>
-
-          <aside class="watch-card" aria-label="Race Navi preview">
-            <div class="watch-frame">
-              <div class="watch-screen">
-                <div class="screen-top">
-                  <span>10km</span>
-                  <span>01:06:25</span>
-                </div>
-                <div class="coach-pill">ACTION: そのまま</div>
-                <div class="metric-stack">
-                  <div>
-                    <p class="metric-label">いまのぺーす</p>
-                    <p class="metric-value">5:08<span>/km</span></p>
-                  </div>
-                  <div>
-                    <p class="metric-label">心拍ZONE</p>
-                    <p class="metric-sub">上限まで +4 bpm</p>
-                  </div>
-                </div>
-                <div class="fuel-banner">次の補給まで 03:20</div>
-              </div>
-            </div>
-            <p class="watch-caption">
-              数値を並べるのではなく、レース中に迷わないための判断材料を一画面に整理します。
-            </p>
-          </aside>
-        </div>
-      </header>
-
-      <main>
-        <section class="section problem">
-          <div class="section-heading">
-            <p class="section-kicker">Why Race Navi</p>
-            <h2>レースの失速は、体力だけでなく判断の遅れから始まる。</h2>
           </div>
-          <div class="problem-grid">
+
+          <div class="hero-visual" aria-label="Race Navi cover image">
+            <div class="hero-card">
+              <img
+                class="hero-image"
+                src="./assets/cover_normal2.png"
+                alt="Race Navi のカバーイメージ。ランナー向けの 1 画面ガイドと主要機能を紹介。"
+              >
+              <div class="hero-note hero-note-top">PACE / HR / FUEL を一画面で整理</div>
+              <div class="hero-note hero-note-bottom">公開版は迷わないための最小構成に絞って提供</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section concept" id="concept">
+          <div class="section-heading">
+            <p class="section-kicker">Concept</p>
+            <h2>数値を増やすのではなく、次の一手に変える。</h2>
+            <p>
+              Race Navi が目指しているのは、レース中の情報量を増やすことではありません。
+              見るべきものを絞り、走りながら判断しやすい形にして返すことです。
+            </p>
+          </div>
+          <div class="concept-grid">
             <article>
-              <h3>ペース迷子</h3>
-              <p>少し速いのか、少し落とすべきか。その迷いが集中力を削ります。</p>
+              <h3>ペース迷子を防ぐ</h3>
+              <p>少し上げるか、少し落とすか。その迷いを ACTION 表示で短く返します。</p>
             </article>
             <article>
-              <h3>補給忘れ</h3>
-              <p>考えることが多いほど、補給の判断は後回しになりがちです。</p>
+              <h3>補給忘れを防ぐ</h3>
+              <p>考えることが増える後半ほど、補給通知を先回りで受け取れます。</p>
             </article>
             <article>
-              <h3>崩れの見逃し</h3>
-              <p>心拍やドリフトの兆候に早めに気づけると、後半の失速を抑えやすくなります。</p>
+              <h3>失速の兆しを早めに拾う</h3>
+              <p>心拍ゾーンとドリフトの見立てを添えて、無理な押し込みを避けやすくします。</p>
             </article>
           </div>
         </section>
 
-        <section class="section" id="features">
+        <section class="section features" id="features">
           <div class="section-heading">
             <p class="section-kicker">Core Features</p>
-            <h2>公開版は、レース中に本当に必要な5つに絞っています。</h2>
+            <h2>公開版は、レース中に必要な判断をこの 5 つへ集約します。</h2>
           </div>
           <div class="feature-grid">
             <article class="feature-card">
+              <span class="feature-index">01</span>
               <h3>ACTIONカード</h3>
-              <p>「ちょい上げ」「ちょい落とし」「そのまま」を短文で表示。次の一手がすぐ分かります。</p>
+              <p>「ちょい上げ」「ちょい落とし」「そのまま」を短文で表示し、次の判断をすぐ返します。</p>
             </article>
             <article class="feature-card">
+              <span class="feature-index">02</span>
               <h3>補給通知</h3>
-              <p>通常版は 35 分ごとを基準に通知。フル・ハーフ・10K・5K で必要な頻度だけ案内します。</p>
+              <p>通常版は 35 分ごとを基準に通知。レース距離に応じて必要な頻度だけ案内します。</p>
             </article>
             <article class="feature-card">
+              <span class="feature-index">03</span>
               <h3>心拍ZONE上限</h3>
-              <p>Garmin の心拍ゾーンを使い、今どこまで余裕があるかをシンプルに把握できます。</p>
+              <p>Garmin の心拍ゾーンをもとに、今どこまで余裕があるかを一目で把握できます。</p>
             </article>
             <article class="feature-card">
+              <span class="feature-index">04</span>
               <h3>距離通知</h3>
-              <p>1km ごとの進捗に加え、種目ごとの節目で距離カードを表示します。</p>
+              <p>1km ごとの進捗に加え、種目ごとの節目で距離カードを表示して集中を切らしません。</p>
             </article>
             <article class="feature-card">
+              <span class="feature-index">05</span>
               <h3>ドリフト検知</h3>
-              <p>後半の崩れにつながる兆候を早めに捉え、無理な押し込みを避けやすくします。</p>
+              <p>後半の崩れにつながる変化を早めに捉え、無理なオーバーペースを避けやすくします。</p>
             </article>
           </div>
         </section>
 
-        <section class="section timeline">
+        <section class="section flow">
           <div class="section-heading">
             <p class="section-kicker">Runner Flow</p>
-            <h2>使い方はシンプルです。</h2>
+            <h2>使い方は、レース前もレース中もシンプルです。</h2>
           </div>
-          <div class="timeline-grid">
+          <div class="flow-grid">
             <article>
               <span>01</span>
               <h3>距離と目標タイムを入れる</h3>
-              <p>通常版の設定は 2 つだけ。レース前の準備が増えません。</p>
+              <p>通常版の設定は 2 項目だけ。準備の手間を増やさずに使い始められます。</p>
             </article>
             <article>
               <span>02</span>
-              <h3>レース中は 1 画面を見る</h3>
-              <p>ペース、心拍、補給の判断材料がまとまっているので、視線移動を減らせます。</p>
+              <h3>レース中は 1 画面だけ見る</h3>
+              <p>ペース、心拍、補給の判断材料をまとめているので、視線移動を減らせます。</p>
             </article>
             <article>
               <span>03</span>
-              <h3>迷ったらカードに従う</h3>
-              <p>走りながら考え込まず、短いアクション表示をきっかけに判断できます。</p>
+              <h3>迷ったら短文ガイドに従う</h3>
+              <p>考え込みすぎず、短い表示をきっかけにリズムを整えながら走れます。</p>
             </article>
           </div>
         </section>
@@ -134,25 +141,25 @@
         <section class="section modes" id="modes">
           <div class="section-heading">
             <p class="section-kicker">Two Modes</p>
-            <h2>通常版で迷いを減らし、必要ならカスタム版で自分向けに寄せる。</h2>
+            <h2>まずは通常版で迷いを減らし、必要ならカスタム版で自分向けに寄せる。</h2>
           </div>
           <div class="modes-grid">
             <article class="mode-card">
               <p class="mode-label">通常版</p>
-              <h3>まずは迷わないための土台を作る</h3>
+              <h3>公開版の最小構成で、すぐ使い始める</h3>
               <ul>
                 <li>距離と目標タイムの 2 項目だけ設定</li>
-                <li>ACTION / FUEL / 距離通知をひとつの画面に集約</li>
+                <li>ACTION / FUEL / 距離通知を 1 画面に集約</li>
                 <li>市民ランナー向けの標準設計</li>
               </ul>
             </article>
             <article class="mode-card mode-card-accent">
               <p class="mode-label">カスタム版</p>
-              <h3>自分の傾向に合わせて、さらに迷いを減らす</h3>
+              <h3>自分の傾向に合わせて、判断の精度をさらに寄せる</h3>
               <ul>
                 <li>FIT 分析やヒアリングを前提に個別調整</li>
-                <li>補給や心拍の感度を自分用に寄せられる</li>
-                <li>将来的な申込導線をここへ集約予定</li>
+                <li>補給や心拍の感度を自分用に最適化</li>
+                <li>今後の申込導線をこのページへ集約予定</li>
               </ul>
             </article>
           </div>
@@ -161,10 +168,10 @@
         <section class="section callout" id="contact">
           <div class="callout-box">
             <p class="section-kicker">Now Preparing</p>
-            <h2>このページは、公開に向けたプレビュー版です。</h2>
+            <h2>このページは、公開に向けた通常版 LP のプレビューです。</h2>
             <p>
-              次の段階では、Connect IQ Store への導線、カスタム版の申込導線、
-              実機スクリーンショットを追加して公開用に整えます。
+              次の段階では、Connect IQ Store への導線、対応機種の整理、
+              実機スクリーンショットを追加して公開用の情報を仕上げます。
             </p>
             <a class="button button-primary" href="#top">ページ先頭へ戻る</a>
           </div>
