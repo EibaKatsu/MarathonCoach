@@ -1661,13 +1661,15 @@ class MarathonCoachField extends Ui.DataField {
         var capFont = Gfx.FONT_XTINY;
         var verticalShift = 0;
         var capVerticalShift = 0;
+        var valueBottomAllowance = 0;
+        var rightMargin = 0;
         if (sizeClass == 2) {
             valueFont = Gfx.FONT_LARGE;
             capFont = Gfx.FONT_XTINY;
         } else if (sizeClass == 1) {
-            capFont = Gfx.FONT_TINY;
-            verticalShift = _clamp(areaH / 8, 3, 6);
-            capVerticalShift = verticalShift + 1;
+            verticalShift = _clamp(areaH / 6, 6, 10);
+            valueBottomAllowance = _clamp(areaH / 10, 3, 6);
+            rightMargin = _clamp(areaW / 14, 6, 10);
         } else if (sizeClass == 0) {
             valueFont = Gfx.FONT_SMALL;
             capFont = Gfx.FONT_XTINY;
@@ -1701,6 +1703,9 @@ class MarathonCoachField extends Ui.DataField {
             contentX = areaX;
             contentW = areaW;
         }
+        if (rightMargin > 0 and contentW > rightMargin) {
+            contentW -= rightMargin;
+        }
         var heartBitmap = _getHeartStatusBitmap(gaugeState, sizeClass);
         var heartSize = valueHeight - 1;
         if (heartBitmap != null) {
@@ -1727,7 +1732,7 @@ class MarathonCoachField extends Ui.DataField {
         if (valueY <= capY) {
             valueY = capY + capHeight - _clamp(valueHeight / 3, 1, 5);
         }
-        var maxValueY = areaY + areaH - valueHeight;
+        var maxValueY = areaY + areaH - valueHeight + valueBottomAllowance;
         if (valueY > maxValueY) {
             valueY = maxValueY;
         }
@@ -1760,7 +1765,7 @@ class MarathonCoachField extends Ui.DataField {
             }
         }
         if (verticalShift > 0) {
-            valueY = _min(valueY + verticalShift, areaY + areaH - 1);
+            valueY = _min(valueY + verticalShift, maxValueY);
         }
         if (capVerticalShift > 0) {
             capY = _min(capY + capVerticalShift, valueY - 1);
