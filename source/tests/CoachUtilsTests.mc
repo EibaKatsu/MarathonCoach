@@ -149,15 +149,17 @@ function testBuildGoalDeltaText_usesMinuteDeltaLabels(logger) {
 }
 
 (:test)
-function testHeartRateCapText_reflectsSizeClassAndFallback(logger) {
+function testHeartRateCapText_reflectsLabelAndFallback(logger) {
     var sut = _newUtilsSut();
 
-    Test.assertEqual("cap --", sut._resolveHeartRateCapText(1));
-    Test.assertEqual("cap--", sut._resolveHeartRateCapText(0));
+    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(1));
+    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(0));
+    Test.assertEqual("--", sut._resolveHeartRateCapValueText());
 
     sut._allowedMaxHeartRate = 152;
-    Test.assertEqual("cap 152", sut._resolveHeartRateCapText(1));
-    Test.assertEqual("cap152", sut._resolveHeartRateCapText(0));
+    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(1));
+    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(0));
+    Test.assertEqual("152", sut._resolveHeartRateCapValueText());
     return true;
 }
 
