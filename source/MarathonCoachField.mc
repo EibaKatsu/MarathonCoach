@@ -141,8 +141,9 @@ class MarathonCoachField extends Ui.DataField {
     var _goalDeltaText = "--:--(waiting)";
     var _predictionWaitingText = "waiting";
     var _predictionOnPaceText = "on pace";
-    var _predictionAheadSuffixText = "m ahead";
-    var _predictionBehindSuffixText = "m behind";
+    var _predictionAheadSuffixText = "min.";
+    var _predictionBehindSuffixText = "min.";
+    var _predictionSystemLanguage = null;
     var _actionPushText = "Push a bit";
     var _actionHoldText = "Hold pace";
     var _actionEaseText = "Ease down";
@@ -903,7 +904,7 @@ class MarathonCoachField extends Ui.DataField {
         var insetPct = 7;
         var paceFont = Gfx.FONT_LARGE;
         var footerFont = Gfx.FONT_SMALL;
-        var paceDeltaFont = Gfx.FONT_XTINY;
+        var paceDeltaFont = Gfx.FONT_TINY;
         var fuelLabelFont = Gfx.FONT_XTINY;
         var fuelTimeFont = Gfx.FONT_SMALL;
         var fuelRadiusPct = 46;
@@ -912,7 +913,7 @@ class MarathonCoachField extends Ui.DataField {
             insetPct = 9;
             paceFont = Gfx.FONT_LARGE;
             footerFont = Gfx.FONT_SMALL;
-            paceDeltaFont = Gfx.FONT_XTINY;
+            paceDeltaFont = Gfx.FONT_TINY;
             fuelLabelFont = Gfx.FONT_XTINY;
             fuelTimeFont = Gfx.FONT_MEDIUM;
             fuelRadiusPct = 50;
@@ -1670,6 +1671,8 @@ class MarathonCoachField extends Ui.DataField {
             capLabelFont = Gfx.FONT_XTINY;
             capValueFont = Gfx.FONT_SMALL;
             capLabelLift = 1;
+            verticalShift = _clamp(areaH / 2, 20, 26);
+            valueBottomAllowance = _clamp(areaH / 3, 18, 24);
         } else if (sizeClass == 1) {
             verticalShift = _clamp(areaH / 5, 8, 12);
             valueBottomAllowance = _clamp(areaH / 8, 5, 8);
@@ -4016,11 +4019,29 @@ class MarathonCoachField extends Ui.DataField {
         if (roundedMinuteDelta < 1) {
             roundedMinuteDelta = 1;
         }
-        var deltaText = roundedMinuteDelta.format("%d") + _predictionBehindSuffixText;
+        var deltaSignText = "+";
+        var deltaSuffixText = _predictionBehindSuffixText;
         if (deltaSec < 0) {
-            deltaText = roundedMinuteDelta.format("%d") + _predictionAheadSuffixText;
+            deltaSignText = "-";
+            deltaSuffixText = _predictionAheadSuffixText;
         }
+        deltaSuffixText = _resolvePredictionMinuteSuffixText(deltaSuffixText);
+        var deltaText = deltaSignText + roundedMinuteDelta.format("%d") + deltaSuffixText;
         return predictedText + "(" + deltaText + ")";
+    }
+
+    function _resolvePredictionMinuteSuffixText(defaultSuffixText) {
+        var systemLanguage = _predictionSystemLanguage;
+        if (systemLanguage == null) {
+            var deviceSettings = Sys.getDeviceSettings();
+            if (deviceSettings != null) {
+                systemLanguage = deviceSettings.systemLanguage;
+            }
+        }
+        if (systemLanguage == Sys.LANGUAGE_JPN) {
+            return "分";
+        }
+        return defaultSuffixText;
     }
 
     function _clamp(value, minValue, maxValue) {
