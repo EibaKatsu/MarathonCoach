@@ -1658,28 +1658,34 @@ class MarathonCoachField extends Ui.DataField {
 
     function _drawHeartRateGauge(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
         var valueFont = Gfx.FONT_MEDIUM;
-        var capFont = Gfx.FONT_XTINY;
+        var capLabelFont = Gfx.FONT_XTINY;
+        var capValueFont = Gfx.FONT_XTINY;
         var verticalShift = 0;
         var capVerticalShift = 0;
         var valueBottomAllowance = 0;
         var rightMargin = 0;
         if (sizeClass == 2) {
             valueFont = Gfx.FONT_LARGE;
-            capFont = Gfx.FONT_XTINY;
+            capLabelFont = Gfx.FONT_XTINY;
+            capValueFont = Gfx.FONT_SMALL;
         } else if (sizeClass == 1) {
             verticalShift = _clamp(areaH / 6, 6, 10);
             valueBottomAllowance = _clamp(areaH / 10, 3, 6);
             rightMargin = _clamp(areaW / 14, 6, 10);
+            capLabelFont = Gfx.FONT_XTINY;
+            capValueFont = Gfx.FONT_TINY;
         } else if (sizeClass == 0) {
             valueFont = Gfx.FONT_SMALL;
-            capFont = Gfx.FONT_XTINY;
+            capLabelFont = Gfx.FONT_XTINY;
+            capValueFont = Gfx.FONT_XTINY;
         }
 
         var valueText = "--";
         if (_currentHeartRate != null) {
             valueText = _currentHeartRate.format("%d");
         }
-        var capText = _resolveHeartRateCapText(sizeClass);
+        var capLabelText = _resolveHeartRateCapLabelText(sizeClass);
+        var capValueText = _resolveHeartRateCapValueText();
         var gaugeState = _resolveHeartRateGaugeState();
         var valueColor = Gfx.COLOR_WHITE;
         var capTextColor = Gfx.COLOR_WHITE;
@@ -1688,9 +1694,17 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         var valueHeight = dc.getFontHeight(valueFont);
-        var capHeight = dc.getFontHeight(capFont);
+        var capLabelHeight = dc.getFontHeight(capLabelFont);
+        var capValueHeight = dc.getFontHeight(capValueFont);
+        var capHeight = _max(capLabelHeight, capValueHeight);
         var valueTextWidth = dc.getTextWidthInPixels(valueText, valueFont);
-        var capTextWidth = dc.getTextWidthInPixels(capText, capFont);
+        var capLabelWidth = dc.getTextWidthInPixels(capLabelText, capLabelFont);
+        var capValueWidth = dc.getTextWidthInPixels(capValueText, capValueFont);
+        var capGap = 0;
+        if (sizeClass != 0) {
+            capGap = 2;
+        }
+        var capTextWidth = capLabelWidth + capGap + capValueWidth;
         var innerPad = 4;
         if (sizeClass == 0) {
             innerPad = 2;
@@ -1774,6 +1788,9 @@ class MarathonCoachField extends Ui.DataField {
         if (heartY < areaY) {
             heartY = areaY;
         }
+        var capLabelY = capY + _max(capHeight - capLabelHeight, 0);
+        var capValueY = capY + _max(capHeight - capValueHeight, 0);
+        var capValueX = capX + capLabelWidth + capGap;
 
         dc.setColor(valueColor, Gfx.COLOR_TRANSPARENT);
         dc.drawText(valueX, valueY, valueFont, valueText, Gfx.TEXT_JUSTIFY_LEFT);
@@ -1781,7 +1798,8 @@ class MarathonCoachField extends Ui.DataField {
             dc.drawBitmap(heartX, heartY, heartBitmap);
         }
         dc.setColor(capTextColor, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(capX, capY, capFont, capText, Gfx.TEXT_JUSTIFY_LEFT);
+        dc.drawText(capX, capLabelY, capLabelFont, capLabelText, Gfx.TEXT_JUSTIFY_LEFT);
+        dc.drawText(capValueX, capValueY, capValueFont, capValueText, Gfx.TEXT_JUSTIFY_LEFT);
     }
 
     function _getHeartStatusBitmap(gaugeState, sizeClass) {
@@ -1823,15 +1841,19 @@ class MarathonCoachField extends Ui.DataField {
         );
     }
 
-    function _resolveHeartRateCapText(sizeClass) {
+    function _resolveHeartRateCapValueText() {
         var capText = "--";
         if (_allowedMaxHeartRate != null) {
             capText = _allowedMaxHeartRate.format("%d");
         }
+        return capText;
+    }
+
+    function _resolveHeartRateCapLabelText(sizeClass) {
         if (sizeClass == 0) {
-            return "cap" + capText;
+            return "cap";
         }
-        return "cap " + capText;
+        return "cap";
     }
 
     function _resolveHeartRateGaugeState() {
