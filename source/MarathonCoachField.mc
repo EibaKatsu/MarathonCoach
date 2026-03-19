@@ -1662,18 +1662,21 @@ class MarathonCoachField extends Ui.DataField {
         var capValueFont = Gfx.FONT_XTINY;
         var verticalShift = 0;
         var capVerticalShift = 0;
+        var capLabelLift = 0;
         var valueBottomAllowance = 0;
         var rightMargin = 0;
         if (sizeClass == 2) {
             valueFont = Gfx.FONT_LARGE;
             capLabelFont = Gfx.FONT_XTINY;
             capValueFont = Gfx.FONT_SMALL;
+            capLabelLift = 1;
         } else if (sizeClass == 1) {
             verticalShift = _clamp(areaH / 5, 8, 12);
             valueBottomAllowance = _clamp(areaH / 8, 5, 8);
             rightMargin = _clamp(areaW / 14, 6, 10);
             capLabelFont = Gfx.FONT_XTINY;
             capValueFont = Gfx.FONT_SMALL;
+            capLabelLift = 2;
         } else if (sizeClass == 0) {
             valueFont = Gfx.FONT_SMALL;
             capLabelFont = Gfx.FONT_XTINY;
@@ -1788,7 +1791,10 @@ class MarathonCoachField extends Ui.DataField {
         if (heartY < areaY) {
             heartY = areaY;
         }
-        var capLabelY = capY + _max(capHeight - capLabelHeight, 0);
+        var capLabelY = capY + _max(capHeight - capLabelHeight, 0) - capLabelLift;
+        if (capLabelY < areaY) {
+            capLabelY = areaY;
+        }
         var capValueY = capY + _max(capHeight - capValueHeight, 0);
         var capValueX = capX + capLabelWidth + capGap;
 
