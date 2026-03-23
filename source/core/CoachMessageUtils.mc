@@ -502,26 +502,26 @@ module CoachMessageUtils {
 
     function _getLastSpurtPoolJa(category) as Lang.Array {
         switch (category) {
-            case CATEGORY_FUNNY: return ["ラスト5%、いこか", "最後だけ本気出そ"];
-            case CATEGORY_SALT: return ["残り5%だけ前へ", "最後は押し切るだけ"];
-            case CATEGORY_ALCOHOL: return ["最後は濃いめで", "ゴールまで注ぎ切ろ"];
-            case CATEGORY_TOXIC: return ["もう出し切れ", "最後で抜かれんな"];
-            case CATEGORY_PRAISE: return ["ここまで来たで", "最後まで強いまま"];
+            case CATEGORY_FUNNY: return ["ゴールが呼ぶで", "脚まだあるやろ", "最後に笑おか", "締めにいこか", "ここから見せ場", "脚を起こそか", "最後だけ派手に", "ゴールへ急ごか", "前だけ見とこ", "最後に決めよ"];
+            case CATEGORY_SALT: return ["前だけ見ろ", "押し切るだけ", "ここで踏め", "最後まで運べ", "脚を止めるな", "一段前へ", "腕振り続けろ", "流れを切るな", "そのまま押せ", "ゴールへ詰めろ"];
+            case CATEGORY_ALCOHOL: return ["最後は濃いめで", "ゴールまで注げ", "一気に仕上げよ", "ここで熱を足そ", "締めの一杯や", "最後は強めで", "注ぎ切っていこ", "香り残して押そ", "ここで仕上がる", "最後はキレよく"];
+            case CATEGORY_TOXIC: return ["もう残すな", "最後で抜かすな", "ここで決めろ", "脚を出し切れ", "前を追い切れ", "止まるな押せ", "勝負はここや", "最後で負けるな", "全部置いてけ", "ここで刺し切れ"];
+            case CATEGORY_PRAISE: return ["ここまで強い", "まだ伸びてるで", "最後もいける", "その脚ええで", "押せる強さある", "粘りが光ってる", "仕上がってるで", "最後もきれい", "強さが残ってる", "締めまで上手い"];
             case CATEGORY_DIST: return [];
         }
-        return ["ラスト5%、前へ", "ゴールまで押し切ろ"];
+        return ["ゴールまで前へ", "ここから押そ", "最後まで運ぼ", "前へ前へ", "腕でつなご", "押し切っていこ", "ゴールへ向かお", "このまま詰めよ", "最後まで強く", "脚を回し切ろ"];
     }
 
     function _getLastSpurtPoolEn(category) as Lang.Array {
         switch (category) {
-            case CATEGORY_FUNNY: return ["Last 5, send it", "Time to wake the legs"];
-            case CATEGORY_SALT: return ["Last 5, go forward", "Just drive it home"];
-            case CATEGORY_ALCOHOL: return ["Make this one strong", "Pour it to the line"];
-            case CATEGORY_TOXIC: return ["Empty the tank now", "Dont get passed here"];
-            case CATEGORY_PRAISE: return ["You earned this push", "Finish strong now"];
+            case CATEGORY_FUNNY: return ["Finish is calling", "Legs still have jokes", "Time for the good part", "This is the fun bit", "Wake the last gear", "Give it the finale", "Run at the ribbon", "Close with some style", "Bring the line closer", "Now make it dramatic"];
+            case CATEGORY_SALT: return ["Eyes up, keep going", "Just drive it home", "Press and do not fade", "Keep the chain moving", "Do not stop the legs", "One more gear forward", "Hold the line and go", "Carry it to the tape", "Keep pushing through", "Close the gap ahead"];
+            case CATEGORY_ALCOHOL: return ["Pour it to the line", "One bold closing sip", "Turn up the finish", "This is the last round", "Close with some bite", "Keep the mix strong", "Finish with a kick", "Let the last sip hit", "Serve the final push", "Make this one neat"];
+            case CATEGORY_TOXIC: return ["Empty the tank now", "Do not get passed here", "This is where it counts", "Use every good step", "Do not leave any left", "No fading at the end", "Finish the job now", "Everything goes here", "Take the finish hard", "Make them chase late"];
+            case CATEGORY_PRAISE: return ["You still have plenty", "Strong all the way in", "You earned this finish", "That strength is real", "You can close this well", "Your form still works", "Strong right to the line", "You kept plenty alive", "Finish like you know how", "That push is yours"];
             case CATEGORY_DIST: return [];
         }
-        return ["Last 5, go now", "Drive it to the line"];
+        return ["Go all the way in", "Take it to the line", "Keep moving forward", "Close it out strong", "One more push now", "Run through the line", "Stay on the front foot", "Carry this home", "Finish with intent", "Keep the legs turning"];
     }
 
     function _getFuelPrepPoolJa(category) as Lang.Array {

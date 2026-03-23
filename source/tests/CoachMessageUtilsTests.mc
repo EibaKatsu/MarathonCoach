@@ -156,6 +156,57 @@ function testCoachMessageUtilsFunnySaltPraisePoolsHaveTenVariants(logger) {
 }
 
 (:test)
+function testCoachMessageUtilsLastSpurtPoolsHaveTenVariants(logger) {
+    var categories = CoachMessageUtils.displayCategories();
+    var languages = ["ja", "en"];
+
+    for (var i = 0; i < languages.size(); i += 1) {
+        var language = languages[i];
+        for (var j = 0; j < categories.size(); j += 1) {
+            var pool = CoachMessageUtils.getMessagePool(
+                language,
+                categories[j],
+                CoachMessageUtils.FUEL_STATE_NONE,
+                CoachMessageUtils.STATE_KEY_LAST_SPURT
+            );
+            Test.assertMessage(pool.size() == 10, language + " last spurt should have 10 for " + categories[j]);
+        }
+    }
+    return true;
+}
+
+(:test)
+function testCoachMessageUtilsLastSpurtMessagesAvoidFivePercentText(logger) {
+    var categories = CoachMessageUtils.displayCategories();
+
+    for (var i = 0; i < categories.size(); i += 1) {
+        var jaPool = CoachMessageUtils.getMessagePool(
+            "ja",
+            categories[i],
+            CoachMessageUtils.FUEL_STATE_NONE,
+            CoachMessageUtils.STATE_KEY_LAST_SPURT
+        );
+        for (var j = 0; j < jaPool.size(); j += 1) {
+            Test.assertMessage(jaPool[j].find("5%") == null, "ja last spurt should not mention 5%: " + jaPool[j]);
+            Test.assertMessage(jaPool[j].length() <= 9, "ja last spurt too long: " + jaPool[j]);
+        }
+
+        var enPool = CoachMessageUtils.getMessagePool(
+            "en",
+            categories[i],
+            CoachMessageUtils.FUEL_STATE_NONE,
+            CoachMessageUtils.STATE_KEY_LAST_SPURT
+        );
+        for (var k = 0; k < enPool.size(); k += 1) {
+            Test.assertMessage(enPool[k].find("5%") == null, "en last spurt should not mention 5%: " + enPool[k]);
+            Test.assertMessage(enPool[k].find("Last 5") == null, "en last spurt should not mention Last 5: " + enPool[k]);
+            Test.assertMessage(enPool[k].length() <= 25, "en last spurt too long: " + enPool[k]);
+        }
+    }
+    return true;
+}
+
+(:test)
 function testCoachMessageUtilsAllDisplayPoolsHaveTenVariants(logger) {
     var categories = CoachMessageUtils.displayCategories();
     var languages = ["ja", "en"];
