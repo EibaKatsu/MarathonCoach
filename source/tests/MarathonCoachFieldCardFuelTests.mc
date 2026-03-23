@@ -335,17 +335,18 @@ function testUpdateFuelTimer_shortRaceDisablesFuelMeter(logger) {
 }
 
 (:test)
-function testUpdateSummaryMetrics_hidesGoalPredictionPastRaceDistance(logger) {
+function testUpdateSummaryMetrics_showsOverDistancePastRaceDistance(logger) {
     var sut = _newCardFuelSut();
     sut._targetTimeSec = 12600;
     sut._testElapsedSec = 12630;
-    sut._testElapsedDistanceKm = 42.30;
+    sut._testElapsedDistanceKm = 42.314;
 
     sut._updateSummaryMetrics(null);
 
-    Test.assertEqual("", sut._goalPredictionTimeText);
-    Test.assertEqual("", sut._goalPredictionDiffText);
-    Test.assertEqual("", sut._goalDeltaText);
+    Test.assertEqual("Over", sut._goalPredictionTimeText);
+    Test.assertEqual("+0.12km", sut._goalPredictionDiffText);
+    Test.assertEqual("Over +0.12km", sut._goalDeltaText);
+    Test.assertEqual(false, sut._goalPredictionLabelVisible);
     return true;
 }
 

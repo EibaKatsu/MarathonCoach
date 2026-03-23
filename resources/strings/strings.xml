@@ -9,6 +9,7 @@
     <string id="PredictedDeltaLabel">Delta</string>
     <string id="PredictionWaiting">waiting</string>
     <string id="PredictionOnPace">on pace</string>
+    <string id="PredictionOver">Over</string>
     <string id="PredictionAheadSuffix"> min. ahead</string>
     <string id="PredictionBehindSuffix"> min. behind</string>
     <string id="ActionPushText">Push a bit</string>

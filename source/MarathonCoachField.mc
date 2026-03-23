@@ -119,11 +119,13 @@ class MarathonCoachField extends Ui.DataField {
     const HR_CAP_MARKER_OVER_COLOR = 0xF01818;
 
     var _goalPredictionLabelText = "Pred.";
+    var _goalPredictionLabelVisible = true;
     var _goalPredictionTimeText = "--:--";
     var _goalPredictionDiffText = "waiting";
     var _goalDeltaText = "--:--(waiting)";
     var _predictionWaitingText = "waiting";
     var _predictionOnPaceText = "on pace";
+    var _predictionOverText = "Over";
     var _predictionAheadSuffixText = "min.";
     var _predictionBehindSuffixText = "min.";
     var _predictionSystemLanguage = null;
@@ -254,8 +256,10 @@ class MarathonCoachField extends Ui.DataField {
 
     function _loadLocalizedTexts() {
         _goalPredictionLabelText = Ui.loadResource(Rez.Strings.GoalPredictionLabel);
+        _goalPredictionLabelVisible = true;
         _predictionWaitingText = Ui.loadResource(Rez.Strings.PredictionWaiting);
         _predictionOnPaceText = Ui.loadResource(Rez.Strings.PredictionOnPace);
+        _predictionOverText = Ui.loadResource(Rez.Strings.PredictionOver);
         _predictionAheadSuffixText = Ui.loadResource(Rez.Strings.PredictionAheadSuffix);
         _predictionBehindSuffixText = Ui.loadResource(Rez.Strings.PredictionBehindSuffix);
         _goalPredictionTimeText = _buildGoalPredictionTimeText(null);
@@ -331,6 +335,7 @@ class MarathonCoachField extends Ui.DataField {
         _goalPredictionTimeText = _buildGoalPredictionTimeText(null);
         _goalPredictionDiffText = _buildGoalPredictionDiffText(null);
         _goalDeltaText = _buildGoalDeltaText(null);
+        _goalPredictionLabelVisible = true;
         _currentHeartRate = null;
         _activeHeartRateZones = [];
         _currentHeartRateZone = null;
@@ -912,7 +917,11 @@ class MarathonCoachField extends Ui.DataField {
 
         dc.drawText(centerX, timeY, timeFont, _goalPredictionTimeText, Gfx.TEXT_JUSTIFY_CENTER);
 
-        if (_goalPredictionLabelText == null or _goalPredictionLabelText.length() == 0) {
+        if (
+            !_goalPredictionLabelVisible or
+            _goalPredictionLabelText == null or
+            _goalPredictionLabelText.length() == 0
+        ) {
             return;
         }
 
@@ -1430,12 +1439,15 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         if (hideGoalPrediction) {
-            _goalPredictionTimeText = "";
-            _goalPredictionDiffText = "";
-            _goalDeltaText = "";
+            var overDistanceText = _buildGoalPredictionOverDistanceText(distanceKm - _raceDistanceKm);
+            _goalPredictionLabelVisible = false;
+            _goalPredictionTimeText = _predictionOverText;
+            _goalPredictionDiffText = overDistanceText;
+            _goalDeltaText = _predictionOverText + " " + overDistanceText;
             return;
         }
 
+        _goalPredictionLabelVisible = true;
         _goalPredictionTimeText = _buildGoalPredictionTimeText(predictedTotalSec);
         _goalPredictionDiffText = _buildGoalPredictionDiffText(predictedTotalSec);
         _goalDeltaText = _buildGoalDeltaText(predictedTotalSec);
@@ -3011,6 +3023,17 @@ class MarathonCoachField extends Ui.DataField {
 
     function _hasGoalPredictionDisplay() {
         return _goalPredictionTimeText != null and _goalPredictionTimeText.length() > 0;
+    }
+
+    function _buildGoalPredictionOverDistanceText(overDistanceKm) {
+        if (overDistanceKm == null or overDistanceKm < 0) {
+            overDistanceKm = 0;
+        }
+
+        var roundedHundredths = Math.floor((overDistanceKm * 100.0) + 0.5);
+        var wholeKm = Math.floor(roundedHundredths / 100);
+        var fractionKm = roundedHundredths % 100;
+        return "+" + wholeKm.format("%d") + "." + fractionKm.format("%02d") + "km";
     }
 
     function _applyEmaSample(previousValue, sampleValue, alpha) {
