@@ -254,6 +254,34 @@ function testCardDisplay_stateChangeRefreshesImmediately(logger) {
 }
 
 (:test)
+function testCardDisplay_lastSpurtOverridesFuelAndAction(logger) {
+    var sut = _newCardFuelSut();
+    sut._fuelRemainingSec = 0;
+    sut._testActionVariant = TEST_CARD_VARIANT_ACTION_EASE;
+    sut._testActionEaseReason = TEST_ACTION_EASE_REASON_BOTH;
+    sut._slopeState = "DN";
+    sut._testElapsedDistanceKm = sut._raceDistanceKm * 0.95;
+    sut._testElapsedSec = 7200;
+
+    sut._updateCardDisplay(null);
+
+    Test.assertEqual(TEST_CARD_MODE_ACTION, sut._cardMode);
+    Test.assertEqual(TEST_CARD_VARIANT_ACTION_PUSH, sut._cardVariant);
+    Test.assertEqual(sut._lastSpurtLabelText, sut._cardLine1);
+    _assertMessageInPool(
+        _cardMessageText(sut),
+        CoachMessageUtils.getMessagePool(
+            "ja",
+            CoachMessageUtils.CATEGORY_FIXED,
+            CoachMessageUtils.FUEL_STATE_NONE,
+            CoachMessageUtils.STATE_KEY_LAST_SPURT
+        ),
+        "message should come from last spurt pool"
+    );
+    return true;
+}
+
+(:test)
 function testCardDisplay_paceOnlyEaseUsesPaceLabelAndPool(logger) {
     var sut = _newCardFuelSut();
     sut._fuelRemainingSec = 300;

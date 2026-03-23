@@ -20,6 +20,7 @@
 - そのまま
 - ちょい落とし
 - 少し戻す（`EASE` がペース理由のみのとき）
+- ラストスパート
 - 補給準備
 - 補給NOW
 
@@ -28,6 +29,7 @@
 - Hold pace
 - Ease down
 - Ease pace（pace-only）
+- Final push
 - Fuel prep
 - Fuel NOW
 
@@ -42,10 +44,11 @@
 - 長い文は短縮または省略で収める
 
 ### 表示優先順位
-1. `FUEL NOW`
-2. `FUEL PREP`
-3. `EASE`
-4. `HOLD / PUSH`
+1. 残り5%以降は `ラストスパート / Final push`
+2. `FUEL NOW`
+3. `FUEL PREP`
+4. `EASE`
+5. `HOLD / PUSH`
 
 距離イベント割り込みと DRIFT 由来割り込みは行わない。
 
@@ -80,7 +83,8 @@
 
 ## コーチカード構成
 - 1段目は小さい判定ラベル。状態変化時に即更新する
-- 2段目はメインメッセージ。`fuelState` が `NOW` のときは `fuelNow`、`PREP` のときは `fuelPrep`、それ以外は `normal[stateKey]` から選ぶ
+- 残り5%以降は、補給・心拍・ペース判定を表示上は無視して `ラストスパート / Final push` を固定表示する
+- 2段目はメインメッセージ。残り5%未満では `fuelState` が `NOW` のときは `fuelNow`、`PREP` のときは `fuelPrep`、それ以外は `normal[stateKey]` から選ぶ
 - `stateKey` は `slope × action` を基本とする
 - `EASE` は理由別に `PACE / HR / BOTH` を持ち、`{UP|FL|DN}_EASE_{PACE|HR|BOTH}` を使い分ける
 - 理由不明や後方互換時は従来どおり `{UP|FL|DN}_EASE` を使う
