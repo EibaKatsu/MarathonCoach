@@ -1,4 +1,5 @@
 using Toybox.Test;
+using Toybox.Lang as Lang;
 using Toybox.System as Sys;
 
 class MarathonCoachFieldUtilsHarness extends MarathonCoachField {
@@ -7,8 +8,78 @@ class MarathonCoachFieldUtilsHarness extends MarathonCoachField {
     }
 }
 
+class MarathonCoachFieldSmoothingHarness extends MarathonCoachField {
+    var _testElapsedSec = null;
+    var _testDistanceKm = 1.0;
+    var _testHeartRate = null;
+    var _testPaceSecPerKm = null;
+    var _testAllowedMaxHeartRate = 150;
+    var _testActiveHeartRateZones as Lang.Array<Lang.Number> = [100, 120, 140, 160, 180];
+
+    function initialize() {
+        MarathonCoachField.initialize();
+    }
+
+    function _extractElapsedSec(info) {
+        return _testElapsedSec;
+    }
+
+    function _extractElapsedDistanceKm(info) {
+        return _testDistanceKm;
+    }
+
+    function _extractCurrentHeartRate(info) {
+        return _testHeartRate;
+    }
+
+    function _extractPaceSecPerKm(info) {
+        return _testPaceSecPerKm;
+    }
+
+    function _extractPaceFromDistanceDelta(info, elapsedSec) {
+        return null;
+    }
+
+    function _resolveActiveHeartRateZones() as Lang.Array<Lang.Number> {
+        return _testActiveHeartRateZones;
+    }
+
+    function _resolveAllowedMaxHeartRate(info, zones as Lang.Array<Lang.Number>) {
+        return _testAllowedMaxHeartRate;
+    }
+
+    function _getHrOverTriggerSec(distanceKm) {
+        return 0;
+    }
+
+    function _getHrOverReleaseSec(distanceKm) {
+        return 0;
+    }
+
+    function _getHrOverReleaseOffsetBpm(distanceKm) {
+        return 2;
+    }
+}
+
 function _newUtilsSut() {
     return new MarathonCoachFieldUtilsHarness();
+}
+
+function _newSmoothingSut() {
+    return new MarathonCoachFieldSmoothingHarness();
+}
+
+function _typedZoneThresholdInput(values as Lang.Array<Lang.Number>) as Lang.Array<Lang.Number> {
+    return values;
+}
+
+function _assertZoneThresholds(actual as Lang.Array<Lang.Number>) {
+    Test.assertEqual(5, actual.size());
+    Test.assertEqual(111, actual[0]);
+    Test.assertEqual(130, actual[1]);
+    Test.assertEqual(148, actual[2]);
+    Test.assertEqual(167, actual[3]);
+    Test.assertEqual(185, actual[4]);
 }
 
 function _assertFloatNear(actual, expected, epsilon, message) {
@@ -137,31 +208,16 @@ function testBuildGoalDeltaText_usesMinuteDeltaLabels(logger) {
     sut._targetTimeSec = 6600;
     sut._predictionWaitingText = "waiting";
     sut._predictionOnPaceText = "on pace";
-    sut._predictionAheadSuffixText = "min.";
-    sut._predictionBehindSuffixText = "min.";
+    sut._predictionAheadSuffixText = " min. ahead";
+    sut._predictionBehindSuffixText = " min. behind";
     sut._predictionSystemLanguage = Sys.LANGUAGE_ENG;
 
     var onPaceText = sut._buildGoalDeltaText(6577);
     var aheadText = sut._buildGoalDeltaText(6395);
     var behindText = sut._buildGoalDeltaText(6780);
     Test.assertEqual("1:50(on pace)", onPaceText);
-    Test.assertEqual("1:47(-3min.)", aheadText);
-    Test.assertEqual("1:53(+3min.)", behindText);
-    return true;
-}
-
-(:test)
-function testHeartRateCapText_reflectsLabelAndFallback(logger) {
-    var sut = _newUtilsSut();
-
-    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(1));
-    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(0));
-    Test.assertEqual("--", sut._resolveHeartRateCapValueText());
-
-    sut._allowedMaxHeartRate = 152;
-    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(1));
-    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(0));
-    Test.assertEqual("152", sut._resolveHeartRateCapValueText());
+    Test.assertEqual("1:47(3 min. ahead)", aheadText);
+    Test.assertEqual("1:53(3 min. behind)", behindText);
     return true;
 }
 
@@ -213,6 +269,71 @@ function testHeartRateGaugeRatioForHeartRate_usesZoneBoundaries(logger) {
 }
 
 (:test)
+function testHeartRateUpdate_appliesEmaAndRoundedDisplay(logger) {
+    var sut = _newSmoothingSut();
+
+    sut._testElapsedSec = 1;
+    sut._testHeartRate = 130;
+    sut._updateHeartRate(null);
+    _assertFloatNear(sut._currentHeartRate, 130.0, 0.0001, "first heart-rate sample should seed EMA");
+    Test.assertEqual("130 / cap 150", sut._hrZoneText);
+
+    sut._testElapsedSec = 2;
+    sut._testHeartRate = 143;
+    sut._updateHeartRate(null);
+    _assertFloatNear(sut._currentHeartRate, 132.0, 0.0001, "heart-rate EMA should use 12-second window");
+    Test.assertEqual("132", sut._formatHeartRateValueText(sut._currentHeartRate));
+    Test.assertEqual("132 / cap 150", sut._hrZoneText);
+    return true;
+}
+
+(:test)
+function testPaceUpdate_appliesEmaOncePerElapsedSecond(logger) {
+    var sut = _newSmoothingSut();
+
+    sut._testElapsedSec = 1;
+    sut._testPaceSecPerKm = 300;
+    sut._updatePaceWindow(null);
+    _assertFloatNear(sut._paceNowSecPerKm, 300.0, 0.0001, "first pace sample should seed EMA");
+    Test.assertEqual("5:00", sut._paceNowText);
+
+    sut._testElapsedSec = 2;
+    sut._testPaceSecPerKm = 319;
+    sut._updatePaceWindow(null);
+    _assertFloatNear(sut._paceNowSecPerKm, 302.0, 0.0001, "pace EMA should use 18-second window");
+    Test.assertEqual("5:02", sut._paceNowText);
+
+    sut._testPaceSecPerKm = 360;
+    sut._updatePaceWindow(null);
+    _assertFloatNear(
+        sut._paceNowSecPerKm,
+        302.0,
+        0.0001,
+        "pace EMA should not update twice for the same elapsed second"
+    );
+    return true;
+}
+
+(:test)
+function testHrOverState_usesSmoothedHeartRate(logger) {
+    var sut = _newSmoothingSut();
+
+    sut._testElapsedSec = 1;
+    sut._testHeartRate = 140;
+    sut._updateHeartRate(null);
+    sut._updateHrOverState(null);
+    Test.assertEqual(false, sut._hrOverActive);
+
+    sut._testElapsedSec = 2;
+    sut._testHeartRate = 166;
+    sut._updateHeartRate(null);
+    _assertFloatNear(sut._currentHeartRate, 144.0, 0.0001, "hr-over should see the EMA heart rate");
+    sut._updateHrOverState(null);
+    Test.assertEqual(false, sut._hrOverActive);
+    return true;
+}
+
+(:test)
 function testHeartRateCapGaugeRatio_usesCachedZoneBounds(logger) {
     var sut = _newUtilsSut();
     sut._allowedMaxHeartRate = 150;
@@ -246,14 +367,9 @@ function testGetZoneUpperHeartRate_returnsNullForNullZone(logger) {
 (:test)
 function testResolveUsableHeartRateZoneThresholds_acceptsDocumentedSixElementFormat(logger) {
     var sut = _newUtilsSut();
-    var actual = sut._resolveUsableHeartRateZoneThresholds([93, 111, 130, 148, 167, 185]);
+    var actual = sut._resolveUsableHeartRateZoneThresholds(_typedZoneThresholdInput([93, 111, 130, 148, 167, 185]));
 
-    Test.assertEqual(5, actual.size());
-    Test.assertEqual(111, actual[0]);
-    Test.assertEqual(130, actual[1]);
-    Test.assertEqual(148, actual[2]);
-    Test.assertEqual(167, actual[3]);
-    Test.assertEqual(185, actual[4]);
+    _assertZoneThresholds(actual);
     return true;
 }
 
@@ -262,7 +378,7 @@ function testResolveUsableHeartRateZoneThresholds_rejectsNonMonotonicSixElementF
     var sut = _newUtilsSut();
 
     Test.assertMessage(
-        sut._resolveUsableHeartRateZoneThresholds([128, 153, 179, 204, 230, 185]) == null,
+        sut._resolveUsableHeartRateZoneThresholds(_typedZoneThresholdInput([128, 153, 179, 204, 230, 185])) == null,
         "non-monotonic six-element format should be rejected"
     );
     return true;
