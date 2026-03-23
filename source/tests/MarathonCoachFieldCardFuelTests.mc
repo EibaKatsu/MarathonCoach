@@ -335,6 +335,21 @@ function testUpdateFuelTimer_shortRaceDisablesFuelMeter(logger) {
 }
 
 (:test)
+function testUpdateSummaryMetrics_hidesGoalPredictionPastRaceDistance(logger) {
+    var sut = _newCardFuelSut();
+    sut._targetTimeSec = 12600;
+    sut._testElapsedSec = 12630;
+    sut._testElapsedDistanceKm = 42.30;
+
+    sut._updateSummaryMetrics(null);
+
+    Test.assertEqual("", sut._goalPredictionTimeText);
+    Test.assertEqual("", sut._goalPredictionDiffText);
+    Test.assertEqual("", sut._goalDeltaText);
+    return true;
+}
+
+(:test)
 function testUpdateFuelTimer_fullRaceCountdownAndDue(logger) {
     var sut = _newCardFuelSut();
     sut._raceDistanceKm = 42.195;
