@@ -758,8 +758,10 @@ class MarathonCoachField extends Ui.DataField {
         var footerAreaH = row4H;
         var footerTimeY = CoachUtils.textYByRatio(row3Y, footerAreaH, 30, dc.getFontHeight(footerTimeFont));
         var footerDiffY = CoachUtils.textYByRatio(row3Y, footerAreaH, 80, dc.getFontHeight(footerDiffFont));
-        _drawGoalPredictionTimeWithLabel(dc, width / 2, footerTimeY, footerTimeFont, footerLabelFont);
-        dc.drawText(width / 2, footerDiffY, footerDiffFont, _goalPredictionDiffText, Gfx.TEXT_JUSTIFY_CENTER);
+        if (_hasGoalPredictionDisplay()) {
+            _drawGoalPredictionTimeWithLabel(dc, width / 2, footerTimeY, footerTimeFont, footerLabelFont);
+            dc.drawText(width / 2, footerDiffY, footerDiffFont, _goalPredictionDiffText, Gfx.TEXT_JUSTIFY_CENTER);
+        }
     }
 
     function _drawStep3LayoutMedium(dc as Gfx.Dc, width, height, minDim) {
@@ -827,8 +829,10 @@ class MarathonCoachField extends Ui.DataField {
         var footerAreaH = row4H;
         var footerTimeY = CoachUtils.textYByRatio(row3Y, footerAreaH, 32, dc.getFontHeight(footerTimeFont));
         var footerDiffY = CoachUtils.textYByRatio(row3Y, footerAreaH, 82, dc.getFontHeight(footerDiffFont));
-        _drawGoalPredictionTimeWithLabel(dc, width / 2, footerTimeY, footerTimeFont, footerLabelFont);
-        dc.drawText(width / 2, footerDiffY, footerDiffFont, _goalPredictionDiffText, Gfx.TEXT_JUSTIFY_CENTER);
+        if (_hasGoalPredictionDisplay()) {
+            _drawGoalPredictionTimeWithLabel(dc, width / 2, footerTimeY, footerTimeFont, footerLabelFont);
+            dc.drawText(width / 2, footerDiffY, footerDiffFont, _goalPredictionDiffText, Gfx.TEXT_JUSTIFY_CENTER);
+        }
     }
 
     function _drawStep3LayoutLarge(dc as Gfx.Dc, width, height, minDim) {
@@ -895,11 +899,17 @@ class MarathonCoachField extends Ui.DataField {
         var footerAreaH = row4H;
         var footerTimeY = CoachUtils.textYByRatio(row3Y, footerAreaH, 32, dc.getFontHeight(footerTimeFont));
         var footerDiffY = CoachUtils.textYByRatio(row3Y, footerAreaH, 82, dc.getFontHeight(footerDiffFont));
-        _drawGoalPredictionTimeWithLabel(dc, width / 2, footerTimeY, footerTimeFont, footerLabelFont);
-        dc.drawText(width / 2, footerDiffY, footerDiffFont, _goalPredictionDiffText, Gfx.TEXT_JUSTIFY_CENTER);
+        if (_hasGoalPredictionDisplay()) {
+            _drawGoalPredictionTimeWithLabel(dc, width / 2, footerTimeY, footerTimeFont, footerLabelFont);
+            dc.drawText(width / 2, footerDiffY, footerDiffFont, _goalPredictionDiffText, Gfx.TEXT_JUSTIFY_CENTER);
+        }
     }
 
     function _drawGoalPredictionTimeWithLabel(dc as Gfx.Dc, centerX, timeY, timeFont, labelFont) {
+        if (!_hasGoalPredictionDisplay()) {
+            return;
+        }
+
         dc.drawText(centerX, timeY, timeFont, _goalPredictionTimeText, Gfx.TEXT_JUSTIFY_CENTER);
 
         if (_goalPredictionLabelText == null or _goalPredictionLabelText.length() == 0) {
@@ -1382,6 +1392,7 @@ class MarathonCoachField extends Ui.DataField {
     function _updateSummaryMetrics(info) {
         var elapsedSec = _extractElapsedSec(info);
         var distanceKm = _extractElapsedDistanceKm(info);
+        var hideGoalPrediction = _isPastRaceDistance(distanceKm);
 
         var distanceText = "--.- km";
         if (distanceKm != null) {
@@ -1403,6 +1414,7 @@ class MarathonCoachField extends Ui.DataField {
             displayPaceSecPerKm = Math.floor(_paceNowSecPerKm + 0.5);
         }
         if (
+            !hideGoalPrediction and
             _targetTimeSec != null and _targetTimeSec > 0 and
             displayPaceSecPerKm != null and
             elapsedSec != null and
@@ -1415,6 +1427,13 @@ class MarathonCoachField extends Ui.DataField {
                 remainingDistanceKm = 0;
             }
             predictedTotalSec = elapsedSec + (remainingDistanceKm * displayPaceSecPerKm);
+        }
+
+        if (hideGoalPrediction) {
+            _goalPredictionTimeText = "";
+            _goalPredictionDiffText = "";
+            _goalDeltaText = "";
+            return;
         }
 
         _goalPredictionTimeText = _buildGoalPredictionTimeText(predictedTotalSec);
@@ -2990,6 +3009,10 @@ class MarathonCoachField extends Ui.DataField {
         return predictedText;
     }
 
+    function _hasGoalPredictionDisplay() {
+        return _goalPredictionTimeText != null and _goalPredictionTimeText.length() > 0;
+    }
+
     function _applyEmaSample(previousValue, sampleValue, alpha) {
         if (sampleValue == null) {
             return previousValue;
@@ -3037,6 +3060,15 @@ class MarathonCoachField extends Ui.DataField {
         var predictedText = _buildGoalPredictionTimeText(predictedTotalSec);
         var diffText = _buildGoalPredictionDiffText(predictedTotalSec);
         return predictedText + "(" + diffText + ")";
+    }
+
+    function _isPastRaceDistance(distanceKm) {
+        return (
+            distanceKm != null and
+            _raceDistanceKm != null and
+            _raceDistanceKm > 0 and
+            distanceKm > _raceDistanceKm
+        );
     }
 
     function _resolvePredictionSystemLanguage() {
