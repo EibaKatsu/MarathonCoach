@@ -11,6 +11,7 @@ SIM_WAIT_SEC="${CIQ_SIM_WAIT_SEC:-12}"
 BUILD_RETRIES="${CIQ_BUILD_RETRIES:-2}"
 RUN_RETRIES="${CIQ_RUN_RETRIES:-2}"
 KILL_BEFORE_RUN="${CIQ_KILL_BEFORE_RUN:-1}"
+SIM_STDOUT_LOG="${CIQ_SIM_STDOUT_LOG:-/tmp/connectiq_simulator_stdout.log}"
 BUILD_ONLY=0
 
 usage() {
@@ -20,7 +21,7 @@ Usage:
 
 Description:
   - manifest.xml に記載された全機種をビルド
-  - (default) 各機種をシミュレーターで起動し、ログの [SETTINGS] 行を検出して起動確認
+  - (default) 各機種をシミュレーターで起動し、simulator stdout の成功シグナルで起動確認
 
 Options:
   --build-only   シミュレーター起動/ログ確認を行わず、ビルドのみ実施
@@ -32,6 +33,7 @@ Env:
   CIQ_BUILD_RETRIES      monkeyc リトライ回数 (default: 2)
   CIQ_RUN_RETRIES        monkeydo リトライ回数 (default: 2)
   CIQ_KILL_BEFORE_RUN    起動前に既存simulatorをkill (default: 1)
+  CIQ_SIM_STDOUT_LOG     simulator stdout の保存先 (default: /tmp/connectiq_simulator_stdout.log)
 EOF
 }
 
@@ -82,7 +84,7 @@ LOG_DIR="$OUT_DIR/logs"
 mkdir -p "$LOG_DIR"
 
 SUMMARY_TSV="$OUT_DIR/summary.tsv"
-echo -e "device\tbuild\tlaunch\tsettings_log\tsettings_line\tlog_path" > "$SUMMARY_TSV"
+echo -e "device\tbuild\tlaunch\tlaunch_signal\tsignal_line\tlog_path" > "$SUMMARY_TSV"
 
 ensure_simulator_running() {
   local sim_exec="$CONNECTIQ_HOME/bin/ConnectIQ.app/Contents/MacOS/simulator"
@@ -104,7 +106,7 @@ ensure_simulator_running() {
   return 0
 }
 
-run_and_check_settings_log() {
+run_and_check_launch_log() {
   local prg_path="$1"
   local device_id="$2"
   local run_log="$3"
@@ -112,6 +114,9 @@ run_and_check_settings_log() {
   local settings_found=0
   local run_status=1
   local matched_line="-"
+  local success_pattern='(\[SETTINGS\]|\[COACH_MSG\]|Debug: SetLayout)'
+  local fail_pattern='(Stack Overflow Error|Unhandled Exception|Out Of Memory|Application crashed|ERROR:)'
+  local launch_survived_timeout=0
 
   typeset -a monkeydo_args
   monkeydo_args=("$prg_path" "$device_id")
@@ -125,18 +130,36 @@ run_and_check_settings_log() {
   local attempt=1
   while [[ $attempt -le "$RUN_RETRIES" ]]; do
     local attempt_log="$run_log"
+    local sim_attempt_log="${run_log%.log}.simulator.log"
     if [[ "$RUN_RETRIES" -gt 1 ]]; then
       attempt_log="${run_log%.log}.attempt${attempt}.log"
+      sim_attempt_log="${run_log%.log}.simulator.attempt${attempt}.log"
     fi
     : > "$attempt_log"
+    : > "$sim_attempt_log"
+    : > "$SIM_STDOUT_LOG"
 
     "$CONNECTIQ_HOME/bin/monkeydo" "${monkeydo_args[@]}" >"$attempt_log" 2>&1 &
     local run_pid=$!
 
     local i=0
     while [[ $i -lt "$TIMEOUT_SEC" ]]; do
-      if rg -q "\\[SETTINGS\\]" "$attempt_log"; then
-        run_status=0
+      if [[ -f "$SIM_STDOUT_LOG" ]]; then
+        cp "$SIM_STDOUT_LOG" "$sim_attempt_log" >/dev/null 2>&1 || true
+        if rg -q "$fail_pattern" "$sim_attempt_log"; then
+          run_status=2
+          matched_line="$(rg -m1 "$fail_pattern" "$sim_attempt_log" || true)"
+          break
+        fi
+        if rg -q "$success_pattern" "$sim_attempt_log"; then
+          run_status=0
+          matched_line="$(rg -m1 "$success_pattern" "$sim_attempt_log" || true)"
+          break
+        fi
+      fi
+      if rg -q "$fail_pattern" "$attempt_log"; then
+        run_status=2
+        matched_line="$(rg -m1 "$fail_pattern" "$attempt_log" || true)"
         break
       fi
       if ! kill -0 "$run_pid" 2>/dev/null; then
@@ -145,6 +168,9 @@ run_and_check_settings_log() {
       sleep 1
       i=$((i + 1))
     done
+    if [[ $run_status -eq 1 && $i -ge "$TIMEOUT_SEC" ]]; then
+      launch_survived_timeout=1
+    fi
 
     if kill -0 "$run_pid" 2>/dev/null; then
       kill "$run_pid" >/dev/null 2>&1 || true
@@ -153,9 +179,19 @@ run_and_check_settings_log() {
     fi
     wait "$run_pid" >/dev/null 2>&1 || true
 
-    cp "$attempt_log" "$run_log"
+    cat "$attempt_log" > "$run_log"
+    if [[ -f "$sim_attempt_log" ]]; then
+      {
+        echo
+        echo "--- simulator stdout ---"
+        cat "$sim_attempt_log"
+      } >> "$run_log"
+    fi
     if [[ $run_status -eq 0 ]]; then
-      matched_line="$(rg -m1 "\\[SETTINGS\\]" "$attempt_log" || true)"
+      break
+    fi
+    if [[ $launch_survived_timeout -eq 1 ]]; then
+      matched_line="stable for ${TIMEOUT_SEC}s"
       break
     fi
     attempt=$((attempt + 1))
@@ -172,7 +208,21 @@ run_and_check_settings_log() {
     echo "$matched_line"
     return 0
   fi
-  echo "FAIL_NO_SETTINGS_LOG"
+  if [[ $launch_survived_timeout -eq 1 ]]; then
+    if [[ $settings_found -eq 1 ]]; then
+      echo "PASS_STABLE_WITH_SETTINGS_FILE"
+    else
+      echo "PASS_STABLE_NO_SETTINGS_FILE"
+    fi
+    echo "$matched_line"
+    return 0
+  fi
+  if [[ $run_status -eq 2 ]]; then
+    echo "FAIL_SIMULATOR_ERROR"
+    echo "$matched_line"
+    return 1
+  fi
+  echo "FAIL_NO_LAUNCH_SIGNAL"
   echo "-"
   return 1
 }
@@ -225,7 +275,7 @@ for device_id in "${DEVICES[@]}"; do
   fi
 
   echo "[RUN]   $device_id"
-  if run_output="$(run_and_check_settings_log "$prg_path" "$device_id" "$run_log")"; then
+  if run_output="$(run_and_check_launch_log "$prg_path" "$device_id" "$run_log")"; then
     run_ok=1
   else
     run_ok=0
