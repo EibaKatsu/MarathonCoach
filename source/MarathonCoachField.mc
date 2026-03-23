@@ -131,6 +131,7 @@ class MarathonCoachField extends Ui.DataField {
     var _actionHoldText = "Hold pace";
     var _actionEaseText = "Ease down";
     var _actionEasePaceText = "Ease pace";
+    var _lastSpurtLabelText = "Final push";
     var _fuelPrepLabelText = "Fuel prep";
     var _fuelNowLabelText = "Fuel NOW";
     var _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
@@ -264,6 +265,7 @@ class MarathonCoachField extends Ui.DataField {
         _actionHoldText = Ui.loadResource(Rez.Strings.ActionHoldText);
         _actionEaseText = Ui.loadResource(Rez.Strings.ActionEaseText);
         _actionEasePaceText = Ui.loadResource(Rez.Strings.ActionEasePaceText);
+        _lastSpurtLabelText = Ui.loadResource(Rez.Strings.CardLastSpurtLabel);
         _fuelPrepLabelText = Ui.loadResource(Rez.Strings.CardFuelPrepLabel);
         _fuelNowLabelText = Ui.loadResource(Rez.Strings.CardFuelNowLabel);
         _cardMode = CARD_MODE_ACTION;
@@ -2372,9 +2374,13 @@ class MarathonCoachField extends Ui.DataField {
         var fuelOverdue = _isFuelOverdue();
         var hrOver = _isHeartRateOverCap();
         var fuelState = _resolveFuelState();
+        var isLastSpurt = _isLastSpurtSegment(info);
         _updateBeepNotifications(elapsedSec, fuelOverdue, hrOver);
 
-        if (_isSameText(fuelState, CoachMessageUtils.FUEL_STATE_NOW)) {
+        if (isLastSpurt) {
+            fuelState = CoachMessageUtils.FUEL_STATE_NONE;
+            _cardMode = CARD_MODE_ACTION;
+        } else if (_isSameText(fuelState, CoachMessageUtils.FUEL_STATE_NOW)) {
             _cardMode = CARD_MODE_FUEL_OVERDUE;
         } else if (_isSameText(fuelState, CoachMessageUtils.FUEL_STATE_PREP)) {
             _cardMode = CARD_MODE_FUEL;
@@ -2396,6 +2402,12 @@ class MarathonCoachField extends Ui.DataField {
             return CoachMessageUtils.FUEL_STATE_PREP;
         }
         return CoachMessageUtils.FUEL_STATE_NONE;
+    }
+
+    function _isLastSpurtSegment(info) {
+        var distanceKm = _extractElapsedDistanceKm(info);
+        var progress = _resolveRaceProgress(distanceKm);
+        return progress != null and progress >= RACE_PHASE_4_END_PROGRESS;
     }
 
     function _resetCoachMessageState() {
@@ -2583,6 +2595,11 @@ class MarathonCoachField extends Ui.DataField {
             return;
         }
 
+        if (_isLastSpurtSegment(info)) {
+            _resetPushState();
+            return;
+        }
+
         if (_isFuelOverdue() or _hrOverActive) {
             _resetPushState();
             return;
@@ -2724,7 +2741,10 @@ class MarathonCoachField extends Ui.DataField {
         return "HOLD";
     }
 
-    function _resolveCardStateKey(actionVariant) {
+    function _resolveCardStateKey(actionVariant, isLastSpurt) {
+        if (isLastSpurt) {
+            return CoachMessageUtils.STATE_KEY_LAST_SPURT;
+        }
         if (actionVariant == CARD_VARIANT_ACTION_EASE) {
             return _slopeState + "_" + _resolveActionEaseStateKey();
         }
@@ -2745,7 +2765,10 @@ class MarathonCoachField extends Ui.DataField {
         return "EASE";
     }
 
-    function _resolveCardLabelText(actionVariant, fuelState) {
+    function _resolveCardLabelText(actionVariant, fuelState, isLastSpurt) {
+        if (isLastSpurt) {
+            return _lastSpurtLabelText;
+        }
         if (_isSameText(fuelState, CoachMessageUtils.FUEL_STATE_NOW)) {
             return _fuelNowLabelText;
         }
@@ -2799,9 +2822,15 @@ class MarathonCoachField extends Ui.DataField {
 
     function _setActionCardDisplay(elapsedSec, fuelState, info, forceRefresh) {
         var actionVariant = _resolveActionVariant();
-        _cardVariant = _resolveDisplayCardVariant(actionVariant, fuelState);
-        var stateKey = _resolveCardStateKey(actionVariant);
-        var labelText = _resolveCardLabelText(actionVariant, fuelState);
+        var isLastSpurt = _isLastSpurtSegment(info);
+        if (isLastSpurt) {
+            fuelState = CoachMessageUtils.FUEL_STATE_NONE;
+            _cardVariant = CARD_VARIANT_ACTION_PUSH;
+        } else {
+            _cardVariant = _resolveDisplayCardVariant(actionVariant, fuelState);
+        }
+        var stateKey = _resolveCardStateKey(actionVariant, isLastSpurt);
+        var labelText = _resolveCardLabelText(actionVariant, fuelState, isLastSpurt);
         var language = CoachMessageUtils.resolveLanguage(_resolvePredictionSystemLanguage());
         var category = _coachMessageCategory;
         var messagePool = CoachMessageUtils.getMessagePool(language, category, fuelState, stateKey);

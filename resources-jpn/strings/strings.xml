@@ -19,6 +19,7 @@
     <string id="ActionHoldText">そのまま</string>
     <string id="ActionEaseText">ちょい落とし</string>
     <string id="ActionEasePaceText">少し戻す</string>
+    <string id="CardLastSpurtLabel">ラストスパート</string>
     <string id="CardFuelPrepLabel">補給準備</string>
     <string id="CardFuelNowLabel">補給NOW</string>
     <string id="FuelMeterPrimaryLabel">補給</string>

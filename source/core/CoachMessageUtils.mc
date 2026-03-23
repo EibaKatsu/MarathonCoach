@@ -9,6 +9,7 @@ module CoachMessageUtils {
     const CATEGORY_TOXIC = "TOXIC";
     const CATEGORY_PRAISE = "PRAISE";
     const CATEGORY_DIST = "DIST";
+    const STATE_KEY_LAST_SPURT = "LAST_SPURT";
 
     const FUEL_STATE_NONE = "NONE";
     const FUEL_STATE_PREP = "PREP";
@@ -87,6 +88,9 @@ module CoachMessageUtils {
     }
 
     function _getNormalPoolJa(category, stateKey) as Lang.Array {
+        if (_isSameText(stateKey, STATE_KEY_LAST_SPURT)) {
+            return _getLastSpurtPoolJa(category);
+        }
         var reasonSpecificPool = _getReasonSpecificNormalPoolJa(category, stateKey);
         if (reasonSpecificPool != null) {
             return reasonSpecificPool;
@@ -172,6 +176,9 @@ module CoachMessageUtils {
     }
 
     function _getNormalPoolEn(category, stateKey) as Lang.Array {
+        if (_isSameText(stateKey, STATE_KEY_LAST_SPURT)) {
+            return _getLastSpurtPoolEn(category);
+        }
         var reasonSpecificPool = _getReasonSpecificNormalPoolEn(category, stateKey);
         if (reasonSpecificPool != null) {
             return reasonSpecificPool;
@@ -491,6 +498,30 @@ module CoachMessageUtils {
             return false;
         }
         return text.substring(text.length() - suffixText.length(), text.length()).equals(suffixText);
+    }
+
+    function _getLastSpurtPoolJa(category) as Lang.Array {
+        switch (category) {
+            case CATEGORY_FUNNY: return ["ラスト5%、いこか", "最後だけ本気出そ"];
+            case CATEGORY_SALT: return ["残り5%だけ前へ", "最後は押し切るだけ"];
+            case CATEGORY_ALCOHOL: return ["最後は濃いめで", "ゴールまで注ぎ切ろ"];
+            case CATEGORY_TOXIC: return ["もう出し切れ", "最後で抜かれんな"];
+            case CATEGORY_PRAISE: return ["ここまで来たで", "最後まで強いまま"];
+            case CATEGORY_DIST: return [];
+        }
+        return ["ラスト5%、前へ", "ゴールまで押し切ろ"];
+    }
+
+    function _getLastSpurtPoolEn(category) as Lang.Array {
+        switch (category) {
+            case CATEGORY_FUNNY: return ["Last 5, send it", "Time to wake the legs"];
+            case CATEGORY_SALT: return ["Last 5, go forward", "Just drive it home"];
+            case CATEGORY_ALCOHOL: return ["Make this one strong", "Pour it to the line"];
+            case CATEGORY_TOXIC: return ["Empty the tank now", "Dont get passed here"];
+            case CATEGORY_PRAISE: return ["You earned this push", "Finish strong now"];
+            case CATEGORY_DIST: return [];
+        }
+        return ["Last 5, go now", "Drive it to the line"];
     }
 
     function _getFuelPrepPoolJa(category) as Lang.Array {
