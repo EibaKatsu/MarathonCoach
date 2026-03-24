@@ -1,0 +1,4 @@
+interface:
+  display_name: "Race Navi X Posts"
+  short_description: "Check live history, then draft safer Race Navi X posts."
+  default_prompt: "Use $x-post-writer to check @racenavi_run's latest posts and draft the next X post safely."

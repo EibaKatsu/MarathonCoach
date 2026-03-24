@@ -210,7 +210,7 @@ function testRenderUtilsCardFontRules(logger) {
 (:test)
 function testRenderUtilsAdjustSingleLineFont(logger) {
     var oneAscii = ["abcdefg"]; // 7 chars => shrink
-    var oneCjk = ["補給now"]; // contains non-ascii and >= 4 chars => shrink
+    var oneCjk = ["補給now"]; // contains non-ascii but should stay large if it still fits
     var shortAscii = ["abc"];
 
     Test.assertEqual(
@@ -218,7 +218,7 @@ function testRenderUtilsAdjustSingleLineFont(logger) {
         RenderUtils.adjustCardFontForSingleLineLimit(Gfx.FONT_SMALL, 1, oneAscii)
     );
     Test.assertEqual(
-        Gfx.FONT_TINY,
+        Gfx.FONT_SMALL,
         RenderUtils.adjustCardFontForSingleLineLimit(Gfx.FONT_SMALL, 1, oneCjk)
     );
     Test.assertEqual(

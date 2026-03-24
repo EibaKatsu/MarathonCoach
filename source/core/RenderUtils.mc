@@ -365,7 +365,7 @@ module RenderUtils {
 
         var limit = 7;
         if (containsNonAscii(line)) {
-            limit = 4;
+            limit = 7;
         }
 
         if (line.length() >= limit) {

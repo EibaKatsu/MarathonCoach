@@ -69,19 +69,6 @@ function _newSmoothingSut() {
     return new MarathonCoachFieldSmoothingHarness();
 }
 
-function _typedZoneThresholdInput(values as Lang.Array<Lang.Number>) as Lang.Array<Lang.Number> {
-    return values;
-}
-
-function _assertZoneThresholds(actual as Lang.Array<Lang.Number>) {
-    Test.assertEqual(5, actual.size());
-    Test.assertEqual(111, actual[0]);
-    Test.assertEqual(130, actual[1]);
-    Test.assertEqual(148, actual[2]);
-    Test.assertEqual(167, actual[3]);
-    Test.assertEqual(185, actual[4]);
-}
-
 function _assertFloatNear(actual, expected, epsilon, message) {
     if (actual == null or expected == null) {
         Test.assertMessage(actual == expected, message);
@@ -218,6 +205,21 @@ function testBuildGoalDeltaText_usesMinuteDeltaLabels(logger) {
     Test.assertEqual("1:50(on pace)", onPaceText);
     Test.assertEqual("1:47(3 min. ahead)", aheadText);
     Test.assertEqual("1:53(3 min. behind)", behindText);
+    return true;
+}
+
+(:test)
+function testHeartRateCapText_reflectsLabelAndFallback(logger) {
+    var sut = _newUtilsSut();
+
+    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(1));
+    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(0));
+    Test.assertEqual("--", sut._resolveHeartRateCapValueText());
+
+    sut._allowedMaxHeartRate = 152;
+    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(1));
+    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(0));
+    Test.assertEqual("152", sut._resolveHeartRateCapValueText());
     return true;
 }
 
@@ -367,9 +369,14 @@ function testGetZoneUpperHeartRate_returnsNullForNullZone(logger) {
 (:test)
 function testResolveUsableHeartRateZoneThresholds_acceptsDocumentedSixElementFormat(logger) {
     var sut = _newUtilsSut();
-    var actual = sut._resolveUsableHeartRateZoneThresholds(_typedZoneThresholdInput([93, 111, 130, 148, 167, 185]));
+    var actual = sut._resolveUsableHeartRateZoneThresholds([93, 111, 130, 148, 167, 185]);
 
-    _assertZoneThresholds(actual);
+    Test.assertEqual(5, actual.size());
+    Test.assertEqual(111, actual[0]);
+    Test.assertEqual(130, actual[1]);
+    Test.assertEqual(148, actual[2]);
+    Test.assertEqual(167, actual[3]);
+    Test.assertEqual(185, actual[4]);
     return true;
 }
 
@@ -378,7 +385,7 @@ function testResolveUsableHeartRateZoneThresholds_rejectsNonMonotonicSixElementF
     var sut = _newUtilsSut();
 
     Test.assertMessage(
-        sut._resolveUsableHeartRateZoneThresholds(_typedZoneThresholdInput([128, 153, 179, 204, 230, 185])) == null,
+        sut._resolveUsableHeartRateZoneThresholds([128, 153, 179, 204, 230, 185]) == null,
         "non-monotonic six-element format should be rejected"
     );
     return true;

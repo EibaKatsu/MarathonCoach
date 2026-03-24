@@ -12,7 +12,8 @@ description: Connect IQ アプリのシミュレーター実行を自動化す�
 2. デフォルトデバイスは `fr57042mm` を使う。
 3. `connectiq` 実行後、シミュレーター起動待ちとして約10秒待ってから `monkeydo` を実行する。
 4. 必要ならデバイスIDを引数で上書きする。
-5. 設定を固定再現したいときだけ `CIQ_SETTINGS_JSON=/path/to/settings.json` を付ける。デフォルトでは自動生成の設定JSONを送らず、シミュレーター側の現在設定を使う。
+5. 設定JSONが自動生成されていれば、それを `monkeydo` で `GARMIN/Settings/` へ送る。
+6. 設定を固定再現したいときは `CIQ_SETTINGS_JSON=/path/to/settings.json` で上書きする。
 
 ## Commands
 ```bash
@@ -25,3 +26,4 @@ description: Connect IQ アプリのシミュレーター実行を自動化す�
 - 別のキーを使う場合は `CIQ_DEV_KEY` 環境変数で上書きする。
 - `monkeydo` 実行後は、シミュレーター稼働中にコマンドが待機状態になることがある。
 - この待機状態に入った時点で、SKILL実行は完了扱いでよい。
+- `bin/<app>-settings.json` が生成される構成では、これを送ることで Simulator の App Settings Editor から設定UIを開ける。

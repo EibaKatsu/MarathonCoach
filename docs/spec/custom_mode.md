@@ -10,7 +10,7 @@
 4. `fuelAlertLeadMin`（補給予告の早さ）
 5. `phaseAggressiveness`（走り方強度 0..20）
 6. `hrCapBiasBpm`（心拍上限バイアス -8..+8）
-7. `driftSensitivity`（ドリフト感度 0..7）
+7. `driftSensitivity`（予約値 0..7）
 
 ## 補給設定MVP方針
 - `fuelMode=off`: 補給通知なし
@@ -25,6 +25,7 @@
 - ユーザーに見せる項目は7つに限定
 - 内部の専門閾値は公開せず、抽象設定から展開する
 - 通常版はシンプル維持、カスタムモードのみ個別最適化
+- `driftSensitivity` はカスタムコード互換維持のため構造上は残すが、現行表示・判定では使用しない
 
 ## カスタムコード方針
 - 7項目の設定値を短いカスタムコードへ符号化して受け渡す
@@ -85,8 +86,8 @@
 - ただし安全側のため、Garmin由来上限より厳しい値を設定した場合はそのまま採用し、緩い値を設定した場合は上限緩和幅を別途制限する
 
 ### ACTIONとの整合
-- `ちょい上げ`: 現在ペースが `paceMaxSecPerKm` より遅く、心拍が `hrCapBpm` 未満で、既存のCardiac Cost条件も満たす場合のみ候補にする
-- `そのまま`: 現在ペースが `paceMinSecPerKm..paceMaxSecPerKm` の範囲で、心拍超過やDRIFTがないときの基本状態とする
+- `ちょい上げ`: 現在ペースが `paceMaxSecPerKm` より遅く、心拍が `hrCapBpm` 未満のときに候補にする
+- `そのまま`: 現在ペースが `paceMinSecPerKm..paceMaxSecPerKm` の範囲で、心拍超過がないときの基本状態とする
 - `ちょい落とし`: 現在ペースが `paceMinSecPerKm` より速い、または `hrCapBpm` を超過した場合に優先して出す
 - ペース帯と心拍上限が矛盾した場合は、失速防止を優先して心拍側を優先する
 

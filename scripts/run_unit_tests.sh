@@ -110,13 +110,23 @@ set -e
 
 cat "$RUN_LOG"
 
-if [[ "$RUN_STATUS" -ne 0 ]]; then
-  exit "$RUN_STATUS"
-fi
-
 if rg -q "Unhandled Exception|Encountered an app crash|UnexpectedTypeException" "$RUN_LOG"; then
   echo "ERROR: Crash markers were found in unit-test output." >&2
   exit 1
+fi
+
+if rg -q "^FAILED \\(passed=" "$RUN_LOG"; then
+  echo "ERROR: Unit tests reported failures." >&2
+  exit 1
+fi
+
+if rg -q "^PASSED \\(passed=" "$RUN_LOG"; then
+  echo "Unit-test run completed: $RUN_LOG"
+  exit 0
+fi
+
+if [[ "$RUN_STATUS" -ne 0 ]]; then
+  exit "$RUN_STATUS"
 fi
 
 echo "Unit-test run completed: $RUN_LOG"
