@@ -22,6 +22,7 @@ mkdir -p bin
 
 APP_PRG_PATH="bin/marathoncoach.prg"
 APP_SETTINGS_PATH="${CIQ_SETTINGS_JSON:-}"
+GENERATED_SETTINGS_PATH="${APP_PRG_PATH%.prg}-settings.json"
 
 "$CONNECTIQ_HOME/bin/monkeyc" \
   -f monkey.jungle \
@@ -38,13 +39,17 @@ echo "Waiting 10 seconds for simulator startup..."
 sleep 10
 
 MONKEYDO_ARGS=("$APP_PRG_PATH" "$DEVICE_ID")
+if [[ -z "$APP_SETTINGS_PATH" && -f "$GENERATED_SETTINGS_PATH" ]]; then
+  APP_SETTINGS_PATH="$GENERATED_SETTINGS_PATH"
+fi
+
 if [[ -n "$APP_SETTINGS_PATH" && -f "$APP_SETTINGS_PATH" ]]; then
   SETTINGS_BASENAME="${APP_SETTINGS_PATH##*/}"
   SETTINGS_DEST_PATH="GARMIN/Settings/$SETTINGS_BASENAME"
   MONKEYDO_ARGS+=("-a" "$APP_SETTINGS_PATH:$SETTINGS_DEST_PATH")
   echo "Sending settings file: $APP_SETTINGS_PATH -> $SETTINGS_DEST_PATH"
 else
-  echo "No explicit settings snapshot provided; using simulator/app current settings"
+  echo "No settings JSON found; using simulator/app current settings"
 fi
 
 "$CONNECTIQ_HOME/bin/monkeydo" "${MONKEYDO_ARGS[@]}"

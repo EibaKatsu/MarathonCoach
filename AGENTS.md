@@ -18,6 +18,8 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
   - `skills/ciq-simulator-launch/SKILL.md`
 - `custom-code-generator`: `カスタムコード` 指示時に使用
   - `skills/custom-code-generator/SKILL.md`
+- `x-post-writer`: `X投稿文を作って` / `次の投稿を考えて` / `ポスト文を考えて` 指示時に使用
+  - `skills/x-post-writer/SKILL.md`
 
 ### How to use skills
 - Trigger rules: ユーザーがスキル名やトリガー文言を指定したらそのスキルを使う。
@@ -30,9 +32,10 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
 - `docs/spec/ui.md`: UI方針、文言、多言語、レイアウト
 - `docs/spec/logic_hr_zone.md`: レースプロファイル/HR ZONEロジック
 - `docs/spec/logic_action.md`: ACTION判定
-- `docs/spec/logic_drift.md`: DRIFT検知
+- `docs/spec/logic_drift.md`: DRIFT廃止メモ
 - `docs/spec/logic_fuel.md`: FUEL判定、LAPリセット、表示優先
-- `docs/spec/distance_cards.md`: 距離通知カード
+- `docs/spec/distance_cards.md`: 距離通知廃止メモ
+- `docs/dev/message_integration_memo.md`: MessageInGarmin風カード統合メモ
 
 ## 開発運用（小文字）
 - `docs/dev/step_plan.md`: 段階開発STEPと進行状況

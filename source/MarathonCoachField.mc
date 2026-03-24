@@ -1224,6 +1224,14 @@ class MarathonCoachField extends Ui.DataField {
         return text;
     }
 
+    function _resolveHeartRateCapLabelText(layoutVariant) {
+        return "cap";
+    }
+
+    function _resolveHeartRateCapValueText() {
+        return _formatHeartRateValueText(_allowedMaxHeartRate);
+    }
+
     function _resolveHeartRateGaugeState() {
         if (_currentHeartRate == null or _allowedMaxHeartRate == null) {
             return null;
