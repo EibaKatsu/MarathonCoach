@@ -33,6 +33,7 @@ class MarathonCoachField extends Ui.DataField {
     const MIN_DISTANCE_FOR_PREDICTION_KM = 0.5;
     const PREDICTION_ON_PACE_THRESHOLD_SEC = 60;
     const MESSAGE_ROTATE_SEC = 24;
+    const START_MESSAGE_MAX_DISTANCE_KM = 0.5;
     const SLOPE_UP_THRESHOLD = 0.03;
     const SLOPE_DOWN_THRESHOLD = -0.03;
     const SLOPE_MIN_DISTANCE_DELTA_M = 20.0;
@@ -2857,14 +2858,25 @@ class MarathonCoachField extends Ui.DataField {
         return "HOLD";
     }
 
-    function _resolveCardStateKey(actionVariant, isLastSpurt) {
+    function _resolveCardStateKey(actionVariant, isLastSpurt, info) {
         if (isLastSpurt) {
             return CoachMessageUtils.STATE_KEY_LAST_SPURT;
+        }
+        if (_isStartMessageSegment(info)) {
+            return CoachMessageUtils.STATE_KEY_START;
         }
         if (actionVariant == CARD_VARIANT_ACTION_EASE) {
             return _slopeState + "_" + _resolveActionEaseStateKey();
         }
         return _slopeState + "_" + _resolveActionKey(actionVariant);
+    }
+
+    function _isStartMessageSegment(info) {
+        var distanceKm = _extractElapsedDistanceKm(info);
+        if (distanceKm == null) {
+            return false;
+        }
+        return distanceKm < START_MESSAGE_MAX_DISTANCE_KM;
     }
 
     function _resolveActionEaseStateKey() {
@@ -2945,7 +2957,7 @@ class MarathonCoachField extends Ui.DataField {
         } else {
             _cardVariant = _resolveDisplayCardVariant(actionVariant, fuelState);
         }
-        var stateKey = _resolveCardStateKey(actionVariant, isLastSpurt);
+        var stateKey = _resolveCardStateKey(actionVariant, isLastSpurt, info);
         var labelText = _resolveCardLabelText(actionVariant, fuelState, isLastSpurt);
         var language = CoachMessageUtils.resolveLanguage(_resolvePredictionSystemLanguage());
         var category = _coachMessageCategory;
