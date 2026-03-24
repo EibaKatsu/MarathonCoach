@@ -39,6 +39,7 @@ class MarathonCoachField extends Ui.DataField {
     const ACTION_PUSH_RELEASE_SEC = 5;
     const ACTION_PUSH_RELEASE_PACE_HYSTERESIS_SEC = 2;
     const ACTION_PUSH_RELEASE_HR_HYSTERESIS_BPM = 1;
+    const LAST_SPURT_MAX_DISTANCE_KM = 1.0;
     const ACTION_EASE_MIN_HEADROOM_BPM = 3;
     const ACTION_EASE_BASELINE_HR_DELTA_BPM = 6;
     const HEART_RATE_EMA_WINDOW_SEC = 12;
@@ -2437,8 +2438,26 @@ class MarathonCoachField extends Ui.DataField {
 
     function _isLastSpurtSegment(info) {
         var distanceKm = _extractElapsedDistanceKm(info);
-        var progress = _resolveRaceProgress(distanceKm);
-        return progress != null and progress >= RACE_PHASE_4_END_PROGRESS;
+        if (
+            distanceKm == null or
+            _raceDistanceKm == null or
+            _raceDistanceKm <= 0
+        ) {
+            return false;
+        }
+
+        var remainingDistanceKm = _raceDistanceKm - distanceKm;
+        if (remainingDistanceKm < 0) {
+            remainingDistanceKm = 0;
+        }
+
+        var progressThresholdDistanceKm = _raceDistanceKm * (1.0 - RACE_PHASE_4_END_PROGRESS);
+        var triggerRemainingDistanceKm = progressThresholdDistanceKm;
+        if (triggerRemainingDistanceKm > LAST_SPURT_MAX_DISTANCE_KM) {
+            triggerRemainingDistanceKm = LAST_SPURT_MAX_DISTANCE_KM;
+        }
+
+        return remainingDistanceKm <= triggerRemainingDistanceKm;
     }
 
     function _resetCoachMessageState() {
