@@ -3116,8 +3116,12 @@ class MarathonCoachField extends Ui.DataField {
 
         var roundedHundredths = Math.floor((overDistanceKm * 100.0) + 0.5);
         var wholeKm = Math.floor(roundedHundredths / 100);
-        var fractionKm = roundedHundredths % 100;
-        return "+" + wholeKm.format("%d") + "." + fractionKm.format("%02d") + "km";
+        var fractionKm = roundedHundredths - (wholeKm * 100);
+        var fractionText = fractionKm.format("%d");
+        if (fractionKm < 10) {
+            fractionText = "0" + fractionText;
+        }
+        return "+" + wholeKm.format("%d") + "." + fractionText + "km";
     }
 
     function _applyEmaSample(previousValue, sampleValue, alpha) {

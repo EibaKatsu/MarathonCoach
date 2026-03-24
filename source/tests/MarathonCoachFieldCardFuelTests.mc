@@ -380,6 +380,14 @@ function testUpdateSummaryMetrics_showsOverDistancePastRaceDistance(logger) {
 }
 
 (:test)
+function testBuildGoalPredictionOverDistanceText_formatsSmallFloatOverflow(logger) {
+    var sut = _newCardFuelSut();
+
+    Test.assertEqual("+0.01km", sut._buildGoalPredictionOverDistanceText(0.00672));
+    return true;
+}
+
+(:test)
 function testUpdateFuelTimer_fullRaceCountdownAndDue(logger) {
     var sut = _newCardFuelSut();
     sut._raceDistanceKm = 42.195;
