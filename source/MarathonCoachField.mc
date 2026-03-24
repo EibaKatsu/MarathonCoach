@@ -26,6 +26,8 @@ class MarathonCoachField extends Ui.DataField {
     const FUEL_METER_WARNING_LEAD_SEC = 0;
     const FUEL_METER_LABEL_TOGGLE_SEC = 2;
     const LAP_DIAG_LOG = false;
+    const FINISH_DIAG_LOG = true;
+    const FINISH_DIAG_MARGIN_KM = 1.0;
     const FUEL_PLAN_DIAG_LOG = false;
     const HR_OVER_TRIGGER_MARGIN_BPM = 1;
     const MIN_DISTANCE_FOR_PREDICTION_KM = 0.5;
@@ -225,6 +227,7 @@ class MarathonCoachField extends Ui.DataField {
     var _probeSpeedLastElapsedSec = null;
     var _lastDistanceProbeLogLine = null;
     var _lastCoachMessageDiagLine = null;
+    var _lastFinishDiagLine = null;
     var _coachMessageLanguage = "ja";
     var _coachMessageCategory = CoachMessageUtils.defaultCategory();
     var _coachMessageStateKey = null;
@@ -304,18 +307,22 @@ class MarathonCoachField extends Ui.DataField {
 
     function onTimerStart() {
         _timerRunning = true;
+        _logFinishDiag("timer_start", _lastElapsedSec, _resolveFinishDiagDistanceKm(), false);
     }
 
     function onTimerResume() {
         _timerRunning = true;
+        _logFinishDiag("timer_resume", _lastElapsedSec, _resolveFinishDiagDistanceKm(), false);
     }
 
     function onTimerPause() {
         _timerRunning = false;
+        _logFinishDiag("timer_pause", _lastElapsedSec, _resolveFinishDiagDistanceKm(), false);
     }
 
     function onTimerStop() {
         _timerRunning = false;
+        _logFinishDiag("timer_stop", _lastElapsedSec, _resolveFinishDiagDistanceKm(), false);
     }
 
     function onTimerReset() {
@@ -383,6 +390,7 @@ class MarathonCoachField extends Ui.DataField {
         _sampleHeartRateSource = "null";
         _sampleCurrentLocationSource = "null";
         _lastFactLogLine = null;
+        _lastFinishDiagLine = null;
         _probeLocDistanceM = 0.0;
         _probeLocLastLocation = null;
         _probeLocLastElapsedSec = null;
@@ -1445,6 +1453,7 @@ class MarathonCoachField extends Ui.DataField {
             _goalPredictionTimeText = _predictionOverText;
             _goalPredictionDiffText = overDistanceText;
             _goalDeltaText = _predictionOverText + " " + overDistanceText;
+            _logFinishDiag("summary", elapsedSec, distanceKm, hideGoalPrediction);
             return;
         }
 
@@ -1452,6 +1461,7 @@ class MarathonCoachField extends Ui.DataField {
         _goalPredictionTimeText = _buildGoalPredictionTimeText(predictedTotalSec);
         _goalPredictionDiffText = _buildGoalPredictionDiffText(predictedTotalSec);
         _goalDeltaText = _buildGoalDeltaText(predictedTotalSec);
+        _logFinishDiag("summary", elapsedSec, distanceKm, hideGoalPrediction);
     }
 
     function _updateHeartRate(info) {
@@ -2082,6 +2092,54 @@ class MarathonCoachField extends Ui.DataField {
             return "null";
         }
         return value.toString();
+    }
+
+    function _shouldLogFinishDiag(stage, distanceKm) {
+        if (!FINISH_DIAG_LOG) {
+            return false;
+        }
+        if (stage != "summary") {
+            return true;
+        }
+        if (distanceKm == null or _raceDistanceKm == null or _raceDistanceKm <= 0) {
+            return false;
+        }
+        return distanceKm >= (_raceDistanceKm - FINISH_DIAG_MARGIN_KM);
+    }
+
+    function _logFinishDiag(stage, elapsedSec, distanceKm, hideGoalPrediction) {
+        if (!_shouldLogFinishDiag(stage, distanceKm)) {
+            return;
+        }
+
+        var overDistanceKm = null;
+        if (distanceKm != null and _raceDistanceKm != null) {
+            overDistanceKm = distanceKm - _raceDistanceKm;
+        }
+
+        var line =
+            "[FINISH_DIAG]" +
+            " stage=" + _factValue(stage) +
+            " elapsed=" + _factValue(elapsedSec) +
+            " timerRunning=" + _factValue(_timerRunning) +
+            " distanceKm=" + _factValue(distanceKm) +
+            " raceKm=" + _factValue(_raceDistanceKm) +
+            " overKm=" + _factValue(overDistanceKm) +
+            " sampleTimerRaw=" + _factValue(_sampleTimerRaw) + "(" + _sampleTimerSource + ")" +
+            " sampleDistanceRawM=" + _factValue(_sampleDistanceRawM) + "(" + _sampleDistanceSource + ")" +
+            " paceNow=" + _factValue(_paceNowSecPerKm) +
+            " hideGoalPrediction=" + _factValue(hideGoalPrediction) +
+            " labelVisible=" + _factValue(_goalPredictionLabelVisible) +
+            " timeText=" + _factValue(_goalPredictionTimeText) +
+            " diffText=" + _factValue(_goalPredictionDiffText) +
+            " deltaText=" + _factValue(_goalDeltaText) +
+            " distanceText=" + _factValue(_distanceText) +
+            " elapsedText=" + _factValue(_elapsedTimeText);
+        if (_isSameText(_lastFinishDiagLine, line)) {
+            return;
+        }
+        _lastFinishDiagLine = line;
+        Sys.println(line);
     }
 
     function _logCoachMessageDiag(stage, elapsedSec, stateKey, fuelState, labelText, selectedMessage, messagePool) {
@@ -3038,6 +3096,13 @@ class MarathonCoachField extends Ui.DataField {
             predictedText = CoachUtils.formatHourMin(predictedTotalSec);
         }
         return predictedText;
+    }
+
+    function _resolveFinishDiagDistanceKm() {
+        if (!_isNumericSample(_sampleDistanceRawM) or _sampleDistanceRawM < 0) {
+            return null;
+        }
+        return _sampleDistanceRawM / 1000.0;
     }
 
     function _hasGoalPredictionDisplay() {
