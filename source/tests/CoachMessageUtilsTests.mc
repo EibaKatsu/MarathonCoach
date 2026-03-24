@@ -81,3 +81,32 @@ function testCoachMessageUtilsStartPoolsHaveTenEntriesPerCategory(logger) {
     }
     return true;
 }
+
+(:test)
+function testCoachMessageUtilsFunnyFlatPoolsHaveTenEntries(logger) {
+    Test.assertMessage(
+        CoachMessageUtils.getMessagePool("ja", CoachMessageUtils.CATEGORY_FUNNY, CoachMessageUtils.FUEL_STATE_NONE, "FL_PUSH").size() == 10,
+        "ja funny FL_PUSH should have 10 entries"
+    );
+    Test.assertMessage(
+        CoachMessageUtils.getMessagePool("ja", CoachMessageUtils.CATEGORY_FUNNY, CoachMessageUtils.FUEL_STATE_NONE, "FL_HOLD").size() == 10,
+        "ja funny FL_HOLD should have 10 entries"
+    );
+    Test.assertMessage(
+        CoachMessageUtils.getMessagePool("ja", CoachMessageUtils.CATEGORY_FUNNY, CoachMessageUtils.FUEL_STATE_NONE, "FL_EASE").size() == 10,
+        "ja funny FL_EASE should have 10 entries"
+    );
+    Test.assertMessage(
+        CoachMessageUtils.getMessagePool("en", CoachMessageUtils.CATEGORY_FUNNY, CoachMessageUtils.FUEL_STATE_NONE, "FL_PUSH").size() == 10,
+        "en funny FL_PUSH should have 10 entries"
+    );
+    Test.assertMessage(
+        CoachMessageUtils.getMessagePool("en", CoachMessageUtils.CATEGORY_FUNNY, CoachMessageUtils.FUEL_STATE_NONE, "FL_HOLD").size() == 10,
+        "en funny FL_HOLD should have 10 entries"
+    );
+    Test.assertMessage(
+        CoachMessageUtils.getMessagePool("en", CoachMessageUtils.CATEGORY_FUNNY, CoachMessageUtils.FUEL_STATE_NONE, "FL_EASE").size() == 10,
+        "en funny FL_EASE should have 10 entries"
+    );
+    return true;
+}

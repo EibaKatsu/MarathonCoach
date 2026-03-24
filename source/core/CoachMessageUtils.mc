@@ -106,9 +106,9 @@ module CoachMessageUtils {
                     case "UP_PUSH": return ["坂にも前向きや", "登りで仕事しよ"];
                     case "UP_HOLD": return ["坂は慌てんで", "登りは淡々勝ち"];
                     case "UP_EASE": return ["坂に全部は払わん", "登りで見栄いらん"];
-                    case "FL_PUSH": return ["ここでひと押し", "少しだけ前へ"];
-                    case "FL_HOLD": return ["その巡航、ええやん", "ええリズムやで"];
-                    case "FL_EASE": return ["熱なりすぎ", "いったん整えよ"];
+                    case "FL_PUSH": return ["ここでひと押し", "少しだけ前へ", "巡航に軽く火を入れよ", "流れの中でひと伸び", "ここは半歩だけ前へ", "ええ流れに少し足そ", "軽く前へ転がそ", "巡航にひと粒スパイス", "ここでひと呼吸ぶん押そ", "少しだけノリ足そ"];
+                    case "FL_HOLD": return ["その巡航、ええやん", "ええリズムやで", "その流れ、きれいや", "まだそれで十分や", "巡航がようまとまってる", "その安定感ええ感じ", "落ち着いた運びやで", "そのまま運べたら強い", "今のリズムようできてる", "ええ巡航つくれてる"];
+                    case "FL_EASE": return ["熱なりすぎ", "いったん整えよ", "ちょい前のめりやで", "力みを半分ほどこ", "少しクールダウンしよ", "熱量だけ戻そ", "いったん息整えよ", "出力をひとつ落とそ", "まだ静かにいこ", "ちょい焦りすぎや"];
                     case "DN_PUSH": return ["下りのボーナス活用", "脚だけ軽く回そ"];
                     case "DN_HOLD": return ["下りで雑はあかん", "楽して丁寧に"];
                     case "DN_EASE": return ["下りで飛ばしすぎや", "ブレーキは少しだけ"];
@@ -197,9 +197,9 @@ module CoachMessageUtils {
                     case "UP_PUSH": return ["Climb with intent", "Uphill has work today"];
                     case "UP_HOLD": return ["No panic uphill", "Steady wins the climb"];
                     case "UP_EASE": return ["No hero climb now", "Dont spend it here"];
-                    case "FL_PUSH": return ["Little nudge here", "One small lift here"];
-                    case "FL_HOLD": return ["Rhythm looks smooth", "Nice smooth cruise"];
-                    case "FL_EASE": return ["Got too spicy", "Reset the heat"];
+                    case "FL_PUSH": return ["Little nudge here", "One small lift here", "Add a touch to the roll", "Small spark in the rhythm", "Half-step forward here", "Give the cruise a lift", "Roll it a bit brighter", "Just a hint more now", "One breath of pressure", "Tiny boost, stay smooth"];
+                    case "FL_HOLD": return ["Rhythm looks smooth", "Nice smooth cruise", "That flow looks clean", "This is enough right now", "Cruise is nicely settled", "Good calm carry there", "That rhythm is working", "Keep that smooth line", "Steady looks strong", "You built a nice roll"];
+                    case "FL_EASE": return ["Got too spicy", "Reset the heat", "A bit too eager there", "Take half the tension out", "Cool it a touch", "Bring the effort down", "Let the breath settle", "One gear softer now", "Keep it quieter here", "Ease the rush a bit"];
                     case "DN_PUSH": return ["Use the downhill", "Quick easy feet"];
                     case "DN_HOLD": return ["Stay neat downhill", "Easy speed only"];
                     case "DN_EASE": return ["Downhill got greedy", "Brake just a touch"];
