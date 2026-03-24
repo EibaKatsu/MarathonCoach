@@ -64,3 +64,20 @@ function testCoachMessageUtilsNormalPoolUsesSlopeAndActionKey(logger) {
     );
     return true;
 }
+
+(:test)
+function testCoachMessageUtilsStartPoolsHaveTenEntriesPerCategory(logger) {
+    var categories = CoachMessageUtils.displayCategories();
+    for (var i = 0; i < categories.size(); i += 1) {
+        var category = categories[i];
+        Test.assertMessage(
+            CoachMessageUtils.getMessagePool("ja", category, CoachMessageUtils.FUEL_STATE_NONE, CoachMessageUtils.STATE_KEY_START).size() == 10,
+            "ja start pool should have 10 entries for " + category
+        );
+        Test.assertMessage(
+            CoachMessageUtils.getMessagePool("en", category, CoachMessageUtils.FUEL_STATE_NONE, CoachMessageUtils.STATE_KEY_START).size() == 10,
+            "en start pool should have 10 entries for " + category
+        );
+    }
+    return true;
+}

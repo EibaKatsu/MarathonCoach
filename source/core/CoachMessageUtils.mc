@@ -10,6 +10,7 @@ module CoachMessageUtils {
     const CATEGORY_PRAISE = "PRAISE";
     const CATEGORY_DIST = "DIST";
     const STATE_KEY_LAST_SPURT = "LAST_SPURT";
+    const STATE_KEY_START = "START";
 
     const FUEL_STATE_NONE = "NONE";
     const FUEL_STATE_PREP = "PREP";
@@ -91,6 +92,9 @@ module CoachMessageUtils {
         if (_isSameText(stateKey, STATE_KEY_LAST_SPURT)) {
             return _getLastSpurtPoolJa(category);
         }
+        if (_isSameText(stateKey, STATE_KEY_START)) {
+            return _getStartPoolJa(category);
+        }
         var reasonSpecificPool = _getReasonSpecificNormalPoolJa(category, stateKey);
         if (reasonSpecificPool != null) {
             return reasonSpecificPool;
@@ -102,9 +106,9 @@ module CoachMessageUtils {
                     case "UP_PUSH": return ["坂にも前向きや", "登りで仕事しよ"];
                     case "UP_HOLD": return ["坂は慌てんで", "登りは淡々勝ち"];
                     case "UP_EASE": return ["坂に全部は払わん", "登りで見栄いらん"];
-                    case "FL_PUSH": return ["平地でひと押し", "ここで少しだけ"];
-                    case "FL_HOLD": return ["平地が味方やで", "その巡航、ええやん"];
-                    case "FL_EASE": return ["平地で熱なりすぎ", "いったん整えよ"];
+                    case "FL_PUSH": return ["ここでひと押し", "少しだけ前へ"];
+                    case "FL_HOLD": return ["その巡航、ええやん", "ええリズムやで"];
+                    case "FL_EASE": return ["熱なりすぎ", "いったん整えよ"];
                     case "DN_PUSH": return ["下りのボーナス活用", "脚だけ軽く回そ"];
                     case "DN_HOLD": return ["下りで雑はあかん", "楽して丁寧に"];
                     case "DN_EASE": return ["下りで飛ばしすぎや", "ブレーキは少しだけ"];
@@ -126,9 +130,9 @@ module CoachMessageUtils {
                     case "UP_PUSH": return ["登りは薄めに押そ", "腕ふり一杯ぶん"];
                     case "UP_HOLD": return ["坂はちびちびで", "濃くせんでええ"];
                     case "UP_EASE": return ["坂で飲みすぎや", "少し水いこ"];
-                    case "FL_PUSH": return ["平地で一口だけ上げる", "軽く炭酸入れよ"];
+                    case "FL_PUSH": return ["一口だけ上げる", "軽く炭酸入れよ"];
                     case "FL_HOLD": return ["いい温度やで", "そのまま熟成"];
-                    case "FL_EASE": return ["平地で濃すぎる", "水で整えよ"];
+                    case "FL_EASE": return ["ちょい濃すぎる", "水で整えよ"];
                     case "DN_PUSH": return ["下りは口当たり軽く", "脚を軽めに回そ"];
                     case "DN_HOLD": return ["下りもなめらかに", "流れにまかせよ"];
                     case "DN_EASE": return ["下りで度数上げすぎ", "少し薄めよ"];
@@ -179,6 +183,9 @@ module CoachMessageUtils {
         if (_isSameText(stateKey, STATE_KEY_LAST_SPURT)) {
             return _getLastSpurtPoolEn(category);
         }
+        if (_isSameText(stateKey, STATE_KEY_START)) {
+            return _getStartPoolEn(category);
+        }
         var reasonSpecificPool = _getReasonSpecificNormalPoolEn(category, stateKey);
         if (reasonSpecificPool != null) {
             return reasonSpecificPool;
@@ -190,9 +197,9 @@ module CoachMessageUtils {
                     case "UP_PUSH": return ["Climb with intent", "Uphill has work today"];
                     case "UP_HOLD": return ["No panic uphill", "Steady wins the climb"];
                     case "UP_EASE": return ["No hero climb now", "Dont spend it here"];
-                    case "FL_PUSH": return ["Little flat push", "One small lift here"];
-                    case "FL_HOLD": return ["Flat is your friend", "Nice smooth cruise"];
-                    case "FL_EASE": return ["Flat got too spicy", "Reset the heat"];
+                    case "FL_PUSH": return ["Little nudge here", "One small lift here"];
+                    case "FL_HOLD": return ["Rhythm looks smooth", "Nice smooth cruise"];
+                    case "FL_EASE": return ["Got too spicy", "Reset the heat"];
                     case "DN_PUSH": return ["Use the downhill", "Quick easy feet"];
                     case "DN_HOLD": return ["Stay neat downhill", "Easy speed only"];
                     case "DN_EASE": return ["Downhill got greedy", "Brake just a touch"];
@@ -204,7 +211,7 @@ module CoachMessageUtils {
                     case "UP_EASE": return ["That is too much", "Back off uphill"];
                     case "FL_PUSH": return ["Recover the gap slowly", "Lift, dont lunge"];
                     case "FL_HOLD": return ["Normal is right", "Keep doing that"];
-                    case "FL_EASE": return ["Too hot on flat", "Cool it down"];
+                    case "FL_EASE": return ["Too hot already", "Cool it down"];
                     case "DN_PUSH": return ["Dont waste the downhill", "Keep it controlled"];
                     case "DN_HOLD": return ["Just carry the flow", "Stay tidy downhill"];
                     case "DN_EASE": return ["Too much on downhill", "Bring it back"];
@@ -214,9 +221,9 @@ module CoachMessageUtils {
                     case "UP_PUSH": return ["Light sip uphill", "Push it lightly"];
                     case "UP_HOLD": return ["Easy pour on climbs", "Keep it mellow uphill"];
                     case "UP_EASE": return ["Too strong uphill", "Add some water"];
-                    case "FL_PUSH": return ["Tiny flat top-up", "A little sparkle here"];
+                    case "FL_PUSH": return ["Tiny top-up here", "A little sparkle here"];
                     case "FL_HOLD": return ["Good steady blend", "Let it age nicely"];
-                    case "FL_EASE": return ["Too strong on flat", "Water it down"];
+                    case "FL_EASE": return ["Too strong already", "Water it down"];
                     case "DN_PUSH": return ["Light feet downhill", "Roll it smooth"];
                     case "DN_HOLD": return ["Smooth pour downhill", "Let the flow work"];
                     case "DN_EASE": return ["Too much downhill proof", "Make it lighter"];
@@ -261,6 +268,42 @@ module CoachMessageUtils {
             case "DN_EASE": return ["Dont overcook downhill", "Ease the descent"];
         }
         return ["Stay steady"];
+    }
+
+    function _getStartPoolJa(category) as Lang.Array {
+        switch (category) {
+            case CATEGORY_FUNNY:
+                return ["今日はまだ試運転や", "最初は笑って入ろ", "飛び出しすぎ注意やで", "リズム探しの時間や", "まだ本気は預けとこ", "脚のネジは半分でええ", "序盤は静かに仕事しよ", "景色見る余裕で入ろ", "スタート貯金はいらん", "最初は軽口くらいで"];
+            case CATEGORY_SALT:
+                return ["最初は丁寧に入る", "まだ上げなくていい", "呼吸優先でいこ", "落ち着いて流れ作る", "突っ込みは禁止", "体を起こして進む", "まずは巡航を作る", "余計な力を抜こ", "入りで焦らない", "ここは様子見で十分"];
+            case CATEGORY_ALCOHOL:
+                return ["最初は薄めでいこ", "まだ一口目の温度や", "今日は香りから入ろ", "序盤は軽めに流そ", "濃さはまだいらん", "まずは口当たり良く", "ちびちび進めばええ", "最初はやさしく回そ", "まだ熟成前やで", "出だしは軽く合わせよ"];
+            case CATEGORY_TOXIC:
+                return ["最初から飛ばすな", "まだ見せ場ちゃうで", "焦って使うな", "入りで雑になるな", "ここで気負うな", "最初の暴走は禁止", "まだ借金作るな", "力みを置いていけ", "序盤で勝負するな", "まずは頭を冷やせ"];
+            case CATEGORY_PRAISE:
+                return ["落ち着いて入れてる", "丁寧な出だしええやん", "最初の我慢が強い", "静かな入り方うまい", "呼吸を整えられてる", "序盤の運びがきれい", "いいリズムを作れてる", "慌てないのが強さや", "出だしの判断ええで", "落ち着いた入りが光る"];
+            case CATEGORY_DIST:
+                return [];
+        }
+        return ["最初は丁寧に入ろ", "呼吸を整えていこ", "まだ慌てんでええ", "リズム優先でいこ", "落ち着いて流そ", "いい入りを作ろ", "出だしは静かに", "余計な力を抜こ", "まずは巡航づくり", "ここは丁寧さ優先"];
+    }
+
+    function _getStartPoolEn(category) as Lang.Array {
+        switch (category) {
+            case CATEGORY_FUNNY:
+                return ["Still in warm-up mode", "Start with a grin", "No launch mode yet", "Find the rhythm first", "Keep the lid on early", "Half a turn on the legs", "Quiet work to begin", "Start with some spare ease", "No need for hero speed", "Just roll into the day"];
+            case CATEGORY_SALT:
+                return ["Start under control", "No need to lift yet", "Let breathing lead", "Build the flow first", "No rushing this part", "Run tall and easy", "Settle into rhythm", "Drop the extra tension", "Stay patient early", "Easy start is enough"];
+            case CATEGORY_ALCOHOL:
+                return ["Start light today", "First sip effort only", "Open with good flavor", "Keep the pour easy", "No strong mix yet", "Smooth and light first", "Small sips forward", "Easy roll to start", "Let it age a little", "Start with a soft blend"];
+            case CATEGORY_TOXIC:
+                return ["Do not blast the start", "This is not the show yet", "Do not spend early", "Do not get sloppy now", "Leave the ego behind", "No wild opening move", "Do not build debt here", "Drop the tension now", "This is not race-winning pace", "Cool your head first"];
+            case CATEGORY_PRAISE:
+                return ["Nice calm start", "That opening control is strong", "Good patience already", "You are starting clean", "Breathing looks settled", "That early rhythm is good", "Strong calm decision", "Patience is a strength", "You opened this well", "Clean work right away"];
+            case CATEGORY_DIST:
+                return [];
+        }
+        return ["Start with control", "Settle the breathing", "No need to rush", "Build the rhythm first", "Keep the opening calm", "Make this a clean start", "Easy does it early", "Relax the extra tension", "Find the cruise first", "Start smooth and steady"];
     }
 
     function _getFuelPrepPoolJa(category) as Lang.Array {

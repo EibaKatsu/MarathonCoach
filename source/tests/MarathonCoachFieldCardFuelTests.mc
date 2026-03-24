@@ -202,6 +202,46 @@ function testCardDisplay_usesEnglishLanguagePool(logger) {
 }
 
 (:test)
+function testCardDisplay_usesStartPoolWithinFirstFiveHundredMeters(logger) {
+    var sut = _newCardFuelSut();
+    sut._testElapsedSec = 120;
+    sut._fuelRemainingSec = 300;
+    sut._testActionVariant = TEST_CARD_VARIANT_ACTION_PUSH;
+    sut._slopeState = "UP";
+    sut._testElapsedDistanceKm = 0.32;
+
+    sut._updateCardDisplay(null);
+
+    Test.assertEqual(sut._actionPushText, sut._cardLine1);
+    _assertMessageInPool(
+        _cardMessageText(sut),
+        CoachMessageUtils.getMessagePool("ja", CoachMessageUtils.CATEGORY_FIXED, CoachMessageUtils.FUEL_STATE_NONE, CoachMessageUtils.STATE_KEY_START),
+        "message should come from START pool"
+    );
+    return true;
+}
+
+(:test)
+function testCardDisplay_switchesBackToSlopePoolAfterFiveHundredMeters(logger) {
+    var sut = _newCardFuelSut();
+    sut._testElapsedSec = 120;
+    sut._fuelRemainingSec = 300;
+    sut._testActionVariant = TEST_CARD_VARIANT_ACTION_HOLD;
+    sut._slopeState = "FL";
+    sut._testElapsedDistanceKm = 0.5;
+
+    sut._updateCardDisplay(null);
+
+    Test.assertEqual(sut._actionHoldText, sut._cardLine1);
+    _assertMessageInPool(
+        _cardMessageText(sut),
+        CoachMessageUtils.getMessagePool("ja", CoachMessageUtils.CATEGORY_FIXED, CoachMessageUtils.FUEL_STATE_NONE, "FL_HOLD"),
+        "message should come from regular slope pool at 500m"
+    );
+    return true;
+}
+
+(:test)
 function testSetCardLabelAndMessage_keepsSentenceOnSingleLine(logger) {
     var sut = _newCardFuelSut();
 
