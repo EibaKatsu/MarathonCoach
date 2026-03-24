@@ -51,13 +51,190 @@ module CoachMessageUtils {
     }
 
     function getMessagePool(language, category, fuelState, stateKey) as Lang.Array {
+        var pool = [];
         if (_isSameText(fuelState, FUEL_STATE_NOW)) {
-            return _getFuelNowPool(language, category);
+            pool = _getFuelNowPool(language, category);
+        } else if (_isSameText(fuelState, FUEL_STATE_PREP)) {
+            pool = _getFuelPrepPool(language, category);
+        } else {
+            pool = _getNormalPool(language, category, stateKey);
         }
-        if (_isSameText(fuelState, FUEL_STATE_PREP)) {
-            return _getFuelPrepPool(language, category);
+        return _normalizePool(language, fuelState, stateKey, pool);
+    }
+
+    function _normalizePool(language, fuelState, stateKey, pool) as Lang.Array {
+        if (pool == null or pool.size() == 0 or pool.size() >= 10) {
+            return pool;
         }
-        return _getNormalPool(language, category, stateKey);
+
+        var fallback = [];
+        if (_isSameText(fuelState, FUEL_STATE_NOW)) {
+            fallback = _getGenericFuelNowPool(language);
+        } else if (_isSameText(fuelState, FUEL_STATE_PREP)) {
+            fallback = _getGenericFuelPrepPool(language);
+        } else if (_isReasonSpecificStateKey(stateKey)) {
+            fallback = _getGenericReasonSpecificPool(language, stateKey);
+        } else {
+            fallback = _getGenericNormalPool(language, stateKey);
+        }
+        return _mergePools(pool, fallback);
+    }
+
+    function _mergePools(primary as Lang.Array, fallback as Lang.Array) as Lang.Array {
+        var merged = [];
+        _appendUniqueMessages(merged, primary);
+        _appendUniqueMessages(merged, fallback);
+        return merged;
+    }
+
+    function _appendUniqueMessages(target as Lang.Array, source as Lang.Array) {
+        if (source.size() == 0) {
+            return;
+        }
+
+        for (var i = 0; i < source.size(); i += 1) {
+            if (target.size() >= 10) {
+                return;
+            }
+
+            var candidate = source[i];
+            var exists = false;
+            for (var j = 0; j < target.size(); j += 1) {
+                if (_isSameText(target[j], candidate)) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                target.add(candidate);
+            }
+        }
+    }
+
+    function _isReasonSpecificStateKey(stateKey) {
+        switch (stateKey) {
+            case "UP_EASE_PACE":
+            case "FL_EASE_PACE":
+            case "DN_EASE_PACE":
+            case "UP_EASE_HR":
+            case "FL_EASE_HR":
+            case "DN_EASE_HR":
+            case "UP_EASE_BOTH":
+            case "FL_EASE_BOTH":
+            case "DN_EASE_BOTH":
+                return true;
+        }
+        return false;
+    }
+
+    function _getGenericNormalPool(language, stateKey) as Lang.Array {
+        if (_isSameText(language, "en")) {
+            return _getGenericNormalPoolEn(stateKey);
+        }
+        return _getGenericNormalPoolJa(stateKey);
+    }
+
+    function _getGenericFuelPrepPool(language) as Lang.Array {
+        if (_isSameText(language, "en")) {
+            return _getGenericFuelPrepPoolEn();
+        }
+        return _getGenericFuelPrepPoolJa();
+    }
+
+    function _getGenericFuelNowPool(language) as Lang.Array {
+        if (_isSameText(language, "en")) {
+            return _getGenericFuelNowPoolEn();
+        }
+        return _getGenericFuelNowPoolJa();
+    }
+
+    function _getGenericReasonSpecificPool(language, stateKey) as Lang.Array {
+        if (_isSameText(language, "en")) {
+            return _getGenericReasonSpecificPoolEn(stateKey);
+        }
+        return _getGenericReasonSpecificPoolJa(stateKey);
+    }
+
+    function _getGenericNormalPoolJa(stateKey) as Lang.Array {
+        switch (stateKey) {
+            case "UP_PUSH": return ["腕でつなご", "登りで少し押そ", "登りは一歩ずつ前へ", "リズムを崩さず押そ", "呼吸に合わせて前へ", "焦らず登りを進めよ", "ここは丁寧に押し切ろ", "上りは静かに前へ", "脚より腕で運ぼ", "ひと呼吸ぶん前へ"];
+            case "UP_HOLD": return ["登りは淡々と", "リズム優先で", "登りは落ち着いて刻も", "一定で運ぶのが正解", "呼吸を乱さず進めよ", "上りは静かに守ろ", "今は丁寧さを優先", "その流れで十分や", "焦らず巡航を守ろ", "上りの我慢が効く"];
+            case "UP_EASE": return ["登りで抑えよ", "少し落とそ", "上りは一段ゆるめよ", "呼吸を先に整えよ", "ここは静かに戻そ", "力みを外していこ", "登りで無理せんとこ", "少しだけ余裕を作ろ", "熱量をひとつ下げよ", "落ち着いて立て直そ"];
+            case "FL_PUSH": return ["少し前へ", "ここで少し上げよ", "巡航にひと押し足そ", "流れのまま前へ出よ", "半歩だけ攻めていこ", "リズムの中で上げよ", "なめらかに前へ運ぼ", "ここは軽く押していい", "呼吸ぶんだけ前へ", "静かに前進しよ"];
+            case "FL_HOLD": return ["そのまま運ぼ", "いい流れやで", "今の巡航で十分や", "そのリズムを守ろ", "落ち着いて流そう", "安定したまま進も", "この流れを続けよ", "静かな巡航でいこ", "今は整ってるで", "ええ運びをキープ"];
+            case "FL_EASE": return ["少し落ち着こ", "一段ゆるめよ", "少し熱を戻そ", "呼吸を整えていこ", "出力をひとつ下げよ", "前のめりを戻そ", "まだ静かにいこ", "力みを抜いて運ぼ", "いったん整え直そ", "落ち着き優先で"];
+            case "DN_PUSH": return ["下りで丁寧に乗ろ", "脚を回していこ", "下りの流れを使お", "軽い接地で進めよ", "ここは足を回していこ", "重心だけ前へ乗せよ", "下りをなめらかに使お", "脚さばきで前へ出よ", "リズム良く転がそ", "流れに乗って進も"];
+            case "DN_HOLD": return ["下りも丁寧に", "流れに乗ろ", "下りは静かに運ぼ", "接地を乱さずいこ", "この流れを保とう", "楽に回して進も", "下りで雑にならんとこ", "姿勢そのままでいこ", "力まず流そう", "丁寧な下りで十分"];
+            case "DN_EASE": return ["下りで飛ばしすぎ", "少し抑えよ", "下りは一段戻そ", "足音を静かにしよ", "重心を落ち着けよ", "流れを少し整えよ", "まだ攻めすぎんでええ", "下りで使いすぎるな", "呼吸を整えて戻そ", "少しだけブレーキ"];
+        }
+        return ["そのままいこ", "落ち着いて運ぼ", "今の流れで十分や", "呼吸を整えていこ", "静かに前へ進も", "リズム優先でいこ", "焦らず運んでいこ", "丁寧にまとめよ", "今は崩さんとこ", "その調子でいこ"];
+    }
+
+    function _getGenericNormalPoolEn(stateKey) as Lang.Array {
+        switch (stateKey) {
+            case "UP_PUSH": return ["Use the arms", "Push the climb", "Step into the hill", "Press without rushing", "Move with the breath", "Climb one step at a time", "Stay smooth and push", "Quiet work uphill", "Carry it with the arms", "One breath more uphill"];
+            case "UP_HOLD": return ["Steady uphill", "Keep the rhythm", "Stay calm on the climb", "This pace is enough here", "Keep the breathing steady", "Protect the flow uphill", "Patience works here", "Hold the line uphill", "No need to force it", "Keep the climb tidy"];
+            case "UP_EASE": return ["Ease on the climb", "Back off uphill", "Take one gear off", "Settle the breathing", "Bring it down smoothly", "Drop the tension now", "No need to force the hill", "Make a little room", "Turn the heat down", "Reset the climb"];
+            case "FL_PUSH": return ["Lift it a touch", "Press a little", "Add one small lift", "Move half a step up", "Push within the rhythm", "Roll it forward smoothly", "Take a calm step on", "One breath more here", "Nudge the cruise ahead", "Gentle pressure now"];
+            case "FL_HOLD": return ["Hold this rhythm", "Good steady flow", "This cruise is enough", "Keep the line smooth", "Stay settled here", "Carry the pace calmly", "Keep the roll going", "This rhythm is working", "No need to change much", "Steady still looks strong"];
+            case "FL_EASE": return ["Settle a little", "Ease one gear", "Take the heat down", "Let the breath settle", "Back off smoothly", "Relax the tension", "Keep it quieter here", "Reset the effort now", "Bring it down a touch", "Calm the rush"];
+            case "DN_PUSH": return ["Roll the downhill", "Quick light steps", "Use the flow downhill", "Let the slope help", "Turn the legs over", "Carry the speed cleanly", "Flow forward here", "Light feet down the slope", "Ride the rhythm down", "Use the drop well"];
+            case "DN_HOLD": return ["Stay smooth downhill", "Ride the flow", "Keep it neat downhill", "Hold the line here", "Calm feet on the drop", "Let the slope carry you", "Stay relaxed downhill", "Keep the rhythm clean", "No extra force needed", "Smooth is enough here"];
+            case "DN_EASE": return ["Dont overcook downhill", "Ease the descent", "Take one gear off downhill", "Quiet the footstrike", "Bring the speed back", "Settle the drop a bit", "Do not spend it here", "Take the edge off", "Reset on the downhill", "Brake just a touch"];
+        }
+        return ["Stay steady", "Keep it calm", "Hold the flow", "Breathe and move", "Keep the rhythm first", "No need to rush", "Stay smooth here", "Carry it cleanly", "Keep it under control", "This pace is fine"];
+    }
+
+    function _getGenericFuelPrepPoolJa() as Lang.Array {
+        return ["次で補給やで", "補給の準備しよ", "そろそろ入れどき", "次のタイミングで入れよ", "手元を確認しとこ", "今のうちに準備や", "補給の段取りしよ", "次で忘れず入れよ", "先に準備できたら強い", "補給ポイント近いで"];
+    }
+
+    function _getGenericFuelPrepPoolEn() as Lang.Array {
+        return ["Fuel prep next", "Get fuel ready", "Fuel point coming", "Be ready for the next fuel", "Check it in your hand", "Prep it while you can", "Set up the fuel now", "Do not miss the next one", "Ready fuel stays strong", "Fuel timing is close"];
+    }
+
+    function _getGenericFuelNowPoolJa() as Lang.Array {
+        return ["今、補給しよ", "ここで補給や", "今が入れどき", "このタイミングで入れよ", "忘れず今いこ", "一口でも入れとこ", "ここは補給優先や", "今入れたら楽になる", "手早く補給しよ", "この場面で補給やで"];
+    }
+
+    function _getGenericFuelNowPoolEn() as Lang.Array {
+        return ["Fuel now", "Take fuel now", "This is the fuel point", "Take it right here", "Do not miss it now", "Even a small sip helps", "Fuel comes first here", "Take it and save the legs", "Quick fuel now", "This moment is for fuel"];
+    }
+
+    function _getGenericReasonSpecificPoolJa(stateKey) as Lang.Array {
+        switch (stateKey) {
+            case "UP_EASE_PACE":
+            case "FL_EASE_PACE":
+            case "DN_EASE_PACE":
+                return ["少し戻す", "ペースだけ戻そ", "速さを半歩戻そ", "ペースを静かに下げよ", "いったん巡航へ戻そ", "焦らずペース修正", "出力を少し戻そ", "今はペース優先で調整", "一段だけ戻していこ", "落ち着く速さに戻そ"];
+            case "UP_EASE_HR":
+            case "FL_EASE_HR":
+            case "DN_EASE_HR":
+                return ["息を整えよ", "心拍落ち着こ", "呼吸優先で戻そ", "まずは心拍を待と", "少しだけ楽にしよ", "脈を静かに下げよ", "呼吸が整うまで待と", "今は負荷を逃がそ", "心拍を戻してからいこ", "まず落ち着きを作ろ"];
+            case "UP_EASE_BOTH":
+            case "FL_EASE_BOTH":
+            case "DN_EASE_BOTH":
+                return ["少し落ち着こ", "無理せんとこ", "呼吸もペースも整えよ", "ここはいったん戻そ", "熱も速さも下げよ", "一段静かにいこ", "立て直し優先や", "今は守って整えよ", "まとめてクールダウン", "落ち着き直していこ"];
+        }
+        return ["少し落ち着こ", "無理せんとこ", "呼吸を整えよ", "いったん戻そ", "熱を下げよ", "一段ゆるめよ", "静かに運ぼ", "ここは整えよ", "落ち着き優先", "立て直していこ"];
+    }
+
+    function _getGenericReasonSpecificPoolEn(stateKey) as Lang.Array {
+        switch (stateKey) {
+            case "UP_EASE_PACE":
+            case "FL_EASE_PACE":
+            case "DN_EASE_PACE":
+                return ["Ease pace", "Bring pace back", "Take half a step off", "Lower the speed calmly", "Return to cruise pace", "Adjust pace without panic", "Dial the output back", "Pace first right now", "One gear softer", "Go back to settled speed"];
+            case "UP_EASE_HR":
+            case "FL_EASE_HR":
+            case "DN_EASE_HR":
+                return ["Settle the breath", "Let HR come down", "Breathing comes first", "Wait for the heart rate", "Make it a touch easier", "Bring the pulse down", "Stay here until it settles", "Take the load off now", "Let HR reset first", "Build calm before pace"];
+            case "UP_EASE_BOTH":
+            case "FL_EASE_BOTH":
+            case "DN_EASE_BOTH":
+                return ["Settle a little", "Back it off", "Reset pace and breathing", "Bring it back for now", "Turn down speed and heat", "Take one quieter gear", "Reset before you push", "Protect it and settle", "Cool it all down", "Calm it, then go"];
+        }
+        return ["Settle a little", "Back it off", "Reset the breathing", "Bring it down", "Turn the heat down", "Take one easier gear", "Keep it calm", "Reset here", "Control first", "Settle before moving on"];
     }
 
     function _getNormalPool(language, category, stateKey) as Lang.Array {
