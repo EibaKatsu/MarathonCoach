@@ -260,7 +260,7 @@ function testCardDisplay_lastSpurtOverridesFuelAndAction(logger) {
     sut._testActionVariant = TEST_CARD_VARIANT_ACTION_EASE;
     sut._testActionEaseReason = TEST_ACTION_EASE_REASON_BOTH;
     sut._slopeState = "DN";
-    sut._testElapsedDistanceKm = sut._raceDistanceKm * 0.95;
+    sut._testElapsedDistanceKm = 41.20;
     sut._testElapsedSec = 7200;
 
     sut._updateCardDisplay(null);
@@ -278,6 +278,35 @@ function testCardDisplay_lastSpurtOverridesFuelAndAction(logger) {
         ),
         "message should come from last spurt pool"
     );
+    return true;
+}
+
+(:test)
+function testCardDisplay_lastSpurtUsesSmallerThresholdOfFivePercentOrOneKm(logger) {
+    var sut = _newCardFuelSut();
+    sut._fuelRemainingSec = 0;
+    sut._testActionVariant = TEST_CARD_VARIANT_ACTION_EASE;
+    sut._testActionEaseReason = TEST_ACTION_EASE_REASON_BOTH;
+    sut._slopeState = "FL";
+    sut._testElapsedSec = 3600;
+
+    sut._raceDistanceKm = 42.195;
+    sut._testElapsedDistanceKm = sut._raceDistanceKm * 0.95;
+    sut._updateCardDisplay(null);
+    Test.assertEqual(TEST_CARD_MODE_FUEL_OVERDUE, sut._cardMode);
+    Test.assertEqual(sut._fuelNowLabelText, sut._cardLine1);
+
+    sut.resetTestState();
+    sut._raceDistanceKm = 10.0;
+    sut._fuelRemainingSec = 0;
+    sut._testActionVariant = TEST_CARD_VARIANT_ACTION_EASE;
+    sut._testActionEaseReason = TEST_ACTION_EASE_REASON_BOTH;
+    sut._slopeState = "FL";
+    sut._testElapsedSec = 3600;
+    sut._testElapsedDistanceKm = 9.5;
+    sut._updateCardDisplay(null);
+    Test.assertEqual(TEST_CARD_MODE_ACTION, sut._cardMode);
+    Test.assertEqual(sut._lastSpurtLabelText, sut._cardLine1);
     return true;
 }
 

@@ -45,7 +45,7 @@
 - 長い文は短縮または省略で収める
 
 ### 表示優先順位
-1. 残り5%以降は `ラストスパート / Final push`
+1. 残り距離が「全体の5%」または `1km` の小さい方以下になったら `ラストスパート / Final push`
 2. `FUEL NOW`
 3. `FUEL PREP`
 4. `EASE`
@@ -84,8 +84,8 @@
 
 ## コーチカード構成
 - 1段目は小さい判定ラベル。状態変化時に即更新する
-- 残り5%以降は、補給・心拍・ペース判定を表示上は無視して `ラストスパート / Final push` を固定表示する
-- 2段目はメインメッセージ。残り5%未満では `fuelState` が `NOW` のときは `fuelNow`、`PREP` のときは `fuelPrep`、それ以外は `normal[stateKey]` から選ぶ
+- 残り距離が「全体の5%」または `1km` の小さい方以下になったら、補給・心拍・ペース判定を表示上は無視して `ラストスパート / Final push` を固定表示する
+- 2段目はメインメッセージ。ラストスパート条件未満では `fuelState` が `NOW` のときは `fuelNow`、`PREP` のときは `fuelPrep`、それ以外は `normal[stateKey]` から選ぶ
 - `stateKey` は `slope × action` を基本とする
 - `EASE` は理由別に `PACE / HR / BOTH` を持ち、`{UP|FL|DN}_EASE_{PACE|HR|BOTH}` を使い分ける
 - 理由不明や後方互換時は従来どおり `{UP|FL|DN}_EASE` を使う
