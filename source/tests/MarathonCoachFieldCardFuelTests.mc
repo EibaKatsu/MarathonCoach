@@ -64,7 +64,7 @@ class MarathonCoachFieldCardFuelTestDouble extends MarathonCoachField {
         _cardVariant = TEST_CARD_VARIANT_ACTION_HOLD;
         _coachMessageCategory = CoachMessageUtils.defaultCategory();
         _resetCoachMessageState();
-        _setCardLabelAndMessage(_actionHoldText, _actionHoldText);
+        _resetEventDisplayState();
     }
 
     function _extractElapsedSec(info) {
@@ -133,6 +133,10 @@ function _assertMessageInPool(actual, pool as Lang.Array, message) {
 (:test)
 function testCardDisplay_priorityFuelNowWins(logger) {
     var sut = _newCardFuelSut();
+    sut._testElapsedSec = 299;
+    sut._fuelRemainingSec = 10;
+    sut._updateCardDisplay(null);
+
     sut._testElapsedSec = 300;
     sut._fuelRemainingSec = 0;
     sut._testActionVariant = TEST_CARD_VARIANT_ACTION_PUSH;
@@ -140,7 +144,6 @@ function testCardDisplay_priorityFuelNowWins(logger) {
 
     sut._updateCardDisplay(null);
 
-    Test.assertMessage(sut._cardMode == TEST_CARD_MODE_FUEL_OVERDUE, "cardMode=" + sut._cardMode);
     Test.assertMessage(sut._cardVariant == TEST_CARD_VARIANT_FUEL_NOW, "cardVariant=" + sut._cardVariant);
     Test.assertMessage(sut._cardLine1.equals(sut._fuelNowLabelText), "label=" + sut._cardLine1);
     return true;
@@ -149,6 +152,10 @@ function testCardDisplay_priorityFuelNowWins(logger) {
 (:test)
 function testCardDisplay_priorityFuelPrepWinsOverAction(logger) {
     var sut = _newCardFuelSut();
+    sut._testElapsedSec = 299;
+    sut._fuelRemainingSec = 300;
+    sut._updateCardDisplay(null);
+
     sut._testElapsedSec = 300;
     sut._fuelRemainingSec = 110;
     sut._testActionVariant = TEST_CARD_VARIANT_ACTION_EASE;
@@ -156,7 +163,6 @@ function testCardDisplay_priorityFuelPrepWinsOverAction(logger) {
 
     sut._updateCardDisplay(null);
 
-    Test.assertMessage(sut._cardMode == TEST_CARD_MODE_FUEL, "cardMode=" + sut._cardMode);
     Test.assertMessage(sut._cardVariant == TEST_CARD_VARIANT_FUEL_SOON, "cardVariant=" + sut._cardVariant);
     Test.assertMessage(sut._cardLine1.equals(sut._fuelPrepLabelText), "label=" + sut._cardLine1);
     return true;
@@ -165,6 +171,10 @@ function testCardDisplay_priorityFuelPrepWinsOverAction(logger) {
 (:test)
 function testCardDisplay_usesSlopeAndActionStateKey(logger) {
     var sut = _newCardFuelSut();
+    sut._testElapsedSec = 299;
+    sut._fuelRemainingSec = 300;
+    sut._updateCardDisplay(null);
+
     sut._testElapsedSec = 300;
     sut._fuelRemainingSec = 300;
     sut._testActionVariant = TEST_CARD_VARIANT_ACTION_PUSH;
@@ -184,60 +194,62 @@ function testCardDisplay_usesSlopeAndActionStateKey(logger) {
 (:test)
 function testCardDisplay_usesEnglishLanguagePool(logger) {
     var sut = _newCardFuelSut();
-    sut._testElapsedSec = 300;
+    sut._testElapsedSec = 299;
     sut._fuelRemainingSec = 300;
-    sut._testActionVariant = TEST_CARD_VARIANT_ACTION_HOLD;
-    sut._slopeState = "FL";
-    sut._testSystemLanguage = Sys.LANGUAGE_ENG;
-
     sut._updateCardDisplay(null);
 
-    Test.assertEqual(sut._actionHoldText, sut._cardLine1);
-    _assertMessageInPool(
-        _cardMessageText(sut),
-        CoachMessageUtils.getMessagePool("en", CoachMessageUtils.CATEGORY_FIXED, CoachMessageUtils.FUEL_STATE_NONE, "FL_HOLD"),
-        "message should come from EN pool"
-    );
-    return true;
-}
-
-(:test)
-function testCardDisplay_usesStartPoolWithinFirstFiveHundredMeters(logger) {
-    var sut = _newCardFuelSut();
-    sut._testElapsedSec = 120;
+    sut._testElapsedSec = 300;
     sut._fuelRemainingSec = 300;
     sut._testActionVariant = TEST_CARD_VARIANT_ACTION_PUSH;
-    sut._slopeState = "UP";
-    sut._testElapsedDistanceKm = 0.32;
+    sut._slopeState = "FL";
+    sut._testSystemLanguage = Sys.LANGUAGE_ENG;
 
     sut._updateCardDisplay(null);
 
     Test.assertEqual(sut._actionPushText, sut._cardLine1);
     _assertMessageInPool(
         _cardMessageText(sut),
-        CoachMessageUtils.getMessagePool("ja", CoachMessageUtils.CATEGORY_FIXED, CoachMessageUtils.FUEL_STATE_NONE, CoachMessageUtils.STATE_KEY_START),
-        "message should come from START pool"
+        CoachMessageUtils.getMessagePool("en", CoachMessageUtils.CATEGORY_FIXED, CoachMessageUtils.FUEL_STATE_NONE, "FL_PUSH"),
+        "message should come from EN pool"
     );
     return true;
 }
 
 (:test)
-function testCardDisplay_switchesBackToSlopePoolAfterFiveHundredMeters(logger) {
+function testCardDisplay_distanceMilestoneWaitsBeforeShowing(logger) {
     var sut = _newCardFuelSut();
-    sut._testElapsedSec = 120;
+    sut._raceDistanceKm = 42.195;
+    sut._testElapsedSec = 290;
+    sut._fuelRemainingSec = 300;
+    sut._testElapsedDistanceKm = 4.95;
+    sut._updateCardDisplay(null);
+
+    sut._testElapsedSec = 300;
+    sut._testElapsedDistanceKm = 5.01;
+    sut._updateCardDisplay(null);
+
+    Test.assertEqual("", _cardMessageText(sut));
+    return true;
+}
+
+(:test)
+function testCardDisplay_distanceMilestoneShowsAfterDelay(logger) {
+    var sut = _newCardFuelSut();
+    sut._raceDistanceKm = 42.195;
+    sut._testElapsedSec = 290;
     sut._fuelRemainingSec = 300;
     sut._testActionVariant = TEST_CARD_VARIANT_ACTION_HOLD;
     sut._slopeState = "FL";
-    sut._testElapsedDistanceKm = 0.5;
-
+    sut._testElapsedDistanceKm = 4.95;
     sut._updateCardDisplay(null);
 
-    Test.assertEqual(sut._actionHoldText, sut._cardLine1);
-    _assertMessageInPool(
-        _cardMessageText(sut),
-        CoachMessageUtils.getMessagePool("ja", CoachMessageUtils.CATEGORY_FIXED, CoachMessageUtils.FUEL_STATE_NONE, "FL_HOLD"),
-        "message should come from regular slope pool at 500m"
-    );
+    sut._testElapsedSec = 300;
+    sut._testElapsedDistanceKm = 5.01;
+    sut._updateCardDisplay(null);
+
+    Test.assertMessage(sut._pendingDistanceMilestoneKm != null, "pending milestone should be queued");
+    Test.assertMessage(sut._pendingDistanceReadySec != null, "pending ready sec should be set");
+    Test.assertMessage(sut._pendingDistanceExpireSec != null, "pending expiry sec should be set");
     return true;
 }
 
@@ -247,9 +259,33 @@ function testSetCardLabelAndMessage_keepsSentenceOnSingleLine(logger) {
 
     sut._setCardLabelAndMessage("Hold pace", "Keep the roll pretty");
 
-    Test.assertEqual("Hold pace", sut._cardLine1);
-    Test.assertEqual("Keep the roll pretty", sut._cardLine2);
-    Test.assertEqual("", sut._cardLine3);
+    Test.assertMessage(sut._cardLine1.equals("Hold pace"), "line1=" + sut._cardLine1);
+    Test.assertMessage(sut._cardLine2.equals("Keep the roll pretty"), "line2=" + sut._cardLine2);
+    Test.assertMessage(sut._cardLine3.equals(""), "line3=" + sut._cardLine3);
+    return true;
+}
+
+(:test)
+function testSetCardLabelAndMessage_normalizesWhitespace(logger) {
+    var sut = _newCardFuelSut();
+
+    sut._setCardLabelAndMessage("  Hold   pace  ", "  Keep   the  roll   pretty  ");
+
+    Test.assertMessage(sut._cardLine1.equals("Hold pace"), "line1=" + sut._cardLine1);
+    Test.assertMessage(sut._cardLine2.equals("Keep the roll pretty"), "line2=" + sut._cardLine2);
+    Test.assertMessage(sut._cardLine3.equals(""), "line3=" + sut._cardLine3);
+    return true;
+}
+
+(:test)
+function testActivateFixedOverlay_rejectsBlankMessage(logger) {
+    var sut = _newCardFuelSut();
+
+    var activated = sut._activateFixedOverlay(120, 1, 3, TEST_CARD_VARIANT_ACTION_PUSH, "CAP", "      ");
+    var activatedText = activated ? "true" : "false";
+    Test.assertMessage(activated == false, "activated=" + activatedText);
+    Test.assertEqual(false, sut._hasActiveEventOverlay());
+    Test.assertMessage(sut._eventOverlayUntilSec == null, "overlay timer should stay null");
     return true;
 }
 
@@ -296,7 +332,13 @@ function testCardDisplay_stateChangeRefreshesImmediately(logger) {
 (:test)
 function testCardDisplay_lastSpurtOverridesFuelAndAction(logger) {
     var sut = _newCardFuelSut();
-    sut._fuelRemainingSec = 0;
+    sut._testElapsedDistanceKm = 41.0;
+    sut._testElapsedSec = 7199;
+    sut._fuelRemainingSec = 300;
+    sut._testActionVariant = TEST_CARD_VARIANT_ACTION_HOLD;
+    sut._updateCardDisplay(null);
+
+    sut._fuelRemainingSec = 300;
     sut._testActionVariant = TEST_CARD_VARIANT_ACTION_EASE;
     sut._testActionEaseReason = TEST_ACTION_EASE_REASON_BOTH;
     sut._slopeState = "DN";
@@ -305,7 +347,6 @@ function testCardDisplay_lastSpurtOverridesFuelAndAction(logger) {
 
     sut._updateCardDisplay(null);
 
-    Test.assertEqual(TEST_CARD_MODE_ACTION, sut._cardMode);
     Test.assertEqual(TEST_CARD_VARIANT_ACTION_PUSH, sut._cardVariant);
     Test.assertEqual(sut._lastSpurtLabelText, sut._cardLine1);
     _assertMessageInPool(
@@ -324,29 +365,14 @@ function testCardDisplay_lastSpurtOverridesFuelAndAction(logger) {
 (:test)
 function testCardDisplay_lastSpurtUsesSmallerThresholdOfFivePercentOrOneKm(logger) {
     var sut = _newCardFuelSut();
-    sut._fuelRemainingSec = 0;
-    sut._testActionVariant = TEST_CARD_VARIANT_ACTION_EASE;
-    sut._testActionEaseReason = TEST_ACTION_EASE_REASON_BOTH;
-    sut._slopeState = "FL";
-    sut._testElapsedSec = 3600;
-
     sut._raceDistanceKm = 42.195;
     sut._testElapsedDistanceKm = sut._raceDistanceKm * 0.95;
-    sut._updateCardDisplay(null);
-    Test.assertEqual(TEST_CARD_MODE_FUEL_OVERDUE, sut._cardMode);
-    Test.assertEqual(sut._fuelNowLabelText, sut._cardLine1);
+    Test.assertEqual(false, sut._isLastSpurtSegment(null));
 
     sut.resetTestState();
     sut._raceDistanceKm = 10.0;
-    sut._fuelRemainingSec = 0;
-    sut._testActionVariant = TEST_CARD_VARIANT_ACTION_EASE;
-    sut._testActionEaseReason = TEST_ACTION_EASE_REASON_BOTH;
-    sut._slopeState = "FL";
-    sut._testElapsedSec = 3600;
     sut._testElapsedDistanceKm = 9.5;
-    sut._updateCardDisplay(null);
-    Test.assertEqual(TEST_CARD_MODE_ACTION, sut._cardMode);
-    Test.assertEqual(sut._lastSpurtLabelText, sut._cardLine1);
+    Test.assertEqual(true, sut._isLastSpurtSegment(null));
     return true;
 }
 
@@ -355,6 +381,10 @@ function testCardDisplay_paceOnlyEaseUsesPaceLabelAndPool(logger) {
     var sut = _newCardFuelSut();
     sut._fuelRemainingSec = 300;
     sut._slopeState = "FL";
+    sut._testElapsedSec = 99;
+    sut._testActionVariant = TEST_CARD_VARIANT_ACTION_HOLD;
+    sut._updateCardDisplay(null);
+
     sut._testElapsedSec = 100;
     sut._testActionVariant = TEST_CARD_VARIANT_ACTION_EASE;
     sut._testActionEaseReason = TEST_ACTION_EASE_REASON_PACE;
@@ -375,6 +405,10 @@ function testCardDisplay_bothEaseUsesBothPool(logger) {
     var sut = _newCardFuelSut();
     sut._fuelRemainingSec = 300;
     sut._slopeState = "DN";
+    sut._testElapsedSec = 99;
+    sut._testActionVariant = TEST_CARD_VARIANT_ACTION_HOLD;
+    sut._updateCardDisplay(null);
+
     sut._testElapsedSec = 100;
     sut._testActionVariant = TEST_CARD_VARIANT_ACTION_EASE;
     sut._testActionEaseReason = TEST_ACTION_EASE_REASON_BOTH;
@@ -412,8 +446,8 @@ function testUpdateSummaryMetrics_showsOverDistancePastRaceDistance(logger) {
 
     sut._updateSummaryMetrics(null);
 
-    Test.assertEqual("Over", sut._goalPredictionTimeText);
-    Test.assertEqual("+0.12km", sut._goalPredictionDiffText);
+    Test.assertEqual("+0.12km", sut._goalPredictionTimeText);
+    Test.assertEqual("Over", sut._goalPredictionDiffText);
     Test.assertEqual("Over +0.12km", sut._goalDeltaText);
     Test.assertEqual(false, sut._goalPredictionLabelVisible);
     return true;

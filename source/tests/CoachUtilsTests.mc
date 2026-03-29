@@ -390,3 +390,64 @@ function testResolveUsableHeartRateZoneThresholds_rejectsNonMonotonicSixElementF
     );
     return true;
 }
+
+(:test)
+function testBuildGoalDiffSecondsText_usesSignedMinuteDelta(logger) {
+    var sut = _newUtilsSut();
+    sut._targetTimeSec = 6600;
+
+    Test.assertEqual("+1m", sut._buildGoalDiffSecondsText(6627));
+    Test.assertEqual("-1m", sut._buildGoalDiffSecondsText(6589));
+    Test.assertEqual("+10m", sut._buildGoalDiffSecondsText(7200));
+    Test.assertEqual("-70m", sut._buildGoalDiffSecondsText(2400));
+    Test.assertEqual("0m", sut._buildGoalDiffSecondsText(6600));
+    Test.assertEqual("--m", sut._buildGoalDiffSecondsText(null));
+    return true;
+}
+
+(:test)
+function testBuildDashboardElapsedText_compactsSubHourValues(logger) {
+    var sut = _newUtilsSut();
+
+    Test.assertEqual("32:32", sut._buildDashboardElapsedText(1952));
+    Test.assertEqual("1:02:03", sut._buildDashboardElapsedText(3723));
+    Test.assertEqual("--:--", sut._buildDashboardElapsedText(null));
+    return true;
+}
+
+(:test)
+function testHeartRateArcEndDeg_reservesCapAndOverrunSegment(logger) {
+    var sut = _newUtilsSut();
+    sut._allowedMaxHeartRate = 150;
+
+    sut._currentHeartRate = 150;
+    _assertFloatNear(sut._resolveHeartRateArcEndDeg(), 255, 0.0001, "cap should map to 11:30 tick");
+
+    sut._currentHeartRate = 165;
+    _assertFloatNear(sut._resolveHeartRateArcEndDeg(), 270, 0.0001, "110 percent should map to 12 oclock");
+
+    sut._currentHeartRate = 135;
+    Test.assertMessage(
+        sut._resolveHeartRateArcEndDeg() >= 247 and sut._resolveHeartRateArcEndDeg() <= 248,
+        "90 percent should land just before the cap tick"
+    );
+    return true;
+}
+
+(:test)
+function testDistanceMilestoneHelpers_supportHalfMessage(logger) {
+    var sut = _newUtilsSut();
+    sut._raceDistanceKm = 42.195;
+    sut._predictionSystemLanguage = Sys.LANGUAGE_JPN;
+
+    var milestones = sut._resolveDistanceMilestones();
+    Test.assertEqual(9, milestones.size());
+    _assertFloatNear(milestones[4], 21.0975, 0.0001, "full marathon list should include half milestone");
+    Test.assertEqual("ハーフ", sut._buildDistanceMilestoneLabel(21.0975));
+    Test.assertEqual("後半入るで", sut._buildDistanceMilestoneMessage(21.0975));
+
+    sut._predictionSystemLanguage = Sys.LANGUAGE_ENG;
+    Test.assertEqual("HALF", sut._buildDistanceMilestoneLabel(21.0975));
+    Test.assertEqual("Back half now", sut._buildDistanceMilestoneMessage(21.0975));
+    return true;
+}

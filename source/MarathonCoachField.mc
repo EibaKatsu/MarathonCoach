@@ -30,7 +30,7 @@ class MarathonCoachField extends Ui.DataField {
     const FINISH_DIAG_MARGIN_KM = 1.0;
     const FUEL_PLAN_DIAG_LOG = false;
     const HR_OVER_TRIGGER_MARGIN_BPM = 1;
-    const MIN_DISTANCE_FOR_PREDICTION_KM = 0.5;
+    const MIN_DISTANCE_FOR_PREDICTION_KM = 0.05;
     const PREDICTION_ON_PACE_THRESHOLD_SEC = 60;
     const MESSAGE_ROTATE_SEC = 24;
     const START_MESSAGE_MAX_DISTANCE_KM = 0.5;
@@ -45,6 +45,7 @@ class MarathonCoachField extends Ui.DataField {
     const LAST_SPURT_MAX_DISTANCE_KM = 1.0;
     const ACTION_EASE_MIN_HEADROOM_BPM = 3;
     const ACTION_EASE_BASELINE_HR_DELTA_BPM = 6;
+    const DANGER_PACE_EXTRA_SEC = 4;
     const HEART_RATE_EMA_WINDOW_SEC = 12;
     const HEART_RATE_EMA_ALPHA = 2.0 / (HEART_RATE_EMA_WINDOW_SEC + 1.0);
     const PACE_EMA_WINDOW_SEC = 18;
@@ -102,6 +103,38 @@ class MarathonCoachField extends Ui.DataField {
     const BEEP_HR_SUPPRESS_SEC = 75;
     const BEEP_FUEL_NOW_REPEAT_FIRST_SEC = 30;
     const BEEP_FUEL_NOW_REPEAT_INTERVAL_SEC = 60;
+    const EVENT_PRIORITY_NONE = 0;
+    const EVENT_PRIORITY_RECOVERY = 1;
+    const EVENT_PRIORITY_DISTANCE = 2;
+    const EVENT_PRIORITY_CORRECTION = 3;
+    const EVENT_PRIORITY_FUEL = 4;
+    const EVENT_PRIORITY_DANGER = 5;
+    const EVENT_DANGER_DURATION_SEC = 3;
+    const EVENT_FUEL_DURATION_SEC = 3;
+    const EVENT_CORRECTION_DURATION_SEC = 3;
+    const EVENT_DISTANCE_DURATION_SEC = 2;
+    const EVENT_RECOVERY_DURATION_SEC = 2;
+    const EVENT_DANGER_COOLDOWN_SEC = 30;
+    const EVENT_CORRECTION_COOLDOWN_SEC = 30;
+    const EVENT_RECOVERY_COOLDOWN_SEC = 5 * 60;
+    const EVENT_DISTANCE_DELAY_SEC = 8;
+    const EVENT_DISTANCE_EXPIRY_SEC = 20;
+    const HR_ARC_START_DEG = 180;
+    const HR_ARC_CAP_DEG = 255;
+    const HR_ARC_MAX_DEG = 270;
+    const HR_ARC_MAX_RATIO = 1.1;
+    const HR_ARC_SAFE_RATIO = 0.90;
+    const HR_ARC_CAUTION_RATIO = 0.97;
+    const HR_ARC_BASE_COLOR = 0x3A4146;
+    const HR_ARC_SAFE_COLOR = 0x63C84A;
+    const HR_ARC_CAUTION_COLOR = 0xE0C24A;
+    const HR_ARC_WARNING_COLOR = 0xF29F67;
+    const HR_ARC_DANGER_COLOR = 0xF01818;
+    const PACE_INDICATOR_FAST_COLOR = 0x4CC3FF;
+    const PACE_INDICATOR_ON_COLOR = 0x63C84A;
+    const PACE_INDICATOR_SLOW_COLOR = 0xF6B547;
+    const PACE_INDICATOR_OFF_COLOR = 0x4A535A;
+    const PACE_INDICATOR_BASELINE_COLOR = 0xFFFFFF;
 
     const DEFAULT_RACE_DISTANCE_KM = 42.195;
     const CUSTOM_MODE_CORE = CustomModeUtils.MODE_CORE;
@@ -126,6 +159,7 @@ class MarathonCoachField extends Ui.DataField {
     var _goalPredictionLabelVisible = true;
     var _goalPredictionTimeText = "--:--";
     var _goalPredictionDiffText = "waiting";
+    var _goalDiffSecondsText = "--m";
     var _goalDeltaText = "--:--(waiting)";
     var _predictionWaitingText = "waiting";
     var _predictionOnPaceText = "on pace";
@@ -245,6 +279,23 @@ class MarathonCoachField extends Ui.DataField {
     var _cardLine1 = "Hold pace";
     var _cardLine2 = "Hold";
     var _cardLine3 = "this rhythm";
+    var _eventOverlayUntilSec = null;
+    var _eventOverlayPriority = EVENT_PRIORITY_NONE;
+    var _eventStateInitialized = false;
+    var _eventLastElapsedSec = null;
+    var _eventPrevFuelState = CoachMessageUtils.FUEL_STATE_NONE;
+    var _eventPrevActionVariant = CARD_VARIANT_ACTION_HOLD;
+    var _eventPrevHrGaugeState = null;
+    var _eventPrevHrOver = false;
+    var _eventPrevLastSpurt = false;
+    var _lastDangerEventSec = null;
+    var _lastCorrectionEventSec = null;
+    var _lastRecoveryEventSec = null;
+    var _distanceMilestones as Lang.Array<Lang.Number> = [];
+    var _nextDistanceMilestoneIndex = 0;
+    var _pendingDistanceMilestoneKm = null;
+    var _pendingDistanceReadySec = null;
+    var _pendingDistanceExpireSec = null;
     var _beepStateInitialized = false;
     var _beepPrevFuelMeterState = FUEL_METER_STATE_NORMAL;
     var _beepPrevHrOver = false;
@@ -269,6 +320,7 @@ class MarathonCoachField extends Ui.DataField {
         _predictionBehindSuffixText = Ui.loadResource(Rez.Strings.PredictionBehindSuffix);
         _goalPredictionTimeText = _buildGoalPredictionTimeText(null);
         _goalPredictionDiffText = _buildGoalPredictionDiffText(null);
+        _goalDiffSecondsText = _buildGoalDiffSecondsText(null);
         _goalDeltaText = _buildGoalDeltaText(null);
         _actionPushText = Ui.loadResource(Rez.Strings.ActionPushText);
         _actionHoldText = Ui.loadResource(Rez.Strings.ActionHoldText);
@@ -343,6 +395,7 @@ class MarathonCoachField extends Ui.DataField {
         _distanceTimeText = "--.- km  --:--:--";
         _goalPredictionTimeText = _buildGoalPredictionTimeText(null);
         _goalPredictionDiffText = _buildGoalPredictionDiffText(null);
+        _goalDiffSecondsText = _buildGoalDiffSecondsText(null);
         _goalDeltaText = _buildGoalDeltaText(null);
         _goalPredictionLabelVisible = true;
         _currentHeartRate = null;
@@ -400,8 +453,8 @@ class MarathonCoachField extends Ui.DataField {
         _lastDistanceProbeLogLine = null;
         _resetSlopeState();
         _resetCoachMessageState();
+        _resetEventDisplayState();
         _resetBeepState();
-        _setActionCardDisplay(null, CoachMessageUtils.FUEL_STATE_NONE, null, true);
     }
 
     function onTimerLap() {
@@ -716,67 +769,7 @@ class MarathonCoachField extends Ui.DataField {
         var squareSize = Math.floor(_clamp((minDim * (100 - (insetPct * 2))) / 100, (minDim * 78) / 100, minDim));
         var left = Math.floor((width - squareSize) / 2);
         var top = Math.floor((height - squareSize) / 2);
-        var centerX = Math.floor(left + (squareSize / 2));
-        var right = left + squareSize;
-        var bottomY = top + squareSize;
-
-        var row1H = Math.floor((squareSize * 29) / 100);
-        var row2H = Math.floor((squareSize * 35) / 100);
-        var row3H = Math.floor((squareSize * 14) / 100);
-        var row4H = bottomY - top - row1H - row2H - row3H;
-        var row1Y = top + row1H;
-        var row2Y = row1Y + row2H;
-        var row3Y = row2Y + row3H;
-
-        var leftColX = left;
-        var leftColW = centerX - leftColX;
-        var rightColX = centerX;
-        var rightColW = right - rightColX;
-
-        _drawHeartRateSummarySmall(dc, leftColX, top, leftColW, row1H);
-        _drawPaceSummarySmall(dc, rightColX, top, rightColW, row1H);
-
-        var bannerInsetY = 1;
-        var bannerY = row1Y + bannerInsetY + 1;
-        var bannerH = row2H - (bannerInsetY * 2);
-        var bannerTextInset = 10;
-        var bannerTextAreaX = bannerTextInset / 2;
-        var bannerTextAreaW = width - bannerTextInset;
-        var bannerLabelText = _cardLine1;
-        var bannerLabelFont = Gfx.FONT_XTINY;
-        var bannerMessageText = _cardLine2;
-        var bannerMessageFont = Gfx.FONT_XTINY;
-        if (bannerMessageText != null and bannerMessageText.length() > 0 and bannerTextAreaW > 0) {
-            _drawMessageBannerFrame(dc, 0, bannerY, width, bannerH, 0);
-            bannerMessageText = _truncateCardText(bannerMessageText, 20);
-            var bannerCenterX = bannerTextAreaX + (bannerTextAreaW / 2);
-            var bannerLabelY = bannerY + 7;
-            var bannerMessageY = bannerY + ((bannerH - dc.getFontHeight(bannerMessageFont)) / 2) + 6;
-            dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-            if (bannerLabelText != null and bannerLabelText.length() > 0) {
-                dc.drawText(bannerTextAreaX + 6, bannerLabelY, bannerLabelFont, bannerLabelText, Gfx.TEXT_JUSTIFY_LEFT);
-            }
-            dc.drawText(bannerCenterX, bannerMessageY, bannerMessageFont, bannerMessageText, Gfx.TEXT_JUSTIFY_CENTER);
-        }
-
-        var metricFont = Gfx.FONT_SMALL;
-        var metricFontHeight = dc.getFontHeight(metricFont);
-        var metricY = CoachUtils.textYByRatio(row2Y, row3H, 54, metricFontHeight);
-        var metricInset = 8;
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        _drawDistanceSummaryMedium(dc, leftColX + 22, metricY, _distanceText, metricFont);
-        dc.drawText(rightColX + metricInset, metricY, metricFont, _elapsedTimeText, Gfx.TEXT_JUSTIFY_LEFT);
-
-        var footerTimeFont = Gfx.FONT_TINY;
-        var footerDiffFont = Gfx.FONT_XTINY;
-        var footerLabelFont = Gfx.FONT_XTINY;
-        var footerAreaH = row4H;
-        var footerTimeY = CoachUtils.textYByRatio(row3Y, footerAreaH, 30, dc.getFontHeight(footerTimeFont));
-        var footerDiffY = CoachUtils.textYByRatio(row3Y, footerAreaH, 80, dc.getFontHeight(footerDiffFont));
-        if (_hasGoalPredictionDisplay()) {
-            _drawGoalPredictionTimeWithLabel(dc, width / 2, footerTimeY, footerTimeFont, footerLabelFont);
-            dc.drawText(width / 2, footerDiffY, footerDiffFont, _goalPredictionDiffText, Gfx.TEXT_JUSTIFY_CENTER);
-        }
+        _drawDashboardLayout(dc, left, top, squareSize, 0);
     }
 
     function _drawStep3LayoutMedium(dc as Gfx.Dc, width, height, minDim) {
@@ -784,70 +777,7 @@ class MarathonCoachField extends Ui.DataField {
         var squareSize = Math.floor(_clamp((minDim * (100 - (insetPct * 2))) / 100, (minDim * 70) / 100, minDim));
         var left = Math.floor((width - squareSize) / 2);
         var top = Math.floor((height - squareSize) / 2);
-        var centerX = Math.floor(left + (squareSize / 2));
-        var right = left + squareSize;
-        var bottomY = top + squareSize;
-
-        var row1H = Math.floor((squareSize * 28) / 100);
-        var row2H = Math.floor((squareSize * 35) / 100);
-        var row3H = Math.floor((squareSize * 14) / 100);
-        var row4H = bottomY - top - row1H - row2H - row3H;
-        var row1Y = top + row1H;
-        var row2Y = row1Y + row2H;
-        var row3Y = row2Y + row3H;
-
-        var leftColX = left;
-        var leftColW = centerX - leftColX;
-        var rightColX = centerX;
-        var rightColW = right - rightColX;
-
-        _drawHeartRateSummaryMedium(dc, leftColX, top, leftColW, row1H);
-        _drawPaceSummaryMedium(dc, rightColX, top, rightColW, row1H);
-
-        var bannerInsetY = 2;
-        var bannerOverscanX = 6;
-        var bannerX = -bannerOverscanX;
-        var bannerY = row1Y + bannerInsetY + 2;
-        var bannerW = width + (bannerOverscanX * 2);
-        var bannerH = row2H - (bannerInsetY * 2);
-        var bannerTextInset = 16;
-        var bannerTextAreaX = bannerX + (bannerTextInset / 2);
-        var bannerTextAreaW = bannerW - bannerTextInset;
-        var bannerLabelText = _cardLine1;
-        var bannerLabelFont = Gfx.FONT_TINY;
-        var bannerMessageText = _cardLine2;
-        var bannerMessageFont = Gfx.FONT_SMALL;
-        if (bannerMessageText != null and bannerMessageText.length() > 0 and bannerTextAreaW > 0) {
-            _drawMessageBannerFrame(dc, bannerX, bannerY, bannerW, bannerH, 1);
-            bannerMessageText = _truncateCardText(bannerMessageText, 16);
-            var bannerCenterX = bannerTextAreaX + (bannerTextAreaW / 2);
-            var bannerLabelY = bannerY + 5;
-            var bannerMessageY = bannerY + ((bannerH - dc.getFontHeight(bannerMessageFont)) / 2) + 8;
-            dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-            if (bannerLabelText != null and bannerLabelText.length() > 0) {
-                dc.drawText(bannerTextAreaX + 6, bannerLabelY, bannerLabelFont, bannerLabelText, Gfx.TEXT_JUSTIFY_LEFT);
-            }
-            dc.drawText(bannerCenterX, bannerMessageY, bannerMessageFont, bannerMessageText, Gfx.TEXT_JUSTIFY_CENTER);
-        }
-
-        var metricFont = Gfx.FONT_MEDIUM;
-        var metricFontHeight = dc.getFontHeight(metricFont);
-        var metricY = CoachUtils.textYByRatio(row2Y, row3H, 54, metricFontHeight);
-        var metricInset = 12;
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        _drawDistanceSummaryMedium(dc, leftColX + metricInset, metricY, _distanceText, metricFont);
-        dc.drawText(rightColX + metricInset, metricY, metricFont, _elapsedTimeText, Gfx.TEXT_JUSTIFY_LEFT);
-
-        var footerTimeFont = Gfx.FONT_SMALL;
-        var footerDiffFont = Gfx.FONT_XTINY;
-        var footerLabelFont = Gfx.FONT_XTINY;
-        var footerAreaH = row4H;
-        var footerTimeY = CoachUtils.textYByRatio(row3Y, footerAreaH, 32, dc.getFontHeight(footerTimeFont));
-        var footerDiffY = CoachUtils.textYByRatio(row3Y, footerAreaH, 82, dc.getFontHeight(footerDiffFont));
-        if (_hasGoalPredictionDisplay()) {
-            _drawGoalPredictionTimeWithLabel(dc, width / 2, footerTimeY, footerTimeFont, footerLabelFont);
-            dc.drawText(width / 2, footerDiffY, footerDiffFont, _goalPredictionDiffText, Gfx.TEXT_JUSTIFY_CENTER);
-        }
+        _drawDashboardLayout(dc, left, top, squareSize, 1);
     }
 
     function _drawStep3LayoutLarge(dc as Gfx.Dc, width, height, minDim) {
@@ -855,91 +785,573 @@ class MarathonCoachField extends Ui.DataField {
         var squareSize = Math.floor(_clamp((minDim * (100 - (insetPct * 2))) / 100, (minDim * 72) / 100, minDim));
         var left = Math.floor((width - squareSize) / 2);
         var top = Math.floor((height - squareSize) / 2);
+        _drawDashboardLayout(dc, left, top, squareSize, 2);
+    }
+
+    function _drawDashboardLayout(dc as Gfx.Dc, left, top, squareSize, sizeClass) {
         var centerX = Math.floor(left + (squareSize / 2));
-        var right = left + squareSize;
-        var bottomY = top + squareSize;
-
-        var row1H = Math.floor((squareSize * 28) / 100);
-        var row2H = Math.floor((squareSize * 34) / 100);
-        var row3H = Math.floor((squareSize * 15) / 100);
-        var row4H = bottomY - top - row1H - row2H - row3H;
-        var row1Y = top + row1H;
-        var row2Y = row1Y + row2H;
-        var row3Y = row2Y + row3H;
-
-        var leftColX = left;
-        var leftColW = centerX - leftColX;
-        var rightColX = centerX;
-        var rightColW = right - rightColX;
-
-        _drawHeartRateSummaryLarge(dc, leftColX, top, leftColW, row1H);
-        _drawPaceSummaryLarge(dc, rightColX, top, rightColW, row1H);
-
-        var bannerInsetY = 3;
-        var bannerX = 0;
-        var bannerY = row1Y + bannerInsetY + 2;
-        var bannerW = width;
-        var bannerH = row2H - (bannerInsetY * 2);
-        var bannerTextInset = 20;
-        var bannerTextAreaX = bannerX + (bannerTextInset / 2);
-        var bannerTextAreaW = bannerW - bannerTextInset;
-        var bannerLabelText = _cardLine1;
-        var bannerLabelFont = Gfx.FONT_TINY;
-        var bannerMessageText = _cardLine2;
-        var bannerMessageFont = Gfx.FONT_SMALL;
-        if (bannerMessageText != null and bannerMessageText.length() > 0 and bannerTextAreaW > 0) {
-            _drawMessageBannerFrame(dc, bannerX, bannerY, bannerW, bannerH, 2);
-            bannerMessageText = _truncateCardText(bannerMessageText, 18);
-            var bannerCenterX = bannerTextAreaX + (bannerTextAreaW / 2);
-            var bannerLabelY = bannerY + 6;
-            var bannerMessageY = bannerY + ((bannerH - dc.getFontHeight(bannerMessageFont)) / 2) + 10;
-            dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-            if (bannerLabelText != null and bannerLabelText.length() > 0) {
-                dc.drawText(bannerTextAreaX + 8, bannerLabelY, bannerLabelFont, bannerLabelText, Gfx.TEXT_JUSTIFY_LEFT);
-            }
-            dc.drawText(bannerCenterX, bannerMessageY, bannerMessageFont, bannerMessageText, Gfx.TEXT_JUSTIFY_CENTER);
+        var topBandPct = 46;
+        var bottomBandPct = 18;
+        if (sizeClass == 0) {
+            topBandPct = 45;
+            bottomBandPct = 19;
+        } else if (sizeClass == 2) {
+            topBandPct = 45;
+            bottomBandPct = 17;
         }
 
-        var metricFont = Gfx.FONT_MEDIUM;
-        var metricFontHeight = dc.getFontHeight(metricFont);
-        var metricY = CoachUtils.textYByRatio(row2Y, row3H, 56, metricFontHeight);
-        var metricInset = 14;
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        _drawDistanceSummaryMedium(dc, leftColX + metricInset, metricY, _distanceText, metricFont);
-        dc.drawText(rightColX + metricInset, metricY, metricFont, _elapsedTimeText, Gfx.TEXT_JUSTIFY_LEFT);
+        var topBandH = Math.floor((squareSize * topBandPct) / 100);
+        var bottomBandH = Math.floor((squareSize * bottomBandPct) / 100);
+        var centerY = top + topBandH;
+        var bottomY = top + squareSize - bottomBandH;
+        var centerH = bottomY - centerY;
 
-        var footerTimeFont = Gfx.FONT_SMALL;
-        var footerDiffFont = Gfx.FONT_XTINY;
-        var footerLabelFont = Gfx.FONT_XTINY;
-        var footerAreaH = row4H;
-        var footerTimeY = CoachUtils.textYByRatio(row3Y, footerAreaH, 32, dc.getFontHeight(footerTimeFont));
-        var footerDiffY = CoachUtils.textYByRatio(row3Y, footerAreaH, 82, dc.getFontHeight(footerDiffFont));
-        if (_hasGoalPredictionDisplay()) {
-            _drawGoalPredictionTimeWithLabel(dc, width / 2, footerTimeY, footerTimeFont, footerLabelFont);
-            dc.drawText(width / 2, footerDiffY, footerDiffFont, _goalPredictionDiffText, Gfx.TEXT_JUSTIFY_CENTER);
+        _drawHeartRateDashboard(dc, left + 2, top + 10, centerX - left - 6, topBandH - 14, sizeClass);
+        _drawPredictionDashboard(dc, centerX + 2, top + 10, (left + squareSize) - centerX - 4, topBandH - 14, sizeClass);
+
+        if (_hasActiveEventOverlay()) {
+            var overlaySide = Math.floor((squareSize * 70) / 100);
+            if (sizeClass == 0) {
+                overlaySide = Math.floor((squareSize * 68) / 100);
+            } else if (sizeClass == 2) {
+                overlaySide = Math.floor((squareSize * 72) / 100);
+            }
+            var overlayX = left + Math.floor((squareSize - overlaySide) / 2);
+            var overlayY = top + Math.floor((squareSize - overlaySide) / 2);
+            _drawEventOverlay(
+                dc,
+                overlayX,
+                overlayY,
+                overlaySide,
+                overlaySide,
+                sizeClass
+            );
+        } else {
+            _drawCenterPaceDashboard(dc, left, centerY, squareSize, centerH, sizeClass);
+            _drawBottomDashboard(dc, left, bottomY, squareSize, bottomBandH, sizeClass);
         }
     }
 
-    function _drawGoalPredictionTimeWithLabel(dc as Gfx.Dc, centerX, timeY, timeFont, labelFont) {
-        if (!_hasGoalPredictionDisplay()) {
+    function _drawPredictionDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
+        var diffFont = Gfx.FONT_LARGE;
+        var predictionFont = Gfx.FONT_MEDIUM;
+        var rowGap = 6;
+        var blockOffsetY = 6;
+        if (sizeClass == 0) {
+            diffFont = Gfx.FONT_MEDIUM;
+            predictionFont = Gfx.FONT_SMALL;
+            rowGap = 4;
+            blockOffsetY = 4;
+        } else if (sizeClass == 1) {
+            blockOffsetY = 10;
+        } else if (sizeClass == 2) {
+            rowGap = 8;
+            blockOffsetY = 12;
+        }
+
+        var predictionText = _goalPredictionTimeText;
+        var deltaText = _goalDiffSecondsText;
+        if (dc.getTextWidthInPixels(deltaText, diffFont) > (areaW - 8) and diffFont == Gfx.FONT_LARGE) {
+            diffFont = Gfx.FONT_MEDIUM;
+        }
+        if (dc.getTextWidthInPixels(predictionText, predictionFont) > (areaW - 8) and predictionFont == Gfx.FONT_MEDIUM) {
+            predictionFont = Gfx.FONT_SMALL;
+        }
+
+        var centerX = areaX + Math.floor(areaW / 2);
+        var totalH = dc.getFontHeight(predictionFont) + rowGap + dc.getFontHeight(diffFont);
+        var predictionY = areaY + Math.floor((areaH - totalH) / 2) + blockOffsetY;
+        var deltaY = predictionY + dc.getFontHeight(predictionFont) + rowGap;
+
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(centerX, predictionY, predictionFont, predictionText, Gfx.TEXT_JUSTIFY_CENTER);
+        _drawBoldText(dc, centerX, deltaY, diffFont, deltaText, Gfx.TEXT_JUSTIFY_CENTER, Gfx.COLOR_WHITE);
+    }
+
+    function _drawCenterPaceDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
+        var paceFont = Gfx.FONT_LARGE;
+        var unitFont = Gfx.FONT_XTINY;
+        var segmentCount = 5;
+        var segmentGap = 5;
+        var indicatorH = 10;
+        var baselineMarkerH = 16;
+        var contentInset = 14;
+        var gaugeGap = 8;
+        if (sizeClass == 0) {
+            segmentGap = 4;
+            indicatorH = 8;
+            baselineMarkerH = 13;
+            contentInset = 10;
+            gaugeGap = 6;
+        } else if (sizeClass == 1) {
+            unitFont = Gfx.FONT_TINY;
+            gaugeGap = 10;
+        } else if (sizeClass == 2) {
+            paceFont = Gfx.FONT_LARGE;
+            unitFont = Gfx.FONT_TINY;
+            segmentGap = 7;
+            indicatorH = 12;
+            baselineMarkerH = 18;
+            contentInset = 18;
+            gaugeGap = 12;
+            unitFont = Gfx.FONT_SMALL;
+        }
+
+        var centerX = areaX + Math.floor(areaW / 2);
+        var totalH = dc.getFontHeight(paceFont) + gaugeGap + baselineMarkerH;
+        var paceY = areaY + Math.floor((areaH - totalH) / 2);
+        _drawValueWithTrailingUnitCentered(
+            dc,
+            centerX,
+            paceY,
+            paceFont,
+            _paceNowText,
+            unitFont,
+            "/km",
+            3,
+            Gfx.COLOR_WHITE
+        );
+
+        var laneW = areaW - (contentInset * 2);
+        var segmentW = Math.floor((laneW - (segmentGap * (segmentCount - 1))) / segmentCount);
+        if (segmentW < 8) {
+            segmentW = 8;
+        }
+        laneW = (segmentW * segmentCount) + (segmentGap * (segmentCount - 1));
+        var laneX = areaX + Math.floor((areaW - laneW) / 2);
+        var laneY = paceY + dc.getFontHeight(paceFont) + gaugeGap;
+        var activeIndex = _resolvePaceIndicatorIndex();
+        var activeColor = _resolvePaceIndicatorColor(activeIndex);
+
+        for (var i = 0; i < segmentCount; i += 1) {
+            var segmentX = laneX + (i * (segmentW + segmentGap));
+            var segmentColor = PACE_INDICATOR_OFF_COLOR;
+            if (i == activeIndex) {
+                segmentColor = activeColor;
+            }
+            dc.setColor(segmentColor, segmentColor);
+            dc.fillRectangle(segmentX, laneY, segmentW, indicatorH);
+        }
+
+        var baselineSegmentX = laneX + (2 * (segmentW + segmentGap));
+        var baselineX = baselineSegmentX + Math.floor(segmentW / 2);
+        dc.setColor(PACE_INDICATOR_BASELINE_COLOR, Gfx.COLOR_TRANSPARENT);
+        dc.drawLine(baselineX, laneY - 3, baselineX, laneY + baselineMarkerH);
+    }
+
+    function _drawGoalDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
+        var deltaFont = Gfx.FONT_LARGE;
+        var predictionFont = Gfx.FONT_SMALL;
+        var gap = 10;
+        var horizontalInset = 12;
+        if (sizeClass == 0) {
+            predictionFont = Gfx.FONT_TINY;
+            gap = 6;
+            horizontalInset = 8;
+        } else if (sizeClass == 2) {
+            predictionFont = Gfx.FONT_MEDIUM;
+            gap = 12;
+            horizontalInset = 16;
+        }
+
+        var predictionText = _goalPredictionTimeText;
+        var deltaText = _goalDiffSecondsText;
+        var deltaW = dc.getTextWidthInPixels(deltaText, deltaFont);
+        var predictionW = dc.getTextWidthInPixels(predictionText, predictionFont);
+        var maxContentW = areaW - (horizontalInset * 2);
+        if ((deltaW + gap + predictionW) > maxContentW and sizeClass != 0) {
+            deltaFont = Gfx.FONT_MEDIUM;
+            deltaW = dc.getTextWidthInPixels(deltaText, deltaFont);
+        }
+        if ((deltaW + gap + predictionW) > maxContentW and sizeClass == 1) {
+            predictionFont = Gfx.FONT_TINY;
+            gap = 8;
+            predictionW = dc.getTextWidthInPixels(predictionText, predictionFont);
+        }
+
+        var totalW = deltaW + gap + predictionW;
+        if (totalW > maxContentW) {
+            totalW = maxContentW;
+        }
+        var startX = areaX + Math.floor((areaW - totalW) / 2);
+        var baselineY = areaY + Math.floor((areaH - dc.getFontHeight(deltaFont)) / 2) - 4;
+        var predictionY = baselineY + dc.getFontHeight(deltaFont) - dc.getFontHeight(predictionFont) - 2;
+
+        _drawBoldText(dc, startX, baselineY, deltaFont, deltaText, Gfx.TEXT_JUSTIFY_LEFT, Gfx.COLOR_WHITE);
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(startX + deltaW + gap, predictionY, predictionFont, predictionText, Gfx.TEXT_JUSTIFY_LEFT);
+    }
+
+    function _drawBottomDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
+        var distanceFont = Gfx.FONT_MEDIUM;
+        var distanceUnitFont = Gfx.FONT_TINY;
+        var timeFont = Gfx.FONT_MEDIUM;
+        if (sizeClass == 0) {
+            distanceFont = Gfx.FONT_MEDIUM;
+            distanceUnitFont = Gfx.FONT_XTINY;
+            timeFont = Gfx.FONT_MEDIUM;
+        } else if (sizeClass == 1) {
+            distanceUnitFont = Gfx.FONT_TINY;
+        } else if (sizeClass == 2) {
+            distanceFont = Gfx.FONT_LARGE;
+            timeFont = Gfx.FONT_LARGE;
+        }
+
+        var distanceParts = _splitMetricValueAndUnit(_distanceText);
+        var distanceValue = distanceParts[0];
+        var distanceUnit = distanceParts[1];
+        var halfW = Math.floor(areaW / 2);
+        var leftCenterX = areaX + Math.floor((halfW * 60) / 100);
+        var rightCenterX = areaX + halfW + Math.floor(((areaW - halfW) * 40) / 100);
+        var perSideMaxW = Math.floor(halfW * 0.8);
+
+        if (dc.getTextWidthInPixels(_elapsedTimeText, timeFont) > perSideMaxW and timeFont == Gfx.FONT_LARGE) {
+            timeFont = Gfx.FONT_MEDIUM;
+        }
+
+        var distanceTotalW = dc.getTextWidthInPixels(distanceValue, distanceFont);
+        if (distanceUnit.length() > 0) {
+            distanceTotalW += 2 + dc.getTextWidthInPixels(distanceUnit, distanceUnitFont);
+        }
+        if (distanceTotalW > perSideMaxW) {
+            if (distanceFont == Gfx.FONT_LARGE) {
+                distanceFont = Gfx.FONT_MEDIUM;
+            } else {
+                distanceFont = Gfx.FONT_SMALL;
+            }
+            distanceUnitFont = Gfx.FONT_XTINY;
+        }
+
+        if (dc.getTextWidthInPixels(_elapsedTimeText, timeFont) > perSideMaxW and timeFont == Gfx.FONT_MEDIUM) {
+            timeFont = Gfx.FONT_SMALL;
+        }
+
+        var distanceY = areaY + Math.floor((areaH - dc.getFontHeight(distanceFont)) / 2) - 4;
+        var timeY = areaY + Math.floor((areaH - dc.getFontHeight(timeFont)) / 2) - 4;
+
+        _drawValueWithTrailingUnitCentered(
+            dc,
+            leftCenterX,
+            distanceY,
+            distanceFont,
+            distanceValue,
+            distanceUnitFont,
+            distanceUnit,
+            2,
+            Gfx.COLOR_WHITE
+        );
+        _drawBoldText(dc, rightCenterX, timeY, timeFont, _elapsedTimeText, Gfx.TEXT_JUSTIFY_CENTER, Gfx.COLOR_WHITE);
+    }
+
+    function _drawHeartRateDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
+        var currentFont = Gfx.FONT_LARGE;
+        var capValueFont = Gfx.FONT_MEDIUM;
+        var displayW = dc.getWidth();
+        var displayH = dc.getHeight();
+        var minDim = _min(displayW, displayH);
+        var screenCenterX = Math.floor(displayW / 2);
+        var screenCenterY = Math.floor(displayH / 2);
+        var screenRadius = Math.floor(minDim / 2);
+        var outerInset = 12;
+        var bandThickness = 9;
+        if (sizeClass == 0) {
+            currentFont = Gfx.FONT_MEDIUM;
+            capValueFont = Gfx.FONT_SMALL;
+            outerInset = 12;
+            bandThickness = 9;
+        } else if (sizeClass == 1) {
+            outerInset = 10;
+            bandThickness = 10;
+        } else if (sizeClass == 2) {
+            capValueFont = Gfx.FONT_MEDIUM;
+            outerInset = 12;
+            bandThickness = 12;
+        }
+
+        var outerRadius = screenRadius - outerInset;
+        if (outerRadius < bandThickness + 2) {
+            outerRadius = bandThickness + 2;
+        }
+        var centerX = areaX + outerRadius + 2;
+        var centerY = areaY + outerRadius + 2;
+        centerX = screenCenterX;
+        centerY = screenCenterY;
+        var innerRadius = outerRadius - bandThickness;
+        if (innerRadius < 1) {
+            innerRadius = 1;
+        }
+        var fillEndDeg = _resolveHeartRateArcEndDeg();
+        var fillColor = _resolveHeartRateArcColor();
+
+        _drawThickArc(dc, centerX, centerY, innerRadius, outerRadius, HR_ARC_START_DEG, HR_ARC_MAX_DEG, HR_ARC_BASE_COLOR);
+        if (fillEndDeg > HR_ARC_START_DEG) {
+            _drawThickArc(dc, centerX, centerY, innerRadius, outerRadius, HR_ARC_START_DEG, fillEndDeg, fillColor);
+        }
+        if (_allowedMaxHeartRate != null) {
+            _drawRadialTick(dc, centerX, centerY, innerRadius - 2, outerRadius + 2, HR_ARC_CAP_DEG, Gfx.COLOR_WHITE);
+        }
+
+        var currentText = _formatHeartRateValueText(_currentHeartRate);
+        var capValueText = _resolveHeartRateCapValueText();
+        var textCenterX = areaX + Math.floor(areaW / 2);
+        if (sizeClass == 0) {
+            textCenterX += 6;
+        } else if (sizeClass == 1) {
+            textCenterX += 10;
+        } else {
+            textCenterX += 12;
+        }
+        var capLineH = dc.getFontHeight(capValueFont);
+        var currentLineH = dc.getFontHeight(currentFont);
+        var totalTextH = capLineH + 6 + currentLineH;
+        var topOffsetY = 6;
+        if (sizeClass == 0) {
+            topOffsetY = 4;
+        } else if (sizeClass == 1) {
+            topOffsetY = 10;
+        } else if (sizeClass == 2) {
+            topOffsetY = 12;
+        }
+        var capValueY = areaY + Math.floor((areaH - totalTextH) / 2) + topOffsetY;
+        var currentY = capValueY + capLineH + 6;
+
+        _drawBoldText(dc, textCenterX, currentY, currentFont, currentText, Gfx.TEXT_JUSTIFY_CENTER, Gfx.COLOR_WHITE);
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(textCenterX, capValueY, capValueFont, capValueText, Gfx.TEXT_JUSTIFY_CENTER);
+    }
+
+    function _drawEventOverlay(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
+        if (areaW <= 0 or areaH <= 0) {
             return;
         }
 
-        dc.drawText(centerX, timeY, timeFont, _goalPredictionTimeText, Gfx.TEXT_JUSTIFY_CENTER);
+        var borderColor = _resolveMessageBannerBorderColor();
+        var frameInset = 6;
+        var frameCorner = 14;
+        var labelFont = Gfx.FONT_LARGE;
+        var messageFont = Gfx.FONT_LARGE;
+        if (sizeClass == 0) {
+            frameInset = 5;
+            frameCorner = 10;
+        } else if (sizeClass == 2) {
+            frameInset = 7;
+            frameCorner = 16;
+        }
 
-        if (
-            !_goalPredictionLabelVisible or
-            _goalPredictionLabelText == null or
-            _goalPredictionLabelText.length() == 0
-        ) {
+        dc.setColor(borderColor, borderColor);
+        dc.fillRoundedRectangle(areaX, areaY, areaW, areaH, frameCorner);
+        dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_BLACK);
+        dc.fillRoundedRectangle(
+            areaX + frameInset,
+            areaY + frameInset,
+            areaW - (frameInset * 2),
+            areaH - (frameInset * 2),
+            _max(frameCorner - 4, 4)
+        );
+
+        var accentInset = frameInset + 8;
+        var accentLen = Math.floor((areaW * 18) / 100);
+        if (accentLen < 16) {
+            accentLen = 16;
+        }
+        var accentTopY = areaY + accentInset;
+        var accentBottomY = areaY + areaH - accentInset;
+        var accentLeftX = areaX + accentInset;
+        var accentRightX = areaX + areaW - accentInset;
+        dc.setColor(borderColor, Gfx.COLOR_TRANSPARENT);
+        dc.drawLine(accentLeftX, accentTopY, accentLeftX + accentLen, accentTopY);
+        dc.drawLine(accentLeftX, accentTopY, accentLeftX, accentTopY + accentLen);
+        dc.drawLine(accentRightX - accentLen, accentTopY, accentRightX, accentTopY);
+        dc.drawLine(accentRightX, accentTopY, accentRightX, accentTopY + accentLen);
+        dc.drawLine(accentLeftX, accentBottomY - accentLen, accentLeftX, accentBottomY);
+        dc.drawLine(accentLeftX, accentBottomY, accentLeftX + accentLen, accentBottomY);
+        dc.drawLine(accentRightX - accentLen, accentBottomY, accentRightX, accentBottomY);
+        dc.drawLine(accentRightX, accentBottomY - accentLen, accentRightX, accentBottomY);
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+        dc.drawLine(accentLeftX + 1, accentTopY + 2, accentRightX - 1, accentTopY + 2);
+
+        var labelText = _cardLine1;
+        var messageText = _cardLine2;
+        var textInsetX = 20;
+        var contentTop = areaY + frameInset + 18;
+        var contentBottom = areaY + areaH - frameInset - 18;
+        var centerX = areaX + Math.floor(areaW / 2);
+        var labelGap = 12;
+        var maxMessageLines = _isOverlayWordBasedText(messageText) ? 3 : 2;
+        if (sizeClass == 0) {
+            textInsetX = 16;
+            labelGap = 8;
+        }
+
+        var fitLabelFont = labelFont;
+        var fitMessageFont = messageFont;
+        var fitLabelText = labelText;
+        var fitMessageLines = [""];
+        var lineGap = 4;
+        while (true) {
+            fitLabelText = labelText;
+            var fitLabelH = 0;
+            if (fitLabelText != null and fitLabelText.length() > 0) {
+                fitLabelText = _truncateTextToFit(dc, fitLabelFont, fitLabelText, areaW - (textInsetX * 2));
+                fitLabelH = dc.getFontHeight(fitLabelFont);
+            }
+
+            fitMessageLines = _wrapOverlayTextLines(
+                dc,
+                fitMessageFont,
+                messageText,
+                areaW - (textInsetX * 2),
+                maxMessageLines
+            );
+            lineGap = (fitMessageFont == Gfx.FONT_SMALL) ? 2 : 4;
+            var fitMessageAreaTop = contentTop + fitLabelH;
+            if (fitLabelH > 0) {
+                fitMessageAreaTop += labelGap;
+            }
+            var fitMessageAreaH = contentBottom - fitMessageAreaTop;
+            var fitMessageBlockH =
+                (fitMessageLines.size() * dc.getFontHeight(fitMessageFont)) +
+                ((fitMessageLines.size() - 1) * lineGap);
+
+            if (fitMessageBlockH <= fitMessageAreaH) {
+                labelFont = fitLabelFont;
+                messageFont = fitMessageFont;
+                labelText = fitLabelText;
+                break;
+            }
+
+            var nextMessageFont = _getNextSmallerOverlayFont(fitMessageFont);
+            var nextLabelFont = _getNextSmallerOverlayFont(fitLabelFont);
+            if (nextMessageFont == fitMessageFont and nextLabelFont == fitLabelFont) {
+                labelFont = fitLabelFont;
+                messageFont = fitMessageFont;
+                labelText = fitLabelText;
+                break;
+            }
+            fitMessageFont = nextMessageFont;
+            fitLabelFont = nextLabelFont;
+        }
+
+        var labelH = 0;
+        if (labelText != null and labelText.length() > 0) {
+            labelH = dc.getFontHeight(labelFont);
+            var labelY = contentTop;
+            dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+            _drawBoldText(dc, centerX, labelY, labelFont, labelText, Gfx.TEXT_JUSTIFY_CENTER, Gfx.COLOR_WHITE);
+        }
+
+        var messageLines = fitMessageLines;
+        var messageAreaTop = contentTop + labelH;
+        if (labelH > 0) {
+            messageAreaTop += labelGap;
+        }
+        var messageAreaH = contentBottom - messageAreaTop;
+        var messageBlockH = (messageLines.size() * dc.getFontHeight(messageFont)) + ((messageLines.size() - 1) * lineGap);
+        var messageY = messageAreaTop + Math.floor((messageAreaH - messageBlockH) / 2);
+
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+        for (var i = 0; i < messageLines.size(); i += 1) {
+            _drawBoldText(
+                dc,
+                centerX,
+                messageY + (i * (dc.getFontHeight(messageFont) + lineGap)),
+                messageFont,
+                messageLines[i],
+                Gfx.TEXT_JUSTIFY_CENTER,
+                Gfx.COLOR_WHITE
+            );
+        }
+    }
+
+    function _drawBoldText(dc as Gfx.Dc, drawX, drawY, font, text, justify, textColor) {
+        if (text == null or text.length() == 0) {
+            return;
+        }
+        dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(drawX - 1, drawY, font, text, justify);
+        dc.drawText(drawX + 1, drawY, font, text, justify);
+        dc.drawText(drawX, drawY - 1, font, text, justify);
+        dc.drawText(drawX, drawY + 1, font, text, justify);
+        dc.drawText(drawX, drawY, font, text, justify);
+    }
+
+    function _drawValueWithTrailingUnitCentered(
+        dc as Gfx.Dc,
+        centerX,
+        valueY,
+        valueFont,
+        valueText,
+        unitFont,
+        unitText,
+        unitGap,
+        textColor
+    ) {
+        if (valueText == null) {
+            valueText = "";
+        }
+        if (unitText == null) {
+            unitText = "";
+        }
+
+        var valueW = dc.getTextWidthInPixels(valueText, valueFont);
+        var unitW = 0;
+        if (unitText.length() > 0) {
+            unitW = dc.getTextWidthInPixels(unitText, unitFont);
+        } else {
+            unitGap = 0;
+        }
+        var totalW = valueW + unitGap + unitW;
+        var drawX = centerX - Math.floor(totalW / 2);
+
+        _drawBoldText(dc, drawX, valueY, valueFont, valueText, Gfx.TEXT_JUSTIFY_LEFT, textColor);
+        if (unitText.length() <= 0) {
             return;
         }
 
-        var timeTextWidth = dc.getTextWidthInPixels(_goalPredictionTimeText, timeFont);
-        var labelGap = 3;
-        var labelRightX = centerX - Math.floor(timeTextWidth / 2) - labelGap;
-        var labelY = timeY - 2;
-        dc.drawText(labelRightX, labelY, labelFont, _goalPredictionLabelText, Gfx.TEXT_JUSTIFY_RIGHT);
+        var unitY = valueY + dc.getFontHeight(valueFont) - dc.getFontHeight(unitFont) - 1;
+        dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(drawX + valueW + unitGap, unitY, unitFont, unitText, Gfx.TEXT_JUSTIFY_LEFT);
+    }
+
+    function _drawThickArc(dc as Gfx.Dc, centerX, centerY, innerRadius, outerRadius, startDeg, endDeg, color) {
+        if (outerRadius < innerRadius) {
+            return;
+        }
+        if (endDeg < startDeg) {
+            var swap = startDeg;
+            startDeg = endDeg;
+            endDeg = swap;
+        }
+
+        dc.setColor(color, Gfx.COLOR_TRANSPARENT);
+        for (var radius = innerRadius; radius <= outerRadius; radius += 1) {
+            var startPoint = _arcPoint(centerX, centerY, radius, startDeg);
+            var prevX = startPoint[0];
+            var prevY = startPoint[1];
+            for (var deg = startDeg + 3; deg <= endDeg; deg += 3) {
+                var point = _arcPoint(centerX, centerY, radius, deg);
+                dc.drawLine(prevX, prevY, point[0], point[1]);
+                prevX = point[0];
+                prevY = point[1];
+            }
+            var endPoint = _arcPoint(centerX, centerY, radius, endDeg);
+            dc.drawLine(prevX, prevY, endPoint[0], endPoint[1]);
+        }
+    }
+
+    function _drawRadialTick(dc as Gfx.Dc, centerX, centerY, innerRadius, outerRadius, angleDeg, color) {
+        var innerPoint = _arcPoint(centerX, centerY, innerRadius, angleDeg);
+        var outerPoint = _arcPoint(centerX, centerY, outerRadius, angleDeg);
+        dc.setColor(color, Gfx.COLOR_TRANSPARENT);
+        dc.drawLine(innerPoint[0], innerPoint[1], outerPoint[0], outerPoint[1]);
+    }
+
+    function _arcPoint(centerX, centerY, radius, angleDeg) as Lang.Array {
+        // Screen-space angle basis: 180deg=9 o'clock, 255deg=11:30, 270deg=12 o'clock.
+        var rad = (angleDeg * Math.PI) / 180.0;
+        var pointX = Math.floor(centerX + (Math.cos(rad) * radius) + 0.5);
+        var pointY = Math.floor(centerY + (Math.sin(rad) * radius) + 0.5);
+        return [pointX, pointY];
     }
 
     function _drawMessageBannerFrame(dc as Gfx.Dc, bannerX, bannerY, bannerW, bannerH, sizeClass) {
@@ -1259,6 +1671,88 @@ class MarathonCoachField extends Ui.DataField {
         return Gfx.COLOR_WHITE;
     }
 
+    function _resolveHeartRateArcRatio() {
+        if (_currentHeartRate == null) {
+            return 0.0;
+        }
+        if (_allowedMaxHeartRate != null and _allowedMaxHeartRate > 0) {
+            return _clamp((_currentHeartRate * 1.0) / (_allowedMaxHeartRate * 1.0), 0.0, HR_ARC_MAX_RATIO);
+        }
+        return _clamp(_resolveHeartRateGaugeRatio(), 0.0, 1.0);
+    }
+
+    function _resolveHeartRateArcEndDeg() {
+        var ratio = _resolveHeartRateArcRatio();
+        if (ratio <= 0) {
+            return HR_ARC_START_DEG;
+        }
+        if (ratio <= 1.0) {
+            return HR_ARC_START_DEG + Math.floor(((HR_ARC_CAP_DEG - HR_ARC_START_DEG) * ratio) + 0.5);
+        }
+        var overRatio = _clamp((ratio - 1.0) / (HR_ARC_MAX_RATIO - 1.0), 0.0, 1.0);
+        return HR_ARC_CAP_DEG + Math.floor(((HR_ARC_MAX_DEG - HR_ARC_CAP_DEG) * overRatio) + 0.5);
+    }
+
+    function _resolveHeartRateArcColor() {
+        var ratio = _resolveHeartRateArcRatio();
+        if (ratio >= 1.0) {
+            return HR_ARC_DANGER_COLOR;
+        }
+        if (ratio >= HR_ARC_CAUTION_RATIO) {
+            return HR_ARC_WARNING_COLOR;
+        }
+        if (ratio >= HR_ARC_SAFE_RATIO) {
+            return HR_ARC_CAUTION_COLOR;
+        }
+        return HR_ARC_SAFE_COLOR;
+    }
+
+    function _resolvePaceDeltaSec() {
+        if (_paceNowSecPerKm == null or _targetPaceSecPerKm == null) {
+            return null;
+        }
+        return _paceNowSecPerKm - _targetPaceSecPerKm;
+    }
+
+    function _resolvePaceIndicatorIndex() {
+        var paceDeltaSec = _resolvePaceDeltaSec();
+        if (paceDeltaSec == null) {
+            return 2;
+        }
+        if (paceDeltaSec <= -12) {
+            return 0;
+        }
+        if (paceDeltaSec <= -4) {
+            return 1;
+        }
+        if (paceDeltaSec < 4) {
+            return 2;
+        }
+        if (paceDeltaSec < 12) {
+            return 3;
+        }
+        return 4;
+    }
+
+    function _resolvePaceIndicatorColor(indicatorIndex) {
+        if (indicatorIndex <= 1) {
+            return PACE_INDICATOR_FAST_COLOR;
+        }
+        if (indicatorIndex == 2) {
+            return PACE_INDICATOR_ON_COLOR;
+        }
+        return PACE_INDICATOR_SLOW_COLOR;
+    }
+
+    function _isDangerousPaceDeviation() {
+        var paceDeltaSec = _resolvePaceDeltaSec();
+        if (paceDeltaSec == null) {
+            return false;
+        }
+        var easePaceDeltaThreshold = _adjustEasePaceThresholdSec(ACTION_EASE_PACE_DELTA_SEC);
+        return paceDeltaSec <= (easePaceDeltaThreshold - DANGER_PACE_EXTRA_SEC);
+    }
+
     function _resolveHeartRateGaugeRatio() {
         if (_currentHeartRateGaugeRatio != null) {
             return _currentHeartRateGaugeRatio;
@@ -1428,7 +1922,7 @@ class MarathonCoachField extends Ui.DataField {
 
         var elapsedText = "--:--:--";
         if (elapsedSec != null) {
-            elapsedText = CoachUtils.formatElapsedTime(elapsedSec);
+            elapsedText = _buildDashboardElapsedText(elapsedSec);
         }
 
         _distanceText = distanceText;
@@ -1459,8 +1953,9 @@ class MarathonCoachField extends Ui.DataField {
         if (hideGoalPrediction) {
             var overDistanceText = _buildGoalPredictionOverDistanceText(distanceKm - _raceDistanceKm);
             _goalPredictionLabelVisible = false;
-            _goalPredictionTimeText = _predictionOverText;
-            _goalPredictionDiffText = overDistanceText;
+            _goalPredictionTimeText = overDistanceText;
+            _goalPredictionDiffText = _predictionOverText;
+            _goalDiffSecondsText = _predictionOverText;
             _goalDeltaText = _predictionOverText + " " + overDistanceText;
             _logFinishDiag("summary", elapsedSec, distanceKm, hideGoalPrediction);
             return;
@@ -1469,6 +1964,7 @@ class MarathonCoachField extends Ui.DataField {
         _goalPredictionLabelVisible = true;
         _goalPredictionTimeText = _buildGoalPredictionTimeText(predictedTotalSec);
         _goalPredictionDiffText = _buildGoalPredictionDiffText(predictedTotalSec);
+        _goalDiffSecondsText = _buildGoalDiffSecondsText(predictedTotalSec);
         _goalDeltaText = _buildGoalDeltaText(predictedTotalSec);
         _logFinishDiag("summary", elapsedSec, distanceKm, hideGoalPrediction);
     }
@@ -2474,20 +2970,57 @@ class MarathonCoachField extends Ui.DataField {
         var hrOver = _isHeartRateOverCap();
         var fuelState = _resolveFuelState();
         var isLastSpurt = _isLastSpurtSegment(info);
+        var actionVariant = _resolveActionVariant();
+        var hrGaugeState = _resolveHeartRateGaugeState();
         _updateBeepNotifications(elapsedSec, fuelOverdue, hrOver);
 
         if (isLastSpurt) {
             fuelState = CoachMessageUtils.FUEL_STATE_NONE;
-            _cardMode = CARD_MODE_ACTION;
-        } else if (_isSameText(fuelState, CoachMessageUtils.FUEL_STATE_NOW)) {
-            _cardMode = CARD_MODE_FUEL_OVERDUE;
-        } else if (_isSameText(fuelState, CoachMessageUtils.FUEL_STATE_PREP)) {
-            _cardMode = CARD_MODE_FUEL;
-        } else {
-            _cardMode = CARD_MODE_ACTION;
         }
 
-        _setActionCardDisplay(elapsedSec, fuelState, info, false);
+        if (elapsedSec == null) {
+            _resetEventDisplayState();
+            return;
+        }
+
+        if (_eventLastElapsedSec != null and elapsedSec < _eventLastElapsedSec) {
+            _resetEventDisplayState();
+        }
+        _eventLastElapsedSec = elapsedSec;
+
+        if (!_eventStateInitialized) {
+            _initializeEventDisplayState(elapsedSec, fuelState, actionVariant, hrGaugeState, hrOver, isLastSpurt, info);
+            return;
+        }
+
+        _expireEventOverlay(elapsedSec);
+        _updateDistanceMilestoneQueue(elapsedSec, info);
+
+        var handled = false;
+        if (!handled) {
+            handled = _tryTriggerDangerEvent(elapsedSec, info, actionVariant, fuelState, hrGaugeState);
+        }
+        if (!handled) {
+            handled = _tryTriggerFuelEvent(elapsedSec, info, actionVariant, fuelState);
+        }
+        if (!handled) {
+            handled = _tryTriggerLastSpurtEvent(elapsedSec, info, actionVariant, isLastSpurt);
+        }
+        if (!handled) {
+            handled = _tryTriggerCorrectionEvent(elapsedSec, info, actionVariant);
+        }
+        if (!handled) {
+            handled = _tryTriggerPendingDistanceEvent(elapsedSec);
+        }
+        if (!handled) {
+            handled = _tryTriggerRecoveryEvent(elapsedSec, info, actionVariant, hrOver);
+        }
+
+        _eventPrevFuelState = fuelState;
+        _eventPrevActionVariant = actionVariant;
+        _eventPrevHrGaugeState = hrGaugeState;
+        _eventPrevHrOver = hrOver;
+        _eventPrevLastSpurt = isLastSpurt;
     }
 
     function _resolveFuelState() {
@@ -2534,6 +3067,472 @@ class MarathonCoachField extends Ui.DataField {
         _coachMessagePreviousText = "";
         _coachMessageLastChangeSec = null;
         _actionEaseReason = ACTION_EASE_REASON_NONE;
+    }
+
+    function _resetEventDisplayState() {
+        _clearEventOverlay();
+        _eventStateInitialized = false;
+        _eventLastElapsedSec = null;
+        _eventPrevFuelState = CoachMessageUtils.FUEL_STATE_NONE;
+        _eventPrevActionVariant = CARD_VARIANT_ACTION_HOLD;
+        _eventPrevHrGaugeState = null;
+        _eventPrevHrOver = false;
+        _eventPrevLastSpurt = false;
+        _lastDangerEventSec = null;
+        _lastCorrectionEventSec = null;
+        _lastRecoveryEventSec = null;
+        _distanceMilestones = [];
+        _nextDistanceMilestoneIndex = 0;
+        _pendingDistanceMilestoneKm = null;
+        _pendingDistanceReadySec = null;
+        _pendingDistanceExpireSec = null;
+    }
+
+    function _initializeEventDisplayState(elapsedSec, fuelState, actionVariant, hrGaugeState, hrOver, isLastSpurt, info) {
+        _clearEventOverlay();
+        _syncDistanceMilestones(_extractElapsedDistanceKm(info), true);
+        _eventStateInitialized = true;
+        _eventLastElapsedSec = elapsedSec;
+        _eventPrevFuelState = fuelState;
+        _eventPrevActionVariant = actionVariant;
+        _eventPrevHrGaugeState = hrGaugeState;
+        _eventPrevHrOver = hrOver;
+        _eventPrevLastSpurt = isLastSpurt;
+    }
+
+    function _clearEventOverlay() {
+        _eventOverlayUntilSec = null;
+        _eventOverlayPriority = EVENT_PRIORITY_NONE;
+        _cardLine1 = "";
+        _cardLine2 = "";
+        _cardLine3 = "";
+        _cardVariant = CARD_VARIANT_ACTION_HOLD;
+    }
+
+    function _expireEventOverlay(elapsedSec) {
+        if (_eventOverlayUntilSec != null and elapsedSec >= _eventOverlayUntilSec) {
+            _clearEventOverlay();
+        }
+    }
+
+    function _hasActiveEventOverlay() {
+        return _eventOverlayUntilSec != null and _cardLine2 != null and _cardLine2.length() > 0;
+    }
+
+    function _canActivateOverlay(elapsedSec, priority) {
+        if (_eventOverlayUntilSec == null) {
+            return true;
+        }
+        if (elapsedSec >= _eventOverlayUntilSec) {
+            _clearEventOverlay();
+            return true;
+        }
+        return priority > _eventOverlayPriority;
+    }
+
+    function _isEventCooldownActive(lastEventSec, cooldownSec, elapsedSec) {
+        return lastEventSec != null and (elapsedSec - lastEventSec) < cooldownSec;
+    }
+
+    function _activateFixedOverlay(elapsedSec, priority, durationSec, variant, labelText, messageText) {
+        if (!_canActivateOverlay(elapsedSec, priority)) {
+            return false;
+        }
+        var normalizedLabelText = _normalizeDisplayText(labelText);
+        var normalizedMessageText = _normalizeDisplayText(messageText);
+        if (normalizedMessageText.length() <= 0) {
+            return false;
+        }
+        _cardVariant = variant;
+        _cardLine1 = _truncateCardText(normalizedLabelText, 12);
+        _cardLine2 = normalizedMessageText;
+        _cardLine3 = "";
+        _eventOverlayPriority = priority;
+        _eventOverlayUntilSec = elapsedSec + durationSec;
+        return _cardLine2.length() > 0;
+    }
+
+    function _activateCoachMessageEvent(
+        elapsedSec,
+        info,
+        actionVariant,
+        fuelState,
+        isLastSpurt,
+        categoryOverride,
+        labelOverride,
+        variantOverride,
+        priority,
+        durationSec
+    ) {
+        if (!_canActivateOverlay(elapsedSec, priority)) {
+            return false;
+        }
+
+        var overlayVariant = variantOverride;
+        if (overlayVariant == null) {
+            if (isLastSpurt) {
+                overlayVariant = CARD_VARIANT_ACTION_PUSH;
+            } else {
+                overlayVariant = _resolveDisplayCardVariant(actionVariant, fuelState);
+            }
+        }
+        var stateKey = _resolveCardStateKey(actionVariant, isLastSpurt, info);
+        var labelText = labelOverride;
+        if (labelText == null) {
+            labelText = _resolveCardLabelText(actionVariant, fuelState, isLastSpurt);
+        }
+        var language = CoachMessageUtils.resolveLanguage(_resolvePredictionSystemLanguage());
+        var category = categoryOverride;
+        if (category == null) {
+            category = _resolveCoachMessageCategory(language, fuelState, stateKey);
+        }
+        var messagePool = CoachMessageUtils.getMessagePool(language, category, fuelState, stateKey);
+        if (messagePool == null or messagePool.size() <= 0) {
+            category = _resolveCoachMessageCategory(language, fuelState, stateKey);
+            messagePool = CoachMessageUtils.getMessagePool(language, category, fuelState, stateKey);
+        }
+
+        var nextMessage = _pickCoachMessage(messagePool);
+        if (nextMessage == null or nextMessage.toString().length() == 0) {
+            nextMessage = _resolveActionMessage(actionVariant);
+        }
+
+        _coachMessagePreviousText = _coachMessageCurrentText;
+        _coachMessageCurrentText = nextMessage;
+        _coachMessageLastChangeSec = elapsedSec;
+        _coachMessageLanguage = language;
+        _coachMessageCategory = category;
+        _coachMessageStateKey = stateKey;
+        _coachMessageFuelState = fuelState;
+        return _activateFixedOverlay(elapsedSec, priority, durationSec, overlayVariant, labelText, nextMessage);
+    }
+
+    function _tryTriggerDangerEvent(elapsedSec, info, actionVariant, fuelState, hrGaugeState) {
+        if (_isEventCooldownActive(_lastDangerEventSec, EVENT_DANGER_COOLDOWN_SEC, elapsedSec)) {
+            return false;
+        }
+
+        if (
+            hrGaugeState != _eventPrevHrGaugeState and
+            (hrGaugeState == HR_CAP_STATE_CAUTION or hrGaugeState == HR_CAP_STATE_OVER)
+        ) {
+            var hrMessage = _resolveHrAlertMessage(hrGaugeState);
+            if (_activateFixedOverlay(elapsedSec, EVENT_PRIORITY_DANGER, EVENT_DANGER_DURATION_SEC, CARD_VARIANT_HR_WARNING, "CAP", hrMessage)) {
+                _lastDangerEventSec = elapsedSec;
+                return true;
+            }
+        }
+
+        if (
+            actionVariant == CARD_VARIANT_ACTION_EASE and
+            actionVariant != _eventPrevActionVariant and
+            _isDangerousPaceDeviation()
+        ) {
+            if (_activateCoachMessageEvent(
+                elapsedSec,
+                info,
+                actionVariant,
+                fuelState,
+                false,
+                null,
+                null,
+                CARD_VARIANT_ACTION_EASE,
+                EVENT_PRIORITY_DANGER,
+                EVENT_DANGER_DURATION_SEC
+            )) {
+                _lastDangerEventSec = elapsedSec;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function _tryTriggerFuelEvent(elapsedSec, info, actionVariant, fuelState) {
+        if (_isSameText(fuelState, _eventPrevFuelState)) {
+            return false;
+        }
+        if (
+            !_isSameText(fuelState, CoachMessageUtils.FUEL_STATE_PREP) and
+            !_isSameText(fuelState, CoachMessageUtils.FUEL_STATE_NOW)
+        ) {
+            return false;
+        }
+        return _activateCoachMessageEvent(
+            elapsedSec,
+            info,
+            actionVariant,
+            fuelState,
+            false,
+            null,
+            null,
+            null,
+            EVENT_PRIORITY_FUEL,
+            EVENT_FUEL_DURATION_SEC
+        );
+    }
+
+    function _tryTriggerCorrectionEvent(elapsedSec, info, actionVariant) {
+        if (_isEventCooldownActive(_lastCorrectionEventSec, EVENT_CORRECTION_COOLDOWN_SEC, elapsedSec)) {
+            return false;
+        }
+        if (actionVariant == _eventPrevActionVariant) {
+            return false;
+        }
+        if (actionVariant != CARD_VARIANT_ACTION_PUSH and actionVariant != CARD_VARIANT_ACTION_EASE) {
+            return false;
+        }
+        if (actionVariant == CARD_VARIANT_ACTION_EASE and _isDangerousPaceDeviation()) {
+            return false;
+        }
+        if (_activateCoachMessageEvent(
+            elapsedSec,
+            info,
+            actionVariant,
+            CoachMessageUtils.FUEL_STATE_NONE,
+            false,
+            null,
+            null,
+            null,
+            EVENT_PRIORITY_CORRECTION,
+            EVENT_CORRECTION_DURATION_SEC
+        )) {
+            _lastCorrectionEventSec = elapsedSec;
+            return true;
+        }
+        return false;
+    }
+
+    function _tryTriggerLastSpurtEvent(elapsedSec, info, actionVariant, isLastSpurt) {
+        if (!isLastSpurt or _eventPrevLastSpurt) {
+            return false;
+        }
+        return _activateCoachMessageEvent(
+            elapsedSec,
+            info,
+            actionVariant,
+            CoachMessageUtils.FUEL_STATE_NONE,
+            true,
+            null,
+            null,
+            CARD_VARIANT_ACTION_PUSH,
+            EVENT_PRIORITY_CORRECTION,
+            EVENT_CORRECTION_DURATION_SEC
+        );
+    }
+
+    function _tryTriggerRecoveryEvent(elapsedSec, info, actionVariant, hrOver) {
+        if (_isEventCooldownActive(_lastRecoveryEventSec, EVENT_RECOVERY_COOLDOWN_SEC, elapsedSec)) {
+            return false;
+        }
+
+        if (_eventPrevHrOver and !hrOver) {
+            if (_activateFixedOverlay(elapsedSec, EVENT_PRIORITY_RECOVERY, EVENT_RECOVERY_DURATION_SEC, CARD_VARIANT_RECOVERY, "", _resolveRecoveryMessage())) {
+                _lastRecoveryEventSec = elapsedSec;
+                return true;
+            }
+        }
+
+        if (_eventPrevActionVariant == CARD_VARIANT_ACTION_EASE and actionVariant == CARD_VARIANT_ACTION_HOLD) {
+            if (_activateCoachMessageEvent(
+                elapsedSec,
+                info,
+                actionVariant,
+                CoachMessageUtils.FUEL_STATE_NONE,
+                false,
+                CoachMessageUtils.CATEGORY_PRAISE,
+                "",
+                CARD_VARIANT_RECOVERY,
+                EVENT_PRIORITY_RECOVERY,
+                EVENT_RECOVERY_DURATION_SEC
+            )) {
+                _lastRecoveryEventSec = elapsedSec;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function _tryTriggerPendingDistanceEvent(elapsedSec) {
+        if (_pendingDistanceMilestoneKm == null) {
+            return false;
+        }
+        if (_pendingDistanceExpireSec != null and elapsedSec > _pendingDistanceExpireSec) {
+            _clearPendingDistanceMilestone();
+            return false;
+        }
+        if (_pendingDistanceReadySec != null and elapsedSec < _pendingDistanceReadySec) {
+            return false;
+        }
+
+        var labelText = _buildDistanceMilestoneLabel(_pendingDistanceMilestoneKm);
+        var messageText = _buildDistanceMilestoneMessage(_pendingDistanceMilestoneKm);
+        if (_activateFixedOverlay(
+            elapsedSec,
+            EVENT_PRIORITY_DISTANCE,
+            EVENT_DISTANCE_DURATION_SEC,
+            CARD_VARIANT_RECOVERY,
+            labelText,
+            messageText
+        )) {
+            _clearPendingDistanceMilestone();
+            return true;
+        }
+        return false;
+    }
+
+    function _updateDistanceMilestoneQueue(elapsedSec, info) {
+        var distanceKm = _extractElapsedDistanceKm(info);
+        _syncDistanceMilestones(distanceKm, false);
+        if (distanceKm == null or _distanceMilestones == null) {
+            return;
+        }
+
+        while (
+            _nextDistanceMilestoneIndex < _distanceMilestones.size() and
+            distanceKm >= _distanceMilestones[_nextDistanceMilestoneIndex]
+        ) {
+            var milestoneKm = _distanceMilestones[_nextDistanceMilestoneIndex];
+            _pendingDistanceMilestoneKm = milestoneKm;
+            _pendingDistanceReadySec = elapsedSec + EVENT_DISTANCE_DELAY_SEC;
+            _pendingDistanceExpireSec = elapsedSec + EVENT_DISTANCE_EXPIRY_SEC;
+            _nextDistanceMilestoneIndex += 1;
+        }
+    }
+
+    function _syncDistanceMilestones(distanceKm, alignCursor) {
+        var nextMilestones = _resolveDistanceMilestones();
+        var milestonesChanged = false;
+        if (!_sameDistanceMilestones(nextMilestones, _distanceMilestones)) {
+            _distanceMilestones = nextMilestones;
+            _nextDistanceMilestoneIndex = 0;
+            _clearPendingDistanceMilestone();
+            milestonesChanged = true;
+        }
+
+        if ((!alignCursor and !milestonesChanged) or distanceKm == null or _distanceMilestones == null) {
+            return;
+        }
+
+        while (
+            _nextDistanceMilestoneIndex < _distanceMilestones.size() and
+            distanceKm >= _distanceMilestones[_nextDistanceMilestoneIndex]
+        ) {
+            _nextDistanceMilestoneIndex += 1;
+        }
+    }
+
+    function _clearPendingDistanceMilestone() {
+        _pendingDistanceMilestoneKm = null;
+        _pendingDistanceReadySec = null;
+        _pendingDistanceExpireSec = null;
+    }
+
+    function _sameDistanceMilestones(nextMilestones, currentMilestones) {
+        if (nextMilestones == null or currentMilestones == null) {
+            return nextMilestones == currentMilestones;
+        }
+        if (nextMilestones.size() != currentMilestones.size()) {
+            return false;
+        }
+        for (var i = 0; i < nextMilestones.size(); i += 1) {
+            if (_abs(nextMilestones[i] - currentMilestones[i]) > 0.001) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function _resolveDistanceMilestones() as Lang.Array<Lang.Number> {
+        var milestones = [];
+        if (_raceDistanceKm == null or _raceDistanceKm <= 0) {
+            return milestones;
+        }
+
+        var candidates = [];
+        if (_raceDistanceKm >= FIVE_DISTANCE_KM) {
+            candidates.add(FIVE_DISTANCE_KM);
+        }
+        if (_raceDistanceKm >= TEN_DISTANCE_KM) {
+            candidates.add(TEN_DISTANCE_KM);
+        }
+        if (_raceDistanceKm >= 15.0) {
+            candidates.add(15.0);
+        }
+        if (_raceDistanceKm >= 20.0) {
+            candidates.add(20.0);
+        }
+        if (_raceDistanceKm >= (HALF_DISTANCE_KM - HALF_DISTANCE_TOLERANCE_KM)) {
+            candidates.add(HALF_DISTANCE_KM);
+        }
+        if (_raceDistanceKm >= 25.0) {
+            candidates.add(25.0);
+        }
+        if (_raceDistanceKm >= 30.0) {
+            candidates.add(30.0);
+        }
+        if (_raceDistanceKm >= 35.0) {
+            candidates.add(35.0);
+        }
+        if (_raceDistanceKm >= 40.0) {
+            candidates.add(40.0);
+        }
+
+        for (var i = 0; i < candidates.size(); i += 1) {
+            var milestoneKm = candidates[i];
+            if (milestoneKm <= (_raceDistanceKm + HALF_DISTANCE_TOLERANCE_KM)) {
+                milestones.add(milestoneKm);
+            }
+        }
+        return milestones;
+    }
+
+    function _buildDistanceMilestoneLabel(milestoneKm) {
+        var language = CoachMessageUtils.resolveLanguage(_resolvePredictionSystemLanguage());
+        if (_abs(milestoneKm - HALF_DISTANCE_KM) <= HALF_DISTANCE_TOLERANCE_KM) {
+            if (_isSameText(language, "en")) {
+                return "HALF";
+            }
+            return "ハーフ";
+        }
+        return Math.floor(milestoneKm + 0.5).format("%d") + "km";
+    }
+
+    function _buildDistanceMilestoneMessage(milestoneKm) {
+        var language = CoachMessageUtils.resolveLanguage(_resolvePredictionSystemLanguage());
+        if (_abs(milestoneKm - HALF_DISTANCE_KM) <= HALF_DISTANCE_TOLERANCE_KM) {
+            if (_isSameText(language, "en")) {
+                return "Back half now";
+            }
+            return "後半入るで";
+        }
+        if (_isSameText(language, "en")) {
+            return "Passed";
+        }
+        return "通過";
+    }
+
+    function _resolveHrAlertMessage(gaugeState) {
+        var language = CoachMessageUtils.resolveLanguage(_resolvePredictionSystemLanguage());
+        if (gaugeState == HR_CAP_STATE_OVER) {
+            if (_isSameText(language, "en")) {
+                return "Over HR cap";
+            }
+            return "ここは使いすぎ";
+        }
+        if (_isSameText(language, "en")) {
+            return "Near HR cap";
+        }
+        return "CAP近いで";
+    }
+
+    function _resolveRecoveryMessage() {
+        var language = CoachMessageUtils.resolveLanguage(_resolvePredictionSystemLanguage());
+        if (_isSameText(language, "en")) {
+            return "Settled again";
+        }
+        return "戻せてる";
     }
 
     function _updateBeepNotifications(elapsedSec, fuelOverdue, hrOver) {
@@ -3028,18 +4027,15 @@ class MarathonCoachField extends Ui.DataField {
         _cardLine2 = "";
         _cardLine3 = "";
 
-        if (labelText != null) {
-            _cardLine1 = _truncateCardText(labelText.toString(), 12);
+        var normalizedLabelText = _normalizeDisplayText(labelText);
+        if (normalizedLabelText.length() > 0) {
+            _cardLine1 = _truncateCardText(normalizedLabelText, 12);
         }
-        if (messageText == null) {
+        var normalizedMessageText = _normalizeDisplayText(messageText);
+        if (normalizedMessageText.length() <= 0) {
             return;
         }
-
-        var message = messageText.toString();
-        if (message.length() == 0) {
-            return;
-        }
-        _cardLine2 = message;
+        _cardLine2 = normalizedMessageText;
     }
 
     function _truncateCardText(text, maxChars) {
@@ -3056,12 +4052,50 @@ class MarathonCoachField extends Ui.DataField {
         return raw.substring(0, maxChars - 1) + ".";
     }
 
+    function _normalizeDisplayText(text) {
+        if (text == null) {
+            return "";
+        }
+
+        var raw = text.toString();
+        if (raw.length() <= 0) {
+            return "";
+        }
+
+        var normalized = "";
+        var pendingSpace = false;
+        var chars = raw.toCharArray();
+        if (!(chars instanceof Lang.Array)) {
+            return raw;
+        }
+
+        for (var i = 0; i < chars.size(); i += 1) {
+            var ch = chars[i];
+            var chText = ch.toString();
+            var chCode = ch.toNumber();
+            var isWhitespace = chCode == 32 or chCode == 9 or chCode == 10 or chCode == 13;
+            if (isWhitespace) {
+                if (normalized.length() > 0) {
+                    pendingSpace = true;
+                }
+                continue;
+            }
+            if (pendingSpace and normalized.length() > 0) {
+                normalized += " ";
+            }
+            normalized += chText;
+            pendingSpace = false;
+        }
+
+        return normalized;
+    }
+
     function _truncateTextToFit(dc as Gfx.Dc, font, text, maxWidth) {
         if (text == null or maxWidth <= 0) {
             return "";
         }
 
-        var raw = text.toString();
+        var raw = _normalizeDisplayText(text);
         if (raw.length() == 0 or dc.getTextWidthInPixels(raw, font) <= maxWidth) {
             return raw;
         }
@@ -3078,6 +4112,92 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         return raw.substring(0, 1);
+    }
+
+    function _wrapOverlayTextLines(dc as Gfx.Dc, font, text, maxWidth, maxLines) as Lang.Array {
+        var raw = _normalizeDisplayText(text);
+        if (raw.length() == 0) {
+            return [""];
+        }
+        if (dc.getTextWidthInPixels(raw, font) <= maxWidth) {
+            return [raw];
+        }
+
+        var tokens = [];
+        if (raw.find(" ") != null) {
+            tokens = CoachUtils.splitWords(raw);
+        } else {
+            for (var i = 0; i < raw.length(); i += 1) {
+                tokens.add(raw.substring(i, i + 1));
+            }
+        }
+        if (tokens.size() == 0) {
+            return [_truncateTextToFit(dc, font, raw, maxWidth)];
+        }
+
+        var joiner = "";
+        if (raw.find(" ") != null) {
+            joiner = " ";
+        }
+
+        var lines = [];
+        var current = "";
+        for (var idx = 0; idx < tokens.size(); idx += 1) {
+            var token = tokens[idx];
+            var candidate = token;
+            if (current.length() > 0) {
+                candidate = current + joiner + token;
+            }
+            if (dc.getTextWidthInPixels(candidate, font) <= maxWidth) {
+                current = candidate;
+                continue;
+            }
+            if (current.length() > 0) {
+                lines.add(current);
+                current = token;
+            } else {
+                lines.add(_truncateTextToFit(dc, font, token, maxWidth));
+                current = "";
+            }
+        }
+        if (current.length() > 0) {
+            lines.add(current);
+        }
+
+        if (lines.size() <= maxLines) {
+            return lines;
+        }
+
+        var trimmed = [];
+        for (var lineIdx = 0; lineIdx < maxLines; lineIdx += 1) {
+            if (lineIdx < (maxLines - 1)) {
+                trimmed.add(lines[lineIdx]);
+            } else {
+                var remain = lines[lineIdx];
+                for (var extraIdx = lineIdx + 1; extraIdx < lines.size(); extraIdx += 1) {
+                    remain += joiner + lines[extraIdx];
+                }
+                trimmed.add(_truncateTextToFit(dc, font, remain, maxWidth));
+            }
+        }
+        return trimmed;
+    }
+
+    function _isOverlayWordBasedText(text) as Lang.Boolean {
+        if (text == null) {
+            return false;
+        }
+        return text.toString().find(" ") != null;
+    }
+
+    function _getNextSmallerOverlayFont(font) {
+        if (font == Gfx.FONT_LARGE) {
+            return Gfx.FONT_MEDIUM;
+        }
+        if (font == Gfx.FONT_MEDIUM) {
+            return Gfx.FONT_SMALL;
+        }
+        return font;
     }
 
     function _getCardDisplayLines() as Lang.Array {
@@ -3117,6 +4237,66 @@ class MarathonCoachField extends Ui.DataField {
         }
         return predictedText;
     }
+
+    function _buildGoalDiffSecondsText(predictedTotalSec) {
+        if (
+            predictedTotalSec == null or
+            _targetTimeSec == null or
+            _targetTimeSec <= 0
+        ) {
+            return "--m";
+        }
+
+        var deltaSec = predictedTotalSec - _targetTimeSec;
+        if (_abs(deltaSec) < 0.5) {
+            return "0m";
+        }
+        var sign = "+";
+        if (deltaSec < 0) {
+            sign = "-";
+        }
+        var deltaMin = Math.floor((_abs(deltaSec) + 30) / 60);
+        if (deltaMin <= 0) {
+            deltaMin = 1;
+        }
+        return sign + deltaMin.format("%d") + "m";
+    }
+
+    function _buildDashboardElapsedText(elapsedSec) {
+        if (elapsedSec == null) {
+            return "--:--";
+        }
+        if (elapsedSec < 3600) {
+            return CoachUtils.formatMinSec(elapsedSec);
+        }
+        return CoachUtils.formatElapsedTime(elapsedSec);
+    }
+
+    function _compactDistanceText(distanceText) {
+        if (distanceText == null) {
+            return "";
+        }
+        var splitIndex = distanceText.find(" ");
+        if (splitIndex == null) {
+            return distanceText;
+        }
+        return distanceText.substring(0, splitIndex) + distanceText.substring(splitIndex + 1, distanceText.length());
+    }
+
+    function _splitMetricValueAndUnit(metricText) as Lang.Array {
+        if (metricText == null) {
+            return ["", ""];
+        }
+        var splitIndex = metricText.find(" ");
+        if (splitIndex == null) {
+            return [metricText, ""];
+        }
+        return [
+            metricText.substring(0, splitIndex),
+            metricText.substring(splitIndex + 1, metricText.length())
+        ];
+    }
+
 
     function _resolveFinishDiagDistanceKm() {
         if (!_isNumericSample(_sampleDistanceRawM) or _sampleDistanceRawM < 0) {
