@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
-    <iq:application id="12e1a6ba-4da8-47a1-b9ef-710f630f7c73" type="datafield" name="@Strings.AppName" entry="MarathonCoachApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="3.2.0" version="0.0.3">
+    <iq:application id="12e1a6ba-4da8-47a1-b9ef-710f630f7c73" type="datafield" name="@Strings.AppName" entry="MarathonCoachApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="3.2.0" version="0.0.5">
         <iq:products>
             <!-- Initial support scope: P0 + P1 + P2 + P3 (build-pass subset) -->
             <!-- P0: Runner mainstream -->
