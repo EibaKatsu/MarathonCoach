@@ -75,11 +75,6 @@ class MarathonCoachField extends Ui.DataField {
     const LARGE_TOP_ROW_DIAG_LOG = false;
     const COACH_MESSAGE_DIAG_LOG = false;
     const CRASH_DIAG_LOG = false;
-    const COMPACT_BANNER_DIAG_LOG = false;
-
-    const CARD_MODE_ACTION = 0;
-    const CARD_MODE_FUEL = 1;
-    const CARD_MODE_FUEL_OVERDUE = 2;
     const CARD_VARIANT_WARMUP = 0;
     const CARD_VARIANT_ACTION_PUSH = 1;
     const CARD_VARIANT_ACTION_HOLD = 2;
@@ -151,9 +146,6 @@ class MarathonCoachField extends Ui.DataField {
     const HR_CAP_STATE_CAUTION = 1;
     const HR_CAP_STATE_OVER = 2;
     const HR_CAP_CAUTION_MARGIN_BPM = 2;
-    const HR_CAP_MARKER_SAFE_COLOR = 0x63C84A;
-    const HR_CAP_MARKER_CAUTION_COLOR = 0xF29F67;
-    const HR_CAP_MARKER_OVER_COLOR = 0xF01818;
 
     var _goalPredictionLabelText = "Pred.";
     var _goalPredictionLabelVisible = true;
@@ -274,7 +266,6 @@ class MarathonCoachField extends Ui.DataField {
     var _slopeState = "FL";
     var _slopeAnchorAltitude = null;
     var _slopeAnchorDistanceM = null;
-    var _cardMode = CARD_MODE_ACTION;
     var _cardVariant = CARD_VARIANT_ACTION_HOLD;
     var _cardLine1 = "Hold pace";
     var _cardLine2 = "Hold";
@@ -329,7 +320,6 @@ class MarathonCoachField extends Ui.DataField {
         _lastSpurtLabelText = Ui.loadResource(Rez.Strings.CardLastSpurtLabel);
         _fuelPrepLabelText = Ui.loadResource(Rez.Strings.CardFuelPrepLabel);
         _fuelNowLabelText = Ui.loadResource(Rez.Strings.CardFuelNowLabel);
-        _cardMode = CARD_MODE_ACTION;
         _cardVariant = CARD_VARIANT_ACTION_HOLD;
         _coachMessageLanguage = CoachMessageUtils.resolveLanguage(_resolvePredictionSystemLanguage());
         _setCardLabelAndMessage(_actionHoldText, _actionHoldText);
@@ -939,49 +929,6 @@ class MarathonCoachField extends Ui.DataField {
         dc.drawLine(baselineX, laneY - 3, baselineX, laneY + baselineMarkerH);
     }
 
-    function _drawGoalDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
-        var deltaFont = Gfx.FONT_LARGE;
-        var predictionFont = Gfx.FONT_SMALL;
-        var gap = 10;
-        var horizontalInset = 12;
-        if (sizeClass == 0) {
-            predictionFont = Gfx.FONT_TINY;
-            gap = 6;
-            horizontalInset = 8;
-        } else if (sizeClass == 2) {
-            predictionFont = Gfx.FONT_MEDIUM;
-            gap = 12;
-            horizontalInset = 16;
-        }
-
-        var predictionText = _goalPredictionTimeText;
-        var deltaText = _goalDiffSecondsText;
-        var deltaW = dc.getTextWidthInPixels(deltaText, deltaFont);
-        var predictionW = dc.getTextWidthInPixels(predictionText, predictionFont);
-        var maxContentW = areaW - (horizontalInset * 2);
-        if ((deltaW + gap + predictionW) > maxContentW and sizeClass != 0) {
-            deltaFont = Gfx.FONT_MEDIUM;
-            deltaW = dc.getTextWidthInPixels(deltaText, deltaFont);
-        }
-        if ((deltaW + gap + predictionW) > maxContentW and sizeClass == 1) {
-            predictionFont = Gfx.FONT_TINY;
-            gap = 8;
-            predictionW = dc.getTextWidthInPixels(predictionText, predictionFont);
-        }
-
-        var totalW = deltaW + gap + predictionW;
-        if (totalW > maxContentW) {
-            totalW = maxContentW;
-        }
-        var startX = areaX + Math.floor((areaW - totalW) / 2);
-        var baselineY = areaY + Math.floor((areaH - dc.getFontHeight(deltaFont)) / 2) - 4;
-        var predictionY = baselineY + dc.getFontHeight(deltaFont) - dc.getFontHeight(predictionFont) - 2;
-
-        _drawBoldText(dc, startX, baselineY, deltaFont, deltaText, Gfx.TEXT_JUSTIFY_LEFT, Gfx.COLOR_WHITE);
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(startX + deltaW + gap, predictionY, predictionFont, predictionText, Gfx.TEXT_JUSTIFY_LEFT);
-    }
-
     function _drawBottomDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
         var distanceFont = Gfx.FONT_MEDIUM;
         var distanceUnitFont = Gfx.FONT_TINY;
@@ -1354,47 +1301,6 @@ class MarathonCoachField extends Ui.DataField {
         return [pointX, pointY];
     }
 
-    function _drawMessageBannerFrame(dc as Gfx.Dc, bannerX, bannerY, bannerW, bannerH, sizeClass) {
-        if (bannerW < 20 or bannerH < 12) {
-            return;
-        }
-
-        var borderColor = _resolveMessageBannerBorderColor();
-        var panelMarginX = 8;
-        var panelMarginY = 3;
-        if (sizeClass == 1) {
-            panelMarginX = 10;
-            panelMarginY = 4;
-        } else if (sizeClass == 2) {
-            panelMarginX = 14;
-            panelMarginY = 5;
-        }
-
-        var panelX = bannerX + panelMarginX;
-        var panelY = bannerY + panelMarginY;
-        var panelW = bannerW - (panelMarginX * 2);
-        var panelH = bannerH - (panelMarginY * 2);
-        if (panelW < 12 or panelH < 8) {
-            return;
-        }
-
-        dc.setColor(borderColor, Gfx.COLOR_BLACK);
-        dc.fillRectangle(bannerX, bannerY, bannerW, bannerH);
-
-        dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_BLACK);
-        if (sizeClass == 0) {
-            dc.fillRectangle(panelX, panelY, panelW, panelH);
-            return;
-        }
-
-        var panelCorner = _clamp(panelH / 5, 4, 10);
-        var maxPanelCorner = _max((_min(panelW, panelH) / 2) - 1, 2);
-        if (panelCorner > maxPanelCorner) {
-            panelCorner = maxPanelCorner;
-        }
-        dc.fillRoundedRectangle(panelX, panelY, panelW, panelH, panelCorner);
-    }
-
     function _resolveMessageBannerBorderColor() {
         if (_cardVariant == CARD_VARIANT_WARMUP) {
             return 0x55C3AA;
@@ -1420,201 +1326,6 @@ class MarathonCoachField extends Ui.DataField {
         return 0xA6B2BC;
     }
 
-    function _drawDistanceSummaryMedium(dc as Gfx.Dc, drawX, drawY, distanceText, valueFont) {
-        var splitIndex = distanceText.find(" ");
-        if (splitIndex == null or splitIndex <= 0) {
-            dc.drawText(drawX, drawY, valueFont, distanceText, Gfx.TEXT_JUSTIFY_LEFT);
-            return;
-        }
-
-        var valueText = distanceText.substring(0, splitIndex);
-        var unitText = distanceText.substring(splitIndex, distanceText.length());
-        var unitFont = Gfx.FONT_XTINY;
-        var valueTextW = dc.getTextWidthInPixels(valueText, valueFont);
-        var unitX = drawX + valueTextW + 2;
-        var unitY = drawY + dc.getFontHeight(valueFont) - dc.getFontHeight(unitFont) - 1;
-
-        dc.drawText(drawX, drawY, valueFont, valueText, Gfx.TEXT_JUSTIFY_LEFT);
-        dc.drawText(unitX, unitY, unitFont, unitText, Gfx.TEXT_JUSTIFY_LEFT);
-    }
-
-    function _drawHeartRateSummarySmall(dc as Gfx.Dc, areaX, areaY, areaW, areaH) {
-        var capFont = Gfx.FONT_XTINY;
-        var valueFont = Gfx.FONT_SMALL;
-        var capText = "cap --";
-        if (_allowedMaxHeartRate != null) {
-            capText = "cap " + _allowedMaxHeartRate.format("%d");
-        }
-        var valueText = "--";
-        if (_currentHeartRate != null) {
-            try {
-                valueText = _currentHeartRate.format("%d");
-            } catch (e) {
-                valueText = "--";
-            }
-        }
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(areaX + 4, areaY + 4, capFont, capText, Gfx.TEXT_JUSTIFY_LEFT);
-        dc.drawText(areaX + 4, areaY + 18, valueFont, valueText, Gfx.TEXT_JUSTIFY_LEFT);
-    }
-
-    function _drawHeartRateSummaryMedium(dc as Gfx.Dc, areaX, areaY, areaW, areaH) {
-        var capFont = Gfx.FONT_TINY;
-        var valueFont = Gfx.FONT_MEDIUM;
-        var stateFont = Gfx.FONT_XTINY;
-        var bottomPad = 1;
-        var capText = "cap --";
-        if (_allowedMaxHeartRate != null) {
-            capText = "cap " + _allowedMaxHeartRate.format("%d");
-        }
-        var valueText = _formatHeartRateValueText(_currentHeartRate);
-
-        var gaugeState = _resolveHeartRateGaugeState();
-        var stateText = "SAFE";
-        if (gaugeState == HR_CAP_STATE_CAUTION) {
-            stateText = "CAUTION";
-        } else if (gaugeState == HR_CAP_STATE_OVER) {
-            stateText = "OVER";
-        }
-
-        var drawRightX = Math.floor(areaX + areaW - 10);
-        var valueTextW = dc.getTextWidthInPixels(valueText, valueFont);
-        var valueY = Math.floor(areaY + areaH - dc.getFontHeight(valueFont) - bottomPad);
-        var capY = valueY - dc.getFontHeight(capFont) - 4;
-        if (capY < (areaY + 2)) {
-            capY = areaY + 2;
-        }
-        var stateTextW = dc.getTextWidthInPixels(stateText, stateFont);
-        var stateX = Math.floor(drawRightX - valueTextW - 8 - stateTextW);
-        if (stateX < (areaX + 2)) {
-            stateX = areaX + 2;
-        }
-        var stateY = Math.floor(areaY + areaH - dc.getFontHeight(stateFont) - bottomPad);
-
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(drawRightX, capY, capFont, capText, Gfx.TEXT_JUSTIFY_RIGHT);
-        dc.setColor(_getHeartRateGaugeMarkerColor(gaugeState), Gfx.COLOR_TRANSPARENT);
-        dc.drawText(stateX, stateY, stateFont, stateText, Gfx.TEXT_JUSTIFY_LEFT);
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(drawRightX, valueY, valueFont, valueText, Gfx.TEXT_JUSTIFY_RIGHT);
-    }
-
-    function _drawHeartRateSummaryLarge(dc as Gfx.Dc, areaX, areaY, areaW, areaH) {
-        var capFont = Gfx.FONT_SMALL;
-        var valueFont = Gfx.FONT_LARGE;
-        var stateFont = Gfx.FONT_XTINY;
-        var bottomPad = 0;
-        var valueDrop = 6;
-        var capText = "cap --";
-        if (_allowedMaxHeartRate != null) {
-            capText = "cap " + _allowedMaxHeartRate.format("%d");
-        }
-        var valueText = _formatHeartRateValueText(_currentHeartRate);
-        var gaugeState = _resolveHeartRateGaugeState();
-        var stateText = "SAFE";
-        if (gaugeState == HR_CAP_STATE_CAUTION) {
-            stateText = "CAUTION";
-        } else if (gaugeState == HR_CAP_STATE_OVER) {
-            stateText = "OVER";
-        }
-
-        var drawRightX = Math.floor(areaX + areaW - 6);
-        var valueTextW = dc.getTextWidthInPixels(valueText, valueFont);
-        var valueY = Math.floor(areaY + areaH - dc.getFontHeight(valueFont) - bottomPad + valueDrop);
-        var capY = valueY - dc.getFontHeight(capFont) - 6;
-        if (capY < areaY) {
-            capY = areaY;
-        }
-        var stateTextW = dc.getTextWidthInPixels(stateText, stateFont);
-        var stateX = Math.floor(drawRightX - valueTextW - 10 - stateTextW);
-        if (stateX < (areaX + 2)) {
-            stateX = areaX + 2;
-        }
-        var stateY = Math.floor(areaY + areaH - dc.getFontHeight(stateFont) - bottomPad);
-
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(drawRightX, capY, capFont, capText, Gfx.TEXT_JUSTIFY_RIGHT);
-        dc.setColor(_getHeartRateGaugeMarkerColor(gaugeState), Gfx.COLOR_TRANSPARENT);
-        dc.drawText(stateX, stateY, stateFont, stateText, Gfx.TEXT_JUSTIFY_LEFT);
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(drawRightX, valueY, valueFont, valueText, Gfx.TEXT_JUSTIFY_RIGHT);
-    }
-
-    function _drawPaceSummarySmall(dc as Gfx.Dc, areaX, areaY, areaW, areaH) {
-        var paceFont = Gfx.FONT_MEDIUM;
-        var unitFont = Gfx.FONT_XTINY;
-        var bottomPad = 1;
-        var paceText = _paceNowText;
-        var rightPad = 18;
-        var unitGap = 3;
-        var paceTextW = dc.getTextWidthInPixels(paceText, paceFont);
-        var unitTextW = dc.getTextWidthInPixels("/km", unitFont);
-        var totalTextW = paceTextW + unitGap + unitTextW;
-        var drawX = areaX + areaW - rightPad - totalTextW;
-        var minX = areaX + 4;
-        if (drawX < minX) {
-            drawX = minX;
-        }
-
-        var paceY = Math.floor(areaY + areaH - dc.getFontHeight(paceFont) - bottomPad);
-        var unitY = paceY + dc.getFontHeight(paceFont) - dc.getFontHeight(unitFont) - 1;
-
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(drawX, paceY, paceFont, paceText, Gfx.TEXT_JUSTIFY_LEFT);
-        dc.drawText(drawX + paceTextW + unitGap, unitY, unitFont, "/km", Gfx.TEXT_JUSTIFY_LEFT);
-    }
-
-    function _drawPaceSummaryMedium(dc as Gfx.Dc, areaX, areaY, areaW, areaH) {
-        var paceFont = Gfx.FONT_LARGE;
-        var unitFont = Gfx.FONT_XTINY;
-        var bottomPad = 1;
-        var rightPad = 10;
-        var unitGap = 4;
-        var paceText = _paceNowText;
-        var paceTextW = dc.getTextWidthInPixels(paceText, paceFont);
-        var unitTextW = dc.getTextWidthInPixels("/km", unitFont);
-        var totalTextW = paceTextW + unitGap + unitTextW;
-        var drawX = areaX + areaW - rightPad - totalTextW;
-        var minX = areaX + 8;
-        if (drawX < minX) {
-            drawX = minX;
-        }
-
-        var rowBottomY = Math.floor(areaY + areaH - bottomPad);
-        var paceY = rowBottomY - dc.getFontHeight(paceFont);
-        var unitY = rowBottomY - dc.getFontHeight(unitFont);
-
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(drawX, paceY, paceFont, paceText, Gfx.TEXT_JUSTIFY_LEFT);
-        dc.drawText(drawX + paceTextW + unitGap, unitY, unitFont, "/km", Gfx.TEXT_JUSTIFY_LEFT);
-    }
-
-    function _drawPaceSummaryLarge(dc as Gfx.Dc, areaX, areaY, areaW, areaH) {
-        var paceFont = Gfx.FONT_LARGE;
-        var unitFont = Gfx.FONT_TINY;
-        var bottomPad = 0;
-        var paceDrop = 6;
-        var rightPad = 12;
-        var unitGap = 5;
-        var paceText = _paceNowText;
-        var paceTextW = dc.getTextWidthInPixels(paceText, paceFont);
-        var unitTextW = dc.getTextWidthInPixels("/km", unitFont);
-        var totalTextW = paceTextW + unitGap + unitTextW;
-        var drawX = areaX + areaW - rightPad - totalTextW;
-        var minX = areaX + 10;
-        if (drawX < minX) {
-            drawX = minX;
-        }
-
-        var rowBottomY = Math.floor(areaY + areaH - bottomPad);
-        var paceY = rowBottomY - dc.getFontHeight(paceFont) + paceDrop;
-        var unitY = rowBottomY - dc.getFontHeight(unitFont);
-
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(drawX, paceY, paceFont, paceText, Gfx.TEXT_JUSTIFY_LEFT);
-        dc.drawText(drawX + paceTextW + unitGap, unitY, unitFont, "/km", Gfx.TEXT_JUSTIFY_LEFT);
-    }
-
     function _formatHeartRateValueText(heartRate) {
         if (heartRate == null) {
             return "--";
@@ -1637,10 +1348,6 @@ class MarathonCoachField extends Ui.DataField {
         return text;
     }
 
-    function _resolveHeartRateCapLabelText(layoutVariant) {
-        return "cap";
-    }
-
     function _resolveHeartRateCapValueText() {
         return _formatHeartRateValueText(_allowedMaxHeartRate);
     }
@@ -1656,19 +1363,6 @@ class MarathonCoachField extends Ui.DataField {
             return HR_CAP_STATE_CAUTION;
         }
         return HR_CAP_STATE_SAFE;
-    }
-
-    function _getHeartRateGaugeMarkerColor(gaugeState) {
-        if (gaugeState == HR_CAP_STATE_CAUTION) {
-            return HR_CAP_MARKER_CAUTION_COLOR;
-        }
-        if (gaugeState == HR_CAP_STATE_OVER) {
-            return HR_CAP_MARKER_OVER_COLOR;
-        }
-        if (gaugeState == HR_CAP_STATE_SAFE) {
-            return HR_CAP_MARKER_SAFE_COLOR;
-        }
-        return Gfx.COLOR_WHITE;
     }
 
     function _resolveHeartRateArcRatio() {
@@ -4270,17 +3964,6 @@ class MarathonCoachField extends Ui.DataField {
             return CoachUtils.formatMinSec(elapsedSec);
         }
         return CoachUtils.formatElapsedTime(elapsedSec);
-    }
-
-    function _compactDistanceText(distanceText) {
-        if (distanceText == null) {
-            return "";
-        }
-        var splitIndex = distanceText.find(" ");
-        if (splitIndex == null) {
-            return distanceText;
-        }
-        return distanceText.substring(0, splitIndex) + distanceText.substring(splitIndex + 1, distanceText.length());
     }
 
     function _splitMetricValueAndUnit(metricText) as Lang.Array {

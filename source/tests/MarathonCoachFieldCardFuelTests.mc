@@ -2,9 +2,6 @@ using Toybox.Lang as Lang;
 using Toybox.System as Sys;
 using Toybox.Test;
 
-const TEST_CARD_MODE_ACTION = 0;
-const TEST_CARD_MODE_FUEL = 1;
-const TEST_CARD_MODE_FUEL_OVERDUE = 2;
 const TEST_CARD_VARIANT_ACTION_PUSH = 1;
 const TEST_CARD_VARIANT_ACTION_HOLD = 2;
 const TEST_CARD_VARIANT_ACTION_EASE = 3;
@@ -60,7 +57,6 @@ class MarathonCoachFieldCardFuelTestDouble extends MarathonCoachField {
         _currentHeartRate = 140;
         _hrOverActive = false;
         _slopeState = "FL";
-        _cardMode = CARD_MODE_ACTION;
         _cardVariant = TEST_CARD_VARIANT_ACTION_HOLD;
         _coachMessageCategory = CoachMessageUtils.defaultCategory();
         _resetCoachMessageState();

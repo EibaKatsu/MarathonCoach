@@ -212,13 +212,9 @@ function testBuildGoalDeltaText_usesMinuteDeltaLabels(logger) {
 function testHeartRateCapText_reflectsLabelAndFallback(logger) {
     var sut = _newUtilsSut();
 
-    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(1));
-    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(0));
     Test.assertEqual("--", sut._resolveHeartRateCapValueText());
 
     sut._allowedMaxHeartRate = 152;
-    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(1));
-    Test.assertEqual("cap", sut._resolveHeartRateCapLabelText(0));
     Test.assertEqual("152", sut._resolveHeartRateCapValueText());
     return true;
 }
