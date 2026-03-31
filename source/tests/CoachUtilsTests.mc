@@ -119,6 +119,15 @@ function testSplitWords_collapsesSpaces(logger) {
 }
 
 (:test)
+function testNormalizeDisplayText_preservesJapaneseAndCollapsesWhitespace(logger) {
+    var sut = _newUtilsSut();
+
+    Test.assertEqual("まずは口当たり良く", sut._normalizeDisplayText("まずは口当たり良く"));
+    Test.assertEqual("まずは 口当たり良く", sut._normalizeDisplayText(" まずは \n 口当たり良く "));
+    return true;
+}
+
+(:test)
 function testRandomMessageIndex_constraints(logger) {
     Test.assertEqual(0, CoachUtils.randomMessageIndex(0, -1, -1));
     Test.assertEqual(0, CoachUtils.randomMessageIndex(1, 0, 0));

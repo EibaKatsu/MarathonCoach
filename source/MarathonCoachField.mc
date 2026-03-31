@@ -74,6 +74,7 @@ class MarathonCoachField extends Ui.DataField {
     const MEDIUM_HR_LAYOUT_DIAG_LOG = false;
     const LARGE_TOP_ROW_DIAG_LOG = false;
     const COACH_MESSAGE_DIAG_LOG = false;
+    const EVENT_OVERLAY_DIAG_LOG = false;
     const CRASH_DIAG_LOG = false;
     const CARD_VARIANT_WARMUP = 0;
     const CARD_VARIANT_ACTION_PUSH = 1;
@@ -259,6 +260,7 @@ class MarathonCoachField extends Ui.DataField {
     var _probeSpeedLastElapsedSec = null;
     var _lastDistanceProbeLogLine = null;
     var _lastCoachMessageDiagLine = null;
+    var _lastEventOverlayDiagLine = null;
     var _lastFinishDiagLine = null;
     var _coachMessageLanguage = "ja";
     var _coachMessageCategory = CoachMessageUtils.defaultCategory();
@@ -1121,11 +1123,11 @@ class MarathonCoachField extends Ui.DataField {
             fitLabelText = labelText;
             var fitLabelH = 0;
             if (fitLabelText != null and fitLabelText.length() > 0) {
-                fitLabelText = _truncateTextToFit(dc, fitLabelFont, fitLabelText, areaW - (textInsetX * 2));
+                fitLabelText = _truncateRawTextToFit(dc, fitLabelFont, fitLabelText, areaW - (textInsetX * 2));
                 fitLabelH = dc.getFontHeight(fitLabelFont);
             }
 
-            fitMessageLines = _wrapOverlayTextLines(
+            fitMessageLines = _wrapOverlayRawTextLines(
                 dc,
                 fitMessageFont,
                 messageText,
@@ -1177,6 +1179,21 @@ class MarathonCoachField extends Ui.DataField {
         var messageAreaH = contentBottom - messageAreaTop;
         var messageBlockH = (messageLines.size() * dc.getFontHeight(messageFont)) + ((messageLines.size() - 1) * lineGap);
         var messageY = messageAreaTop + Math.floor((messageAreaH - messageBlockH) / 2);
+
+        _logEventOverlayDiag(
+            "draw",
+            areaW,
+            areaH,
+            sizeClass,
+            labelText,
+            messageText,
+            messageLines,
+            labelFont,
+            messageFont,
+            messageAreaH,
+            messageBlockH,
+            messageY
+        );
 
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
         for (var i = 0; i < messageLines.size(); i += 1) {
@@ -2504,6 +2521,66 @@ class MarathonCoachField extends Ui.DataField {
         Sys.println(line);
     }
 
+    function _logEventOverlayActivationDiag(stage, elapsedSec, priority, durationSec, variant, labelText, messageText) {
+        if (!EVENT_OVERLAY_DIAG_LOG) {
+            return;
+        }
+
+        var line =
+            "[EVENT_OVERLAY]" +
+            " stage=" + _factValue(stage) +
+            " elapsed=" + _factValue(elapsedSec) +
+            " priority=" + _factValue(priority) +
+            " duration=" + _factValue(durationSec) +
+            " variant=" + _factValue(variant) +
+            " until=" + _factValue(_eventOverlayUntilSec) +
+            " label=" + _factValue(labelText) +
+            " message=" + _factValue(messageText) +
+            " line1=" + _factValue(_cardLine1) +
+            " line2=" + _factValue(_cardLine2);
+        if (_isSameText(_lastEventOverlayDiagLine, line)) {
+            return;
+        }
+        _lastEventOverlayDiagLine = line;
+        Sys.println(line);
+    }
+
+    function _logEventOverlayDiag(stage, areaW, areaH, sizeClass, labelText, messageText, messageLines, labelFont, messageFont, messageAreaH, messageBlockH, messageY) {
+        if (!EVENT_OVERLAY_DIAG_LOG) {
+            return;
+        }
+
+        var linesText = "";
+        if (messageLines != null and messageLines.size() > 0) {
+            for (var i = 0; i < messageLines.size(); i += 1) {
+                if (i > 0) {
+                    linesText += "|";
+                }
+                linesText += _factValue(messageLines[i]);
+            }
+        }
+
+        var line =
+            "[EVENT_OVERLAY]" +
+            " stage=" + _factValue(stage) +
+            " area=" + _factValue(areaW) + "x" + _factValue(areaH) +
+            " sizeClass=" + _factValue(sizeClass) +
+            " variant=" + _factValue(_cardVariant) +
+            " label=" + _factValue(labelText) +
+            " message=" + _factValue(messageText) +
+            " lines=" + linesText +
+            " labelFont=" + _factValue(labelFont) +
+            " messageFont=" + _factValue(messageFont) +
+            " areaH=" + _factValue(messageAreaH) +
+            " blockH=" + _factValue(messageBlockH) +
+            " y=" + _factValue(messageY);
+        if (_isSameText(_lastEventOverlayDiagLine, line)) {
+            return;
+        }
+        _lastEventOverlayDiagLine = line;
+        Sys.println(line);
+    }
+
     function _logCrashDiag(stage, errorValue) {
         if (!CRASH_DIAG_LOG) {
             return;
@@ -2967,6 +3044,7 @@ class MarathonCoachField extends Ui.DataField {
         var normalizedLabelText = _normalizeDisplayText(labelText);
         var normalizedMessageText = _normalizeDisplayText(messageText);
         if (normalizedMessageText.length() <= 0) {
+            _logEventOverlayActivationDiag("empty_message", elapsedSec, priority, durationSec, variant, normalizedLabelText, normalizedMessageText);
             return false;
         }
         _cardVariant = variant;
@@ -2975,6 +3053,7 @@ class MarathonCoachField extends Ui.DataField {
         _cardLine3 = "";
         _eventOverlayPriority = priority;
         _eventOverlayUntilSec = elapsedSec + durationSec;
+        _logEventOverlayActivationDiag("activate", elapsedSec, priority, durationSec, variant, _cardLine1, _cardLine2);
         return _cardLine2.length() > 0;
     }
 
@@ -3890,16 +3969,13 @@ class MarathonCoachField extends Ui.DataField {
 
         var normalized = "";
         var pendingSpace = false;
-        var chars = raw.toCharArray();
-        if (!(chars instanceof Lang.Array)) {
-            return raw;
-        }
-
-        for (var i = 0; i < chars.size(); i += 1) {
-            var ch = chars[i];
-            var chText = ch.toString();
-            var chCode = ch.toNumber();
-            var isWhitespace = chCode == 32 or chCode == 9 or chCode == 10 or chCode == 13;
+        for (var i = 0; i < raw.length(); i += 1) {
+            var chText = raw.substring(i, i + 1);
+            var isWhitespace =
+                chText.equals(" ") or
+                chText.equals("\t") or
+                chText.equals("\n") or
+                chText.equals("\r");
             if (isWhitespace) {
                 if (normalized.length() > 0) {
                     pendingSpace = true;
@@ -3940,6 +4016,28 @@ class MarathonCoachField extends Ui.DataField {
         return raw.substring(0, 1);
     }
 
+    function _truncateRawTextToFit(dc as Gfx.Dc, font, raw, maxWidth) {
+        if (raw == null or maxWidth <= 0) {
+            return "";
+        }
+        if (CoachUtils.containsNonAscii(raw) and raw.find(" ") == null) {
+            return raw;
+        }
+        if (raw.length() == 0 or dc.getTextWidthInPixels(raw, font) <= maxWidth) {
+            return raw;
+        }
+        if (raw.length() <= 1) {
+            return raw.substring(0, 1);
+        }
+        for (var keep = raw.length() - 1; keep >= 1; keep -= 1) {
+            var candidate = raw.substring(0, keep) + ".";
+            if (dc.getTextWidthInPixels(candidate, font) <= maxWidth) {
+                return candidate;
+            }
+        }
+        return raw.substring(0, 1);
+    }
+
     function _wrapOverlayTextLines(dc as Gfx.Dc, font, text, maxWidth, maxLines) as Lang.Array {
         var raw = _normalizeDisplayText(text);
         if (raw.length() == 0) {
@@ -3949,14 +4047,12 @@ class MarathonCoachField extends Ui.DataField {
             return [raw];
         }
 
-        var tokens = [];
-        if (raw.find(" ") != null) {
-            tokens = CoachUtils.splitWords(raw);
-        } else {
-            for (var i = 0; i < raw.length(); i += 1) {
-                tokens.add(raw.substring(i, i + 1));
-            }
+        if (raw.find(" ") == null) {
+            return _wrapOverlayCompactTextLines(dc, font, raw, maxWidth, maxLines);
         }
+
+        var tokens = [];
+        tokens = CoachUtils.splitWords(raw);
         if (tokens.size() == 0) {
             return [_truncateTextToFit(dc, font, raw, maxWidth)];
         }
@@ -4007,6 +4103,114 @@ class MarathonCoachField extends Ui.DataField {
             }
         }
         return trimmed;
+    }
+
+    function _wrapOverlayRawTextLines(dc as Gfx.Dc, font, raw, maxWidth, maxLines) as Lang.Array {
+        if (raw == null or raw.length() == 0) {
+            return [""];
+        }
+        if (CoachUtils.containsNonAscii(raw) and raw.find(" ") == null) {
+            return [raw];
+        }
+        if (dc.getTextWidthInPixels(raw, font) <= maxWidth) {
+            return [raw];
+        }
+
+        if (raw.find(" ") == null) {
+            return _wrapOverlayCompactTextLines(dc, font, raw, maxWidth, maxLines);
+        }
+
+        var tokens = CoachUtils.splitWords(raw);
+        if (tokens.size() == 0) {
+            return [_truncateRawTextToFit(dc, font, raw, maxWidth)];
+        }
+
+        var lines = [];
+        var current = "";
+        for (var idx = 0; idx < tokens.size(); idx += 1) {
+            var token = tokens[idx];
+            var candidate = token;
+            if (current.length() > 0) {
+                candidate = current + " " + token;
+            }
+            if (dc.getTextWidthInPixels(candidate, font) <= maxWidth) {
+                current = candidate;
+                continue;
+            }
+            if (current.length() > 0) {
+                lines.add(current);
+                current = token;
+            } else {
+                lines.add(_truncateRawTextToFit(dc, font, token, maxWidth));
+                current = "";
+            }
+        }
+        if (current.length() > 0) {
+            lines.add(current);
+        }
+
+        if (lines.size() <= maxLines) {
+            return lines;
+        }
+
+        var trimmed = [];
+        for (var lineIdx = 0; lineIdx < maxLines; lineIdx += 1) {
+            if (lineIdx < (maxLines - 1)) {
+                trimmed.add(lines[lineIdx]);
+            } else {
+                var remain = lines[lineIdx];
+                for (var extraIdx = lineIdx + 1; extraIdx < lines.size(); extraIdx += 1) {
+                    remain += " " + lines[extraIdx];
+                }
+                trimmed.add(_truncateRawTextToFit(dc, font, remain, maxWidth));
+            }
+        }
+        return trimmed;
+    }
+
+    function _wrapOverlayCompactTextLines(dc as Gfx.Dc, font, raw, maxWidth, maxLines) as Lang.Array {
+        var lines = [];
+        var remaining = raw;
+        for (var lineIdx = 0; lineIdx < maxLines; lineIdx += 1) {
+            if (remaining.length() == 0) {
+                break;
+            }
+            if (dc.getTextWidthInPixels(remaining, font) <= maxWidth) {
+                lines.add(remaining);
+                remaining = "";
+                break;
+            }
+            if (lineIdx >= (maxLines - 1)) {
+                lines.add(_truncateRawTextToFit(dc, font, remaining, maxWidth));
+                remaining = "";
+                break;
+            }
+
+            var splitIndex = _findCompactWrapSplitIndex(dc, font, remaining, maxWidth);
+            if (splitIndex <= 0 or splitIndex >= remaining.length()) {
+                lines.add(_truncateRawTextToFit(dc, font, remaining, maxWidth));
+                remaining = "";
+                break;
+            }
+
+            lines.add(remaining.substring(0, splitIndex));
+            remaining = remaining.substring(splitIndex, remaining.length());
+        }
+
+        if (lines.size() == 0) {
+            lines.add("");
+        }
+        return lines;
+    }
+
+    function _findCompactWrapSplitIndex(dc as Gfx.Dc, font, text, maxWidth) {
+        for (var keep = text.length() - 1; keep >= 1; keep -= 1) {
+            var candidate = text.substring(0, keep);
+            if (dc.getTextWidthInPixels(candidate, font) <= maxWidth) {
+                return keep;
+            }
+        }
+        return 1;
     }
 
     function _isOverlayWordBasedText(text) as Lang.Boolean {
