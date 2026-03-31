@@ -128,10 +128,10 @@ class MarathonCoachField extends Ui.DataField {
     const PACE_INDICATOR_FAST_COLOR = 0x4CC3FF;
     const PACE_INDICATOR_ON_COLOR = 0x63C84A;
     const PACE_INDICATOR_SLOW_COLOR = 0xF6B547;
-    const GOAL_RUNNER_GAUGE_TRACK_COLOR = 0x4A535A;
-    const GOAL_RUNNER_GAUGE_MARKER_COLOR = 0xFFFFFF;
-    const GOAL_RUNNER_GAUGE_RUNNER_COLOR = 0xFFFFFF;
-    const GOAL_RUNNER_GAUGE_FLAG_COLOR = 0xFFFFFF;
+    const GOAL_RUNNER_GAUGE_TRACK_COLOR = 0xFFD84A;
+    const GOAL_RUNNER_GAUGE_MARKER_COLOR = 0xFFD84A;
+    const GOAL_RUNNER_GAUGE_RUNNER_COLOR = 0xFFD84A;
+    const GOAL_RUNNER_GAUGE_FLAG_COLOR = 0xFFD84A;
     const GOAL_RUNNER_GAUGE_RANGE_SEC = 10 * 60;
     const GOAL_RUNNER_GAUGE_DEADZONE_SEC = PREDICTION_ON_PACE_THRESHOLD_SEC;
 
@@ -870,11 +870,13 @@ class MarathonCoachField extends Ui.DataField {
         var unitFont = Gfx.FONT_XTINY;
         var contentInset = 14;
         var gaugeGap = 8;
-        var gaugeH = 20;
+        var gaugeH = 24;
+        var gaugeOverlap = 8;
         if (sizeClass == 0) {
             contentInset = 10;
             gaugeGap = 6;
-            gaugeH = 16;
+            gaugeH = 20;
+            gaugeOverlap = 6;
         } else if (sizeClass == 1) {
             unitFont = Gfx.FONT_TINY;
             gaugeGap = 10;
@@ -883,13 +885,19 @@ class MarathonCoachField extends Ui.DataField {
             unitFont = Gfx.FONT_TINY;
             contentInset = 18;
             gaugeGap = 12;
-            gaugeH = 24;
+            gaugeH = 28;
+            gaugeOverlap = 10;
             unitFont = Gfx.FONT_SMALL;
         }
 
         var centerX = areaX + Math.floor(areaW / 2);
-        var totalH = dc.getFontHeight(paceFont) + gaugeGap + gaugeH;
+        var totalH = dc.getFontHeight(paceFont) + gaugeGap + gaugeH - gaugeOverlap;
         var paceY = areaY + Math.floor((areaH - totalH) / 2);
+        var laneW = areaW - (contentInset * 2);
+        var laneX = areaX + contentInset;
+        var laneY = paceY + dc.getFontHeight(paceFont) + gaugeGap - gaugeOverlap;
+        _drawGoalRunnerGauge(dc, laneX, laneY, laneW, gaugeH, sizeClass);
+
         _drawValueWithTrailingUnitCentered(
             dc,
             centerX,
@@ -901,11 +909,6 @@ class MarathonCoachField extends Ui.DataField {
             3,
             Gfx.COLOR_WHITE
         );
-
-        var laneW = areaW - (contentInset * 2);
-        var laneX = areaX + contentInset;
-        var laneY = paceY + dc.getFontHeight(paceFont) + gaugeGap;
-        _drawGoalRunnerGauge(dc, laneX, laneY, laneW, gaugeH, sizeClass);
     }
 
     function _drawBottomDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
@@ -1245,22 +1248,22 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         var sideInset = 4;
-        var runnerHalfW = 6;
-        var runnerLead = 6;
-        var flagGap = 8;
-        var markerHalfH = 7;
+        var runnerHalfW = 10;
+        var runnerLead = 10;
+        var flagGap = 12;
+        var markerHalfH = 9;
         if (sizeClass == 0) {
             sideInset = 2;
-            runnerHalfW = 5;
-            runnerLead = 5;
-            flagGap = 6;
-            markerHalfH = 6;
-        } else if (sizeClass == 2) {
-            sideInset = 5;
-            runnerHalfW = 7;
-            runnerLead = 7;
+            runnerHalfW = 8;
+            runnerLead = 8;
             flagGap = 10;
             markerHalfH = 8;
+        } else if (sizeClass == 2) {
+            sideInset = 5;
+            runnerHalfW = 12;
+            runnerLead = 12;
+            flagGap = 14;
+            markerHalfH = 10;
         }
 
         var trackStartX = areaX + sideInset;
@@ -1272,10 +1275,11 @@ class MarathonCoachField extends Ui.DataField {
         var trackY = areaY + areaH - 4;
         var centerX = trackStartX + Math.floor((trackEndX - trackStartX) / 2);
         dc.setColor(GOAL_RUNNER_GAUGE_TRACK_COLOR, GOAL_RUNNER_GAUGE_TRACK_COLOR);
-        dc.fillRectangle(trackStartX, trackY - 1, trackEndX - trackStartX + 1, 3);
+        dc.fillRectangle(trackStartX, trackY, trackEndX - trackStartX + 1, 2);
 
         dc.setColor(GOAL_RUNNER_GAUGE_MARKER_COLOR, Gfx.COLOR_TRANSPARENT);
         dc.drawLine(centerX, trackY - markerHalfH, centerX, trackY + markerHalfH);
+        dc.drawLine(centerX + 1, trackY - markerHalfH, centerX + 1, trackY + markerHalfH);
 
         var availableLeft = centerX - (trackStartX + runnerHalfW);
         var availableRight = (trackEndX - runnerLead) - centerX;
@@ -1295,68 +1299,95 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _drawGoalRunnerIcon(dc as Gfx.Dc, centerX, footY, sizeClass) {
-        var headRadius = 2;
-        var headOffsetY = 12;
-        var shoulderOffsetY = 8;
-        var hipOffsetY = 4;
-        var armBackX = 4;
-        var armForwardX = 4;
-        var armForwardDrop = 2;
-        var legBackX = 4;
-        var legBackRise = 2;
-        var legForwardX = 5;
+        var headRadius = 4;
+        var headOffsetY = 17;
+        var shoulderOffsetY = 11;
+        var hipOffsetY = 6;
+        var armBackX = 6;
+        var armForwardX = 6;
+        var armForwardDrop = 4;
+        var legBackX = 6;
+        var legBackRise = 4;
+        var legForwardX = 8;
         if (sizeClass == 0) {
-            headOffsetY = 10;
-            shoulderOffsetY = 7;
-            hipOffsetY = 4;
-            armBackX = 3;
-            armForwardX = 3;
-            legBackX = 3;
-            legForwardX = 4;
-        } else if (sizeClass == 2) {
             headRadius = 3;
-            headOffsetY = 14;
+            headOffsetY = 13;
             shoulderOffsetY = 9;
-            hipOffsetY = 5;
+            hipOffsetY = 4;
             armBackX = 5;
             armForwardX = 5;
             armForwardDrop = 3;
             legBackX = 5;
             legBackRise = 3;
             legForwardX = 6;
+        } else if (sizeClass == 2) {
+            headRadius = 4;
+            headOffsetY = 19;
+            shoulderOffsetY = 12;
+            hipOffsetY = 7;
+            armBackX = 7;
+            armForwardX = 7;
+            armForwardDrop = 5;
+            legBackX = 7;
+            legBackRise = 5;
+            legForwardX = 9;
         }
 
         var headCenterY = footY - headOffsetY;
         var shoulderY = footY - shoulderOffsetY;
         var hipY = footY - hipOffsetY;
+        dc.setColor(GOAL_RUNNER_GAUGE_RUNNER_COLOR, GOAL_RUNNER_GAUGE_RUNNER_COLOR);
+        dc.fillRectangle(
+            centerX - (headRadius - 1),
+            headCenterY - (headRadius - 1),
+            ((headRadius - 1) * 2) + 1,
+            ((headRadius - 1) * 2) + 1
+        );
         dc.setColor(GOAL_RUNNER_GAUGE_RUNNER_COLOR, Gfx.COLOR_TRANSPARENT);
         dc.drawCircle(centerX, headCenterY, headRadius);
         dc.drawLine(centerX, headCenterY + headRadius + 1, centerX, hipY);
+        dc.drawLine(centerX - 1, headCenterY + headRadius + 1, centerX - 1, hipY);
+        dc.drawLine(centerX + 1, headCenterY + headRadius + 1, centerX + 1, hipY);
         dc.drawLine(centerX, shoulderY, centerX - armBackX, shoulderY + 2);
+        dc.drawLine(centerX, shoulderY + 1, centerX - armBackX, shoulderY + 3);
         dc.drawLine(centerX, shoulderY, centerX + armForwardX, shoulderY + armForwardDrop);
+        dc.drawLine(centerX, shoulderY + 1, centerX + armForwardX, shoulderY + armForwardDrop + 1);
         dc.drawLine(centerX, hipY, centerX - legBackX, footY - legBackRise);
+        dc.drawLine(centerX, hipY + 1, centerX - legBackX, footY - legBackRise + 1);
         dc.drawLine(centerX, hipY, centerX + legForwardX, footY);
+        dc.drawLine(centerX, hipY + 1, centerX + legForwardX, footY + 1);
     }
 
     function _drawGoalFlagIcon(dc as Gfx.Dc, poleX, footY, sizeClass) {
-        var poleH = 12;
-        var flagW = 6;
-        var flagH = 4;
+        var poleH = 17;
+        var flagW = 10;
+        var flagH = 6;
         if (sizeClass == 0) {
-            poleH = 10;
-            flagW = 5;
-            flagH = 3;
-        } else if (sizeClass == 2) {
             poleH = 14;
-            flagW = 7;
+            flagW = 8;
             flagH = 5;
+        } else if (sizeClass == 2) {
+            poleH = 19;
+            flagW = 11;
+            flagH = 7;
         }
 
         var topY = footY - poleH;
         dc.setColor(GOAL_RUNNER_GAUGE_FLAG_COLOR, Gfx.COLOR_TRANSPARENT);
         dc.drawLine(poleX, topY, poleX, footY + 1);
-        dc.drawLine(poleX, topY, poleX + flagW, topY + 2);
-        dc.drawLine(poleX + flagW, topY + 2, poleX, topY + flagH);
+        dc.drawLine(poleX + 1, topY, poleX + 1, footY + 1);
+        _drawGoalFlagFill(dc, poleX, topY, flagW, flagH, GOAL_RUNNER_GAUGE_FLAG_COLOR);
+    }
+
+    function _drawGoalFlagFill(dc as Gfx.Dc, poleX, topY, flagW, flagH, color) {
+        dc.setColor(color, Gfx.COLOR_TRANSPARENT);
+        for (var row = 0; row < flagH; row += 1) {
+            var span = Math.floor((flagW * (flagH - row)) / flagH);
+            if (span < 2) {
+                span = 2;
+            }
+            dc.drawLine(poleX, topY + row, poleX + span, topY + row + 1);
+        }
     }
 
     function _drawThickArc(dc as Gfx.Dc, centerX, centerY, innerRadius, outerRadius, startDeg, endDeg, color) {
