@@ -402,6 +402,21 @@ function testBuildGoalDiffSecondsText_usesSignedMinuteDelta(logger) {
 }
 
 (:test)
+function testResolveGoalRunnerOffsetRatioForDeltaSec_mapsAheadRightAndBehindLeft(logger) {
+    var sut = _newUtilsSut();
+
+    _assertFloatNear(sut._resolveGoalRunnerOffsetRatioForDeltaSec(null), 0.0, 0.0001, "null delta should stay centered");
+    _assertFloatNear(sut._resolveGoalRunnerOffsetRatioForDeltaSec(0), 0.0, 0.0001, "on pace should stay centered");
+    _assertFloatNear(sut._resolveGoalRunnerOffsetRatioForDeltaSec(60), 0.0, 0.0001, "deadzone should stay centered");
+    _assertFloatNear(sut._resolveGoalRunnerOffsetRatioForDeltaSec(-60), 0.0, 0.0001, "ahead deadzone should stay centered");
+    _assertFloatNear(sut._resolveGoalRunnerOffsetRatioForDeltaSec(330), -0.5, 0.0001, "behind target should move runner left");
+    _assertFloatNear(sut._resolveGoalRunnerOffsetRatioForDeltaSec(-330), 0.5, 0.0001, "ahead of target should move runner right");
+    _assertFloatNear(sut._resolveGoalRunnerOffsetRatioForDeltaSec(900), -1.0, 0.0001, "large behind delta should clamp left");
+    _assertFloatNear(sut._resolveGoalRunnerOffsetRatioForDeltaSec(-900), 1.0, 0.0001, "large ahead delta should clamp right");
+    return true;
+}
+
+(:test)
 function testBuildDashboardElapsedText_compactsSubHourValues(logger) {
     var sut = _newUtilsSut();
 
