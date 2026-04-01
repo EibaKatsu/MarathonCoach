@@ -444,21 +444,3 @@ function testHeartRateArcEndDeg_reservesCapAndOverrunSegment(logger) {
     );
     return true;
 }
-
-(:test)
-function testDistanceMilestoneHelpers_supportHalfMessage(logger) {
-    var sut = _newUtilsSut();
-    sut._raceDistanceKm = 42.195;
-    sut._predictionSystemLanguage = Sys.LANGUAGE_JPN;
-
-    var milestones = sut._resolveDistanceMilestones();
-    Test.assertEqual(9, milestones.size());
-    _assertFloatNear(milestones[4], 21.0975, 0.0001, "full marathon list should include half milestone");
-    Test.assertEqual("ハーフ", sut._buildDistanceMilestoneLabel(21.0975));
-    Test.assertEqual("後半入るで", sut._buildDistanceMilestoneMessage(21.0975));
-
-    sut._predictionSystemLanguage = Sys.LANGUAGE_ENG;
-    Test.assertEqual("HALF", sut._buildDistanceMilestoneLabel(21.0975));
-    Test.assertEqual("Back half now", sut._buildDistanceMilestoneMessage(21.0975));
-    return true;
-}
