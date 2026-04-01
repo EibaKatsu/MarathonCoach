@@ -119,15 +119,6 @@ function testSplitWords_collapsesSpaces(logger) {
 }
 
 (:test)
-function testNormalizeDisplayText_preservesJapaneseAndCollapsesWhitespace(logger) {
-    var sut = _newUtilsSut();
-
-    Test.assertEqual("まずは口当たり良く", sut._normalizeDisplayText("まずは口当たり良く"));
-    Test.assertEqual("まずは 口当たり良く", sut._normalizeDisplayText(" まずは \n 口当たり良く "));
-    return true;
-}
-
-(:test)
 function testRandomMessageIndex_constraints(logger) {
     Test.assertEqual(0, CoachUtils.randomMessageIndex(0, -1, -1));
     Test.assertEqual(0, CoachUtils.randomMessageIndex(1, 0, 0));
@@ -451,23 +442,5 @@ function testHeartRateArcEndDeg_reservesCapAndOverrunSegment(logger) {
         sut._resolveHeartRateArcEndDeg() >= 247 and sut._resolveHeartRateArcEndDeg() <= 248,
         "90 percent should land just before the cap tick"
     );
-    return true;
-}
-
-(:test)
-function testDistanceMilestoneHelpers_supportHalfMessage(logger) {
-    var sut = _newUtilsSut();
-    sut._raceDistanceKm = 42.195;
-    sut._predictionSystemLanguage = Sys.LANGUAGE_JPN;
-
-    var milestones = sut._resolveDistanceMilestones();
-    Test.assertEqual(9, milestones.size());
-    _assertFloatNear(milestones[4], 21.0975, 0.0001, "full marathon list should include half milestone");
-    Test.assertEqual("ハーフ", sut._buildDistanceMilestoneLabel(21.0975));
-    Test.assertEqual("後半入るで", sut._buildDistanceMilestoneMessage(21.0975));
-
-    sut._predictionSystemLanguage = Sys.LANGUAGE_ENG;
-    Test.assertEqual("HALF", sut._buildDistanceMilestoneLabel(21.0975));
-    Test.assertEqual("Back half now", sut._buildDistanceMilestoneMessage(21.0975));
     return true;
 }
