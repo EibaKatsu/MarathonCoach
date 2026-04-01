@@ -97,8 +97,8 @@ class MarathonCoachField extends Ui.DataField {
     const PACE_INDICATOR_ON_COLOR = 0x63C84A;
     const PACE_INDICATOR_SLOW_COLOR = 0xF6B547;
     const GOAL_RUNNER_GAUGE_TRACK_COLOR = 0xFFD84A;
-    const GOAL_RUNNER_GAUGE_MARKER_COLOR = 0xFFD84A;
     const GOAL_RUNNER_GAUGE_RUNNER_COLOR = 0xFFD84A;
+    const GOAL_RUNNER_GAUGE_TARGET_COLOR = 0xC9D2D8;
     const GOAL_RUNNER_GAUGE_FLAG_COLOR = 0xFFD84A;
     const GOAL_RUNNER_GAUGE_RANGE_SEC = 10 * 60;
     const GOAL_RUNNER_GAUGE_DEADZONE_SEC = PREDICTION_ON_PACE_THRESHOLD_SEC;
@@ -1008,19 +1008,19 @@ class MarathonCoachField extends Ui.DataField {
         var runnerHalfW = 10;
         var runnerLead = 10;
         var flagGap = 12;
-        var markerHalfH = 9;
+        var targetRunnerOffsetY = 3;
         if (sizeClass == 0) {
             sideInset = 2;
             runnerHalfW = 8;
             runnerLead = 8;
             flagGap = 10;
-            markerHalfH = 8;
+            targetRunnerOffsetY = 2;
         } else if (sizeClass == 2) {
             sideInset = 5;
             runnerHalfW = 12;
             runnerLead = 12;
             flagGap = 14;
-            markerHalfH = 10;
+            targetRunnerOffsetY = 4;
         }
 
         var trackStartX = areaX + sideInset;
@@ -1033,10 +1033,6 @@ class MarathonCoachField extends Ui.DataField {
         var centerX = trackStartX + Math.floor((trackEndX - trackStartX) / 2);
         dc.setColor(GOAL_RUNNER_GAUGE_TRACK_COLOR, GOAL_RUNNER_GAUGE_TRACK_COLOR);
         dc.fillRectangle(trackStartX, trackY, trackEndX - trackStartX + 1, 2);
-
-        dc.setColor(GOAL_RUNNER_GAUGE_MARKER_COLOR, Gfx.COLOR_TRANSPARENT);
-        dc.drawLine(centerX, trackY - markerHalfH, centerX, trackY + markerHalfH);
-        dc.drawLine(centerX + 1, trackY - markerHalfH, centerX + 1, trackY + markerHalfH);
 
         var availableLeft = centerX - (trackStartX + runnerHalfW);
         var availableRight = (trackEndX - runnerLead) - centerX;
@@ -1051,11 +1047,12 @@ class MarathonCoachField extends Ui.DataField {
         }
         runnerX = _clamp(runnerX, trackStartX + runnerHalfW, trackEndX - runnerLead);
 
-        _drawGoalRunnerIcon(dc, runnerX, trackY, sizeClass);
+        _drawGoalRunnerIcon(dc, centerX, trackY + targetRunnerOffsetY, sizeClass, GOAL_RUNNER_GAUGE_TARGET_COLOR);
         _drawGoalFlagIcon(dc, trackEndX + flagGap, trackY, sizeClass);
+        _drawGoalRunnerIcon(dc, runnerX, trackY, sizeClass, GOAL_RUNNER_GAUGE_RUNNER_COLOR);
     }
 
-    function _drawGoalRunnerIcon(dc as Gfx.Dc, centerX, footY, sizeClass) {
+    function _drawGoalRunnerIcon(dc as Gfx.Dc, centerX, footY, sizeClass, color) {
         var headRadius = 4;
         var headOffsetY = 17;
         var shoulderOffsetY = 11;
@@ -1093,14 +1090,14 @@ class MarathonCoachField extends Ui.DataField {
         var headCenterY = footY - headOffsetY;
         var shoulderY = footY - shoulderOffsetY;
         var hipY = footY - hipOffsetY;
-        dc.setColor(GOAL_RUNNER_GAUGE_RUNNER_COLOR, GOAL_RUNNER_GAUGE_RUNNER_COLOR);
+        dc.setColor(color, color);
         dc.fillRectangle(
             centerX - (headRadius - 1),
             headCenterY - (headRadius - 1),
             ((headRadius - 1) * 2) + 1,
             ((headRadius - 1) * 2) + 1
         );
-        dc.setColor(GOAL_RUNNER_GAUGE_RUNNER_COLOR, Gfx.COLOR_TRANSPARENT);
+        dc.setColor(color, Gfx.COLOR_TRANSPARENT);
         dc.drawCircle(centerX, headCenterY, headRadius);
         dc.drawLine(centerX, headCenterY + headRadius + 1, centerX, hipY);
         dc.drawLine(centerX - 1, headCenterY + headRadius + 1, centerX - 1, hipY);
