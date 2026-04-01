@@ -732,16 +732,20 @@ class MarathonCoachField extends Ui.DataField {
     function _drawPredictionDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
         var diffFont = Gfx.FONT_LARGE;
         var predictionFont = Gfx.FONT_MEDIUM;
+        var diffNumberFont = Gfx.FONT_NUMBER_MEDIUM;
         var rowGap = 6;
         var blockOffsetY = 6;
         if (sizeClass == 0) {
             diffFont = Gfx.FONT_MEDIUM;
             predictionFont = Gfx.FONT_SMALL;
+            diffNumberFont = Gfx.FONT_NUMBER_MILD;
             rowGap = 4;
             blockOffsetY = 4;
         } else if (sizeClass == 1) {
+            diffNumberFont = Gfx.FONT_NUMBER_MEDIUM;
             blockOffsetY = 10;
         } else if (sizeClass == 2) {
+            diffNumberFont = Gfx.FONT_NUMBER_HOT;
             rowGap = 8;
             blockOffsetY = 12;
         }
@@ -756,32 +760,72 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         var centerX = areaX + Math.floor(areaW / 2);
-        var totalH = dc.getFontHeight(predictionFont) + rowGap + dc.getFontHeight(diffFont);
+        var deltaParts = _splitNumericValueAndSuffix(deltaText);
+        var deltaValueText = deltaParts[0];
+        var deltaUnitText = deltaParts[1];
+        var drawDeltaWithNumberFont = deltaValueText.length() > 0 and _containsAsciiDigit(deltaValueText);
+        if (drawDeltaWithNumberFont) {
+            diffNumberFont = _resolveFittingNumberFontForTrailingUnit(
+                dc,
+                deltaValueText,
+                diffNumberFont,
+                deltaUnitText,
+                predictionFont,
+                2,
+                areaW - 8,
+                diffFont
+            );
+        }
+
+        var deltaLineH = dc.getFontHeight(diffFont);
+        if (drawDeltaWithNumberFont) {
+            deltaLineH = dc.getFontHeight(diffNumberFont);
+        }
+
+        var totalH = dc.getFontHeight(predictionFont) + rowGap + deltaLineH;
         var predictionY = areaY + Math.floor((areaH - totalH) / 2) + blockOffsetY;
         var deltaY = predictionY + dc.getFontHeight(predictionFont) + rowGap;
 
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
         dc.drawText(centerX, predictionY, predictionFont, predictionText, Gfx.TEXT_JUSTIFY_CENTER);
-        _drawBoldText(dc, centerX, deltaY, diffFont, deltaText, Gfx.TEXT_JUSTIFY_CENTER, Gfx.COLOR_WHITE);
+        if (drawDeltaWithNumberFont) {
+            _drawValueWithTrailingUnitCentered(
+                dc,
+                centerX,
+                deltaY,
+                diffNumberFont,
+                deltaValueText,
+                predictionFont,
+                deltaUnitText,
+                2,
+                Gfx.COLOR_WHITE
+            );
+        } else {
+            _drawBoldText(dc, centerX, deltaY, diffFont, deltaText, Gfx.TEXT_JUSTIFY_CENTER, Gfx.COLOR_WHITE);
+        }
     }
 
     function _drawCenterPaceDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
         var paceFont = Gfx.FONT_LARGE;
+        var paceNumberFont = Gfx.FONT_NUMBER_MEDIUM;
         var unitFont = Gfx.FONT_XTINY;
         var contentInset = 14;
         var gaugeGap = 8;
         var gaugeH = 24;
         var gaugeOverlap = 8;
         if (sizeClass == 0) {
+            paceNumberFont = Gfx.FONT_NUMBER_MILD;
             contentInset = 10;
             gaugeGap = 6;
             gaugeH = 20;
             gaugeOverlap = 6;
         } else if (sizeClass == 1) {
+            paceNumberFont = Gfx.FONT_NUMBER_MEDIUM;
             unitFont = Gfx.FONT_TINY;
             gaugeGap = 10;
         } else if (sizeClass == 2) {
             paceFont = Gfx.FONT_LARGE;
+            paceNumberFont = Gfx.FONT_NUMBER_HOT;
             unitFont = Gfx.FONT_TINY;
             contentInset = 18;
             gaugeGap = 12;
@@ -796,13 +840,23 @@ class MarathonCoachField extends Ui.DataField {
         var laneW = areaW - (contentInset * 2);
         var laneX = areaX + contentInset;
         var laneY = paceY + dc.getFontHeight(paceFont) + gaugeGap - gaugeOverlap;
+        paceNumberFont = _resolveFittingNumberFontForTrailingUnit(
+            dc,
+            _paceNowText,
+            paceNumberFont,
+            "/km",
+            unitFont,
+            3,
+            laneW,
+            paceFont
+        );
         _drawGoalRunnerGauge(dc, laneX, laneY, laneW, gaugeH, sizeClass);
 
         _drawValueWithTrailingUnitCentered(
             dc,
             centerX,
             paceY,
-            paceFont,
+            paceNumberFont,
             _paceNowText,
             unitFont,
             "/km",
@@ -874,6 +928,7 @@ class MarathonCoachField extends Ui.DataField {
 
     function _drawHeartRateDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
         var currentFont = Gfx.FONT_LARGE;
+        var currentNumberFont = Gfx.FONT_NUMBER_MEDIUM;
         var capValueFont = Gfx.FONT_MEDIUM;
         var displayW = dc.getWidth();
         var displayH = dc.getHeight();
@@ -885,13 +940,16 @@ class MarathonCoachField extends Ui.DataField {
         var bandThickness = 9;
         if (sizeClass == 0) {
             currentFont = Gfx.FONT_MEDIUM;
+            currentNumberFont = Gfx.FONT_NUMBER_MILD;
             capValueFont = Gfx.FONT_SMALL;
             outerInset = 12;
             bandThickness = 9;
         } else if (sizeClass == 1) {
+            currentNumberFont = Gfx.FONT_NUMBER_MEDIUM;
             outerInset = 10;
             bandThickness = 10;
         } else if (sizeClass == 2) {
+            currentNumberFont = Gfx.FONT_NUMBER_HOT;
             capValueFont = Gfx.FONT_MEDIUM;
             outerInset = 12;
             bandThickness = 12;
@@ -922,6 +980,13 @@ class MarathonCoachField extends Ui.DataField {
 
         var currentText = _formatHeartRateValueText(_currentHeartRate);
         var capValueText = _resolveHeartRateCapValueText();
+        currentNumberFont = _resolveFittingNumberFont(
+            dc,
+            currentText,
+            currentNumberFont,
+            areaW - 6,
+            currentFont
+        );
         var textCenterX = areaX + Math.floor(areaW / 2);
         if (sizeClass == 0) {
             textCenterX += 6;
@@ -931,7 +996,7 @@ class MarathonCoachField extends Ui.DataField {
             textCenterX += 12;
         }
         var capLineH = dc.getFontHeight(capValueFont);
-        var currentLineH = dc.getFontHeight(currentFont);
+        var currentLineH = dc.getFontHeight(currentNumberFont);
         var totalTextH = capLineH + 6 + currentLineH;
         var topOffsetY = 6;
         if (sizeClass == 0) {
@@ -944,7 +1009,7 @@ class MarathonCoachField extends Ui.DataField {
         var capValueY = areaY + Math.floor((areaH - totalTextH) / 2) + topOffsetY;
         var currentY = capValueY + capLineH + 6;
 
-        _drawBoldText(dc, textCenterX, currentY, currentFont, currentText, Gfx.TEXT_JUSTIFY_CENTER, Gfx.COLOR_WHITE);
+        _drawBoldText(dc, textCenterX, currentY, currentNumberFont, currentText, Gfx.TEXT_JUSTIFY_CENTER, Gfx.COLOR_WHITE);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
         dc.drawText(textCenterX, capValueY, capValueFont, capValueText, Gfx.TEXT_JUSTIFY_CENTER);
     }
@@ -997,6 +1062,113 @@ class MarathonCoachField extends Ui.DataField {
         var unitY = valueY + dc.getFontHeight(valueFont) - dc.getFontHeight(unitFont) - 1;
         dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
         dc.drawText(drawX + valueW + unitGap, unitY, unitFont, unitText, Gfx.TEXT_JUSTIFY_LEFT);
+    }
+
+    function _resolveFittingNumberFont(dc as Gfx.Dc, text, preferredFont, maxWidth, fallbackFont) {
+        if (text == null or text.length() <= 0) {
+            return fallbackFont;
+        }
+
+        var font = preferredFont;
+        while (true) {
+            if (dc.getTextWidthInPixels(text, font) <= maxWidth) {
+                return font;
+            }
+            var smallerFont = _shrinkNumberFont(font);
+            if (smallerFont == font) {
+                break;
+            }
+            font = smallerFont;
+        }
+        return fallbackFont;
+    }
+
+    function _resolveFittingNumberFontForTrailingUnit(
+        dc as Gfx.Dc,
+        valueText,
+        preferredFont,
+        unitText,
+        unitFont,
+        unitGap,
+        maxWidth,
+        fallbackFont
+    ) {
+        if (valueText == null or valueText.length() <= 0) {
+            return fallbackFont;
+        }
+
+        var font = preferredFont;
+        while (true) {
+            if (_measureValueWithTrailingUnitWidth(dc, font, valueText, unitFont, unitText, unitGap) <= maxWidth) {
+                return font;
+            }
+            var smallerFont = _shrinkNumberFont(font);
+            if (smallerFont == font) {
+                break;
+            }
+            font = smallerFont;
+        }
+        return fallbackFont;
+    }
+
+    function _measureValueWithTrailingUnitWidth(dc as Gfx.Dc, valueFont, valueText, unitFont, unitText, unitGap) {
+        var totalW = dc.getTextWidthInPixels(valueText, valueFont);
+        if (unitText != null and unitText.length() > 0) {
+            totalW += unitGap + dc.getTextWidthInPixels(unitText, unitFont);
+        }
+        return totalW;
+    }
+
+    function _shrinkNumberFont(font) {
+        if (font == Gfx.FONT_NUMBER_HOT) {
+            return Gfx.FONT_NUMBER_MEDIUM;
+        }
+        if (font == Gfx.FONT_NUMBER_MEDIUM) {
+            return Gfx.FONT_NUMBER_MILD;
+        }
+        return font;
+    }
+
+    function _splitNumericValueAndSuffix(text) as Lang.Array {
+        if (text == null or text.length() <= 0 or !_containsAsciiDigit(text)) {
+            return [text, ""];
+        }
+
+        var splitIndex = text.length();
+        while (splitIndex > 0) {
+            var ch = text.substring(splitIndex - 1, splitIndex);
+            if (_isAsciiAlphabetic(ch)) {
+                splitIndex -= 1;
+                continue;
+            }
+            break;
+        }
+
+        if (splitIndex >= text.length()) {
+            return [text, ""];
+        }
+        return [text.substring(0, splitIndex), text.substring(splitIndex, text.length())];
+    }
+
+    function _containsAsciiDigit(text) as Lang.Boolean {
+        if (text == null) {
+            return false;
+        }
+
+        for (var i = 0; i < text.length(); i += 1) {
+            var ch = text.substring(i, i + 1);
+            if (ch >= "0" and ch <= "9") {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function _isAsciiAlphabetic(ch) as Lang.Boolean {
+        if (ch == null or ch.length() <= 0) {
+            return false;
+        }
+        return (ch >= "A" and ch <= "Z") or (ch >= "a" and ch <= "z");
     }
 
     function _drawGoalRunnerGauge(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
