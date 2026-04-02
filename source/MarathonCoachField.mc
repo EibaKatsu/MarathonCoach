@@ -1192,7 +1192,6 @@ class MarathonCoachField extends Ui.DataField {
         dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
         dc.drawText(drawX + valueW + unitGap, unitY, unitFont, unitText, Gfx.TEXT_JUSTIFY_LEFT);
     }
-
     function _resolveFittingNumberFont(dc as Gfx.Dc, text, preferredFont, maxWidth, fallbackFont) {
         if (text == null or text.length() <= 0) {
             return fallbackFont;
