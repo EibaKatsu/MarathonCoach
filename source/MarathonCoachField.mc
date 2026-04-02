@@ -725,7 +725,8 @@ class MarathonCoachField extends Ui.DataField {
         _drawHeartRateDashboard(dc, left + 2, top + 10, centerX - left - 6, topBandH - 14, sizeClass);
         _drawPredictionDashboard(dc, centerX + 2, top + 10, (left + squareSize) - centerX - 4, topBandH - 14, sizeClass);
 
-        _drawCenterPaceDashboard(dc, left, centerY, squareSize, centerH, sizeClass);
+        var bottomTextTopY = _resolveBottomDashboardTextTopY(dc, left, bottomY, squareSize, bottomBandH, sizeClass);
+        _drawCenterPaceDashboard(dc, left, centerY, squareSize, centerH, sizeClass, bottomTextTopY);
         _drawBottomDashboard(dc, left, bottomY, squareSize, bottomBandH, sizeClass);
     }
 
@@ -733,21 +734,25 @@ class MarathonCoachField extends Ui.DataField {
         var diffFont = Gfx.FONT_LARGE;
         var predictionFont = Gfx.FONT_MEDIUM;
         var diffNumberFont = Gfx.FONT_NUMBER_MEDIUM;
+        var deltaUnitGap = 1;
         var rowGap = 6;
         var blockOffsetY = 6;
         if (sizeClass == 0) {
             diffFont = Gfx.FONT_MEDIUM;
             predictionFont = Gfx.FONT_SMALL;
             diffNumberFont = Gfx.FONT_NUMBER_MILD;
+            deltaUnitGap = 0;
             rowGap = 4;
             blockOffsetY = 4;
         } else if (sizeClass == 1) {
             diffNumberFont = Gfx.FONT_NUMBER_MEDIUM;
+            deltaUnitGap = 1;
             blockOffsetY = 10;
         } else if (sizeClass == 2) {
             diffNumberFont = Gfx.FONT_NUMBER_HOT;
+            deltaUnitGap = 0;
             rowGap = 8;
-            blockOffsetY = 12;
+            blockOffsetY = 11;
         }
 
         var predictionText = _goalPredictionTimeText;
@@ -771,8 +776,8 @@ class MarathonCoachField extends Ui.DataField {
                 diffNumberFont,
                 deltaUnitText,
                 predictionFont,
-                2,
-                areaW - 8,
+                deltaUnitGap,
+                areaW - 2,
                 diffFont
             );
         }
@@ -797,7 +802,7 @@ class MarathonCoachField extends Ui.DataField {
                 deltaValueText,
                 predictionFont,
                 deltaUnitText,
-                2,
+                deltaUnitGap,
                 Gfx.COLOR_WHITE
             );
         } else {
@@ -805,7 +810,7 @@ class MarathonCoachField extends Ui.DataField {
         }
     }
 
-    function _drawCenterPaceDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
+    function _drawCenterPaceDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass, bottomTextTopY) {
         var paceFont = Gfx.FONT_LARGE;
         var paceNumberFont = Gfx.FONT_NUMBER_MEDIUM;
         var unitFont = Gfx.FONT_XTINY;
@@ -835,11 +840,8 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         var centerX = areaX + Math.floor(areaW / 2);
-        var totalH = dc.getFontHeight(paceFont) + gaugeGap + gaugeH - gaugeOverlap;
-        var paceY = areaY + Math.floor((areaH - totalH) / 2);
         var laneW = areaW - (contentInset * 2);
         var laneX = areaX + contentInset;
-        var laneY = paceY + dc.getFontHeight(paceFont) + gaugeGap - gaugeOverlap;
         paceNumberFont = _resolveFittingNumberFontForTrailingUnit(
             dc,
             _paceNowText,
@@ -850,9 +852,21 @@ class MarathonCoachField extends Ui.DataField {
             laneW,
             paceFont
         );
+        var paceLineH = dc.getFontHeight(paceNumberFont);
+        var totalH = paceLineH + gaugeGap + gaugeH - gaugeOverlap;
+        var paceY = areaY + Math.floor((areaH - totalH) / 2);
+        var laneY = paceY + paceLineH + gaugeGap - gaugeOverlap;
+        if (bottomTextTopY != null) {
+            var paceBottomY = paceY + paceLineH;
+            if (bottomTextTopY > paceBottomY) {
+                var targetTrackY = paceBottomY + Math.floor((bottomTextTopY - paceBottomY) / 2);
+                laneY = targetTrackY - gaugeH + 4;
+            }
+        }
+        laneY = _clamp(laneY, areaY, areaY + areaH - gaugeH);
         _drawGoalRunnerGauge(dc, laneX, laneY, laneW, gaugeH, sizeClass);
 
-        _drawValueWithTrailingUnitCentered(
+        _drawValueWithTrailingUnitCenteredAligned(
             dc,
             centerX,
             paceY,
@@ -861,7 +875,8 @@ class MarathonCoachField extends Ui.DataField {
             unitFont,
             "/km",
             3,
-            Gfx.COLOR_WHITE
+            Gfx.COLOR_WHITE,
+            64
         );
     }
 
@@ -924,6 +939,53 @@ class MarathonCoachField extends Ui.DataField {
             Gfx.COLOR_WHITE
         );
         _drawBoldText(dc, rightCenterX, timeY, timeFont, _elapsedTimeText, Gfx.TEXT_JUSTIFY_CENTER, Gfx.COLOR_WHITE);
+    }
+
+    function _resolveBottomDashboardTextTopY(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
+        var distanceFont = Gfx.FONT_MEDIUM;
+        var distanceUnitFont = Gfx.FONT_TINY;
+        var timeFont = Gfx.FONT_MEDIUM;
+        if (sizeClass == 0) {
+            distanceFont = Gfx.FONT_MEDIUM;
+            distanceUnitFont = Gfx.FONT_XTINY;
+            timeFont = Gfx.FONT_MEDIUM;
+        } else if (sizeClass == 1) {
+            distanceUnitFont = Gfx.FONT_TINY;
+        } else if (sizeClass == 2) {
+            distanceFont = Gfx.FONT_LARGE;
+            timeFont = Gfx.FONT_LARGE;
+        }
+
+        var distanceParts = _splitMetricValueAndUnit(_distanceText);
+        var distanceValue = distanceParts[0];
+        var distanceUnit = distanceParts[1];
+        var halfW = Math.floor(areaW / 2);
+        var perSideMaxW = Math.floor(halfW * 0.8);
+
+        if (dc.getTextWidthInPixels(_elapsedTimeText, timeFont) > perSideMaxW and timeFont == Gfx.FONT_LARGE) {
+            timeFont = Gfx.FONT_MEDIUM;
+        }
+
+        var distanceTotalW = dc.getTextWidthInPixels(distanceValue, distanceFont);
+        if (distanceUnit.length() > 0) {
+            distanceTotalW += 2 + dc.getTextWidthInPixels(distanceUnit, distanceUnitFont);
+        }
+        if (distanceTotalW > perSideMaxW) {
+            if (distanceFont == Gfx.FONT_LARGE) {
+                distanceFont = Gfx.FONT_MEDIUM;
+            } else {
+                distanceFont = Gfx.FONT_SMALL;
+            }
+            distanceUnitFont = Gfx.FONT_XTINY;
+        }
+
+        if (dc.getTextWidthInPixels(_elapsedTimeText, timeFont) > perSideMaxW and timeFont == Gfx.FONT_MEDIUM) {
+            timeFont = Gfx.FONT_SMALL;
+        }
+
+        var distanceY = areaY + Math.floor((areaH - dc.getFontHeight(distanceFont)) / 2) - 4;
+        var timeY = areaY + Math.floor((areaH - dc.getFontHeight(timeFont)) / 2) - 4;
+        return _min(distanceY, timeY);
     }
 
     function _drawHeartRateDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
@@ -1004,7 +1066,7 @@ class MarathonCoachField extends Ui.DataField {
         } else if (sizeClass == 1) {
             topOffsetY = 10;
         } else if (sizeClass == 2) {
-            topOffsetY = 12;
+            topOffsetY = 11;
         }
         var capValueY = areaY + Math.floor((areaH - totalTextH) / 2) + topOffsetY;
         var currentY = capValueY + capLineH + 6;
@@ -1037,6 +1099,32 @@ class MarathonCoachField extends Ui.DataField {
         unitGap,
         textColor
     ) {
+        _drawValueWithTrailingUnitCenteredWithUnitYOffset(
+            dc,
+            centerX,
+            valueY,
+            valueFont,
+            valueText,
+            unitFont,
+            unitText,
+            unitGap,
+            textColor,
+            0
+        );
+    }
+
+    function _drawValueWithTrailingUnitCenteredAligned(
+        dc as Gfx.Dc,
+        centerX,
+        valueY,
+        valueFont,
+        valueText,
+        unitFont,
+        unitText,
+        unitGap,
+        textColor,
+        unitTopRatioPct
+    ) {
         if (valueText == null) {
             valueText = "";
         }
@@ -1059,11 +1147,51 @@ class MarathonCoachField extends Ui.DataField {
             return;
         }
 
-        var unitY = valueY + dc.getFontHeight(valueFont) - dc.getFontHeight(unitFont) - 1;
+        var valueFontH = dc.getFontHeight(valueFont);
+        var unitFontH = dc.getFontHeight(unitFont);
+        var unitY = valueY + Math.floor((valueFontH * unitTopRatioPct) / 100) - Math.floor(unitFontH / 2);
         dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
         dc.drawText(drawX + valueW + unitGap, unitY, unitFont, unitText, Gfx.TEXT_JUSTIFY_LEFT);
     }
 
+    function _drawValueWithTrailingUnitCenteredWithUnitYOffset(
+        dc as Gfx.Dc,
+        centerX,
+        valueY,
+        valueFont,
+        valueText,
+        unitFont,
+        unitText,
+        unitGap,
+        textColor,
+        unitYOffset
+    ) {
+        if (valueText == null) {
+            valueText = "";
+        }
+        if (unitText == null) {
+            unitText = "";
+        }
+
+        var valueW = dc.getTextWidthInPixels(valueText, valueFont);
+        var unitW = 0;
+        if (unitText.length() > 0) {
+            unitW = dc.getTextWidthInPixels(unitText, unitFont);
+        } else {
+            unitGap = 0;
+        }
+        var totalW = valueW + unitGap + unitW;
+        var drawX = centerX - Math.floor(totalW / 2);
+
+        _drawBoldText(dc, drawX, valueY, valueFont, valueText, Gfx.TEXT_JUSTIFY_LEFT, textColor);
+        if (unitText.length() <= 0) {
+            return;
+        }
+
+        var unitY = valueY + dc.getFontHeight(valueFont) - dc.getFontHeight(unitFont) - 1 + unitYOffset;
+        dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(drawX + valueW + unitGap, unitY, unitFont, unitText, Gfx.TEXT_JUSTIFY_LEFT);
+    }
     function _resolveFittingNumberFont(dc as Gfx.Dc, text, preferredFont, maxWidth, fallbackFont) {
         if (text == null or text.length() <= 0) {
             return fallbackFont;
@@ -1156,8 +1284,8 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         for (var i = 0; i < text.length(); i += 1) {
-            var ch = text.substring(i, i + 1);
-            if (ch >= "0" and ch <= "9") {
+            var ch = text.substring(i, i + 1).toString();
+            if ("0123456789".find(ch) != null) {
                 return true;
             }
         }
@@ -1168,7 +1296,8 @@ class MarathonCoachField extends Ui.DataField {
         if (ch == null or ch.length() <= 0) {
             return false;
         }
-        return (ch >= "A" and ch <= "Z") or (ch >= "a" and ch <= "z");
+        var raw = ch.toString();
+        return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".find(raw) != null;
     }
 
     function _drawGoalRunnerGauge(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
