@@ -24,10 +24,10 @@ class MarathonCoachField extends Ui.DataField {
     const FUEL_TOGGLE_LEAD_SEC = 2 * 60;
     const FUEL_METER_WARNING_LEAD_SEC = 0;
     const FUEL_METER_LABEL_TOGGLE_SEC = 2;
-    const LAP_DIAG_LOG = false;
+    const LAP_DIAG_LOG = true;
     const FINISH_DIAG_LOG = true;
     const FINISH_DIAG_MARGIN_KM = 1.0;
-    const FUEL_PLAN_DIAG_LOG = false;
+    const FUEL_PLAN_DIAG_LOG = true;
     const HR_OVER_TRIGGER_MARGIN_BPM = 1;
     const MIN_DISTANCE_FOR_PREDICTION_KM = 0.05;
     const PREDICTION_ON_PACE_THRESHOLD_SEC = 60;
@@ -64,13 +64,15 @@ class MarathonCoachField extends Ui.DataField {
     const HALF_DISTANCE_TOLERANCE_KM = 0.25;
     const TEN_DISTANCE_KM = 10.0;
     const FIVE_DISTANCE_KM = 5.0;
-    const SETTINGS_LOG = false;
-    const FIT_FACT_LOG = false;
-    const DIST_PROBE_LOG = false;
-    const SMALL_TOP_ROW_DIAG_LOG = false;
-    const MEDIUM_HR_LAYOUT_DIAG_LOG = false;
-    const LARGE_TOP_ROW_DIAG_LOG = false;
-    const CRASH_DIAG_LOG = false;
+    const SETTINGS_LOG = true;
+    const FIT_FACT_LOG = true;
+    const DIST_PROBE_LOG = true;
+    const TOP_ROW_DIAG_LOG = true;
+    const SMALL_TOP_ROW_DIAG_LOG = true;
+    const MEDIUM_HR_LAYOUT_DIAG_LOG = true;
+    const LARGE_TOP_ROW_DIAG_LOG = true;
+    const CRASH_DIAG_LOG = true;
+    const MEDIUM_DRAW_BLOCK_DIAG_LOG = true;
     const FUEL_METER_STATE_NORMAL = FuelMeterUtils.STATE_NORMAL;
     const FUEL_METER_STATE_CAUTION = FuelMeterUtils.STATE_CAUTION;
     const FUEL_METER_STATE_WARNING = FuelMeterUtils.STATE_WARNING;
@@ -209,6 +211,8 @@ class MarathonCoachField extends Ui.DataField {
     var _lastFactLogLine = null;
     var _lastSettingsLogLine = null;
     var _lastMediumHrLayoutDiagLine = null;
+    var _lastHeartRateTopRowDiagLine = null;
+    var _lastPredictionTopRowDiagLine = null;
     var _lastLargeTopRowDiagLine = null;
     var _largeTopRowDiagPrinted = false;
     var _pendingLargeTopHrDiagLine = null;
@@ -220,6 +224,8 @@ class MarathonCoachField extends Ui.DataField {
     var _probeSpeedLastElapsedSec = null;
     var _lastDistanceProbeLogLine = null;
     var _lastFinishDiagLine = null;
+    var _lastMediumDrawBlockDiagLine = null;
+    var _drawStage = "idle";
     var _slopeState = "FL";
     var _slopeAnchorAltitude = null;
     var _slopeAnchorDistanceM = null;
@@ -454,6 +460,7 @@ class MarathonCoachField extends Ui.DataField {
 
     function onUpdate(dc as Gfx.Dc) {
         try {
+            _drawStage = "onUpdate:start";
             if (LARGE_TOP_ROW_DIAG_LOG and !_largeTopRowDiagPrinted) {
                 if (_pendingLargeTopHrDiagLine != null) {
                     Sys.println(_pendingLargeTopHrDiagLine);
@@ -467,7 +474,9 @@ class MarathonCoachField extends Ui.DataField {
             }
             dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
             dc.clear();
+            _drawStage = "onUpdate:step3";
             _drawStep3Layout(dc);
+            _drawStage = "onUpdate:done";
         } catch (e) {
             _logCrashDiag("onUpdate", e);
             throw e;
@@ -721,42 +730,67 @@ class MarathonCoachField extends Ui.DataField {
         var centerY = top + topBandH;
         var bottomY = top + squareSize - bottomBandH;
         var centerH = bottomY - centerY;
-
+        _drawStage = "layout:heart_rate";
+        _logMediumDrawBlockDiag(sizeClass, "heart_rate:start");
         _drawHeartRateDashboard(dc, left + 2, top + 10, centerX - left - 6, topBandH - 14, sizeClass);
+        _logMediumDrawBlockDiag(sizeClass, "heart_rate:done");
+        _drawStage = "layout:prediction";
+        _logMediumDrawBlockDiag(sizeClass, "prediction:start");
         _drawPredictionDashboard(dc, centerX + 2, top + 10, (left + squareSize) - centerX - 4, topBandH - 14, sizeClass);
+        _logMediumDrawBlockDiag(sizeClass, "prediction:done");
 
+        _drawStage = "layout:bottom_top_y";
+        _logMediumDrawBlockDiag(sizeClass, "bottom_top_y:start");
         var bottomTextTopY = _resolveBottomDashboardTextTopY(dc, left, bottomY, squareSize, bottomBandH, sizeClass);
+        _logMediumDrawBlockDiag(sizeClass, "bottom_top_y:done");
+        _drawStage = "layout:center_pace";
+        _logMediumDrawBlockDiag(sizeClass, "center_pace:start");
         _drawCenterPaceDashboard(dc, left, centerY, squareSize, centerH, sizeClass, bottomTextTopY);
+        _logMediumDrawBlockDiag(sizeClass, "center_pace:done");
+        _drawStage = "layout:bottom";
+        _logMediumDrawBlockDiag(sizeClass, "bottom:start");
         _drawBottomDashboard(dc, left, bottomY, squareSize, bottomBandH, sizeClass);
+        _logMediumDrawBlockDiag(sizeClass, "bottom:done");
+        _drawStage = "layout:done";
     }
 
     function _drawPredictionDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
         var diffFont = Gfx.FONT_LARGE;
         var predictionFont = Gfx.FONT_MEDIUM;
-        var diffNumberFont = Gfx.FONT_NUMBER_MEDIUM;
+        var diffNumberFont = _resolveSharedTopRowNumberFont(sizeClass);
+        var deltaAffixFont = predictionFont;
         var deltaUnitGap = 1;
         var rowGap = 6;
         var blockOffsetY = 6;
         if (sizeClass == 0) {
             diffFont = Gfx.FONT_MEDIUM;
             predictionFont = Gfx.FONT_SMALL;
-            diffNumberFont = Gfx.FONT_NUMBER_MILD;
+            diffNumberFont = _resolveSharedTopRowNumberFont(sizeClass);
+            deltaAffixFont = predictionFont;
             deltaUnitGap = 0;
             rowGap = 4;
             blockOffsetY = 4;
         } else if (sizeClass == 1) {
-            diffNumberFont = Gfx.FONT_NUMBER_MEDIUM;
-            deltaUnitGap = 1;
+            diffNumberFont = _resolveSharedTopRowNumberFont(sizeClass);
+            deltaAffixFont = predictionFont;
+            deltaUnitGap = 0;
             blockOffsetY = 10;
         } else if (sizeClass == 2) {
-            diffNumberFont = Gfx.FONT_NUMBER_HOT;
+            diffNumberFont = _resolveSharedTopRowNumberFont(sizeClass);
+            deltaAffixFont = predictionFont;
             deltaUnitGap = 0;
             rowGap = 8;
             blockOffsetY = 11;
         }
 
         var predictionText = _goalPredictionTimeText;
+        if (predictionText == null or predictionText.length() <= 0) {
+            predictionText = "--:--";
+        }
         var deltaText = _goalDiffSecondsText;
+        if (deltaText == null or deltaText.length() <= 0) {
+            deltaText = "--m";
+        }
         if (dc.getTextWidthInPixels(deltaText, diffFont) > (areaW - 8) and diffFont == Gfx.FONT_LARGE) {
             diffFont = Gfx.FONT_MEDIUM;
         }
@@ -768,39 +802,43 @@ class MarathonCoachField extends Ui.DataField {
         var deltaParts = _splitNumericValueAndSuffix(deltaText);
         var deltaValueText = deltaParts[0];
         var deltaUnitText = deltaParts[1];
-        var drawDeltaWithNumberFont = deltaValueText.length() > 0 and _containsAsciiDigit(deltaValueText);
-        if (drawDeltaWithNumberFont) {
-            diffNumberFont = _resolveFittingNumberFontForTrailingUnit(
-                dc,
-                deltaValueText,
-                diffNumberFont,
-                deltaUnitText,
-                predictionFont,
-                deltaUnitGap,
-                areaW - 2,
-                diffFont
-            );
+        if (deltaValueText == null) {
+            deltaValueText = "";
         }
-
+        if (deltaUnitText == null) {
+            deltaUnitText = "";
+        }
+        var deltaSignParts = _splitLeadingSign(deltaValueText);
+        var deltaSignText = deltaSignParts[0];
+        var deltaDigitsText = deltaSignParts[1];
+        var drawDeltaWithNumberFont = _containsAsciiDigit(deltaDigitsText);
+        var predictionLineH = dc.getFontHeight(predictionFont);
         var deltaLineH = dc.getFontHeight(diffFont);
         if (drawDeltaWithNumberFont) {
             deltaLineH = dc.getFontHeight(diffNumberFont);
         }
-
-        var totalH = dc.getFontHeight(predictionFont) + rowGap + deltaLineH;
-        var predictionY = areaY + Math.floor((areaH - totalH) / 2) + blockOffsetY;
-        var deltaY = predictionY + dc.getFontHeight(predictionFont) + rowGap;
-
+        var sharedTopLineH = dc.getFontHeight(sizeClass == 0 ? Gfx.FONT_SMALL : Gfx.FONT_MEDIUM);
+        var sharedBottomLineH = dc.getFontHeight(sizeClass == 0 ? Gfx.FONT_MEDIUM : Gfx.FONT_LARGE);
+        var numberBottomLineH = dc.getFontHeight(_resolveSharedTopRowNumberFont(sizeClass));
+        if (numberBottomLineH > sharedBottomLineH) {
+            sharedBottomLineH = numberBottomLineH;
+        }
+        var totalH = sharedTopLineH + rowGap + sharedBottomLineH;
+        var anchorY = areaY + Math.floor((areaH - totalH) / 2) + blockOffsetY;
+        var predictionY = anchorY + Math.floor((sharedTopLineH - predictionLineH) / 2);
+        var deltaY = anchorY + sharedTopLineH + rowGap + Math.floor((sharedBottomLineH - deltaLineH) / 2);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
         dc.drawText(centerX, predictionY, predictionFont, predictionText, Gfx.TEXT_JUSTIFY_CENTER);
         if (drawDeltaWithNumberFont) {
-            _drawValueWithTrailingUnitCentered(
+            _drawPrefixedValueWithTrailingUnitCentered(
                 dc,
                 centerX,
                 deltaY,
+                deltaAffixFont,
+                deltaSignText,
                 diffNumberFont,
-                deltaValueText,
-                predictionFont,
+                deltaDigitsText,
+                deltaAffixFont,
                 deltaUnitText,
                 deltaUnitGap,
                 Gfx.COLOR_WHITE
@@ -808,6 +846,25 @@ class MarathonCoachField extends Ui.DataField {
         } else {
             _drawBoldText(dc, centerX, deltaY, diffFont, deltaText, Gfx.TEXT_JUSTIFY_CENTER, Gfx.COLOR_WHITE);
         }
+        _logTopRowLayoutDiag(
+            "prediction",
+            sizeClass,
+            areaX,
+            areaY,
+            areaW,
+            areaH,
+            anchorY,
+            sharedTopLineH,
+            sharedBottomLineH,
+            rowGap,
+            blockOffsetY,
+            predictionLineH,
+            deltaLineH,
+            predictionY,
+            deltaY,
+            predictionText,
+            deltaText
+        );
     }
 
     function _drawCenterPaceDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass, bottomTextTopY) {
@@ -1059,21 +1116,48 @@ class MarathonCoachField extends Ui.DataField {
         }
         var capLineH = dc.getFontHeight(capValueFont);
         var currentLineH = dc.getFontHeight(currentNumberFont);
-        var totalTextH = capLineH + 6 + currentLineH;
-        var topOffsetY = 6;
+        var rowGap = 6;
+        var blockOffsetY = 6;
         if (sizeClass == 0) {
-            topOffsetY = 4;
+            blockOffsetY = 4;
         } else if (sizeClass == 1) {
-            topOffsetY = 10;
+            blockOffsetY = 10;
         } else if (sizeClass == 2) {
-            topOffsetY = 11;
+            blockOffsetY = 11;
         }
-        var capValueY = areaY + Math.floor((areaH - totalTextH) / 2) + topOffsetY;
-        var currentY = capValueY + capLineH + 6;
+        var sharedTopLineH = dc.getFontHeight(sizeClass == 0 ? Gfx.FONT_SMALL : Gfx.FONT_MEDIUM);
+        var sharedBottomLineH = dc.getFontHeight(sizeClass == 0 ? Gfx.FONT_MEDIUM : Gfx.FONT_LARGE);
+        var numberBottomLineH = dc.getFontHeight(_resolveSharedTopRowNumberFont(sizeClass));
+        if (numberBottomLineH > sharedBottomLineH) {
+            sharedBottomLineH = numberBottomLineH;
+        }
+        var totalTextH = sharedTopLineH + rowGap + sharedBottomLineH;
+        var anchorY = areaY + Math.floor((areaH - totalTextH) / 2) + blockOffsetY;
+        var capValueY = anchorY + Math.floor((sharedTopLineH - capLineH) / 2);
+        var currentY = anchorY + sharedTopLineH + rowGap + Math.floor((sharedBottomLineH - currentLineH) / 2);
 
         _drawBoldText(dc, textCenterX, currentY, currentNumberFont, currentText, Gfx.TEXT_JUSTIFY_CENTER, Gfx.COLOR_WHITE);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
         dc.drawText(textCenterX, capValueY, capValueFont, capValueText, Gfx.TEXT_JUSTIFY_CENTER);
+        _logTopRowLayoutDiag(
+            "heart_rate",
+            sizeClass,
+            areaX,
+            areaY,
+            areaW,
+            areaH,
+            anchorY,
+            sharedTopLineH,
+            sharedBottomLineH,
+            rowGap,
+            blockOffsetY,
+            capLineH,
+            currentLineH,
+            capValueY,
+            currentY,
+            capValueText,
+            currentText
+        );
     }
 
     function _drawBoldText(dc as Gfx.Dc, drawX, drawY, font, text, justify, textColor) {
@@ -1152,6 +1236,56 @@ class MarathonCoachField extends Ui.DataField {
         var unitY = valueY + Math.floor((valueFontH * unitTopRatioPct) / 100) - Math.floor(unitFontH / 2);
         dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
         dc.drawText(drawX + valueW + unitGap, unitY, unitFont, unitText, Gfx.TEXT_JUSTIFY_LEFT);
+    }
+
+    function _drawPrefixedValueWithTrailingUnitCentered(
+        dc as Gfx.Dc,
+        centerX,
+        valueY,
+        prefixFont,
+        prefixText,
+        valueFont,
+        valueText,
+        unitFont,
+        unitText,
+        unitGap,
+        textColor
+    ) {
+        if (prefixText == null) {
+            prefixText = "";
+        }
+        if (valueText == null) {
+            valueText = "";
+        }
+        if (unitText == null) {
+            unitText = "";
+        }
+
+        var prefixW = 0;
+        if (prefixText.length() > 0) {
+            prefixW = dc.getTextWidthInPixels(prefixText, prefixFont);
+        }
+        var valueW = dc.getTextWidthInPixels(valueText, valueFont);
+        var unitW = 0;
+        if (unitText.length() > 0) {
+            unitW = dc.getTextWidthInPixels(unitText, unitFont);
+        } else {
+            unitGap = 0;
+        }
+
+        var totalW = prefixW + valueW + unitGap + unitW;
+        var drawX = centerX - Math.floor(totalW / 2);
+        if (prefixText.length() > 0) {
+            _drawBoldText(dc, drawX, valueY, prefixFont, prefixText, Gfx.TEXT_JUSTIFY_LEFT, textColor);
+        }
+        _drawBoldText(dc, drawX + prefixW, valueY, valueFont, valueText, Gfx.TEXT_JUSTIFY_LEFT, textColor);
+        if (unitText.length() <= 0) {
+            return;
+        }
+
+        var unitY = valueY + dc.getFontHeight(valueFont) - dc.getFontHeight(unitFont) - 1;
+        dc.setColor(textColor, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(drawX + prefixW + valueW + unitGap, unitY, unitFont, unitText, Gfx.TEXT_JUSTIFY_LEFT);
     }
 
     function _drawValueWithTrailingUnitCenteredWithUnitYOffset(
@@ -1247,6 +1381,23 @@ class MarathonCoachField extends Ui.DataField {
         return totalW;
     }
 
+    function _measurePrefixedValueWithTrailingUnitWidth(
+        dc as Gfx.Dc,
+        prefixFont,
+        prefixText,
+        valueFont,
+        valueText,
+        unitFont,
+        unitText,
+        unitGap
+    ) {
+        var totalW = _measureValueWithTrailingUnitWidth(dc, valueFont, valueText, unitFont, unitText, unitGap);
+        if (prefixText != null and prefixText.length() > 0) {
+            totalW += dc.getTextWidthInPixels(prefixText, prefixFont);
+        }
+        return totalW;
+    }
+
     function _shrinkNumberFont(font) {
         if (font == Gfx.FONT_NUMBER_HOT) {
             return Gfx.FONT_NUMBER_MEDIUM;
@@ -1255,6 +1406,16 @@ class MarathonCoachField extends Ui.DataField {
             return Gfx.FONT_NUMBER_MILD;
         }
         return font;
+    }
+
+    function _resolveSharedTopRowNumberFont(sizeClass) {
+        if (sizeClass == 0) {
+            return Gfx.FONT_NUMBER_MILD;
+        }
+        if (sizeClass == 1) {
+            return Gfx.FONT_NUMBER_MEDIUM;
+        }
+        return Gfx.FONT_NUMBER_HOT;
     }
 
     function _splitNumericValueAndSuffix(text) as Lang.Array {
@@ -1276,6 +1437,32 @@ class MarathonCoachField extends Ui.DataField {
             return [text, ""];
         }
         return [text.substring(0, splitIndex), text.substring(splitIndex, text.length())];
+    }
+
+    function _splitLeadingSign(text) as Lang.Array {
+        if (text == null or text.length() <= 0) {
+            return ["", ""];
+        }
+
+        var firstChar = text.substring(0, 1);
+        if (firstChar == "+" or firstChar == "-") {
+            return [firstChar, text.substring(1, text.length())];
+        }
+        return ["", text];
+    }
+
+    function _isNumberFontValueText(text) as Lang.Boolean {
+        if (text == null or text.length() <= 0 or !_containsAsciiDigit(text)) {
+            return false;
+        }
+
+        for (var i = 0; i < text.length(); i += 1) {
+            var ch = text.substring(i, i + 1).toString();
+            if ("0123456789:.".find(ch) == null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     function _containsAsciiDigit(text) as Lang.Boolean {
@@ -2376,6 +2563,42 @@ class MarathonCoachField extends Ui.DataField {
         Sys.println(line);
     }
 
+    function _logTopRowLayoutDiag(side, sizeClass, areaX, areaY, areaW, areaH, anchorY, topLineH, bottomLineH, rowGap, blockOffsetY, firstLineH, secondLineH, firstY, secondY, firstText, secondText) {
+        if (!TOP_ROW_DIAG_LOG) {
+            return;
+        }
+
+        var line =
+            "[TOP_ROW_DIAG]" +
+            " side=" + _factValue(side) +
+            " sizeClass=" + _factValue(sizeClass) +
+            " area=" + _factValue(areaX) + "," + _factValue(areaY) + "," + _factValue(areaW) + "," + _factValue(areaH) +
+            " anchorY=" + _factValue(anchorY) +
+            " topLineH=" + _factValue(topLineH) +
+            " bottomLineH=" + _factValue(bottomLineH) +
+            " rowGap=" + _factValue(rowGap) +
+            " blockOffsetY=" + _factValue(blockOffsetY) +
+            " firstLineH=" + _factValue(firstLineH) +
+            " secondLineH=" + _factValue(secondLineH) +
+            " firstY=" + _factValue(firstY) +
+            " secondY=" + _factValue(secondY) +
+            " firstText=" + _factValue(firstText) +
+            " secondText=" + _factValue(secondText);
+        var lastLine = _lastPredictionTopRowDiagLine;
+        if (side == "heart_rate") {
+            lastLine = _lastHeartRateTopRowDiagLine;
+        }
+        if (_isSameText(lastLine, line)) {
+            return;
+        }
+        if (side == "heart_rate") {
+            _lastHeartRateTopRowDiagLine = line;
+        } else {
+            _lastPredictionTopRowDiagLine = line;
+        }
+        Sys.println(line);
+    }
+
     function _logDistanceProbe(info) {
         if (!DIST_PROBE_LOG) {
             return;
@@ -2448,6 +2671,22 @@ class MarathonCoachField extends Ui.DataField {
         Sys.println(line);
     }
 
+    function _logMediumDrawBlockDiag(sizeClass, stage) {
+        if (!MEDIUM_DRAW_BLOCK_DIAG_LOG) {
+            return;
+        }
+        if (sizeClass != 1) {
+            return;
+        }
+
+        var line = "[MEDIUM_DRAW_BLOCK] stage=" + _factValue(stage) + " drawStage=" + _factValue(_drawStage);
+        if (_isSameText(_lastMediumDrawBlockDiagLine, line)) {
+            return;
+        }
+        _lastMediumDrawBlockDiagLine = line;
+        Sys.println(line);
+    }
+
     function _factValue(value) {
         if (value == null) {
             return "null";
@@ -2511,6 +2750,7 @@ class MarathonCoachField extends Ui.DataField {
         var line =
             "[CRASH_DIAG]" +
             " stage=" + _factValue(stage) +
+            " drawStage=" + _factValue(_drawStage) +
             " error=" + _factValue(errorValue) +
             " elapsed=" + _factValue(_lastElapsedSec) +
             " slope=" + _factValue(_slopeState) +
