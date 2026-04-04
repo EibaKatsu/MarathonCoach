@@ -15,7 +15,6 @@ MessageInGarmin の `Z1..Z5` は使わず、出力だけを `PUSH / HOLD / EASE`
   - レース距離から求めるフェーズ情報
 
 ## 発火前提（1つでも欠けると発火しない）
-- FUEL期限超過でない
 - HR超過状態でない
 - `paceNowSecPerKm` / `targetPaceSecPerKm` / `allowedMaxHeartRate` / `currentHeartRate` が有効
 
@@ -36,8 +35,8 @@ MessageInGarmin の `Z1..Z5` は使わず、出力だけを `PUSH / HOLD / EASE`
 - `paceDelta <= -8秒/km`
 - または `headroom <= 閾値`
 
-## カード連携
+## 表示連携
 - `ちょい上げ` は `PUSH`
 - `そのまま` は `HOLD`
 - `ちょい落とし` は `EASE`
-- さらに坂判定 `UP / FL / DN` を組み合わせて `stateKey` を作る
+- さらに坂判定 `UP / FL / DN` を組み合わせて内部状態を作る
