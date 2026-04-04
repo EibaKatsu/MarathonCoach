@@ -1,22 +1,13 @@
 module BeepUtils {
     const EVENT_NONE = 0;
-    const EVENT_FUEL_SOON = 1;
-    const EVENT_HR_OVER = 2;
-    const EVENT_FUEL_NOW = 3;
+    const EVENT_HR_OVER = 1;
 
     const LEVEL_INFO = 1;
     const LEVEL_CAUTION = 2;
-    const LEVEL_URGENT = 3;
 
     function resolveEventPriority(beepEvent) {
-        if (beepEvent == EVENT_FUEL_NOW) {
-            return 600;
-        }
         if (beepEvent == EVENT_HR_OVER) {
             return 500;
-        }
-        if (beepEvent == EVENT_FUEL_SOON) {
-            return 350;
         }
         return 0;
     }
@@ -29,11 +20,8 @@ module BeepUtils {
     }
 
     function resolveBeepLevel(beepEvent) {
-        if (beepEvent == EVENT_FUEL_SOON or beepEvent == EVENT_HR_OVER) {
+        if (beepEvent == EVENT_HR_OVER) {
             return LEVEL_CAUTION;
-        }
-        if (beepEvent == EVENT_FUEL_NOW) {
-            return LEVEL_URGENT;
         }
         return 0;
     }

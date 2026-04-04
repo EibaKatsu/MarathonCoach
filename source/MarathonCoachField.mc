@@ -9,7 +9,6 @@ using Toybox.WatchUi as Ui;
 using BeepUtils;
 using CoachUtils;
 using CustomModeUtils;
-using FuelMeterUtils;
 using RaceStrategyUtils;
 using RenderUtils;
 using SettingsLoader;
@@ -19,15 +18,9 @@ class MarathonCoachField extends Ui.DataField {
     const KEY_TARGET_TIME_HOUR = "target_time_hour";
     const KEY_TARGET_TIME_MINUTE = "target_time_minute";
     const KEY_CUSTOM_MODE_CODE = "custom_mode_code";
-    const FUEL_INTERVAL_SEC = 35 * 60;
-    const LAP_DEBOUNCE_SEC = 20;
-    const FUEL_TOGGLE_LEAD_SEC = 2 * 60;
-    const FUEL_METER_WARNING_LEAD_SEC = 0;
-    const FUEL_METER_LABEL_TOGGLE_SEC = 2;
     const LAP_DIAG_LOG = true;
     const FINISH_DIAG_LOG = true;
     const FINISH_DIAG_MARGIN_KM = 1.0;
-    const FUEL_PLAN_DIAG_LOG = true;
     const HR_OVER_TRIGGER_MARGIN_BPM = 1;
     const MIN_DISTANCE_FOR_PREDICTION_KM = 0.05;
     const PREDICTION_ON_PACE_THRESHOLD_SEC = 60;
@@ -73,17 +66,7 @@ class MarathonCoachField extends Ui.DataField {
     const LARGE_TOP_ROW_DIAG_LOG = true;
     const CRASH_DIAG_LOG = true;
     const MEDIUM_DRAW_BLOCK_DIAG_LOG = true;
-    const FUEL_METER_STATE_NORMAL = FuelMeterUtils.STATE_NORMAL;
-    const FUEL_METER_STATE_CAUTION = FuelMeterUtils.STATE_CAUTION;
-    const FUEL_METER_STATE_WARNING = FuelMeterUtils.STATE_WARNING;
-    const FUEL_DISPLAY_COUNTDOWN = FuelMeterUtils.DISPLAY_COUNTDOWN;
-    const FUEL_DISPLAY_DUE = FuelMeterUtils.DISPLAY_DUE;
-    const FUEL_DISPLAY_DONE_FLASH = FuelMeterUtils.DISPLAY_DONE_FLASH;
-    const FUEL_DISPLAY_NO_PLAN = FuelMeterUtils.DISPLAY_NO_PLAN;
-    const FUEL_DISPLAY_DISABLED = FuelMeterUtils.DISPLAY_DISABLED;
     const BEEP_HR_SUPPRESS_SEC = 75;
-    const BEEP_FUEL_NOW_REPEAT_FIRST_SEC = 30;
-    const BEEP_FUEL_NOW_REPEAT_INTERVAL_SEC = 60;
     const HR_ARC_START_DEG = 180;
     const HR_ARC_CAP_DEG = 255;
     const HR_ARC_MAX_DEG = 270;
@@ -108,8 +91,6 @@ class MarathonCoachField extends Ui.DataField {
     const DEFAULT_RACE_DISTANCE_KM = 42.195;
     const CUSTOM_MODE_CORE = CustomModeUtils.MODE_CORE;
     const CUSTOM_MODE_CUSTOM = CustomModeUtils.MODE_CUSTOM;
-    const CUSTOM_FUEL_MODE_OFF = CustomModeUtils.FUEL_MODE_OFF;
-    const CUSTOM_FUEL_MODE_TIME = CustomModeUtils.FUEL_MODE_TIME;
     const HR_GAUGE_ZONE_COUNT = 5;
     const HR_ZONE_COLOR_1 = 0x9E9E9E; // gray
     const HR_ZONE_COLOR_2 = 0x52B7E8; // light blue
@@ -137,13 +118,8 @@ class MarathonCoachField extends Ui.DataField {
     var _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
     var _customMode = CUSTOM_MODE_CORE;
     var _customCodeValid = false;
-    var _customFuelMode = CUSTOM_FUEL_MODE_TIME;
-    var _customFirstFuelAfterMin = CustomModeUtils.DEFAULT_FIRST_FUEL_AFTER_MIN;
-    var _customFuelIntervalMin = CustomModeUtils.DEFAULT_FUEL_INTERVAL_MIN;
-    var _customFuelAlertLeadMin = CustomModeUtils.DEFAULT_FUEL_ALERT_LEAD_MIN;
     var _customPhaseAggressiveness = CustomModeUtils.DEFAULT_PHASE_AGGRESSIVENESS;
     var _customHrCapBiasBpm = CustomModeUtils.DEFAULT_HR_CAP_BIAS_BPM;
-    var _fuelPlanSignature = null;
     var _targetTimeHms = null;
     var _targetTimeSec = null;
     var _targetPaceSecPerKm = null;
@@ -155,14 +131,8 @@ class MarathonCoachField extends Ui.DataField {
     var _lastPaceSampleElapsedSec = null;
     var _paceFallbackLastElapsedSec = null;
     var _paceFallbackLastDistanceKm = null;
-    var _lastFuelTimeSec = null;
-    var _fuelDueTimeSec = null;
-    var _fuelRemainingSec = null;
-    var _fuelRemainingText = "--:--";
-    var _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
     var _timerRunning = false;
     var _lastElapsedSec = null;
-    var _lastLapResetSec = null;
     var _currentHeartRate = null;
     var _activeHeartRateZones as Lang.Array<Lang.Number> = [];
     var _currentHeartRateZone = null;
@@ -226,14 +196,12 @@ class MarathonCoachField extends Ui.DataField {
     var _lastFinishDiagLine = null;
     var _lastMediumDrawBlockDiagLine = null;
     var _drawStage = "idle";
+    var _lastResolvedHeartRateTopRowNumberFont = null;
     var _slopeState = "FL";
     var _slopeAnchorAltitude = null;
     var _slopeAnchorDistanceM = null;
     var _beepStateInitialized = false;
-    var _beepPrevFuelMeterState = FUEL_METER_STATE_NORMAL;
     var _beepPrevHrOver = false;
-    var _beepFuelNowActive = false;
-    var _beepFuelNowNextRepeatSec = null;
     var _beepLastHrAlertSec = null;
     var _beepLastElapsedSec = null;
 
@@ -270,7 +238,6 @@ class MarathonCoachField extends Ui.DataField {
             _updateHrOverState(info);
             _updatePaceWindow(info);
             _updateSummaryMetrics(info);
-            _updateFuelTimer(info);
             _updateSlopeState(info);
             _updatePushState(info);
             _updateCardDisplay(info);
@@ -304,12 +271,6 @@ class MarathonCoachField extends Ui.DataField {
     function onTimerReset() {
         _timerRunning = false;
         _lastElapsedSec = null;
-        _lastLapResetSec = null;
-        _lastFuelTimeSec = null;
-        _fuelDueTimeSec = null;
-        _fuelRemainingSec = null;
-        _fuelRemainingText = "--:--";
-        _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
         _resetPaceWindow();
         _paceNowSecPerKm = null;
         _paceNowText = "--:--";
@@ -380,58 +341,10 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function onTimerLap() {
-        _logLapDiag("enter", "onTimerLap", _lastElapsedSec, null);
-        if (_lastElapsedSec == null) {
-            _logLapDiag("reject", "elapsed_null", null, null);
-            return;
-        }
-
-        if (_lastLapResetSec != null and (_lastElapsedSec - _lastLapResetSec) < LAP_DEBOUNCE_SEC) {
-            _logLapDiag("reject", "debounce", _lastElapsedSec, null);
-            return;
-        }
-
-        if (_isCustomModeEnabled()) {
-            if (_customFuelMode == CUSTOM_FUEL_MODE_OFF) {
-                _logLapDiag("reject", "custom_fuel_off", _lastElapsedSec, null);
-                return;
-            }
-            var customIntervalSec = _resolveFuelIntervalSec();
-            if (!_shouldAcceptFuelLapReset(_lastElapsedSec, customIntervalSec)) {
-                _logLapDiag("reject", "custom_too_early", _lastElapsedSec, customIntervalSec);
-                return;
-            }
-            _lastFuelTimeSec = _lastElapsedSec;
-            _fuelDueTimeSec = _lastFuelTimeSec + customIntervalSec;
-            _fuelRemainingSec = customIntervalSec;
-            _fuelRemainingText = CoachUtils.formatMinSec(_fuelRemainingSec);
-            _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
-            _lastLapResetSec = _lastElapsedSec;
-            _logLapDiag("apply", "custom_reset", _lastElapsedSec, customIntervalSec);
-            return;
-        }
-
-        var profile = _resolveRaceProfile();
-        if (profile == RACE_PROFILE_SHORT) {
-            _logLapDiag("reject", "short_profile", _lastElapsedSec, null);
-            return;
-        }
-
-        var coreIntervalSec = _resolveFuelIntervalSec();
-        if (!_shouldAcceptFuelLapReset(_lastElapsedSec, coreIntervalSec)) {
-            _logLapDiag("reject", "core_too_early", _lastElapsedSec, coreIntervalSec);
-            return;
-        }
-        _lastFuelTimeSec = _lastElapsedSec;
-        _fuelDueTimeSec = _lastFuelTimeSec + coreIntervalSec;
-        _fuelRemainingSec = coreIntervalSec;
-        _fuelRemainingText = CoachUtils.formatMinSec(_fuelRemainingSec);
-        _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
-        _lastLapResetSec = _lastElapsedSec;
-        _logLapDiag("apply", "core_reset", _lastElapsedSec, coreIntervalSec);
+        _logLapDiag("ignore", "lap_noop", _lastElapsedSec);
     }
 
-    function _logLapDiag(stage, reason, elapsedSec, intervalSec) {
+    function _logLapDiag(stage, reason, elapsedSec) {
         if (!LAP_DIAG_LOG) {
             return;
         }
@@ -440,22 +353,8 @@ class MarathonCoachField extends Ui.DataField {
             " reason=" + _factValue(reason) +
             " elapsed=" + _factValue(elapsedSec) +
             " lastElapsed=" + _factValue(_lastElapsedSec) +
-            " lastLapReset=" + _factValue(_lastLapResetSec) +
-            " mode=" + _factValue(_customMode) +
-            " fuelMode=" + _factValue(_customFuelMode) +
-            " intervalSec=" + _factValue(intervalSec) +
-            " fuelDue=" + _factValue(_fuelDueTimeSec) +
-            " fuelRem=" + _factValue(_fuelRemainingSec) +
-            " fuelDisp=" + _factValue(_fuelDisplayMode) +
-            " fuelText=" + _factValue(_fuelRemainingText);
+            " mode=" + _factValue(_customMode);
         Sys.println(line);
-    }
-
-    function _shouldAcceptFuelLapReset(elapsedSec, intervalSec) {
-        if (elapsedSec == null or intervalSec == null or intervalSec <= 0) {
-            return false;
-        }
-        return true;
     }
 
     function onUpdate(dc as Gfx.Dc) {
@@ -504,7 +403,6 @@ class MarathonCoachField extends Ui.DataField {
         if (_targetTimeSec != null and _targetTimeSec > 0 and _raceDistanceKm > 0) {
             _targetPaceSecPerKm = _targetTimeSec / _raceDistanceKm;
         }
-        _syncFuelPlanStateWithSettings();
         _logSettingsState(targetHour, targetMinute);
     }
 
@@ -512,42 +410,12 @@ class MarathonCoachField extends Ui.DataField {
         var customConfig = CustomModeUtils.decodeCustomCode(rawCustomCode);
         _customMode = CustomModeUtils.getMode(customConfig);
         _customCodeValid = CustomModeUtils.isCodeValid(customConfig);
-        _customFuelMode = CustomModeUtils.getFuelMode(customConfig);
-        _customFirstFuelAfterMin = CustomModeUtils.getFirstFuelAfterMin(customConfig);
-        _customFuelIntervalMin = CustomModeUtils.getFuelIntervalMin(customConfig);
-        _customFuelAlertLeadMin = CustomModeUtils.getFuelAlertLeadMin(customConfig);
         _customPhaseAggressiveness = CustomModeUtils.getPhaseAggressiveness(customConfig);
         _customHrCapBiasBpm = CustomModeUtils.getHrCapBiasBpm(customConfig);
     }
 
     function _isCustomModeEnabled() {
         return _customMode == CUSTOM_MODE_CUSTOM;
-    }
-
-    function _syncFuelPlanStateWithSettings() {
-        var signature = _buildFuelPlanSignature();
-        if (_isSameText(signature, _fuelPlanSignature)) {
-            return;
-        }
-        if (FUEL_PLAN_DIAG_LOG) {
-            Sys.println(
-                "[FUEL_PLAN_DIAG] changed prev=" + _factValue(_fuelPlanSignature) +
-                " next=" + _factValue(signature) +
-                " mode=" + _factValue(_customMode) +
-                " fuelMode=" + _factValue(_customFuelMode) +
-                " first=" + _factValue(_customFirstFuelAfterMin) +
-                " interval=" + _factValue(_customFuelIntervalMin) +
-                " lead=" + _factValue(_customFuelAlertLeadMin)
-            );
-        }
-
-        _fuelPlanSignature = signature;
-        _lastFuelTimeSec = null;
-        _fuelDueTimeSec = null;
-        _fuelRemainingSec = null;
-        _fuelRemainingText = "--:--";
-        _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
-        _lastLapResetSec = null;
     }
 
     function _isSameText(left, right) {
@@ -576,53 +444,6 @@ class MarathonCoachField extends Ui.DataField {
             }
         }
         return true;
-    }
-
-    function _buildFuelPlanSignature() {
-        if (_isCustomModeEnabled()) {
-            var signature =
-                "custom:" + _customFuelMode.toString() +
-                ":" + _customFirstFuelAfterMin.toString() +
-                ":" + _customFuelIntervalMin.toString() +
-                ":" + _customFuelAlertLeadMin.toString();
-            return signature;
-        }
-        var raceDistanceMilli = Math.floor((_raceDistanceKm * 1000.0) + 0.5);
-        return "core:" + _resolveRaceProfile().toString() + ":" + raceDistanceMilli.toString();
-    }
-
-    function _resolveFuelIntervalSec() {
-        if (_isCustomModeEnabled() and _customFuelMode == CUSTOM_FUEL_MODE_TIME) {
-            return _clamp(
-                _customFuelIntervalMin * 60,
-                CustomModeUtils.MIN_FUEL_INTERVAL_MIN * 60,
-                CustomModeUtils.MAX_FUEL_INTERVAL_MIN * 60
-            );
-        }
-        return FUEL_INTERVAL_SEC;
-    }
-
-    function _resolveFuelFirstDueSec() {
-        if (_isCustomModeEnabled() and _customFuelMode == CUSTOM_FUEL_MODE_TIME) {
-            return _clamp(
-                _customFirstFuelAfterMin * 60,
-                CustomModeUtils.MIN_FIRST_FUEL_AFTER_MIN * 60,
-                CustomModeUtils.MAX_FIRST_FUEL_AFTER_MIN * 60
-            );
-        }
-        return _resolveFuelIntervalSec();
-    }
-
-    function _resolveFuelToggleLeadSec() {
-        if (_isCustomModeEnabled() and _customFuelMode == CUSTOM_FUEL_MODE_TIME) {
-            return _clamp(_customFuelAlertLeadMin * 60, 0, 10 * 60);
-        }
-        return FUEL_TOGGLE_LEAD_SEC;
-    }
-
-    function _resolveFuelInitialAnchorSec(intervalSec) {
-        var firstDueSec = _resolveFuelFirstDueSec();
-        return firstDueSec - intervalSec;
     }
 
     function _resolvePhaseAggressivenessShift() {
@@ -757,7 +578,7 @@ class MarathonCoachField extends Ui.DataField {
     function _drawPredictionDashboard(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
         var diffFont = Gfx.FONT_LARGE;
         var predictionFont = Gfx.FONT_MEDIUM;
-        var diffNumberFont = _resolveSharedTopRowNumberFont(sizeClass);
+        var diffNumberFont = _resolvePredictionTopRowNumberFont(sizeClass);
         var deltaAffixFont = predictionFont;
         var deltaUnitGap = 1;
         var rowGap = 6;
@@ -765,18 +586,18 @@ class MarathonCoachField extends Ui.DataField {
         if (sizeClass == 0) {
             diffFont = Gfx.FONT_MEDIUM;
             predictionFont = Gfx.FONT_SMALL;
-            diffNumberFont = _resolveSharedTopRowNumberFont(sizeClass);
+            diffNumberFont = _resolvePredictionTopRowNumberFont(sizeClass);
             deltaAffixFont = predictionFont;
             deltaUnitGap = 0;
             rowGap = 4;
             blockOffsetY = 4;
         } else if (sizeClass == 1) {
-            diffNumberFont = _resolveSharedTopRowNumberFont(sizeClass);
+            diffNumberFont = _resolvePredictionTopRowNumberFont(sizeClass);
             deltaAffixFont = predictionFont;
             deltaUnitGap = 0;
             blockOffsetY = 10;
         } else if (sizeClass == 2) {
-            diffNumberFont = _resolveSharedTopRowNumberFont(sizeClass);
+            diffNumberFont = _resolvePredictionTopRowNumberFont(sizeClass);
             deltaAffixFont = predictionFont;
             deltaUnitGap = 0;
             rowGap = 8;
@@ -812,6 +633,7 @@ class MarathonCoachField extends Ui.DataField {
         var deltaSignText = deltaSignParts[0];
         var deltaDigitsText = deltaSignParts[1];
         var drawDeltaWithNumberFont = _containsAsciiDigit(deltaDigitsText);
+        diffNumberFont = _capPredictionNumberFontToHeartRate(diffNumberFont);
         var predictionLineH = dc.getFontHeight(predictionFont);
         var deltaLineH = dc.getFontHeight(diffFont);
         if (drawDeltaWithNumberFont) {
@@ -1106,6 +928,7 @@ class MarathonCoachField extends Ui.DataField {
             areaW - 6,
             currentFont
         );
+        _lastResolvedHeartRateTopRowNumberFont = currentNumberFont;
         var textCenterX = areaX + Math.floor(areaW / 2);
         if (sizeClass == 0) {
             textCenterX += 6;
@@ -1416,6 +1239,36 @@ class MarathonCoachField extends Ui.DataField {
             return Gfx.FONT_NUMBER_MEDIUM;
         }
         return Gfx.FONT_NUMBER_HOT;
+    }
+
+    function _resolvePredictionTopRowNumberFont(sizeClass) {
+        if (sizeClass == 2) {
+            return Gfx.FONT_NUMBER_MEDIUM;
+        }
+        return _resolveSharedTopRowNumberFont(sizeClass);
+    }
+
+    function _capPredictionNumberFontToHeartRate(font) {
+        if (_lastResolvedHeartRateTopRowNumberFont == null) {
+            return font;
+        }
+        if (_numberFontRank(_lastResolvedHeartRateTopRowNumberFont) < _numberFontRank(font)) {
+            return _lastResolvedHeartRateTopRowNumberFont;
+        }
+        return font;
+    }
+
+    function _numberFontRank(font) {
+        if (font == Gfx.FONT_NUMBER_HOT) {
+            return 3;
+        }
+        if (font == Gfx.FONT_NUMBER_MEDIUM) {
+            return 2;
+        }
+        if (font == Gfx.FONT_NUMBER_MILD) {
+            return 1;
+        }
+        return 0;
     }
 
     function _splitNumericValueAndSuffix(text) as Lang.Array {
@@ -2525,10 +2378,6 @@ class MarathonCoachField extends Ui.DataField {
             " paceSecPerKm=" + _factValue(_targetPaceSecPerKm) +
             " mode=" + _factValue(_customMode) +
             " codeValid=" + _factValue(_customCodeValid) +
-            " fuelMode=" + _factValue(_customFuelMode) +
-            " firstFuelMin=" + _factValue(_customFirstFuelAfterMin) +
-            " fuelIntervalMin=" + _factValue(_customFuelIntervalMin) +
-            " fuelLeadMin=" + _factValue(_customFuelAlertLeadMin) +
             " aggr=" + _factValue(_customPhaseAggressiveness) +
             " hrBias=" + _factValue(_customHrCapBiasBpm);
         if (_isSameText(_lastSettingsLogLine, line)) {
@@ -2923,109 +2772,10 @@ class MarathonCoachField extends Ui.DataField {
         _slopeAnchorDistanceM = null;
     }
 
-    function _updateFuelTimer(info) {
-        var elapsedSec = _extractElapsedSec(info);
-
-        if (_isCustomModeEnabled()) {
-            _updateCustomFuelTimer(elapsedSec);
-            return;
-        }
-
-        var raceProfile = _resolveRaceProfile();
-
-        if (raceProfile == RACE_PROFILE_SHORT) {
-            _fuelDueTimeSec = null;
-            _fuelRemainingSec = null;
-            _fuelRemainingText = "--:--";
-            _fuelDisplayMode = FUEL_DISPLAY_DISABLED;
-            return;
-        }
-
-        if (elapsedSec == null) {
-            _fuelRemainingSec = null;
-            _fuelRemainingText = "--:--";
-            _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
-            return;
-        }
-
-        if (_lastFuelTimeSec == null) {
-            // Keep fuel schedule aligned to activity elapsed time (FIT playback time).
-            _lastFuelTimeSec = 0;
-        } else if (elapsedSec < _lastFuelTimeSec) {
-            // Recover when activity timer resets or playback jumps backward before last reset point.
-            _lastFuelTimeSec = 0;
-            _lastLapResetSec = null;
-        }
-        var intervalSec = _resolveFuelIntervalSec();
-        _fuelDueTimeSec = _lastFuelTimeSec + intervalSec;
-        _fuelRemainingSec = _fuelDueTimeSec - elapsedSec;
-        if (_fuelRemainingSec < 0) {
-            _fuelRemainingSec = 0;
-        }
-        _fuelRemainingText = CoachUtils.formatMinSec(_fuelRemainingSec);
-        if (_fuelRemainingSec <= 0) {
-            _fuelDisplayMode = FUEL_DISPLAY_DUE;
-        } else {
-            _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
-        }
-    }
-
-    function _updateCustomFuelTimer(elapsedSec) {
-        if (_customFuelMode == CUSTOM_FUEL_MODE_OFF) {
-            _fuelDueTimeSec = null;
-            _fuelRemainingSec = null;
-            _fuelRemainingText = "--:--";
-            _fuelDisplayMode = FUEL_DISPLAY_DISABLED;
-            return;
-        }
-
-        if (elapsedSec == null) {
-            _fuelDueTimeSec = null;
-            _fuelRemainingSec = null;
-            _fuelRemainingText = "--:--";
-            _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
-            return;
-        }
-
-        var intervalSec = _resolveFuelIntervalSec();
-        if (_lastFuelTimeSec == null) {
-            // First custom cue is based on firstFuelAfterMin.
-            _lastFuelTimeSec = _resolveFuelInitialAnchorSec(intervalSec);
-        } else if (elapsedSec < _lastFuelTimeSec) {
-            _lastFuelTimeSec = _resolveFuelInitialAnchorSec(intervalSec);
-            _lastLapResetSec = null;
-        }
-
-        _fuelDueTimeSec = _lastFuelTimeSec + intervalSec;
-        _fuelRemainingSec = _fuelDueTimeSec - elapsedSec;
-        if (_fuelRemainingSec < 0) {
-            _fuelRemainingSec = 0;
-        }
-        _fuelRemainingText = CoachUtils.formatMinSec(_fuelRemainingSec);
-        if (_fuelRemainingSec <= 0) {
-            _fuelDisplayMode = FUEL_DISPLAY_DUE;
-        } else {
-            _fuelDisplayMode = FUEL_DISPLAY_COUNTDOWN;
-        }
-    }
-
-    function _isFuelCardEnabled() {
-        if (_isCustomModeEnabled()) {
-            return _customFuelMode == CUSTOM_FUEL_MODE_TIME;
-        }
-
-        var raceProfile = _resolveRaceProfile();
-        if (raceProfile == RACE_PROFILE_SHORT) {
-            return false;
-        }
-        return true;
-    }
-
     function _updateCardDisplay(info) {
         var elapsedSec = _extractElapsedSec(info);
-        var fuelOverdue = _isFuelOverdue();
         var hrOver = _isHeartRateOverCap();
-        _updateBeepNotifications(elapsedSec, fuelOverdue, hrOver);
+        _updateBeepNotifications(elapsedSec, hrOver);
     }
 
     function _isLastSpurtSegment(info) {
@@ -3052,7 +2802,7 @@ class MarathonCoachField extends Ui.DataField {
         return remainingDistanceKm <= triggerRemainingDistanceKm;
     }
 
-    function _updateBeepNotifications(elapsedSec, fuelOverdue, hrOver) {
+    function _updateBeepNotifications(elapsedSec, hrOver) {
         if (elapsedSec == null) {
             _resetBeepState();
             return;
@@ -3062,68 +2812,27 @@ class MarathonCoachField extends Ui.DataField {
         }
         _beepLastElapsedSec = elapsedSec;
 
-        var fuelToggleLeadSec = _resolveFuelToggleLeadSec();
-        var fuelMeterState = FuelMeterUtils.resolveMeterState(
-            _fuelDisplayMode,
-            _fuelRemainingSec,
-            fuelToggleLeadSec
-        );
         if (!_beepStateInitialized) {
-            _beepPrevFuelMeterState = fuelMeterState;
             _beepPrevHrOver = hrOver;
-            _beepFuelNowActive = fuelOverdue;
-            if (fuelOverdue) {
-                _beepFuelNowNextRepeatSec = elapsedSec + BEEP_FUEL_NOW_REPEAT_FIRST_SEC;
-            } else {
-                _beepFuelNowNextRepeatSec = null;
-            }
             _beepStateInitialized = true;
             return;
         }
 
         var beepEvent = BeepUtils.EVENT_NONE;
-
-        if (fuelOverdue) {
-            if (!_beepFuelNowActive) {
-                beepEvent = BeepUtils.selectHigherPriorityEvent(beepEvent, BeepUtils.EVENT_FUEL_NOW);
-                _beepFuelNowActive = true;
-                _beepFuelNowNextRepeatSec = elapsedSec + BEEP_FUEL_NOW_REPEAT_FIRST_SEC;
-            } else if (_beepFuelNowNextRepeatSec != null and elapsedSec >= _beepFuelNowNextRepeatSec) {
-                beepEvent = BeepUtils.selectHigherPriorityEvent(beepEvent, BeepUtils.EVENT_FUEL_NOW);
-                _beepFuelNowNextRepeatSec = elapsedSec + BEEP_FUEL_NOW_REPEAT_INTERVAL_SEC;
-            }
-        } else {
-            _beepFuelNowActive = false;
-            _beepFuelNowNextRepeatSec = null;
-        }
-
-        if (!fuelOverdue) {
-            if (hrOver and !_beepPrevHrOver) {
-                if (_beepLastHrAlertSec == null or (elapsedSec - _beepLastHrAlertSec) >= BEEP_HR_SUPPRESS_SEC) {
-                    beepEvent = BeepUtils.selectHigherPriorityEvent(beepEvent, BeepUtils.EVENT_HR_OVER);
-                    _beepLastHrAlertSec = elapsedSec;
-                }
-            }
-
-            if (
-                fuelMeterState == FUEL_METER_STATE_CAUTION and
-                _beepPrevFuelMeterState != FUEL_METER_STATE_CAUTION
-            ) {
-                beepEvent = BeepUtils.selectHigherPriorityEvent(beepEvent, BeepUtils.EVENT_FUEL_SOON);
+        if (hrOver and !_beepPrevHrOver) {
+            if (_beepLastHrAlertSec == null or (elapsedSec - _beepLastHrAlertSec) >= BEEP_HR_SUPPRESS_SEC) {
+                beepEvent = BeepUtils.selectHigherPriorityEvent(beepEvent, BeepUtils.EVENT_HR_OVER);
+                _beepLastHrAlertSec = elapsedSec;
             }
         }
 
         _playBeepEvent(beepEvent);
-        _beepPrevFuelMeterState = fuelMeterState;
         _beepPrevHrOver = hrOver;
     }
 
     function _resetBeepState() {
         _beepStateInitialized = false;
-        _beepPrevFuelMeterState = FUEL_METER_STATE_NORMAL;
         _beepPrevHrOver = false;
-        _beepFuelNowActive = false;
-        _beepFuelNowNextRepeatSec = null;
         _beepLastHrAlertSec = null;
         _beepLastElapsedSec = null;
     }
@@ -3159,10 +2868,6 @@ class MarathonCoachField extends Ui.DataField {
             }
         } catch (e) {
         }
-    }
-
-    function _isFuelOverdue() {
-        return _isFuelCardEnabled() and _fuelRemainingSec != null and _fuelRemainingSec <= 0;
     }
 
     function _isHeartRateOverCap() {
@@ -3233,7 +2938,7 @@ class MarathonCoachField extends Ui.DataField {
             return;
         }
 
-        if (_isFuelOverdue() or _hrOverActive) {
+        if (_hrOverActive) {
             _resetPushState();
             return;
         }
