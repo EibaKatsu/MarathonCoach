@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="666" height="626" viewBox="0 0 666 626">
+  <rect width="666" height="626" fill="#ececec"/>
+
+  <!-- guides (4 blocks) -->
+  <line x1="333" y1="6" x2="333" y2="620" stroke="#0c6f99" stroke-width="2"/>
+  <line x1="0" y1="228" x2="666" y2="228" stroke="#0c6f99" stroke-width="2"/>
+  <line x1="0" y1="339" x2="666" y2="339" stroke="#0c6f99" stroke-width="2"/>
+  <line x1="0" y1="458" x2="666" y2="458" stroke="#0c6f99" stroke-width="2"/>
+
+  <!-- watch frame -->
+  <circle cx="333" cy="313" r="241" fill="#f7f7f7" stroke="#445762" stroke-width="10"/>
+  <circle cx="333" cy="313" r="235" fill="none" stroke="#2f414a" stroke-width="2"/>
+
+  <text x="39" y="343" font-size="34" font-family="Arial, sans-serif" fill="#0c1f2c">J</text>
+  <text x="583" y="482" font-size="34" font-family="Arial, sans-serif" fill="#0c1f2c">E</text>
+
+  <!-- header: HR/CAP + heart -->
+  <path d="M251 170 C251 152 265 138 283 138 C299 138 311 148 316 162 C321 148 333 138 349 138 C367 138 381 152 381 170 C381 194 353 213 316 236 C279 213 251 194 251 170 Z"
+        fill="none" stroke="#efb7b0" stroke-width="5"/>
+  <text x="181" y="206" font-size="49" font-family="Arial, sans-serif" font-weight="700" fill="#101318">152 / 155</text>
+
+  <!-- block 2: card -->
+  <rect x="92" y="246" rx="36" ry="36" width="236" height="274" fill="#0f668f" stroke="#1f3c4d" stroke-width="2"/>
+  <text x="145" y="332" font-size="28" font-family="Hiragino Sans, Arial, sans-serif" fill="#f3f9fd">ちょい</text>
+  <text x="145" y="374" font-size="28" font-family="Hiragino Sans, Arial, sans-serif" fill="#f3f9fd">落とし</text>
+  <polygon points="170,413 206,413 206,390 253,437 206,483 206,460 170,460" fill="#f1f20f" stroke="#163447" stroke-width="2"/>
+  <text x="219" y="458" font-size="22" font-family="Arial, sans-serif" font-weight="700" fill="#d9ebf7">- 10s</text>
+
+  <!-- block 1-right: fuel circle -->
+  <circle cx="475" cy="227" r="104" fill="#0f668f" stroke="#1f3c4d" stroke-width="2"/>
+  <text x="404" y="239" font-size="49" font-family="Arial, sans-serif" fill="#f4f7fb">FUEL</text>
+  <text x="398" y="291" font-size="64" font-family="Arial, sans-serif" fill="#f4f7fb">6:20</text>
+
+  <!-- block 3: pace -->
+  <text x="349" y="411" font-size="86" font-family="Arial, sans-serif" font-weight="700" fill="#020203">7:21</text>
+  <text x="492" y="436" font-size="53" font-family="Arial, sans-serif" font-weight="700" fill="#020203">/km</text>
+
+  <!-- block 4: footer -->
+  <text x="214" y="493" font-size="22" font-family="Arial, sans-serif" font-weight="700" fill="#0a0e11">22.3 km</text>
+  <text x="347" y="493" font-size="22" font-family="Arial, sans-serif" font-weight="700" fill="#0a0e11">2:33:12</text>
+  <text x="230" y="548" font-size="22" font-family="Arial, sans-serif" font-weight="700" fill="#0a0e11">PACE + 10s</text>
+</svg>
