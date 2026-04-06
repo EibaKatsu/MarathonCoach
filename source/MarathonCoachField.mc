@@ -933,7 +933,7 @@ class MarathonCoachField extends Ui.DataField {
         } else if (sizeClass == 1) {
             textCenterX += 10;
         } else {
-            textCenterX += 12;
+            textCenterX += 18;
         }
         var capLineH = dc.getFontHeight(capValueFont);
         var currentLineH = dc.getFontHeight(currentNumberFont);
@@ -955,6 +955,9 @@ class MarathonCoachField extends Ui.DataField {
         var totalTextH = sharedTopLineH + rowGap + sharedBottomLineH;
         var anchorY = areaY + Math.floor((areaH - totalTextH) / 2) + blockOffsetY;
         var capValueY = anchorY + Math.floor((sharedTopLineH - capLineH) / 2);
+        if (sizeClass == 2) {
+            capValueY += 2;
+        }
         var currentY = anchorY + sharedTopLineH + rowGap + Math.floor((sharedBottomLineH - currentLineH) / 2);
 
         _drawBoldText(dc, textCenterX, currentY, currentNumberFont, currentText, Gfx.TEXT_JUSTIFY_CENTER, Gfx.COLOR_WHITE);
@@ -997,7 +1000,7 @@ class MarathonCoachField extends Ui.DataField {
         } else if (sizeClass == 1) {
             textCenterX += 10;
         } else {
-            textCenterX += 12;
+            textCenterX += 18;
         }
         var rowGap = 6;
         var blockOffsetY = 6;
@@ -1017,6 +1020,9 @@ class MarathonCoachField extends Ui.DataField {
         var totalTextH = sharedTopLineH + rowGap + sharedBottomLineH;
         var anchorY = areaY + Math.floor((areaH - totalTextH) / 2) + blockOffsetY;
         var capValueY = anchorY + Math.floor((sharedTopLineH - capLineH) / 2);
+        if (sizeClass == 2) {
+            capValueY += 2;
+        }
         var capSourceY = capValueY + (capLineH - capSourceLineH);
         var capValueW = dc.getTextWidthInPixels(capValueText, capValueFont);
         var capSourceW = dc.getTextWidthInPixels(capSourceText, capSourceFont);
