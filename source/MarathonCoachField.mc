@@ -548,9 +548,14 @@ class MarathonCoachField extends Ui.DataField {
         var centerY = top + topBandH;
         var bottomY = top + squareSize - bottomBandH;
         var centerH = bottomY - centerY;
+        var heartRateAreaX = left + 2;
+        var heartRateAreaY = top + 10;
+        var heartRateAreaW = centerX - left - 6;
+        var heartRateAreaH = topBandH - 14;
         _drawStage = "layout:heart_rate";
         _logMediumDrawBlockDiag(sizeClass, "heart_rate:start");
-        _drawHeartRateDashboard(dc, left + 2, top + 10, centerX - left - 6, topBandH - 14, sizeClass);
+        _drawHeartRateDashboard(dc, heartRateAreaX, heartRateAreaY, heartRateAreaW, heartRateAreaH, sizeClass);
+        _drawHeartRateCapSourceOverlay(dc, heartRateAreaX, heartRateAreaY, heartRateAreaW, heartRateAreaH, sizeClass);
         _logMediumDrawBlockDiag(sizeClass, "heart_rate:done");
         _drawStage = "layout:prediction";
         _logMediumDrawBlockDiag(sizeClass, "prediction:start");
@@ -868,56 +873,56 @@ class MarathonCoachField extends Ui.DataField {
         var currentFont = Gfx.FONT_LARGE;
         var currentNumberFont = Gfx.FONT_NUMBER_MEDIUM;
         var capValueFont = Gfx.FONT_MEDIUM;
-        var capSourceFont = Gfx.FONT_TINY;
+        var displayW = dc.getWidth();
+        var displayH = dc.getHeight();
+        var minDim = _min(displayW, displayH);
+        var screenCenterX = Math.floor(displayW / 2);
+        var screenCenterY = Math.floor(displayH / 2);
+        var screenRadius = Math.floor(minDim / 2);
         var outerInset = 12;
         var bandThickness = 9;
         if (sizeClass == 0) {
             currentFont = Gfx.FONT_MEDIUM;
             currentNumberFont = Gfx.FONT_NUMBER_MILD;
             capValueFont = Gfx.FONT_SMALL;
-            capSourceFont = Gfx.FONT_XTINY;
             outerInset = 12;
             bandThickness = 9;
         } else if (sizeClass == 1) {
             currentNumberFont = Gfx.FONT_NUMBER_MEDIUM;
-            capSourceFont = Gfx.FONT_TINY;
             outerInset = 10;
             bandThickness = 10;
         } else if (sizeClass == 2) {
             currentNumberFont = Gfx.FONT_NUMBER_HOT;
             capValueFont = Gfx.FONT_MEDIUM;
-            capSourceFont = Gfx.FONT_TINY;
             outerInset = 12;
             bandThickness = 12;
         }
 
-        var outerRadius = _min(areaW, areaH) - outerInset;
+        var outerRadius = screenRadius - outerInset;
         if (outerRadius < bandThickness + 2) {
             outerRadius = bandThickness + 2;
         }
         var centerX = areaX + outerRadius + 2;
         var centerY = areaY + outerRadius + 2;
+        centerX = screenCenterX;
+        centerY = screenCenterY;
         var innerRadius = outerRadius - bandThickness;
         if (innerRadius < 1) {
             innerRadius = 1;
         }
         var fillEndDeg = _resolveHeartRateArcEndDeg();
         var fillColor = _resolveHeartRateArcColor();
-        var allowHeartRateArc = (sizeClass != 2);
 
-        if (allowHeartRateArc) {
-            _drawThickArc(dc, centerX, centerY, innerRadius, outerRadius, HR_ARC_START_DEG, HR_ARC_MAX_DEG, HR_ARC_BASE_COLOR);
-            if (fillEndDeg > HR_ARC_START_DEG) {
-                _drawThickArc(dc, centerX, centerY, innerRadius, outerRadius, HR_ARC_START_DEG, fillEndDeg, fillColor);
-            }
-            if (_allowedMaxHeartRate != null) {
-                _drawRadialTick(dc, centerX, centerY, innerRadius - 2, outerRadius + 2, HR_ARC_CAP_DEG, Gfx.COLOR_WHITE);
-            }
+        _drawThickArc(dc, centerX, centerY, innerRadius, outerRadius, HR_ARC_START_DEG, HR_ARC_MAX_DEG, HR_ARC_BASE_COLOR);
+        if (fillEndDeg > HR_ARC_START_DEG) {
+            _drawThickArc(dc, centerX, centerY, innerRadius, outerRadius, HR_ARC_START_DEG, fillEndDeg, fillColor);
+        }
+        if (_allowedMaxHeartRate != null) {
+            _drawRadialTick(dc, centerX, centerY, innerRadius - 2, outerRadius + 2, HR_ARC_CAP_DEG, Gfx.COLOR_WHITE);
         }
 
         var currentText = _formatHeartRateValueText(_currentHeartRate);
         var capValueText = _resolveHeartRateCapValueText();
-        var capSourceText = _resolveCapHeartRateSourceBadgeText();
         currentNumberFont = _resolveFittingNumberFont(
             dc,
             currentText,
@@ -935,7 +940,6 @@ class MarathonCoachField extends Ui.DataField {
             textCenterX += 12;
         }
         var capLineH = dc.getFontHeight(capValueFont);
-        var capSourceLineH = dc.getFontHeight(capSourceFont);
         var currentLineH = dc.getFontHeight(currentNumberFont);
         var rowGap = 6;
         var blockOffsetY = 6;
@@ -955,23 +959,11 @@ class MarathonCoachField extends Ui.DataField {
         var totalTextH = sharedTopLineH + rowGap + sharedBottomLineH;
         var anchorY = areaY + Math.floor((areaH - totalTextH) / 2) + blockOffsetY;
         var capValueY = anchorY + Math.floor((sharedTopLineH - capLineH) / 2);
-        var capSourceY = anchorY + Math.floor((sharedTopLineH - capSourceLineH) / 2);
         var currentY = anchorY + sharedTopLineH + rowGap + Math.floor((sharedBottomLineH - currentLineH) / 2);
-        var capValueW = dc.getTextWidthInPixels(capValueText, capValueFont);
-        var capSourceGap = 3;
-        if (sizeClass == 2) {
-            capSourceGap = 4;
-        }
-        var capSourceW = dc.getTextWidthInPixels(capSourceText, capSourceFont);
-        var capGroupW = capValueW + capSourceGap + capSourceW;
-        var capGroupStartX = textCenterX - Math.floor(capGroupW / 2);
-        var capValueX = capGroupStartX + Math.floor(capValueW / 2);
-        var capSourceX = capGroupStartX + capValueW + capSourceGap;
 
         _drawBoldText(dc, textCenterX, currentY, currentNumberFont, currentText, Gfx.TEXT_JUSTIFY_CENTER, Gfx.COLOR_WHITE);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(capValueX, capValueY, capValueFont, capValueText, Gfx.TEXT_JUSTIFY_CENTER);
-        dc.drawText(capSourceX, capSourceY, capSourceFont, capSourceText, Gfx.TEXT_JUSTIFY_LEFT);
+        dc.drawText(textCenterX, capValueY, capValueFont, capValueText, Gfx.TEXT_JUSTIFY_CENTER);
         _logTopRowLayoutDiag(
             "heart_rate",
             sizeClass,
@@ -988,9 +980,55 @@ class MarathonCoachField extends Ui.DataField {
             currentLineH,
             capValueY,
             currentY,
-            capValueText + " " + capSourceText,
+            capValueText,
             currentText
         );
+    }
+
+    function _drawHeartRateCapSourceOverlay(dc as Gfx.Dc, areaX, areaY, areaW, areaH, sizeClass) {
+        var capSourceText = _resolveCapHeartRateSourceBadgeText();
+        var capValueText = _resolveHeartRateCapValueText();
+        var capValueFont = Gfx.FONT_MEDIUM;
+        if (sizeClass == 0) {
+            capValueFont = Gfx.FONT_SMALL;
+        }
+        var capSourceFont = Gfx.FONT_XTINY;
+        var capLineH = dc.getFontHeight(capValueFont);
+        var capSourceLineH = dc.getFontHeight(capSourceFont);
+        var textCenterX = areaX + Math.floor(areaW / 2);
+        if (sizeClass == 0) {
+            textCenterX += 6;
+        } else if (sizeClass == 1) {
+            textCenterX += 10;
+        } else {
+            textCenterX += 12;
+        }
+        var rowGap = 6;
+        var blockOffsetY = 6;
+        if (sizeClass == 0) {
+            blockOffsetY = 4;
+        } else if (sizeClass == 1) {
+            blockOffsetY = 10;
+        } else if (sizeClass == 2) {
+            blockOffsetY = 11;
+        }
+        var sharedTopLineH = dc.getFontHeight(sizeClass == 0 ? Gfx.FONT_SMALL : Gfx.FONT_MEDIUM);
+        var sharedBottomLineH = dc.getFontHeight(sizeClass == 0 ? Gfx.FONT_MEDIUM : Gfx.FONT_LARGE);
+        var numberBottomLineH = dc.getFontHeight(_resolveSharedTopRowNumberFont(sizeClass));
+        if (numberBottomLineH > sharedBottomLineH) {
+            sharedBottomLineH = numberBottomLineH;
+        }
+        var totalTextH = sharedTopLineH + rowGap + sharedBottomLineH;
+        var anchorY = areaY + Math.floor((areaH - totalTextH) / 2) + blockOffsetY;
+        var capValueY = anchorY + Math.floor((sharedTopLineH - capLineH) / 2);
+        var capSourceY = capValueY + (capLineH - capSourceLineH);
+        var capValueW = dc.getTextWidthInPixels(capValueText, capValueFont);
+        var capSourceW = dc.getTextWidthInPixels(capSourceText, capSourceFont);
+        var capSourceGap = 2;
+        var capSourceX = textCenterX - Math.floor(capValueW / 2) - capSourceGap - capSourceW;
+
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+        dc.drawText(capSourceX, capSourceY, capSourceFont, capSourceText, Gfx.TEXT_JUSTIFY_LEFT);
     }
 
     function _drawBoldText(dc as Gfx.Dc, drawX, drawY, font, text, justify, textColor) {
@@ -1506,61 +1544,18 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         dc.setColor(color, Gfx.COLOR_TRANSPARENT);
-        var arcStepDeg = HR_ARC_STEP_DEG;
-        if (outerRadius >= 96) {
-            arcStepDeg = HR_ARC_STEP_DEG * 2;
-        }
-        var radiusStep = 1;
-        var thickness = outerRadius - innerRadius;
-        if (thickness >= 12) {
-            radiusStep = 3;
-        } else if (thickness >= 8) {
-            radiusStep = 2;
-        }
-        var startRad = (startDeg * Math.PI) / 180.0;
-        var stepRad = (arcStepDeg * Math.PI) / 180.0;
-        var endRad = (endDeg * Math.PI) / 180.0;
-        var cosStep = Math.cos(stepRad);
-        var sinStep = Math.sin(stepRad);
-        for (var radius = innerRadius; radius <= outerRadius; radius += radiusStep) {
-            var cosAngle = Math.cos(startRad);
-            var sinAngle = Math.sin(startRad);
-            var prevX = Math.floor(centerX + (cosAngle * radius) + 0.5);
-            var prevY = Math.floor(centerY + (sinAngle * radius) + 0.5);
-            for (var deg = startDeg + arcStepDeg; deg <= endDeg; deg += arcStepDeg) {
-                var nextCosAngle = (cosAngle * cosStep) - (sinAngle * sinStep);
-                var nextSinAngle = (sinAngle * cosStep) + (cosAngle * sinStep);
-                cosAngle = nextCosAngle;
-                sinAngle = nextSinAngle;
-                var pointX = Math.floor(centerX + (cosAngle * radius) + 0.5);
-                var pointY = Math.floor(centerY + (sinAngle * radius) + 0.5);
-                dc.drawLine(prevX, prevY, pointX, pointY);
-                prevX = pointX;
-                prevY = pointY;
+        for (var radius = innerRadius; radius <= outerRadius; radius += 1) {
+            var startPoint = _arcPoint(centerX, centerY, radius, startDeg);
+            var prevX = startPoint[0];
+            var prevY = startPoint[1];
+            for (var deg = startDeg + HR_ARC_STEP_DEG; deg <= endDeg; deg += HR_ARC_STEP_DEG) {
+                var point = _arcPoint(centerX, centerY, radius, deg);
+                dc.drawLine(prevX, prevY, point[0], point[1]);
+                prevX = point[0];
+                prevY = point[1];
             }
-            var endX = Math.floor(centerX + (Math.cos(endRad) * radius) + 0.5);
-            var endY = Math.floor(centerY + (Math.sin(endRad) * radius) + 0.5);
-            dc.drawLine(prevX, prevY, endX, endY);
-        }
-        if (((outerRadius - innerRadius) % radiusStep) != 0) {
-            var edgeCosAngle = Math.cos(startRad);
-            var edgeSinAngle = Math.sin(startRad);
-            var edgePrevX = Math.floor(centerX + (edgeCosAngle * outerRadius) + 0.5);
-            var edgePrevY = Math.floor(centerY + (edgeSinAngle * outerRadius) + 0.5);
-            for (var edgeDeg = startDeg + arcStepDeg; edgeDeg <= endDeg; edgeDeg += arcStepDeg) {
-                var edgeNextCosAngle = (edgeCosAngle * cosStep) - (edgeSinAngle * sinStep);
-                var edgeNextSinAngle = (edgeSinAngle * cosStep) + (edgeCosAngle * sinStep);
-                edgeCosAngle = edgeNextCosAngle;
-                edgeSinAngle = edgeNextSinAngle;
-                var edgePointX = Math.floor(centerX + (edgeCosAngle * outerRadius) + 0.5);
-                var edgePointY = Math.floor(centerY + (edgeSinAngle * outerRadius) + 0.5);
-                dc.drawLine(edgePrevX, edgePrevY, edgePointX, edgePointY);
-                edgePrevX = edgePointX;
-                edgePrevY = edgePointY;
-            }
-            var edgeEndX = Math.floor(centerX + (Math.cos(endRad) * outerRadius) + 0.5);
-            var edgeEndY = Math.floor(centerY + (Math.sin(endRad) * outerRadius) + 0.5);
-            dc.drawLine(edgePrevX, edgePrevY, edgeEndX, edgeEndY);
+            var endPoint = _arcPoint(centerX, centerY, radius, endDeg);
+            dc.drawLine(prevX, prevY, endPoint[0], endPoint[1]);
         }
     }
 
