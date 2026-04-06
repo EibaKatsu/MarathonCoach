@@ -19,7 +19,7 @@ class MarathonCoachField extends Ui.DataField {
     const KEY_TARGET_TIME_MINUTE = "target_time_minute";
     const KEY_CUSTOM_MODE_CODE = "custom_mode_code";
     const LAP_DIAG_LOG = true;
-    const FINISH_DIAG_LOG = true;
+    const FINISH_DIAG_LOG = false;
     const FINISH_DIAG_MARGIN_KM = 1.0;
     const MIN_DISTANCE_FOR_PREDICTION_KM = 0.05;
     const PREDICTION_ON_PACE_THRESHOLD_SEC = 60;
@@ -57,19 +57,20 @@ class MarathonCoachField extends Ui.DataField {
     const HALF_DISTANCE_KM = 21.0975;
     const HALF_DISTANCE_TOLERANCE_KM = 0.25;
     const TEN_DISTANCE_KM = 10.0;
-    const SETTINGS_LOG = true;
-    const FIT_FACT_LOG = true;
-    const DIST_PROBE_LOG = true;
-    const TOP_ROW_DIAG_LOG = true;
-    const SMALL_TOP_ROW_DIAG_LOG = true;
-    const MEDIUM_HR_LAYOUT_DIAG_LOG = true;
-    const LARGE_TOP_ROW_DIAG_LOG = true;
+    const SETTINGS_LOG = false;
+    const FIT_FACT_LOG = false;
+    const DIST_PROBE_LOG = false;
+    const TOP_ROW_DIAG_LOG = false;
+    const SMALL_TOP_ROW_DIAG_LOG = false;
+    const MEDIUM_HR_LAYOUT_DIAG_LOG = false;
+    const LARGE_TOP_ROW_DIAG_LOG = false;
     const CRASH_DIAG_LOG = true;
-    const MEDIUM_DRAW_BLOCK_DIAG_LOG = true;
+    const MEDIUM_DRAW_BLOCK_DIAG_LOG = false;
     const BEEP_HR_SUPPRESS_SEC = 75;
     const HR_ARC_START_DEG = 180;
     const HR_ARC_CAP_DEG = 255;
     const HR_ARC_MAX_DEG = 270;
+    const HR_ARC_STEP_DEG = 3;
     const HR_ARC_OVERFLOW_BPM = 10;
     const HR_ARC_BASE_COLOR = 0x3A4146;
     const HR_ARC_SAFE_COLOR = 0x63C84A;
@@ -431,28 +432,15 @@ class MarathonCoachField extends Ui.DataField {
         if (left == null or right == null) {
             return left == right;
         }
-        var leftChars = left.toCharArray();
-        var rightChars = right.toCharArray();
-        if (!(leftChars instanceof Lang.Array) or !(rightChars instanceof Lang.Array)) {
-            return false;
+        try {
+            return left == right;
+        } catch (e) {
         }
-        if (leftChars.size() != rightChars.size()) {
-            return false;
+        try {
+            return left.toString() == right.toString();
+        } catch (e2) {
         }
-        for (var i = 0; i < leftChars.size(); i += 1) {
-            var leftCh = leftChars[i];
-            var rightCh = rightChars[i];
-            if (leftCh == null or rightCh == null) {
-                if (leftCh != rightCh) {
-                    return false;
-                }
-                continue;
-            }
-            if (leftCh.toNumber() != rightCh.toNumber()) {
-                return false;
-            }
-        }
-        return true;
+        return false;
     }
 
     function _resolvePhaseAggressivenessShift() {
@@ -881,12 +869,6 @@ class MarathonCoachField extends Ui.DataField {
         var currentNumberFont = Gfx.FONT_NUMBER_MEDIUM;
         var capValueFont = Gfx.FONT_MEDIUM;
         var capSourceFont = Gfx.FONT_TINY;
-        var displayW = dc.getWidth();
-        var displayH = dc.getHeight();
-        var minDim = _min(displayW, displayH);
-        var screenCenterX = Math.floor(displayW / 2);
-        var screenCenterY = Math.floor(displayH / 2);
-        var screenRadius = Math.floor(minDim / 2);
         var outerInset = 12;
         var bandThickness = 9;
         if (sizeClass == 0) {
@@ -909,27 +891,28 @@ class MarathonCoachField extends Ui.DataField {
             bandThickness = 12;
         }
 
-        var outerRadius = screenRadius - outerInset;
+        var outerRadius = _min(areaW, areaH) - outerInset;
         if (outerRadius < bandThickness + 2) {
             outerRadius = bandThickness + 2;
         }
         var centerX = areaX + outerRadius + 2;
         var centerY = areaY + outerRadius + 2;
-        centerX = screenCenterX;
-        centerY = screenCenterY;
         var innerRadius = outerRadius - bandThickness;
         if (innerRadius < 1) {
             innerRadius = 1;
         }
         var fillEndDeg = _resolveHeartRateArcEndDeg();
         var fillColor = _resolveHeartRateArcColor();
+        var allowHeartRateArc = (sizeClass != 2);
 
-        _drawThickArc(dc, centerX, centerY, innerRadius, outerRadius, HR_ARC_START_DEG, HR_ARC_MAX_DEG, HR_ARC_BASE_COLOR);
-        if (fillEndDeg > HR_ARC_START_DEG) {
-            _drawThickArc(dc, centerX, centerY, innerRadius, outerRadius, HR_ARC_START_DEG, fillEndDeg, fillColor);
-        }
-        if (_allowedMaxHeartRate != null) {
-            _drawRadialTick(dc, centerX, centerY, innerRadius - 2, outerRadius + 2, HR_ARC_CAP_DEG, Gfx.COLOR_WHITE);
+        if (allowHeartRateArc) {
+            _drawThickArc(dc, centerX, centerY, innerRadius, outerRadius, HR_ARC_START_DEG, HR_ARC_MAX_DEG, HR_ARC_BASE_COLOR);
+            if (fillEndDeg > HR_ARC_START_DEG) {
+                _drawThickArc(dc, centerX, centerY, innerRadius, outerRadius, HR_ARC_START_DEG, fillEndDeg, fillColor);
+            }
+            if (_allowedMaxHeartRate != null) {
+                _drawRadialTick(dc, centerX, centerY, innerRadius - 2, outerRadius + 2, HR_ARC_CAP_DEG, Gfx.COLOR_WHITE);
+            }
         }
 
         var currentText = _formatHeartRateValueText(_currentHeartRate);
@@ -1523,18 +1506,61 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         dc.setColor(color, Gfx.COLOR_TRANSPARENT);
-        for (var radius = innerRadius; radius <= outerRadius; radius += 1) {
-            var startPoint = _arcPoint(centerX, centerY, radius, startDeg);
-            var prevX = startPoint[0];
-            var prevY = startPoint[1];
-            for (var deg = startDeg + 3; deg <= endDeg; deg += 3) {
-                var point = _arcPoint(centerX, centerY, radius, deg);
-                dc.drawLine(prevX, prevY, point[0], point[1]);
-                prevX = point[0];
-                prevY = point[1];
+        var arcStepDeg = HR_ARC_STEP_DEG;
+        if (outerRadius >= 96) {
+            arcStepDeg = HR_ARC_STEP_DEG * 2;
+        }
+        var radiusStep = 1;
+        var thickness = outerRadius - innerRadius;
+        if (thickness >= 12) {
+            radiusStep = 3;
+        } else if (thickness >= 8) {
+            radiusStep = 2;
+        }
+        var startRad = (startDeg * Math.PI) / 180.0;
+        var stepRad = (arcStepDeg * Math.PI) / 180.0;
+        var endRad = (endDeg * Math.PI) / 180.0;
+        var cosStep = Math.cos(stepRad);
+        var sinStep = Math.sin(stepRad);
+        for (var radius = innerRadius; radius <= outerRadius; radius += radiusStep) {
+            var cosAngle = Math.cos(startRad);
+            var sinAngle = Math.sin(startRad);
+            var prevX = Math.floor(centerX + (cosAngle * radius) + 0.5);
+            var prevY = Math.floor(centerY + (sinAngle * radius) + 0.5);
+            for (var deg = startDeg + arcStepDeg; deg <= endDeg; deg += arcStepDeg) {
+                var nextCosAngle = (cosAngle * cosStep) - (sinAngle * sinStep);
+                var nextSinAngle = (sinAngle * cosStep) + (cosAngle * sinStep);
+                cosAngle = nextCosAngle;
+                sinAngle = nextSinAngle;
+                var pointX = Math.floor(centerX + (cosAngle * radius) + 0.5);
+                var pointY = Math.floor(centerY + (sinAngle * radius) + 0.5);
+                dc.drawLine(prevX, prevY, pointX, pointY);
+                prevX = pointX;
+                prevY = pointY;
             }
-            var endPoint = _arcPoint(centerX, centerY, radius, endDeg);
-            dc.drawLine(prevX, prevY, endPoint[0], endPoint[1]);
+            var endX = Math.floor(centerX + (Math.cos(endRad) * radius) + 0.5);
+            var endY = Math.floor(centerY + (Math.sin(endRad) * radius) + 0.5);
+            dc.drawLine(prevX, prevY, endX, endY);
+        }
+        if (((outerRadius - innerRadius) % radiusStep) != 0) {
+            var edgeCosAngle = Math.cos(startRad);
+            var edgeSinAngle = Math.sin(startRad);
+            var edgePrevX = Math.floor(centerX + (edgeCosAngle * outerRadius) + 0.5);
+            var edgePrevY = Math.floor(centerY + (edgeSinAngle * outerRadius) + 0.5);
+            for (var edgeDeg = startDeg + arcStepDeg; edgeDeg <= endDeg; edgeDeg += arcStepDeg) {
+                var edgeNextCosAngle = (edgeCosAngle * cosStep) - (edgeSinAngle * sinStep);
+                var edgeNextSinAngle = (edgeSinAngle * cosStep) + (edgeCosAngle * sinStep);
+                edgeCosAngle = edgeNextCosAngle;
+                edgeSinAngle = edgeNextSinAngle;
+                var edgePointX = Math.floor(centerX + (edgeCosAngle * outerRadius) + 0.5);
+                var edgePointY = Math.floor(centerY + (edgeSinAngle * outerRadius) + 0.5);
+                dc.drawLine(edgePrevX, edgePrevY, edgePointX, edgePointY);
+                edgePrevX = edgePointX;
+                edgePrevY = edgePointY;
+            }
+            var edgeEndX = Math.floor(centerX + (Math.cos(endRad) * outerRadius) + 0.5);
+            var edgeEndY = Math.floor(centerY + (Math.sin(endRad) * outerRadius) + 0.5);
+            dc.drawLine(edgePrevX, edgePrevY, edgeEndX, edgeEndY);
         }
     }
 
