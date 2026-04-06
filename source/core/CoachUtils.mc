@@ -17,7 +17,8 @@ module CoachUtils {
             return 10.0;
         }
         if (index == 3) {
-            return 5.0;
+            // Legacy 5km setting now falls forward to the supported SHORT profile.
+            return 10.0;
         }
         return null;
     }

@@ -15,6 +15,10 @@ class MarathonCoachFieldSmoothingHarness extends MarathonCoachField {
     var _testPaceSecPerKm = null;
     var _testAllowedMaxHeartRate = 150;
     var _testActiveHeartRateZones as Lang.Array<Lang.Number> = [100, 120, 140, 160, 180];
+    var _testHrOverTriggerSec = 8;
+    var _testHrOverStrongTriggerSec = 3;
+    var _testHrOverReleaseSec = 5;
+    var _testHrOverReleaseDeltaBpm = 2;
 
     function initialize() {
         MarathonCoachField.initialize();
@@ -49,15 +53,19 @@ class MarathonCoachFieldSmoothingHarness extends MarathonCoachField {
     }
 
     function _getHrOverTriggerSec(distanceKm) {
-        return 0;
+        return _testHrOverTriggerSec;
+    }
+
+    function _getHrOverStrongTriggerSec() {
+        return _testHrOverStrongTriggerSec;
     }
 
     function _getHrOverReleaseSec(distanceKm) {
-        return 0;
+        return _testHrOverReleaseSec;
     }
 
     function _getHrOverReleaseOffsetBpm(distanceKm) {
-        return 2;
+        return _testHrOverReleaseDeltaBpm;
     }
 }
 
@@ -95,7 +103,7 @@ function testMapRaceDistanceIndexToKm_knownValues(logger) {
     _assertFloatNear(CoachUtils.mapRaceDistanceIndexToKm(0), 42.195, 0.0001, "index 0 should be full marathon");
     _assertFloatNear(CoachUtils.mapRaceDistanceIndexToKm(1), 21.0975, 0.0001, "index 1 should be half marathon");
     _assertFloatNear(CoachUtils.mapRaceDistanceIndexToKm(2), 10.0, 0.0001, "index 2 should be 10km");
-    _assertFloatNear(CoachUtils.mapRaceDistanceIndexToKm(3), 5.0, 0.0001, "index 3 should be 5km");
+    _assertFloatNear(CoachUtils.mapRaceDistanceIndexToKm(3), 10.0, 0.0001, "legacy index 3 should fall forward to 10km");
     Test.assertMessage(CoachUtils.mapRaceDistanceIndexToKm(4) == null, "unknown index should map to null");
     return true;
 }
@@ -226,16 +234,16 @@ function testHeartRateGaugeState_boundaries(logger) {
     Test.assertMessage(sut._resolveHeartRateGaugeState() == null, "state should be null without hr/cap");
 
     sut._allowedMaxHeartRate = 152;
-    sut._currentHeartRate = 148;
+    sut._currentHeartRate = 149;
     Test.assertEqual(0, sut._resolveHeartRateGaugeState());
 
     sut._currentHeartRate = 150;
     Test.assertEqual(1, sut._resolveHeartRateGaugeState());
 
-    sut._currentHeartRate = 152;
+    sut._currentHeartRate = 153;
     Test.assertEqual(1, sut._resolveHeartRateGaugeState());
 
-    sut._currentHeartRate = 153;
+    sut._currentHeartRate = 154;
     Test.assertEqual(2, sut._resolveHeartRateGaugeState());
     return true;
 }
@@ -274,12 +282,14 @@ function testHeartRateUpdate_appliesEmaAndRoundedDisplay(logger) {
     sut._testHeartRate = 130;
     sut._updateHeartRate(null);
     _assertFloatNear(sut._currentHeartRate, 130.0, 0.0001, "first heart-rate sample should seed EMA");
+    _assertFloatNear(sut._judgeHeartRate, 130.0, 0.0001, "judge heart-rate should seed independently");
     Test.assertEqual("130 / cap 150", sut._hrZoneText);
 
     sut._testElapsedSec = 2;
     sut._testHeartRate = 143;
     sut._updateHeartRate(null);
-    _assertFloatNear(sut._currentHeartRate, 132.0, 0.0001, "heart-rate EMA should use 12-second window");
+    _assertFloatNear(sut._currentHeartRate, 132.0, 0.0001, "display heart-rate EMA should use 12-second window");
+    _assertFloatNear(sut._judgeHeartRate, 135.2, 0.0001, "judge heart-rate EMA should use 4-second window");
     Test.assertEqual("132", sut._formatHeartRateValueText(sut._currentHeartRate));
     Test.assertEqual("132 / cap 150", sut._hrZoneText);
     return true;
@@ -325,7 +335,60 @@ function testHrOverState_usesSmoothedHeartRate(logger) {
     sut._testElapsedSec = 2;
     sut._testHeartRate = 166;
     sut._updateHeartRate(null);
-    _assertFloatNear(sut._currentHeartRate, 144.0, 0.0001, "hr-over should see the EMA heart rate");
+    _assertFloatNear(sut._currentHeartRate, 144.0, 0.0001, "display heart-rate should keep the slower EMA");
+    _assertFloatNear(sut._judgeHeartRate, 150.4, 0.0001, "hr-over should use the judge EMA heart rate");
+    sut._updateHrOverState(null);
+    Test.assertEqual(false, sut._hrOverActive);
+    return true;
+}
+
+(:test)
+function testHrOverState_entersAfterSustainedJudgeDelta(logger) {
+    var sut = _newSmoothingSut();
+    sut._allowedMaxHeartRate = 150;
+
+    sut._testElapsedSec = 1;
+    sut._judgeHeartRate = 152;
+    sut._updateHrOverState(null);
+    Test.assertEqual(false, sut._hrOverActive);
+
+    sut._testElapsedSec = 9;
+    sut._judgeHeartRate = 152;
+    sut._updateHrOverState(null);
+    Test.assertEqual(true, sut._hrOverActive);
+    return true;
+}
+
+(:test)
+function testHrOverState_entersQuicklyOnStrongJudgeDelta(logger) {
+    var sut = _newSmoothingSut();
+    sut._allowedMaxHeartRate = 150;
+
+    sut._testElapsedSec = 1;
+    sut._judgeHeartRate = 154;
+    sut._updateHrOverState(null);
+    Test.assertEqual(false, sut._hrOverActive);
+
+    sut._testElapsedSec = 4;
+    sut._judgeHeartRate = 154;
+    sut._updateHrOverState(null);
+    Test.assertEqual(true, sut._hrOverActive);
+    return true;
+}
+
+(:test)
+function testHrOverState_releasesAfterJudgeRecovery(logger) {
+    var sut = _newSmoothingSut();
+    sut._allowedMaxHeartRate = 150;
+    sut._hrOverActive = true;
+
+    sut._testElapsedSec = 10;
+    sut._judgeHeartRate = 148;
+    sut._updateHrOverState(null);
+    Test.assertEqual(true, sut._hrOverActive);
+
+    sut._testElapsedSec = 15;
+    sut._judgeHeartRate = 148;
     sut._updateHrOverState(null);
     Test.assertEqual(false, sut._hrOverActive);
     return true;
@@ -430,17 +493,37 @@ function testBuildDashboardElapsedText_compactsSubHourValues(logger) {
 function testHeartRateArcEndDeg_reservesCapAndOverrunSegment(logger) {
     var sut = _newUtilsSut();
     sut._allowedMaxHeartRate = 150;
+    sut._capProfileMaxHeartRate = 180;
 
     sut._currentHeartRate = 150;
     _assertFloatNear(sut._resolveHeartRateArcEndDeg(), 255, 0.0001, "cap should map to 11:30 tick");
 
-    sut._currentHeartRate = 165;
-    _assertFloatNear(sut._resolveHeartRateArcEndDeg(), 270, 0.0001, "110 percent should map to 12 oclock");
+    sut._currentHeartRate = 160;
+    _assertFloatNear(sut._resolveHeartRateArcEndDeg(), 270, 0.0001, "cap plus ten bpm should map to 12 oclock");
 
     sut._currentHeartRate = 135;
     Test.assertMessage(
         sut._resolveHeartRateArcEndDeg() >= 247 and sut._resolveHeartRateArcEndDeg() <= 248,
         "90 percent should land just before the cap tick"
     );
+    return true;
+}
+
+(:test)
+function testHeartRateArcColor_usesDeltaBands(logger) {
+    var sut = _newUtilsSut();
+    sut._allowedMaxHeartRate = 150;
+
+    sut._currentHeartRate = 143;
+    Test.assertEqual(0x63C84A, sut._resolveHeartRateArcColor());
+
+    sut._currentHeartRate = 146;
+    Test.assertEqual(0xE0C24A, sut._resolveHeartRateArcColor());
+
+    sut._currentHeartRate = 149;
+    Test.assertEqual(0xF29F67, sut._resolveHeartRateArcColor());
+
+    sut._currentHeartRate = 152;
+    Test.assertEqual(0xF01818, sut._resolveHeartRateArcColor());
     return true;
 }

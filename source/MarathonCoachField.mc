@@ -21,7 +21,6 @@ class MarathonCoachField extends Ui.DataField {
     const LAP_DIAG_LOG = true;
     const FINISH_DIAG_LOG = true;
     const FINISH_DIAG_MARGIN_KM = 1.0;
-    const HR_OVER_TRIGGER_MARGIN_BPM = 1;
     const MIN_DISTANCE_FOR_PREDICTION_KM = 0.05;
     const PREDICTION_ON_PACE_THRESHOLD_SEC = 60;
     const SLOPE_UP_THRESHOLD = 0.03;
@@ -36,8 +35,10 @@ class MarathonCoachField extends Ui.DataField {
     const ACTION_EASE_MIN_HEADROOM_BPM = 3;
     const ACTION_EASE_BASELINE_HR_DELTA_BPM = 6;
     const DANGER_PACE_EXTRA_SEC = 4;
-    const HEART_RATE_EMA_WINDOW_SEC = 12;
-    const HEART_RATE_EMA_ALPHA = 2.0 / (HEART_RATE_EMA_WINDOW_SEC + 1.0);
+    const HEART_RATE_DISPLAY_EMA_WINDOW_SEC = 12;
+    const HEART_RATE_DISPLAY_EMA_ALPHA = 2.0 / (HEART_RATE_DISPLAY_EMA_WINDOW_SEC + 1.0);
+    const HEART_RATE_JUDGE_EMA_WINDOW_SEC = 4;
+    const HEART_RATE_JUDGE_EMA_ALPHA = 2.0 / (HEART_RATE_JUDGE_EMA_WINDOW_SEC + 1.0);
     const PACE_EMA_WINDOW_SEC = 18;
     const PACE_EMA_ALPHA = 2.0 / (PACE_EMA_WINDOW_SEC + 1.0);
     const RACE_PROFILE_FULL = 0;
@@ -56,7 +57,6 @@ class MarathonCoachField extends Ui.DataField {
     const HALF_DISTANCE_KM = 21.0975;
     const HALF_DISTANCE_TOLERANCE_KM = 0.25;
     const TEN_DISTANCE_KM = 10.0;
-    const FIVE_DISTANCE_KM = 5.0;
     const SETTINGS_LOG = true;
     const FIT_FACT_LOG = true;
     const DIST_PROBE_LOG = true;
@@ -70,9 +70,7 @@ class MarathonCoachField extends Ui.DataField {
     const HR_ARC_START_DEG = 180;
     const HR_ARC_CAP_DEG = 255;
     const HR_ARC_MAX_DEG = 270;
-    const HR_ARC_MAX_RATIO = 1.1;
-    const HR_ARC_SAFE_RATIO = 0.90;
-    const HR_ARC_CAUTION_RATIO = 0.97;
+    const HR_ARC_OVERFLOW_BPM = 10;
     const HR_ARC_BASE_COLOR = 0x3A4146;
     const HR_ARC_SAFE_COLOR = 0x63C84A;
     const HR_ARC_CAUTION_COLOR = 0xE0C24A;
@@ -100,7 +98,6 @@ class MarathonCoachField extends Ui.DataField {
     const HR_CAP_STATE_SAFE = 0;
     const HR_CAP_STATE_CAUTION = 1;
     const HR_CAP_STATE_OVER = 2;
-    const HR_CAP_CAUTION_MARGIN_BPM = 2;
 
     var _goalPredictionLabelText = "Pred.";
     var _goalPredictionLabelVisible = true;
@@ -134,12 +131,17 @@ class MarathonCoachField extends Ui.DataField {
     var _timerRunning = false;
     var _lastElapsedSec = null;
     var _currentHeartRate = null;
+    var _judgeHeartRate = null;
     var _activeHeartRateZones as Lang.Array<Lang.Number> = [];
     var _currentHeartRateZone = null;
     var _currentHeartRateZoneUpper = null;
     var _currentHeartRateZoneLower = null;
     var _currentHeartRateGaugeRatio = null;
     var _allowedMaxHeartRate = null;
+    var _capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_NONE;
+    var _capLactateThresholdHeartRate = null;
+    var _capProfileMaxHeartRate = null;
+    var _capRestingHeartRate = null;
     var _allowedMaxHeartRateZone = null;
     var _allowedMaxHeartRateZoneUpper = null;
     var _allowedMaxHeartRateZoneLower = null;
@@ -147,6 +149,7 @@ class MarathonCoachField extends Ui.DataField {
     var _hrZoneText = "-- / cap --";
     var _hrOverActive = false;
     var _hrOverStartSec = null;
+    var _hrStrongOverStartSec = null;
     var _hrRecoverStartSec = null;
     var _pushActive = false;
     var _pushStartSec = null;
@@ -284,12 +287,17 @@ class MarathonCoachField extends Ui.DataField {
         _goalPredictionDeltaSec = null;
         _goalPredictionLabelVisible = true;
         _currentHeartRate = null;
+        _judgeHeartRate = null;
         _activeHeartRateZones = [];
         _currentHeartRateZone = null;
         _currentHeartRateZoneUpper = null;
         _currentHeartRateZoneLower = null;
         _currentHeartRateGaugeRatio = null;
         _allowedMaxHeartRate = null;
+        _capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_NONE;
+        _capLactateThresholdHeartRate = null;
+        _capProfileMaxHeartRate = null;
+        _capRestingHeartRate = null;
         _allowedMaxHeartRateZone = null;
         _allowedMaxHeartRateZoneUpper = null;
         _allowedMaxHeartRateZoneLower = null;
@@ -297,6 +305,7 @@ class MarathonCoachField extends Ui.DataField {
         _hrZoneText = "-- / cap --";
         _hrOverActive = false;
         _hrOverStartSec = null;
+        _hrStrongOverStartSec = null;
         _hrRecoverStartSec = null;
         _pushActive = false;
         _pushStartSec = null;
@@ -1553,49 +1562,86 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveHeartRateGaugeState() {
-        if (_currentHeartRate == null or _allowedMaxHeartRate == null) {
+        var deltaBpm = _resolveHeartRateDeltaBpm(_currentHeartRate);
+        if (deltaBpm == null) {
             return null;
         }
-        if (_currentHeartRate >= (_allowedMaxHeartRate + 1)) {
+        if (deltaBpm >= RaceStrategyUtils.getHrOverTriggerDeltaBpm()) {
             return HR_CAP_STATE_OVER;
         }
-        if (_currentHeartRate >= (_allowedMaxHeartRate - HR_CAP_CAUTION_MARGIN_BPM)) {
+        if (deltaBpm >= -2) {
             return HR_CAP_STATE_CAUTION;
         }
         return HR_CAP_STATE_SAFE;
     }
 
-    function _resolveHeartRateArcRatio() {
-        if (_currentHeartRate == null) {
-            return 0.0;
+    function _resolveHeartRateDeltaBpm(heartRate) {
+        if (heartRate == null or _allowedMaxHeartRate == null) {
+            return null;
         }
-        if (_allowedMaxHeartRate != null and _allowedMaxHeartRate > 0) {
-            return _clamp((_currentHeartRate * 1.0) / (_allowedMaxHeartRate * 1.0), 0.0, HR_ARC_MAX_RATIO);
+        return heartRate - _allowedMaxHeartRate;
+    }
+
+    function _resolveHeartRateArcMaxHeartRate() {
+        if (_allowedMaxHeartRate == null or _allowedMaxHeartRate <= 0) {
+            return null;
         }
-        return _clamp(_resolveHeartRateGaugeRatio(), 0.0, 1.0);
+
+        var arcMaxHeartRate = _allowedMaxHeartRate + HR_ARC_OVERFLOW_BPM;
+        if (_capProfileMaxHeartRate != null and _capProfileMaxHeartRate > 0 and _capProfileMaxHeartRate < arcMaxHeartRate) {
+            arcMaxHeartRate = _capProfileMaxHeartRate;
+        }
+        if (arcMaxHeartRate < _allowedMaxHeartRate) {
+            arcMaxHeartRate = _allowedMaxHeartRate;
+        }
+        return arcMaxHeartRate;
     }
 
     function _resolveHeartRateArcEndDeg() {
-        var ratio = _resolveHeartRateArcRatio();
-        if (ratio <= 0) {
+        if (_currentHeartRate == null) {
             return HR_ARC_START_DEG;
         }
-        if (ratio <= 1.0) {
-            return HR_ARC_START_DEG + Math.floor(((HR_ARC_CAP_DEG - HR_ARC_START_DEG) * ratio) + 0.5);
+
+        if (_allowedMaxHeartRate == null or _allowedMaxHeartRate <= 0) {
+            var fallbackRatio = _clamp(_resolveHeartRateGaugeRatio(), 0.0, 1.0);
+            return HR_ARC_START_DEG + Math.floor(((HR_ARC_MAX_DEG - HR_ARC_START_DEG) * fallbackRatio) + 0.5);
         }
-        var overRatio = _clamp((ratio - 1.0) / (HR_ARC_MAX_RATIO - 1.0), 0.0, 1.0);
+
+        var clampedCurrentHeartRate = _currentHeartRate;
+        if (clampedCurrentHeartRate < 0) {
+            clampedCurrentHeartRate = 0;
+        }
+
+        if (clampedCurrentHeartRate <= _allowedMaxHeartRate) {
+            var capRatio = _clamp((clampedCurrentHeartRate * 1.0) / (_allowedMaxHeartRate * 1.0), 0.0, 1.0);
+            return HR_ARC_START_DEG + Math.floor(((HR_ARC_CAP_DEG - HR_ARC_START_DEG) * capRatio) + 0.5);
+        }
+
+        var arcMaxHeartRate = _resolveHeartRateArcMaxHeartRate();
+        if (arcMaxHeartRate == null or arcMaxHeartRate <= _allowedMaxHeartRate) {
+            return HR_ARC_CAP_DEG;
+        }
+
+        var overRatio = _clamp(
+            ((clampedCurrentHeartRate - _allowedMaxHeartRate) * 1.0) / ((arcMaxHeartRate - _allowedMaxHeartRate) * 1.0),
+            0.0,
+            1.0
+        );
         return HR_ARC_CAP_DEG + Math.floor(((HR_ARC_MAX_DEG - HR_ARC_CAP_DEG) * overRatio) + 0.5);
     }
 
     function _resolveHeartRateArcColor() {
-        var ratio = _resolveHeartRateArcRatio();
-        if (ratio >= 1.0) {
+        var deltaBpm = _resolveHeartRateDeltaBpm(_currentHeartRate);
+        if (deltaBpm == null) {
+            return HR_ARC_CAUTION_COLOR;
+        }
+        if (deltaBpm >= RaceStrategyUtils.getHrOverTriggerDeltaBpm()) {
             return HR_ARC_DANGER_COLOR;
         }
-        if (ratio >= HR_ARC_CAUTION_RATIO) {
+        if (deltaBpm >= -2) {
             return HR_ARC_WARNING_COLOR;
         }
-        if (ratio >= HR_ARC_SAFE_RATIO) {
+        if (deltaBpm >= -5) {
             return HR_ARC_CAUTION_COLOR;
         }
         return HR_ARC_SAFE_COLOR;
@@ -1868,9 +1914,11 @@ class MarathonCoachField extends Ui.DataField {
     function _updateHeartRate(info) {
         var heartRate = _extractCurrentHeartRate(info);
         if (heartRate != null and heartRate > 0) {
-            _currentHeartRate = _applyEmaSample(_currentHeartRate, heartRate, HEART_RATE_EMA_ALPHA);
+            _currentHeartRate = _applyEmaSample(_currentHeartRate, heartRate, HEART_RATE_DISPLAY_EMA_ALPHA);
+            _judgeHeartRate = _applyEmaSample(_judgeHeartRate, heartRate, HEART_RATE_JUDGE_EMA_ALPHA);
         } else {
             _currentHeartRate = null;
+            _judgeHeartRate = null;
         }
 
         _activeHeartRateZones = _resolveActiveHeartRateZones();
@@ -1978,22 +2026,134 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveAllowedMaxHeartRate(info, zones as Lang.Array<Lang.Number>) {
-        if (zones == null or zones.size() == 0) {
-            return null;
-        }
-
         var distanceKm = _extractElapsedDistanceKm(info);
-        var allowedZoneNumber = _getAllowedZoneNumber(distanceKm);
-        var zoneUpper = _getZoneUpperHeartRate(zones, allowedZoneNumber);
-        if (zoneUpper == null) {
+        var phase = _resolveRacePhase(distanceKm);
+        var profile = _resolveRaceProfile();
+        var anchors = _resolveHeartRateAnchorInfo(info);
+        _capHeartRateSource = anchors[0];
+        _capLactateThresholdHeartRate = anchors[1];
+        _capProfileMaxHeartRate = anchors[2];
+        _capRestingHeartRate = anchors[3];
+
+        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_NONE) {
             return null;
         }
 
-        var allowed = zoneUpper + _getAllowedZoneOffsetBpm(distanceKm) + _resolveHrCapBiasBpm();
-        if (allowed < 1) {
-            allowed = 1;
+        return RaceStrategyUtils.resolveCapHeartRate(
+            _capHeartRateSource,
+            profile,
+            phase,
+            _capLactateThresholdHeartRate,
+            _capProfileMaxHeartRate,
+            _capRestingHeartRate,
+            _resolveHrCapBiasBpm()
+        );
+    }
+
+    function _resolveHeartRateAnchorInfo(info) as Lang.Array {
+        var profile = _getUserHeartRateProfile();
+        var lthr = _resolveLactateThresholdHeartRate(profile, info);
+        var maxHeartRate = _resolveProfileMaxHeartRate(profile, info);
+        var restingHeartRate = _resolveProfileRestingHeartRate(profile);
+        var source = RaceStrategyUtils.resolveCapSource(lthr, maxHeartRate, restingHeartRate);
+        return [source, lthr, maxHeartRate, restingHeartRate];
+    }
+
+    function _getUserHeartRateProfile() {
+        try {
+            return UserProfile.getProfile();
+        } catch (e) {
+            return null;
         }
-        return allowed;
+    }
+
+    function _resolveLactateThresholdHeartRate(profile, info) {
+        var infoValue = _readInfoLactateThresholdHeartRate(info);
+        if (infoValue != null) {
+            return infoValue;
+        }
+        return _readProfileLactateThresholdHeartRate(profile);
+    }
+
+    function _readInfoLactateThresholdHeartRate(info) {
+        if (info != null and info has :lactateThresholdHeartRate) {
+            return _normalizeHeartRateValue(info.lactateThresholdHeartRate);
+        }
+        if (info != null and info has :runningLactateThresholdHeartRate) {
+            return _normalizeHeartRateValue(info.runningLactateThresholdHeartRate);
+        }
+        if (info != null and info has :thresholdHeartRate) {
+            return _normalizeHeartRateValue(info.thresholdHeartRate);
+        }
+        if (info != null and info has :runningThresholdHeartRate) {
+            return _normalizeHeartRateValue(info.runningThresholdHeartRate);
+        }
+        return null;
+    }
+
+    function _readProfileLactateThresholdHeartRate(profile) {
+        if (profile != null and profile has :lactateThresholdHeartRate) {
+            return _normalizeHeartRateValue(profile.lactateThresholdHeartRate);
+        }
+        if (profile != null and profile has :runningLactateThresholdHeartRate) {
+            return _normalizeHeartRateValue(profile.runningLactateThresholdHeartRate);
+        }
+        if (profile != null and profile has :thresholdHeartRate) {
+            return _normalizeHeartRateValue(profile.thresholdHeartRate);
+        }
+        if (profile != null and profile has :runningThresholdHeartRate) {
+            return _normalizeHeartRateValue(profile.runningThresholdHeartRate);
+        }
+        return null;
+    }
+
+    function _resolveProfileMaxHeartRate(profile, info) {
+        if (profile != null and profile has :maxHeartRate) {
+            var profileMaxHeartRate = _normalizeHeartRateValue(profile.maxHeartRate);
+            if (profileMaxHeartRate != null) {
+                return profileMaxHeartRate;
+            }
+        }
+
+        var infoMaxHeartRate = null;
+        if (info != null and info has :maxHeartRate) {
+            infoMaxHeartRate = _normalizeHeartRateValue(info.maxHeartRate);
+        }
+        if (infoMaxHeartRate != null) {
+            return infoMaxHeartRate;
+        }
+
+        var fallbackInfo = _getFallbackActivityInfo();
+        if (fallbackInfo != null and fallbackInfo has :maxHeartRate) {
+            return _normalizeHeartRateValue(fallbackInfo.maxHeartRate);
+        }
+        return null;
+    }
+
+    function _resolveProfileRestingHeartRate(profile) {
+        if (profile != null and profile has :restingHeartRate) {
+            var restingHeartRate = _normalizeHeartRateValue(profile.restingHeartRate);
+            if (restingHeartRate != null) {
+                return restingHeartRate;
+            }
+        }
+        if (profile != null and profile has :averageRestingHeartRate) {
+            return _normalizeHeartRateValue(profile.averageRestingHeartRate);
+        }
+        return null;
+    }
+
+    function _resolveCapHeartRateSourceText() {
+        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_LTHR) {
+            return "LTHR";
+        }
+        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_HRR) {
+            return "HRR";
+        }
+        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_MAXHR) {
+            return "MAXHR";
+        }
+        return "NONE";
     }
 
     function _resolveHeartRateZone(heartRate, zones as Lang.Array<Lang.Number>) {
@@ -2395,16 +2555,15 @@ class MarathonCoachField extends Ui.DataField {
         var line =
             "[MEDIUM_HR_DIAG]" +
             " hr=" + _factValue(_currentHeartRate) +
+            " judgeHr=" + _factValue(_judgeHeartRate) +
             " cap=" + _factValue(_allowedMaxHeartRate) +
+            " capSource=" + _resolveCapHeartRateSourceText() +
+            " lthr=" + _factValue(_capLactateThresholdHeartRate) +
+            " maxHr=" + _factValue(_capProfileMaxHeartRate) +
+            " restingHr=" + _factValue(_capRestingHeartRate) +
             " state=" + _factValue(_resolveHeartRateGaugeState()) +
             " hrText=" + _factValue(hrText) +
-            " capText=" + _factValue(capText) +
-            " zone=" + _factValue(_currentHeartRateZone) +
-            " zoneUpper=" + _factValue(_currentHeartRateZoneUpper) +
-            " zoneLower=" + _factValue(_currentHeartRateZoneLower) +
-            " capZone=" + _factValue(_allowedMaxHeartRateZone) +
-            " capZoneUpper=" + _factValue(_allowedMaxHeartRateZoneUpper) +
-            " capZoneLower=" + _factValue(_allowedMaxHeartRateZoneLower);
+            " capText=" + _factValue(capText);
         if (_isSameText(_lastMediumHrLayoutDiagLine, line)) {
             return;
         }
@@ -2663,29 +2822,19 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _getHrOverTriggerSec(distanceKm) {
-        return RaceStrategyUtils.getHrOverTriggerSec(
-            distanceKm,
-            _raceDistanceKm,
-            RACE_PHASE_1_END_PROGRESS,
-            RACE_PHASE_2_END_PROGRESS,
-            RACE_PHASE_3_END_PROGRESS,
-            RACE_PHASE_4_END_PROGRESS
-        );
+        return RaceStrategyUtils.getHrOverTriggerSec(null, null, null, null, null, null);
+    }
+
+    function _getHrOverStrongTriggerSec() {
+        return RaceStrategyUtils.getHrOverStrongTriggerSec();
     }
 
     function _getHrOverReleaseSec(distanceKm) {
-        return RaceStrategyUtils.getHrOverReleaseSec(distanceKm);
+        return RaceStrategyUtils.getHrOverReleaseSec(null);
     }
 
     function _getHrOverReleaseOffsetBpm(distanceKm) {
-        return RaceStrategyUtils.getHrOverReleaseOffsetBpm(
-            distanceKm,
-            _raceDistanceKm,
-            RACE_PHASE_1_END_PROGRESS,
-            RACE_PHASE_2_END_PROGRESS,
-            RACE_PHASE_3_END_PROGRESS,
-            RACE_PHASE_4_END_PROGRESS
-        );
+        return RaceStrategyUtils.getHrOverReleaseOffsetBpm(null, null, null, null, null, null);
     }
 
     function _getPushPaceDeltaThresholdSec(distanceKm) {
@@ -2875,9 +3024,10 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _updateHrOverState(info) {
-        if (_currentHeartRate == null or _allowedMaxHeartRate == null) {
+        if (_judgeHeartRate == null or _allowedMaxHeartRate == null) {
             _hrOverActive = false;
             _hrOverStartSec = null;
+            _hrStrongOverStartSec = null;
             _hrRecoverStartSec = null;
             return;
         }
@@ -2886,43 +3036,59 @@ class MarathonCoachField extends Ui.DataField {
         if (elapsedSec == null) {
             _hrOverActive = false;
             _hrOverStartSec = null;
+            _hrStrongOverStartSec = null;
             _hrRecoverStartSec = null;
             return;
         }
 
-        var distanceKm = _extractElapsedDistanceKm(info);
-        var triggerThreshold = _allowedMaxHeartRate + HR_OVER_TRIGGER_MARGIN_BPM;
-        var releaseThreshold = _allowedMaxHeartRate - _getHrOverReleaseOffsetBpm(distanceKm);
-        if (releaseThreshold < 1) {
-            releaseThreshold = 1;
-        }
-
-        if (_currentHeartRate > triggerThreshold) {
-            _hrRecoverStartSec = null;
-            if (!_hrOverActive) {
+        if (!_hrOverActive) {
+            if (_judgeHeartRate >= (_allowedMaxHeartRate + RaceStrategyUtils.getHrOverTriggerDeltaBpm())) {
                 if (_hrOverStartSec == null or elapsedSec < _hrOverStartSec) {
                     _hrOverStartSec = elapsedSec;
                 }
-                if ((elapsedSec - _hrOverStartSec) >= _getHrOverTriggerSec(distanceKm)) {
-                    _hrOverActive = true;
+            } else {
+                _hrOverStartSec = null;
+            }
+
+            if (_judgeHeartRate >= (_allowedMaxHeartRate + RaceStrategyUtils.getHrOverStrongTriggerDeltaBpm())) {
+                if (_hrStrongOverStartSec == null or elapsedSec < _hrStrongOverStartSec) {
+                    _hrStrongOverStartSec = elapsedSec;
                 }
+            } else {
+                _hrStrongOverStartSec = null;
+            }
+
+            if (
+                _hrStrongOverStartSec != null and
+                (elapsedSec - _hrStrongOverStartSec) >= _getHrOverStrongTriggerSec()
+            ) {
+                _hrOverActive = true;
+                _hrRecoverStartSec = null;
+                return;
+            }
+
+            if (
+                _hrOverStartSec != null and
+                (elapsedSec - _hrOverStartSec) >= _getHrOverTriggerSec(null)
+            ) {
+                _hrOverActive = true;
+                _hrRecoverStartSec = null;
             }
             return;
         }
 
         _hrOverStartSec = null;
-        if (_hrOverActive) {
-            if (_currentHeartRate <= releaseThreshold) {
-                if (_hrRecoverStartSec == null or elapsedSec < _hrRecoverStartSec) {
-                    _hrRecoverStartSec = elapsedSec;
-                }
-            } else {
-                _hrRecoverStartSec = null;
+        _hrStrongOverStartSec = null;
+        if (_judgeHeartRate <= (_allowedMaxHeartRate - _getHrOverReleaseOffsetBpm(null))) {
+            if (_hrRecoverStartSec == null or elapsedSec < _hrRecoverStartSec) {
+                _hrRecoverStartSec = elapsedSec;
             }
-            if (_hrRecoverStartSec != null and (elapsedSec - _hrRecoverStartSec) >= _getHrOverReleaseSec(distanceKm)) {
-                _hrOverActive = false;
-                _hrRecoverStartSec = null;
-            }
+        } else {
+            _hrRecoverStartSec = null;
+        }
+        if (_hrRecoverStartSec != null and (elapsedSec - _hrRecoverStartSec) >= _getHrOverReleaseSec(null)) {
+            _hrOverActive = false;
+            _hrRecoverStartSec = null;
         }
     }
 
@@ -3081,7 +3247,7 @@ class MarathonCoachField extends Ui.DataField {
             return 0.0;
         }
 
-        var scaled = (absAheadSec - GOAL_RUNNER_GAUGE_DEADZONE_SEC) / usableRangeSec;
+        var scaled = ((absAheadSec - GOAL_RUNNER_GAUGE_DEADZONE_SEC) * 1.0) / usableRangeSec;
         if (signedAheadSec < 0) {
             scaled = -scaled;
         }

@@ -51,6 +51,18 @@ function _rsAllowedZoneOffset(distanceKm, raceDistanceKm) {
     );
 }
 
+function _rsCap(profile, phase, source, lthr, maxHeartRate, restingHeartRate, biasBpm) {
+    return RaceStrategyUtils.resolveCapHeartRate(
+        source,
+        profile,
+        phase,
+        lthr,
+        maxHeartRate,
+        restingHeartRate,
+        biasBpm
+    );
+}
+
 (:test)
 function testRaceStrategyResolveProfile(logger) {
     Test.assertEqual(
@@ -110,6 +122,81 @@ function testRaceStrategyProgressAndPhase(logger) {
 }
 
 (:test)
+function testRaceStrategyCapSourcePriority(logger) {
+    Test.assertEqual(0, RaceStrategyUtils.resolveCapSource(null, null, null));
+    Test.assertEqual(1, RaceStrategyUtils.resolveCapSource(168, 190, 50));
+    Test.assertEqual(2, RaceStrategyUtils.resolveCapSource(null, 190, 50));
+    Test.assertEqual(3, RaceStrategyUtils.resolveCapSource(null, 190, null));
+    Test.assertEqual(3, RaceStrategyUtils.resolveCapSource(null, 190, 190));
+    return true;
+}
+
+(:test)
+function testRaceStrategyCapRatiosAndRounding(logger) {
+    _rsAssertNear(
+        RaceStrategyUtils.resolveCapRatio(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_1, RaceStrategyUtils.CAP_SOURCE_LTHR),
+        0.95,
+        0.0001,
+        "full phase 1 LTHR ratio"
+    );
+    _rsAssertNear(
+        RaceStrategyUtils.resolveCapRatio(RaceStrategyUtils.PROFILE_HALF, RaceStrategyUtils.PHASE_4, RaceStrategyUtils.CAP_SOURCE_HRR),
+        0.89,
+        0.0001,
+        "half phase 4 HRR ratio"
+    );
+    _rsAssertNear(
+        RaceStrategyUtils.resolveCapRatio(RaceStrategyUtils.PROFILE_SHORT, RaceStrategyUtils.PHASE_5, RaceStrategyUtils.CAP_SOURCE_MAXHR),
+        0.94,
+        0.0001,
+        "short phase 5 MaxHR ratio"
+    );
+
+    _rsAssertNear(
+        _rsCap(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_2, RaceStrategyUtils.CAP_SOURCE_LTHR, 168, 190, 50, 0),
+        161.0,
+        0.0001,
+        "full phase 2 LTHR cap"
+    );
+    _rsAssertNear(
+        _rsCap(RaceStrategyUtils.PROFILE_HALF, RaceStrategyUtils.PHASE_3, RaceStrategyUtils.CAP_SOURCE_HRR, null, 188, 52, 0),
+        170.0,
+        0.0001,
+        "half phase 3 HRR cap"
+    );
+    _rsAssertNear(
+        _rsCap(RaceStrategyUtils.PROFILE_SHORT, RaceStrategyUtils.PHASE_4, RaceStrategyUtils.CAP_SOURCE_MAXHR, null, 188, null, 0),
+        175.0,
+        0.0001,
+        "short phase 4 MaxHR cap"
+    );
+    return true;
+}
+
+(:test)
+function testRaceStrategyCapBiasAndClip(logger) {
+    _rsAssertNear(
+        _rsCap(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_5, RaceStrategyUtils.CAP_SOURCE_LTHR, 170, 190, 50, 8),
+        171.0,
+        0.0001,
+        "full LTHR cap should clip after bias"
+    );
+    _rsAssertNear(
+        _rsCap(RaceStrategyUtils.PROFILE_HALF, RaceStrategyUtils.PHASE_5, RaceStrategyUtils.CAP_SOURCE_HRR, null, 190, 50, 12),
+        188.0,
+        0.0001,
+        "half HRR cap should clip to max-based ceiling"
+    );
+    _rsAssertNear(
+        _rsCap(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_1, RaceStrategyUtils.CAP_SOURCE_HRR, null, 180, 50, -130),
+        51.0,
+        0.0001,
+        "large negative bias should respect resting-heart floor"
+    );
+    return true;
+}
+
+(:test)
 function testRaceStrategyAllowedZoneRules(logger) {
     Test.assertEqual(4, _rsAllowedZone(1.0, 10.0));
     Test.assertEqual(5, _rsAllowedZone(3.0, 10.0));
@@ -138,62 +225,12 @@ function testRaceStrategyAllowedZoneRules(logger) {
 
 (:test)
 function testRaceStrategyHrOverRules(logger) {
-    Test.assertEqual(
-        10,
-        RaceStrategyUtils.getHrOverTriggerSec(
-            40.0,
-            42.195,
-            RS_PHASE_1_END,
-            RS_PHASE_2_END,
-            RS_PHASE_3_END,
-            RS_PHASE_4_END
-        )
-    );
-    Test.assertEqual(
-        20,
-        RaceStrategyUtils.getHrOverTriggerSec(
-            42.2,
-            42.195,
-            RS_PHASE_1_END,
-            RS_PHASE_2_END,
-            RS_PHASE_3_END,
-            RS_PHASE_4_END
-        )
-    );
-    Test.assertEqual(
-        12,
-        RaceStrategyUtils.getHrOverTriggerSec(
-            20.0,
-            42.195,
-            RS_PHASE_1_END,
-            RS_PHASE_2_END,
-            RS_PHASE_3_END,
-            RS_PHASE_4_END
-        )
-    );
+    Test.assertEqual(8, RaceStrategyUtils.getHrOverTriggerSec(20.0, 42.195, RS_PHASE_1_END, RS_PHASE_2_END, RS_PHASE_3_END, RS_PHASE_4_END));
+    Test.assertEqual(3, RaceStrategyUtils.getHrOverStrongTriggerSec());
     Test.assertEqual(5, RaceStrategyUtils.getHrOverReleaseSec(20.0));
-    Test.assertEqual(
-        1,
-        RaceStrategyUtils.getHrOverReleaseOffsetBpm(
-            40.0,
-            42.195,
-            RS_PHASE_1_END,
-            RS_PHASE_2_END,
-            RS_PHASE_3_END,
-            RS_PHASE_4_END
-        )
-    );
-    Test.assertEqual(
-        2,
-        RaceStrategyUtils.getHrOverReleaseOffsetBpm(
-            20.0,
-            42.195,
-            RS_PHASE_1_END,
-            RS_PHASE_2_END,
-            RS_PHASE_3_END,
-            RS_PHASE_4_END
-        )
-    );
+    Test.assertEqual(2, RaceStrategyUtils.getHrOverTriggerDeltaBpm());
+    Test.assertEqual(4, RaceStrategyUtils.getHrOverStrongTriggerDeltaBpm());
+    Test.assertEqual(2, RaceStrategyUtils.getHrOverReleaseOffsetBpm(20.0, 42.195, RS_PHASE_1_END, RS_PHASE_2_END, RS_PHASE_3_END, RS_PHASE_4_END));
     return true;
 }
 

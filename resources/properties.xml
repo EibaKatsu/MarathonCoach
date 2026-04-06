@@ -19,7 +19,6 @@
                 <listEntry value="0">42.195 km (Full Marathon)</listEntry>
                 <listEntry value="1">21.0975 km (Half Marathon)</listEntry>
                 <listEntry value="2">10 km</listEntry>
-                <listEntry value="3">5 km</listEntry>
             </settingConfig>
         </setting>
         <setting propertyKey="@Properties.target_time_hour" title="@Strings.setting_target_hour">
