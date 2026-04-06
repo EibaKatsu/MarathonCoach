@@ -8,6 +8,9 @@
 2. `hrCapBiasBpm`（心拍上限バイアス -8..+8）
 3. `driftSensitivity`（予約値 0..7）
 
+- `hrCapBiasBpm` は `LTHR / HRR / MaxHR` のいずれかから算出した CAP HR に最後に加算する
+- bias 適用後も、安全クリップを優先する
+
 ## 互換方針
 - `custom_mode_code` のコード体系は後方互換のため旧スロットを保持してよい
 - 旧来の補給関連スロットは decode / encode 上に残っていても、現行通常版では使用しない
