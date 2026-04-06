@@ -880,6 +880,7 @@ class MarathonCoachField extends Ui.DataField {
         var currentFont = Gfx.FONT_LARGE;
         var currentNumberFont = Gfx.FONT_NUMBER_MEDIUM;
         var capValueFont = Gfx.FONT_MEDIUM;
+        var capSourceFont = Gfx.FONT_TINY;
         var displayW = dc.getWidth();
         var displayH = dc.getHeight();
         var minDim = _min(displayW, displayH);
@@ -892,15 +893,18 @@ class MarathonCoachField extends Ui.DataField {
             currentFont = Gfx.FONT_MEDIUM;
             currentNumberFont = Gfx.FONT_NUMBER_MILD;
             capValueFont = Gfx.FONT_SMALL;
+            capSourceFont = Gfx.FONT_XTINY;
             outerInset = 12;
             bandThickness = 9;
         } else if (sizeClass == 1) {
             currentNumberFont = Gfx.FONT_NUMBER_MEDIUM;
+            capSourceFont = Gfx.FONT_TINY;
             outerInset = 10;
             bandThickness = 10;
         } else if (sizeClass == 2) {
             currentNumberFont = Gfx.FONT_NUMBER_HOT;
             capValueFont = Gfx.FONT_MEDIUM;
+            capSourceFont = Gfx.FONT_TINY;
             outerInset = 12;
             bandThickness = 12;
         }
@@ -930,6 +934,7 @@ class MarathonCoachField extends Ui.DataField {
 
         var currentText = _formatHeartRateValueText(_currentHeartRate);
         var capValueText = _resolveHeartRateCapValueText();
+        var capSourceText = _resolveCapHeartRateSourceBadgeText();
         currentNumberFont = _resolveFittingNumberFont(
             dc,
             currentText,
@@ -947,6 +952,7 @@ class MarathonCoachField extends Ui.DataField {
             textCenterX += 12;
         }
         var capLineH = dc.getFontHeight(capValueFont);
+        var capSourceLineH = dc.getFontHeight(capSourceFont);
         var currentLineH = dc.getFontHeight(currentNumberFont);
         var rowGap = 6;
         var blockOffsetY = 6;
@@ -966,11 +972,23 @@ class MarathonCoachField extends Ui.DataField {
         var totalTextH = sharedTopLineH + rowGap + sharedBottomLineH;
         var anchorY = areaY + Math.floor((areaH - totalTextH) / 2) + blockOffsetY;
         var capValueY = anchorY + Math.floor((sharedTopLineH - capLineH) / 2);
+        var capSourceY = anchorY + Math.floor((sharedTopLineH - capSourceLineH) / 2);
         var currentY = anchorY + sharedTopLineH + rowGap + Math.floor((sharedBottomLineH - currentLineH) / 2);
+        var capValueW = dc.getTextWidthInPixels(capValueText, capValueFont);
+        var capSourceGap = 3;
+        if (sizeClass == 2) {
+            capSourceGap = 4;
+        }
+        var capSourceW = dc.getTextWidthInPixels(capSourceText, capSourceFont);
+        var capGroupW = capValueW + capSourceGap + capSourceW;
+        var capGroupStartX = textCenterX - Math.floor(capGroupW / 2);
+        var capValueX = capGroupStartX + Math.floor(capValueW / 2);
+        var capSourceX = capGroupStartX + capValueW + capSourceGap;
 
         _drawBoldText(dc, textCenterX, currentY, currentNumberFont, currentText, Gfx.TEXT_JUSTIFY_CENTER, Gfx.COLOR_WHITE);
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
-        dc.drawText(textCenterX, capValueY, capValueFont, capValueText, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(capValueX, capValueY, capValueFont, capValueText, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(capSourceX, capSourceY, capSourceFont, capSourceText, Gfx.TEXT_JUSTIFY_LEFT);
         _logTopRowLayoutDiag(
             "heart_rate",
             sizeClass,
@@ -987,7 +1005,7 @@ class MarathonCoachField extends Ui.DataField {
             currentLineH,
             capValueY,
             currentY,
-            capValueText,
+            capValueText + " " + capSourceText,
             currentText
         );
     }
@@ -2154,6 +2172,13 @@ class MarathonCoachField extends Ui.DataField {
             return "MAXHR";
         }
         return "NONE";
+    }
+
+    function _resolveCapHeartRateSourceBadgeText() {
+        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_MAXHR) {
+            return "MHR";
+        }
+        return _resolveCapHeartRateSourceText();
     }
 
     function _resolveHeartRateZone(heartRate, zones as Lang.Array<Lang.Number>) {

@@ -228,6 +228,24 @@ function testHeartRateCapText_reflectsLabelAndFallback(logger) {
 }
 
 (:test)
+function testCapHeartRateSourceBadgeText_usesCompactLabels(logger) {
+    var sut = _newUtilsSut();
+
+    sut._capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_LTHR;
+    Test.assertEqual("LTHR", sut._resolveCapHeartRateSourceBadgeText());
+
+    sut._capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_HRR;
+    Test.assertEqual("HRR", sut._resolveCapHeartRateSourceBadgeText());
+
+    sut._capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_MAXHR;
+    Test.assertEqual("MHR", sut._resolveCapHeartRateSourceBadgeText());
+
+    sut._capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_NONE;
+    Test.assertEqual("NONE", sut._resolveCapHeartRateSourceBadgeText());
+    return true;
+}
+
+(:test)
 function testHeartRateGaugeState_boundaries(logger) {
     var sut = _newUtilsSut();
 
