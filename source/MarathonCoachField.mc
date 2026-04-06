@@ -548,14 +548,10 @@ class MarathonCoachField extends Ui.DataField {
         var centerY = top + topBandH;
         var bottomY = top + squareSize - bottomBandH;
         var centerH = bottomY - centerY;
-        var heartRateAreaX = left + 2;
-        var heartRateAreaY = top + 10;
-        var heartRateAreaW = centerX - left - 6;
-        var heartRateAreaH = topBandH - 14;
         _drawStage = "layout:heart_rate";
         _logMediumDrawBlockDiag(sizeClass, "heart_rate:start");
-        _drawHeartRateDashboard(dc, heartRateAreaX, heartRateAreaY, heartRateAreaW, heartRateAreaH, sizeClass);
-        _drawHeartRateCapSourceOverlay(dc, heartRateAreaX, heartRateAreaY, heartRateAreaW, heartRateAreaH, sizeClass);
+        _drawHeartRateDashboard(dc, left + 2, top + 10, centerX - left - 6, topBandH - 14, sizeClass);
+        _drawHeartRateCapSourceOverlay(dc, left + 2, top + 10, centerX - left - 6, topBandH - 14, sizeClass);
         _logMediumDrawBlockDiag(sizeClass, "heart_rate:done");
         _drawStage = "layout:prediction";
         _logMediumDrawBlockDiag(sizeClass, "prediction:start");
