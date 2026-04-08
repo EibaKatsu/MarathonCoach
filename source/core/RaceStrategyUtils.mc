@@ -21,6 +21,7 @@ module RaceStrategyUtils {
 
     const MIN_VALID_HEART_RATE_BPM = 30;
     const MAX_VALID_HEART_RATE_BPM = 260;
+    const MIN_PLAUSIBLE_MAXHR_ABOVE_LTHR_BPM = 5;
 
     const CAP_RATIO_LTHR = [
         [0.95, 0.96, 0.97, 0.98, 0.99],
@@ -239,12 +240,13 @@ module RaceStrategyUtils {
 
     function resolveCapUpperClip(profile, source, lthr, maxHeartRate) {
         var upper = null;
+        var allowMaxHeartRateClip = _canApplyMaxHeartRateClip(source, lthr, maxHeartRate);
 
         if (profile == PROFILE_FULL) {
             if (_isLthrSource(source) and _isValidHeartRateAnchor(lthr)) {
                 upper = lthr + 1;
             }
-            if (_isValidHeartRateAnchor(maxHeartRate)) {
+            if (allowMaxHeartRateClip) {
                 upper = _minNonNull(upper, maxHeartRate - 3);
             }
             return upper;
@@ -254,13 +256,13 @@ module RaceStrategyUtils {
             if (_isLthrSource(source) and _isValidHeartRateAnchor(lthr)) {
                 upper = lthr + 3;
             }
-            if (_isValidHeartRateAnchor(maxHeartRate)) {
+            if (allowMaxHeartRateClip) {
                 upper = _minNonNull(upper, maxHeartRate - 2);
             }
             return upper;
         }
 
-        if (profile == PROFILE_SHORT and _isValidHeartRateAnchor(maxHeartRate)) {
+        if (profile == PROFILE_SHORT and allowMaxHeartRateClip) {
             return maxHeartRate - 1;
         }
 
@@ -742,6 +744,19 @@ module RaceStrategyUtils {
 
     function _isValidHeartRateAnchor(value) {
         return normalizeHeartRate(value) != null;
+    }
+
+    function _canApplyMaxHeartRateClip(source, lthr, maxHeartRate) {
+        if (!_isValidHeartRateAnchor(maxHeartRate)) {
+            return false;
+        }
+        if (!_isLthrSource(source)) {
+            return true;
+        }
+        if (!_isValidHeartRateAnchor(lthr)) {
+            return false;
+        }
+        return maxHeartRate >= (lthr + MIN_PLAUSIBLE_MAXHR_ABOVE_LTHR_BPM);
     }
 
     function _isLthrSource(source) {

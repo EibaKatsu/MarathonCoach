@@ -252,6 +252,23 @@ function testRaceStrategyPropertyLthrFallbackDecision(logger) {
 }
 
 (:test)
+function testRaceStrategyIgnoresImplausibleMaxHrClipForLthr(logger) {
+    var decision = RaceStrategyUtils.resolveCapHeartRateDecision(
+        RaceStrategyUtils.PROFILE_HALF,
+        RaceStrategyUtils.PHASE_1,
+        null,
+        171,
+        null,
+        154,
+        60
+    );
+    Test.assertMessage(decision[0] == 166, "property lthr cap should ignore implausibly low max hr clip");
+    Test.assertEqual(RaceStrategyUtils.CAP_SOURCE_LTHR_PROPERTY, decision[1]);
+    Test.assertMessage(decision[2] == 171, "selected lthr should remain the property value");
+    return true;
+}
+
+(:test)
 function testRaceStrategyAllowedZoneRules(logger) {
     Test.assertEqual(4, _rsAllowedZone(1.0, 10.0));
     Test.assertEqual(5, _rsAllowedZone(3.0, 10.0));
