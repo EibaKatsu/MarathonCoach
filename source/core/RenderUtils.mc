@@ -20,15 +20,12 @@ module RenderUtils {
         actionPushVariant,
         actionHoldVariant,
         actionEaseVariant,
-        fuelSoonVariant,
-        fuelNowVariant,
         recoveryVariant,
         hrWarningVariant,
         bgWarmup,
         bgActionPush,
         bgActionHold,
-        bgFuelSoon,
-        bgFuelNow,
+        bgRecovery,
         bgHrWarning
     ) {
         if (cardVariant == warmupVariant) {
@@ -43,14 +40,8 @@ module RenderUtils {
         if (cardVariant == actionEaseVariant) {
             return bgActionPush;
         }
-        if (cardVariant == fuelSoonVariant) {
-            return bgFuelSoon;
-        }
-        if (cardVariant == fuelNowVariant) {
-            return bgFuelNow;
-        }
         if (cardVariant == recoveryVariant) {
-            return bgFuelSoon;
+            return bgRecovery;
         }
         if (cardVariant == hrWarningVariant) {
             return bgHrWarning;
@@ -85,8 +76,6 @@ module RenderUtils {
         warmupVariant,
         actionPushVariant,
         actionEaseVariant,
-        fuelSoonVariant,
-        fuelNowVariant,
         recoveryVariant,
         hrWarningVariant
     ) {
@@ -98,12 +87,6 @@ module RenderUtils {
         }
         if (cardVariant == actionEaseVariant) {
             return 0x7F694F;
-        }
-        if (cardVariant == fuelSoonVariant) {
-            return 0x926E49;
-        }
-        if (cardVariant == fuelNowVariant) {
-            return 0xA14B58;
         }
         if (cardVariant == recoveryVariant) {
             return 0x4B7F68;
@@ -119,8 +102,6 @@ module RenderUtils {
         warmupVariant,
         actionPushVariant,
         actionEaseVariant,
-        fuelSoonVariant,
-        fuelNowVariant,
         recoveryVariant,
         hrWarningVariant
     ) {
@@ -132,12 +113,6 @@ module RenderUtils {
         }
         if (cardVariant == actionEaseVariant) {
             return 0x5E4B36;
-        }
-        if (cardVariant == fuelSoonVariant) {
-            return 0x70543A;
-        }
-        if (cardVariant == fuelNowVariant) {
-            return 0x883744;
         }
         if (cardVariant == recoveryVariant) {
             return 0x245844;
@@ -153,8 +128,6 @@ module RenderUtils {
         warmupVariant,
         actionPushVariant,
         actionEaseVariant,
-        fuelSoonVariant,
-        fuelNowVariant,
         recoveryVariant,
         hrWarningVariant
     ) {
@@ -166,12 +139,6 @@ module RenderUtils {
         }
         if (cardVariant == actionEaseVariant) {
             return 0x2E2418;
-        }
-        if (cardVariant == fuelSoonVariant) {
-            return 0x3D2D20;
-        }
-        if (cardVariant == fuelNowVariant) {
-            return 0x461925;
         }
         if (cardVariant == recoveryVariant) {
             return 0x15382B;
@@ -187,8 +154,6 @@ module RenderUtils {
         warmupVariant,
         actionPushVariant,
         actionEaseVariant,
-        fuelSoonVariant,
-        fuelNowVariant,
         recoveryVariant,
         hrWarningVariant
     ) {
@@ -200,12 +165,6 @@ module RenderUtils {
         }
         if (cardVariant == actionEaseVariant) {
             return 0x463726;
-        }
-        if (cardVariant == fuelSoonVariant) {
-            return 0x594230;
-        }
-        if (cardVariant == fuelNowVariant) {
-            return 0x6A2835;
         }
         if (cardVariant == recoveryVariant) {
             return 0x1E4B39;
@@ -221,8 +180,6 @@ module RenderUtils {
         warmupVariant,
         actionPushVariant,
         actionEaseVariant,
-        fuelSoonVariant,
-        fuelNowVariant,
         recoveryVariant,
         hrWarningVariant
     ) {
@@ -234,12 +191,6 @@ module RenderUtils {
         }
         if (cardVariant == actionEaseVariant) {
             return 0xB08A61;
-        }
-        if (cardVariant == fuelSoonVariant) {
-            return 0xC39A70;
-        }
-        if (cardVariant == fuelNowVariant) {
-            return 0xD97983;
         }
         if (cardVariant == recoveryVariant) {
             return 0x7BC1A6;
@@ -255,8 +206,6 @@ module RenderUtils {
         warmupVariant,
         actionPushVariant,
         actionEaseVariant,
-        fuelSoonVariant,
-        fuelNowVariant,
         recoveryVariant,
         hrWarningVariant
     ) {
@@ -268,12 +217,6 @@ module RenderUtils {
         }
         if (cardVariant == actionEaseVariant) {
             return 0xF1CC95;
-        }
-        if (cardVariant == fuelSoonVariant) {
-            return 0xFFD29A;
-        }
-        if (cardVariant == fuelNowVariant) {
-            return 0xFFC2B0;
         }
         if (cardVariant == recoveryVariant) {
             return 0xB2F0D2;
@@ -289,8 +232,6 @@ module RenderUtils {
         warmupVariant,
         actionPushVariant,
         actionEaseVariant,
-        fuelSoonVariant,
-        fuelNowVariant,
         recoveryVariant,
         hrWarningVariant
     ) {
@@ -302,12 +243,6 @@ module RenderUtils {
         }
         if (cardVariant == actionEaseVariant) {
             return 0xC39A6E;
-        }
-        if (cardVariant == fuelSoonVariant) {
-            return 0xD7AA76;
-        }
-        if (cardVariant == fuelNowVariant) {
-            return 0xD96E7E;
         }
         if (cardVariant == recoveryVariant) {
             return 0x5CC48E;

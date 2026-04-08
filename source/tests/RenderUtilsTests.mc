@@ -5,10 +5,8 @@ const RU_VARIANT_WARMUP = 0;
 const RU_VARIANT_ACTION_PUSH = 1;
 const RU_VARIANT_ACTION_HOLD = 2;
 const RU_VARIANT_ACTION_EASE = 3;
-const RU_VARIANT_FUEL_SOON = 4;
-const RU_VARIANT_FUEL_NOW = 5;
-const RU_VARIANT_RECOVERY = 6;
-const RU_VARIANT_HR_WARNING = 7;
+const RU_VARIANT_RECOVERY = 4;
+const RU_VARIANT_HR_WARNING = 5;
 
 function _ruAssertNear(actual, expected, epsilon, message) {
     Test.assertMessage((actual - expected) <= epsilon and (expected - actual) <= epsilon, message);
@@ -27,8 +25,7 @@ function testRenderUtilsCardBitmapSelection(logger) {
     var bgWarmup = "w";
     var bgPush = "p";
     var bgHold = "h";
-    var bgSoon = "s";
-    var bgNow = "n";
+    var bgRecovery = "c";
     var bgHr = "r";
 
     Test.assertEqual(
@@ -39,35 +36,29 @@ function testRenderUtilsCardBitmapSelection(logger) {
             RU_VARIANT_ACTION_PUSH,
             RU_VARIANT_ACTION_HOLD,
             RU_VARIANT_ACTION_EASE,
-            RU_VARIANT_FUEL_SOON,
-            RU_VARIANT_FUEL_NOW,
             RU_VARIANT_RECOVERY,
             RU_VARIANT_HR_WARNING,
             bgWarmup,
             bgPush,
             bgHold,
-            bgSoon,
-            bgNow,
+            bgRecovery,
             bgHr
         )
     );
     Test.assertEqual(
-        bgSoon,
+        bgRecovery,
         RenderUtils.getCardBgBitmapSmall(
             RU_VARIANT_RECOVERY,
             RU_VARIANT_WARMUP,
             RU_VARIANT_ACTION_PUSH,
             RU_VARIANT_ACTION_HOLD,
             RU_VARIANT_ACTION_EASE,
-            RU_VARIANT_FUEL_SOON,
-            RU_VARIANT_FUEL_NOW,
             RU_VARIANT_RECOVERY,
             RU_VARIANT_HR_WARNING,
             bgWarmup,
             bgPush,
             bgHold,
-            bgSoon,
-            bgNow,
+            bgRecovery,
             bgHr
         )
     );
@@ -79,15 +70,12 @@ function testRenderUtilsCardBitmapSelection(logger) {
             RU_VARIANT_ACTION_PUSH,
             RU_VARIANT_ACTION_HOLD,
             RU_VARIANT_ACTION_EASE,
-            RU_VARIANT_FUEL_SOON,
-            RU_VARIANT_FUEL_NOW,
             RU_VARIANT_RECOVERY,
             RU_VARIANT_HR_WARNING,
             bgWarmup,
             bgPush,
             bgHold,
-            bgSoon,
-            bgNow,
+            bgRecovery,
             bgHr
         )
     );
@@ -103,21 +91,17 @@ function testRenderUtilsCardColorPalette(logger) {
             RU_VARIANT_WARMUP,
             RU_VARIANT_ACTION_PUSH,
             RU_VARIANT_ACTION_EASE,
-            RU_VARIANT_FUEL_SOON,
-            RU_VARIANT_FUEL_NOW,
             RU_VARIANT_RECOVERY,
             RU_VARIANT_HR_WARNING
         )
     );
     Test.assertEqual(
-        0x883744,
+        0x245844,
         RenderUtils.getCardGradientTopColor(
-            RU_VARIANT_FUEL_NOW,
+            RU_VARIANT_RECOVERY,
             RU_VARIANT_WARMUP,
             RU_VARIANT_ACTION_PUSH,
             RU_VARIANT_ACTION_EASE,
-            RU_VARIANT_FUEL_SOON,
-            RU_VARIANT_FUEL_NOW,
             RU_VARIANT_RECOVERY,
             RU_VARIANT_HR_WARNING
         )
@@ -129,8 +113,6 @@ function testRenderUtilsCardColorPalette(logger) {
             RU_VARIANT_WARMUP,
             RU_VARIANT_ACTION_PUSH,
             RU_VARIANT_ACTION_EASE,
-            RU_VARIANT_FUEL_SOON,
-            RU_VARIANT_FUEL_NOW,
             RU_VARIANT_RECOVERY,
             RU_VARIANT_HR_WARNING
         )
@@ -142,8 +124,6 @@ function testRenderUtilsCardColorPalette(logger) {
             RU_VARIANT_WARMUP,
             RU_VARIANT_ACTION_PUSH,
             RU_VARIANT_ACTION_EASE,
-            RU_VARIANT_FUEL_SOON,
-            RU_VARIANT_FUEL_NOW,
             RU_VARIANT_RECOVERY,
             RU_VARIANT_HR_WARNING
         )
@@ -155,21 +135,17 @@ function testRenderUtilsCardColorPalette(logger) {
             RU_VARIANT_WARMUP,
             RU_VARIANT_ACTION_PUSH,
             RU_VARIANT_ACTION_EASE,
-            RU_VARIANT_FUEL_SOON,
-            RU_VARIANT_FUEL_NOW,
             RU_VARIANT_RECOVERY,
             RU_VARIANT_HR_WARNING
         )
     );
     Test.assertEqual(
-        0xD7AA76,
+        0x5CC48E,
         RenderUtils.getCardTopBandColor(
-            RU_VARIANT_FUEL_SOON,
+            RU_VARIANT_RECOVERY,
             RU_VARIANT_WARMUP,
             RU_VARIANT_ACTION_PUSH,
             RU_VARIANT_ACTION_EASE,
-            RU_VARIANT_FUEL_SOON,
-            RU_VARIANT_FUEL_NOW,
             RU_VARIANT_RECOVERY,
             RU_VARIANT_HR_WARNING
         )
@@ -181,8 +157,6 @@ function testRenderUtilsCardColorPalette(logger) {
             RU_VARIANT_WARMUP,
             RU_VARIANT_ACTION_PUSH,
             RU_VARIANT_ACTION_EASE,
-            RU_VARIANT_FUEL_SOON,
-            RU_VARIANT_FUEL_NOW,
             RU_VARIANT_RECOVERY,
             RU_VARIANT_HR_WARNING
         )
@@ -210,7 +184,7 @@ function testRenderUtilsCardFontRules(logger) {
 (:test)
 function testRenderUtilsAdjustSingleLineFont(logger) {
     var oneAscii = ["abcdefg"]; // 7 chars => shrink
-    var oneCjk = ["補給now"]; // contains non-ascii but should stay large if it still fits
+    var oneCjk = ["ラスト"]; // contains non-ascii but should stay large if it still fits
     var shortAscii = ["abc"];
 
     Test.assertEqual(

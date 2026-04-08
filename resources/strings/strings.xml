@@ -3,7 +3,6 @@
     <string id="Step1Status">Step1 Ready</string>
     <string id="Step2Status">Step2 Settings</string>
     <string id="Step3Status">Step3 Layout</string>
-    <string id="FuelLabel">Fuel</string>
     <string id="GoalTimeLabel">Tgt</string>
     <string id="GoalPredictionLabel">Pred.</string>
     <string id="PredictedDeltaLabel">Delta</string>
@@ -17,15 +16,4 @@
     <string id="ActionEaseText">Ease down</string>
     <string id="ActionEasePaceText">Ease pace</string>
     <string id="CardLastSpurtLabel">Final push</string>
-    <string id="CardFuelPrepLabel">Fuel prep</string>
-    <string id="CardFuelNowLabel">Fuel NOW</string>
-    <string id="FuelMeterPrimaryLabel">Fuel</string>
-    <string id="FuelMeterAltLabel">In</string>
-    <string id="FuelMeterWarningText">Fuel now</string>
-    <string id="FuelMeterWarningSubText">Press lap</string>
-    <string id="FuelMeterCautionPrefix">In </string>
-    <string id="FuelMeterCautionSuffix">m</string>
-    <string id="FuelMeterMinuteSuffix">m</string>
-    <string id="FuelMeterDoneText">Done</string>
-    <string id="FuelMeterNoPlanText">No plan</string>
 </resources>

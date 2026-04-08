@@ -28,12 +28,12 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
 
 ## 仕様（小文字）
 - `docs/spec/core.md`: 通常版の仕様
-- `docs/spec/custom_mode.md`: カスタムモード仕様
+- `docs/spec/custom_code.md`: カスタムコード仕様
 - `docs/spec/ui.md`: UI方針、文言、多言語、レイアウト
 - `docs/spec/logic_hr_zone.md`: レースプロファイル/HR ZONEロジック
 - `docs/spec/logic_action.md`: ACTION判定
 - `docs/spec/logic_drift.md`: DRIFT廃止メモ
-- `docs/spec/logic_fuel.md`: FUEL判定、LAPリセット、表示優先
+- `docs/spec/logic_fuel.md`: 補給仕様の廃止メモ
 - `docs/spec/distance_cards.md`: 距離通知廃止メモ
 - `docs/dev/message_integration_memo.md`: MessageInGarmin風カード統合メモ
 

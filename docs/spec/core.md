@@ -14,7 +14,7 @@
   - 目標時刻との差分を分単位のコンパクト表記で出す
   - レース距離超過後は `Over` と `+x.xxkm` 表示へ切り替える
 - 心拍管理
-  - `LTHR -> HRR -> MaxHR` の優先順位で CAP 心拍を決める
+  - `custom code direct CAP -> property LTHR -> device LTHR -> HRR -> MaxHR` の優先順位で CAP 心拍を決める
   - レース進行率と距離プロファイルから、その時点の許容心拍上限を決める
   - 心拍アーク色と CAP ティックで上限接近 / 超過を伝える
 - ペース / ゴール差ゲージ
@@ -31,39 +31,39 @@
 - 独自距離通知カード
 - DRIFT の常時表示
 
-## モード方針
-- 2モードを維持する
-  - 通常版
-  - カスタムモード
+## カスタムコード方針
 - 通常版はシンプルな設定で使えることを優先する
-- カスタムモードの詳細仕様は [custom_mode.md](/Users/eibakatsu/Documents/codex/MarathonCoach/docs/spec/custom_mode.md) を正とする
+- 高度な心拍CAP調整は `LTHR` のプロパティ指定またはカスタムコードで扱う
+- カスタムコードの詳細仕様は [custom_code.md](/Users/eibakatsu/codex/MarathonCoach/docs/spec/custom_code.md) を正とする
 
 ## 設定
-- 端末設定画面で扱う項目は次の4つ
+- 端末設定画面で扱う項目は次の5つ
   1. `race_distance_km`
   2. `target_time_hour`
   3. `target_time_minute`
-  4. `custom_mode_code`
+  4. `lthr_bpm`
+  5. `custom_mode_code`
 - `race_distance_km` はプリセット選択を使う
   - `42.195km`
   - `21.0975km`
   - `10km`
 - `target_time_hour` は `0..8`
 - `target_time_minute` は `00..59`
-- `custom_mode_code` は任意入力の英数字文字列とする
+- `lthr_bpm` は任意入力の整数 bpm とし、無効値は通常取得へフォールバックする
+- `custom_mode_code` は任意入力の英数字文字列とし、UI表示名は `Custom Code` とする
 
-## カスタムモードとの関係
-- `custom_mode_code` が有効な場合、走り方強度と心拍上限バイアスなどを上書きできる
-- `hrCapBiasBpm` はアンカー由来の CAP 心拍へ最後に加算する
-- 通常版の画面構成はカスタムモードでも同じダッシュボードを維持する
-- 補給関連の旧コード領域は後方互換のため予約のまま残してよいが、現行通常版では使用しない
-- カスタムモードは公開版から排除しないが、詳細パラメタの直接編集UIは持たない
+## カスタムコードとの関係
+- `custom_mode_code` が有効でも、CAP を変える経路は `S1〜S5` の直接指定だけに限定する
+- `S1〜S5` がすべて有効な場合のみ、通常の CAP 算出より優先して使う
+- `LTHR` を明示したい場合は `lthr_bpm` を使い、通常の係数計算へ流す
+- 通常版の画面構成はカスタムコード利用時でも同じダッシュボードを維持する
+- カスタムコードは公開版から排除しないが、詳細パラメタの直接編集UIは持たない
 
 ## 公開版で含めない機能
 - FIT 自動取り込み
 - レース後の詳細分析やレポート出力
 - 公開版UIでの詳細パラメタ編集
-  - 心拍上限バイアスの直接指定
+  - 心拍CAPのスライダー調整
   - フェーズ別ペース帯の直接指定
 - 後半レース専用の別モード
 
@@ -75,6 +75,6 @@
 - `SHORT` は `10km` 想定とし、`5km` 専用モードは持たない
 
 ## 参照
-- UI: [ui.md](/Users/eibakatsu/Documents/codex/MarathonCoach/docs/spec/ui.md)
-- HR/CAP ロジック: [logic_hr_zone.md](/Users/eibakatsu/Documents/codex/MarathonCoach/docs/spec/logic_hr_zone.md)
-- ACTION: [logic_action.md](/Users/eibakatsu/Documents/codex/MarathonCoach/docs/spec/logic_action.md)
+- UI: [ui.md](/Users/eibakatsu/codex/MarathonCoach/docs/spec/ui.md)
+- HR/CAP ロジック: [logic_hr_zone.md](/Users/eibakatsu/codex/MarathonCoach/docs/spec/logic_hr_zone.md)
+- ACTION: [logic_action.md](/Users/eibakatsu/codex/MarathonCoach/docs/spec/logic_action.md)

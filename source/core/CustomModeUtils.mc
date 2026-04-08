@@ -5,31 +5,11 @@ module CustomModeUtils {
     const MODE_CORE = 0;
     const MODE_CUSTOM = 1;
 
-    const FUEL_MODE_OFF = 0;
-    const FUEL_MODE_TIME = 1;
+    const MIN_DIRECT_CAP_BPM = 30;
+    const MAX_DIRECT_CAP_BPM = 260;
 
-    const DEFAULT_FIRST_FUEL_AFTER_MIN = 35;
-    const DEFAULT_FUEL_INTERVAL_MIN = 35;
-    const DEFAULT_FUEL_ALERT_LEAD_MIN = 2;
-    const DEFAULT_PHASE_AGGRESSIVENESS = 10;
-    const DEFAULT_HR_CAP_BIAS_BPM = 0;
-    const DEFAULT_DRIFT_SENSITIVITY = 3;
-
-    const MIN_FIRST_FUEL_AFTER_MIN = 1;
-    const MAX_FIRST_FUEL_AFTER_MIN = 99;
-    const MIN_FUEL_INTERVAL_MIN = 1;
-    const MAX_FUEL_INTERVAL_MIN = 99;
-    const MIN_FUEL_ALERT_LEAD_MIN = 0;
-    const MAX_FUEL_ALERT_LEAD_MIN = 5;
-    const MIN_PHASE_AGGRESSIVENESS = 0;
-    const MAX_PHASE_AGGRESSIVENESS = 20;
-    const MIN_HR_CAP_BIAS_BPM = -8;
-    const MAX_HR_CAP_BIAS_BPM = 8;
-    const MIN_DRIFT_SENSITIVITY = 0;
-    const MAX_DRIFT_SENSITIVITY = 7;
-
-    const CODE_PREFIX = "C1";
-    const CODE_PAYLOAD_LEN = 14;
+    const CODE_PREFIX = "C2";
+    const CODE_PAYLOAD_LEN = 10;
     const CODE_CHECKSUM_LEN = 2;
     const BASE36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const BASE36_PAIR_RADIX = 36;
@@ -37,25 +17,21 @@ module CustomModeUtils {
 
     const CFG_MODE = 0;
     const CFG_CODE_VALID = 1;
-    const CFG_FUEL_MODE = 2;
-    const CFG_FIRST_FUEL_AFTER_MIN = 3;
-    const CFG_FUEL_INTERVAL_MIN = 4;
-    const CFG_FUEL_ALERT_LEAD_MIN = 5;
-    const CFG_PHASE_AGGRESSIVENESS = 6;
-    const CFG_HR_CAP_BIAS_BPM = 7;
-    const CFG_DRIFT_SENSITIVITY = 8;
+    const CFG_DIRECT_CAP_S1 = 2;
+    const CFG_DIRECT_CAP_S2 = 3;
+    const CFG_DIRECT_CAP_S3 = 4;
+    const CFG_DIRECT_CAP_S4 = 5;
+    const CFG_DIRECT_CAP_S5 = 6;
 
     function newDefaultConfig() as Lang.Array {
         var config = [];
         config.add(MODE_CORE);
         config.add(false);
-        config.add(FUEL_MODE_TIME);
-        config.add(DEFAULT_FIRST_FUEL_AFTER_MIN);
-        config.add(DEFAULT_FUEL_INTERVAL_MIN);
-        config.add(DEFAULT_FUEL_ALERT_LEAD_MIN);
-        config.add(DEFAULT_PHASE_AGGRESSIVENESS);
-        config.add(DEFAULT_HR_CAP_BIAS_BPM);
-        config.add(DEFAULT_DRIFT_SENSITIVITY);
+        config.add(null);
+        config.add(null);
+        config.add(null);
+        config.add(null);
+        config.add(null);
         return config;
     }
 
@@ -81,7 +57,7 @@ module CustomModeUtils {
             prefixChars[0] == null or
             prefixChars[1] == null or
             prefixChars[0].toNumber() != 67 or
-            prefixChars[1].toNumber() != 49
+            prefixChars[1].toNumber() != 50
         ) {
             return config;
         }
@@ -95,93 +71,60 @@ module CustomModeUtils {
             return config;
         }
 
-        var fuelModeEnc = _decodeBase36Pair(payload.substring(0, 2));
-        var firstFuelOffsetEnc = _decodeBase36Pair(payload.substring(2, 4));
-        var fuelIntervalOffsetEnc = _decodeBase36Pair(payload.substring(4, 6));
-        var fuelAlertLeadEnc = _decodeBase36Pair(payload.substring(6, 8));
-        var phaseAggressivenessEnc = _decodeBase36Pair(payload.substring(8, 10));
-        var hrCapBiasOffsetEnc = _decodeBase36Pair(payload.substring(10, 12));
-        var driftSensitivityEnc = _decodeBase36Pair(payload.substring(12, 14));
+        var directCapS1 = _normalizeDirectCapHeartRate(_decodeBase36Pair(payload.substring(0, 2)));
+        var directCapS2 = _normalizeDirectCapHeartRate(_decodeBase36Pair(payload.substring(2, 4)));
+        var directCapS3 = _normalizeDirectCapHeartRate(_decodeBase36Pair(payload.substring(4, 6)));
+        var directCapS4 = _normalizeDirectCapHeartRate(_decodeBase36Pair(payload.substring(6, 8)));
+        var directCapS5 = _normalizeDirectCapHeartRate(_decodeBase36Pair(payload.substring(8, 10)));
 
-        if (fuelModeEnc == null or (fuelModeEnc != FUEL_MODE_OFF and fuelModeEnc != FUEL_MODE_TIME)) {
-            return config;
-        }
         if (
-            firstFuelOffsetEnc == null or
-            firstFuelOffsetEnc < MIN_FIRST_FUEL_AFTER_MIN or
-            firstFuelOffsetEnc > MAX_FIRST_FUEL_AFTER_MIN
+            directCapS1 == null or
+            directCapS2 == null or
+            directCapS3 == null or
+            directCapS4 == null or
+            directCapS5 == null
         ) {
-            return config;
-        }
-        if (
-            fuelIntervalOffsetEnc == null or
-            fuelIntervalOffsetEnc < MIN_FUEL_INTERVAL_MIN or
-            fuelIntervalOffsetEnc > MAX_FUEL_INTERVAL_MIN
-        ) {
-            return config;
-        }
-        if (fuelAlertLeadEnc == null or fuelAlertLeadEnc < 0 or fuelAlertLeadEnc > 5) {
-            return config;
-        }
-        if (phaseAggressivenessEnc == null or phaseAggressivenessEnc < 0 or phaseAggressivenessEnc > 20) {
-            return config;
-        }
-        if (hrCapBiasOffsetEnc == null or hrCapBiasOffsetEnc < 0 or hrCapBiasOffsetEnc > 16) {
-            return config;
-        }
-        if (driftSensitivityEnc == null or driftSensitivityEnc < 0 or driftSensitivityEnc > 7) {
             return config;
         }
 
         config[CFG_MODE] = MODE_CUSTOM;
         config[CFG_CODE_VALID] = true;
-        config[CFG_FUEL_MODE] = fuelModeEnc;
-        config[CFG_FIRST_FUEL_AFTER_MIN] = firstFuelOffsetEnc;
-        config[CFG_FUEL_INTERVAL_MIN] = fuelIntervalOffsetEnc;
-        config[CFG_FUEL_ALERT_LEAD_MIN] = fuelAlertLeadEnc;
-        config[CFG_PHASE_AGGRESSIVENESS] = phaseAggressivenessEnc;
-        config[CFG_HR_CAP_BIAS_BPM] = MIN_HR_CAP_BIAS_BPM + hrCapBiasOffsetEnc;
-        config[CFG_DRIFT_SENSITIVITY] = driftSensitivityEnc;
+        config[CFG_DIRECT_CAP_S1] = directCapS1;
+        config[CFG_DIRECT_CAP_S2] = directCapS2;
+        config[CFG_DIRECT_CAP_S3] = directCapS3;
+        config[CFG_DIRECT_CAP_S4] = directCapS4;
+        config[CFG_DIRECT_CAP_S5] = directCapS5;
         return config;
     }
 
     function encodeCustomCode(
-        fuelMode,
-        firstFuelAfterMin,
-        fuelIntervalMin,
-        fuelAlertLeadMin,
-        phaseAggressiveness,
-        hrCapBiasBpm,
-        driftSensitivity
+        directCapS1,
+        directCapS2,
+        directCapS3,
+        directCapS4,
+        directCapS5
     ) {
-        if (fuelMode != FUEL_MODE_OFF and fuelMode != FUEL_MODE_TIME) {
-            return null;
-        }
+        var normalizedCapS1 = _normalizeDirectCapHeartRate(directCapS1);
+        var normalizedCapS2 = _normalizeDirectCapHeartRate(directCapS2);
+        var normalizedCapS3 = _normalizeDirectCapHeartRate(directCapS3);
+        var normalizedCapS4 = _normalizeDirectCapHeartRate(directCapS4);
+        var normalizedCapS5 = _normalizeDirectCapHeartRate(directCapS5);
         if (
-            firstFuelAfterMin < MIN_FIRST_FUEL_AFTER_MIN or
-            firstFuelAfterMin > MAX_FIRST_FUEL_AFTER_MIN or
-            fuelIntervalMin < MIN_FUEL_INTERVAL_MIN or
-            fuelIntervalMin > MAX_FUEL_INTERVAL_MIN or
-            fuelAlertLeadMin < MIN_FUEL_ALERT_LEAD_MIN or
-            fuelAlertLeadMin > MAX_FUEL_ALERT_LEAD_MIN or
-            phaseAggressiveness < MIN_PHASE_AGGRESSIVENESS or
-            phaseAggressiveness > MAX_PHASE_AGGRESSIVENESS or
-            hrCapBiasBpm < MIN_HR_CAP_BIAS_BPM or
-            hrCapBiasBpm > MAX_HR_CAP_BIAS_BPM or
-            driftSensitivity < MIN_DRIFT_SENSITIVITY or
-            driftSensitivity > MAX_DRIFT_SENSITIVITY
+            normalizedCapS1 == null or
+            normalizedCapS2 == null or
+            normalizedCapS3 == null or
+            normalizedCapS4 == null or
+            normalizedCapS5 == null
         ) {
             return null;
         }
 
         var payload =
-            _encodeBase36Pair(fuelMode) +
-            _encodeBase36Pair(firstFuelAfterMin) +
-            _encodeBase36Pair(fuelIntervalMin) +
-            _encodeBase36Pair(fuelAlertLeadMin) +
-            _encodeBase36Pair(phaseAggressiveness) +
-            _encodeBase36Pair(hrCapBiasBpm - MIN_HR_CAP_BIAS_BPM) +
-            _encodeBase36Pair(driftSensitivity);
+            _encodeBase36Pair(normalizedCapS1) +
+            _encodeBase36Pair(normalizedCapS2) +
+            _encodeBase36Pair(normalizedCapS3) +
+            _encodeBase36Pair(normalizedCapS4) +
+            _encodeBase36Pair(normalizedCapS5);
         var checksum = _encodeBase36Pair(_computeChecksum(CODE_PREFIX + payload));
         return CODE_PREFIX + payload + checksum;
     }
@@ -194,36 +137,64 @@ module CustomModeUtils {
         return getMode(config) == MODE_CUSTOM;
     }
 
+    function isCustomCode(config) {
+        return getMode(config) == MODE_CUSTOM;
+    }
+
     function isCodeValid(config) {
         return _getConfigValue(config, CFG_CODE_VALID, false);
     }
 
-    function getFuelMode(config) {
-        return _getConfigValue(config, CFG_FUEL_MODE, FUEL_MODE_TIME);
+    function getDirectCapS1(config) {
+        return _getConfigValue(config, CFG_DIRECT_CAP_S1, null);
     }
 
-    function getFirstFuelAfterMin(config) {
-        return _getConfigValue(config, CFG_FIRST_FUEL_AFTER_MIN, DEFAULT_FIRST_FUEL_AFTER_MIN);
+    function getDirectCapS2(config) {
+        return _getConfigValue(config, CFG_DIRECT_CAP_S2, null);
     }
 
-    function getFuelIntervalMin(config) {
-        return _getConfigValue(config, CFG_FUEL_INTERVAL_MIN, DEFAULT_FUEL_INTERVAL_MIN);
+    function getDirectCapS3(config) {
+        return _getConfigValue(config, CFG_DIRECT_CAP_S3, null);
     }
 
-    function getFuelAlertLeadMin(config) {
-        return _getConfigValue(config, CFG_FUEL_ALERT_LEAD_MIN, DEFAULT_FUEL_ALERT_LEAD_MIN);
+    function getDirectCapS4(config) {
+        return _getConfigValue(config, CFG_DIRECT_CAP_S4, null);
     }
 
-    function getPhaseAggressiveness(config) {
-        return _getConfigValue(config, CFG_PHASE_AGGRESSIVENESS, DEFAULT_PHASE_AGGRESSIVENESS);
+    function getDirectCapS5(config) {
+        return _getConfigValue(config, CFG_DIRECT_CAP_S5, null);
     }
 
-    function getHrCapBiasBpm(config) {
-        return _getConfigValue(config, CFG_HR_CAP_BIAS_BPM, DEFAULT_HR_CAP_BIAS_BPM);
+    function getDirectCapHeartRates(config) as Lang.Array {
+        return [
+            getDirectCapS1(config),
+            getDirectCapS2(config),
+            getDirectCapS3(config),
+            getDirectCapS4(config),
+            getDirectCapS5(config)
+        ];
     }
 
-    function getDriftSensitivity(config) {
-        return _getConfigValue(config, CFG_DRIFT_SENSITIVITY, DEFAULT_DRIFT_SENSITIVITY);
+    function getDirectCapHeartRate(config, phase) {
+        if (phase == null) {
+            return null;
+        }
+        if (phase == 0) {
+            return getDirectCapS1(config);
+        }
+        if (phase == 1) {
+            return getDirectCapS2(config);
+        }
+        if (phase == 2) {
+            return getDirectCapS3(config);
+        }
+        if (phase == 3) {
+            return getDirectCapS4(config);
+        }
+        if (phase == 4) {
+            return getDirectCapS5(config);
+        }
+        return null;
     }
 
     function _getConfigValue(config, index, defaultValue) {
@@ -360,5 +331,24 @@ module CustomModeUtils {
             }
         }
         return true;
+    }
+
+    function _normalizeDirectCapHeartRate(value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            if (value != value) {
+                return null;
+            }
+        } catch (e) {
+            return null;
+        }
+
+        var rounded = Math.floor(value + 0.5);
+        if (rounded < MIN_DIRECT_CAP_BPM or rounded > MAX_DIRECT_CAP_BPM) {
+            return null;
+        }
+        return rounded;
     }
 }

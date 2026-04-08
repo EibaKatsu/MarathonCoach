@@ -17,7 +17,8 @@ class MarathonCoachField extends Ui.DataField {
     const KEY_RACE_DISTANCE_KM = "race_distance_km";
     const KEY_TARGET_TIME_HOUR = "target_time_hour";
     const KEY_TARGET_TIME_MINUTE = "target_time_minute";
-    const KEY_CUSTOM_MODE_CODE = "custom_mode_code";
+    const KEY_CUSTOM_CODE = "custom_mode_code";
+    const KEY_LTHR_BPM = "lthr_bpm";
     const LAP_DIAG_LOG = true;
     const FINISH_DIAG_LOG = false;
     const FINISH_DIAG_MARGIN_KM = 1.0;
@@ -88,8 +89,6 @@ class MarathonCoachField extends Ui.DataField {
     const GOAL_RUNNER_GAUGE_DEADZONE_SEC = PREDICTION_ON_PACE_THRESHOLD_SEC;
 
     const DEFAULT_RACE_DISTANCE_KM = 42.195;
-    const CUSTOM_MODE_CORE = CustomModeUtils.MODE_CORE;
-    const CUSTOM_MODE_CUSTOM = CustomModeUtils.MODE_CUSTOM;
     const HR_GAUGE_ZONE_COUNT = 5;
     const HR_ZONE_COLOR_1 = 0x9E9E9E; // gray
     const HR_ZONE_COLOR_2 = 0x52B7E8; // light blue
@@ -114,10 +113,9 @@ class MarathonCoachField extends Ui.DataField {
     var _predictionBehindSuffixText = "min.";
     var _predictionSystemLanguage = null;
     var _raceDistanceKm = DEFAULT_RACE_DISTANCE_KM;
-    var _customMode = CUSTOM_MODE_CORE;
+    var _customCodeActive = false;
     var _customCodeValid = false;
-    var _customPhaseAggressiveness = CustomModeUtils.DEFAULT_PHASE_AGGRESSIVENESS;
-    var _customHrCapBiasBpm = CustomModeUtils.DEFAULT_HR_CAP_BIAS_BPM;
+    var _customCodeDirectCapHeartRates as Lang.Array = [null, null, null, null, null];
     var _targetTimeHms = null;
     var _targetTimeSec = null;
     var _targetPaceSecPerKm = null;
@@ -140,7 +138,10 @@ class MarathonCoachField extends Ui.DataField {
     var _currentHeartRateGaugeRatio = null;
     var _allowedMaxHeartRate = null;
     var _capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_NONE;
+    var _propertyLactateThresholdHeartRate = null;
+    var _propertyLactateThresholdState = "unset";
     var _capLactateThresholdHeartRate = null;
+    var _capDeviceLactateThresholdHeartRate = null;
     var _capProfileMaxHeartRate = null;
     var _capRestingHeartRate = null;
     var _allowedMaxHeartRateZone = null;
@@ -296,7 +297,10 @@ class MarathonCoachField extends Ui.DataField {
         _currentHeartRateGaugeRatio = null;
         _allowedMaxHeartRate = null;
         _capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_NONE;
+        _propertyLactateThresholdHeartRate = null;
+        _propertyLactateThresholdState = "unset";
         _capLactateThresholdHeartRate = null;
+        _capDeviceLactateThresholdHeartRate = null;
         _capProfileMaxHeartRate = null;
         _capRestingHeartRate = null;
         _allowedMaxHeartRateZone = null;
@@ -363,7 +367,7 @@ class MarathonCoachField extends Ui.DataField {
             " reason=" + _factValue(reason) +
             " elapsed=" + _factValue(elapsedSec) +
             " lastElapsed=" + _factValue(_lastElapsedSec) +
-            " mode=" + _factValue(_customMode);
+            " customCodeActive=" + _factValue(_customCodeActive);
         Sys.println(line);
     }
 
@@ -400,7 +404,8 @@ class MarathonCoachField extends Ui.DataField {
         _targetTimeHms = null;
         _targetTimeSec = null;
         _targetPaceSecPerKm = null;
-        _applyCustomModeConfig(SettingsLoader.getPropertyValue(KEY_CUSTOM_MODE_CODE));
+        _loadPropertyLactateThresholdHeartRate();
+        _applyCustomCodeConfig(SettingsLoader.getPropertyValue(KEY_CUSTOM_CODE));
 
         var targetHour = SettingsLoader.loadTargetTimeHour(KEY_TARGET_TIME_HOUR);
         var targetMinute = SettingsLoader.loadTargetTimeMinute(KEY_TARGET_TIME_MINUTE);
@@ -416,16 +421,30 @@ class MarathonCoachField extends Ui.DataField {
         _logSettingsState(targetHour, targetMinute);
     }
 
-    function _applyCustomModeConfig(rawCustomCode) {
-        var customConfig = CustomModeUtils.decodeCustomCode(rawCustomCode);
-        _customMode = CustomModeUtils.getMode(customConfig);
-        _customCodeValid = CustomModeUtils.isCodeValid(customConfig);
-        _customPhaseAggressiveness = CustomModeUtils.getPhaseAggressiveness(customConfig);
-        _customHrCapBiasBpm = CustomModeUtils.getHrCapBiasBpm(customConfig);
+    function _loadPropertyLactateThresholdHeartRate() {
+        var rawLthr = SettingsLoader.getPropertyValue(KEY_LTHR_BPM);
+        _propertyLactateThresholdHeartRate = null;
+        _propertyLactateThresholdState = "unset";
+        if (rawLthr == null) {
+            return;
+        }
+
+        var parsedLthr = SettingsLoader.loadIntSettingValue(KEY_LTHR_BPM);
+        var normalizedLthr = RaceStrategyUtils.normalizeHeartRate(parsedLthr);
+        if (normalizedLthr == null) {
+            _propertyLactateThresholdState = "invalid";
+            return;
+        }
+
+        _propertyLactateThresholdHeartRate = normalizedLthr;
+        _propertyLactateThresholdState = "property";
     }
 
-    function _isCustomModeEnabled() {
-        return _customMode == CUSTOM_MODE_CUSTOM;
+    function _applyCustomCodeConfig(rawCustomCode) {
+        var customConfig = CustomModeUtils.decodeCustomCode(rawCustomCode);
+        _customCodeActive = CustomModeUtils.isCustomCode(customConfig);
+        _customCodeValid = CustomModeUtils.isCodeValid(customConfig);
+        _customCodeDirectCapHeartRates = CustomModeUtils.getDirectCapHeartRates(customConfig);
     }
 
     function _isSameText(left, right) {
@@ -441,54 +460,6 @@ class MarathonCoachField extends Ui.DataField {
         } catch (e2) {
         }
         return false;
-    }
-
-    function _resolvePhaseAggressivenessShift() {
-        if (!_isCustomModeEnabled()) {
-            return 0;
-        }
-        return _customPhaseAggressiveness - CustomModeUtils.DEFAULT_PHASE_AGGRESSIVENESS;
-    }
-
-    function _resolveHrCapBiasBpm() {
-        if (!_isCustomModeEnabled()) {
-            return 0;
-        }
-        return _customHrCapBiasBpm;
-    }
-
-    function _signedDivRounded(value, divisor) {
-        if (divisor == null or divisor <= 0) {
-            return 0;
-        }
-        if (value >= 0) {
-            return Math.floor((value + (divisor / 2)) / divisor);
-        }
-        return -Math.floor(((-value) + (divisor / 2)) / divisor);
-    }
-
-    function _adjustPushPaceThresholdSec(baseThreshold) {
-        var shift = _resolvePhaseAggressivenessShift();
-        var paceBias = _signedDivRounded(shift, 2);
-        return _clamp(baseThreshold - paceBias, 1, 30);
-    }
-
-    function _adjustPushHeadroomThresholdBpm(baseThreshold) {
-        var shift = _resolvePhaseAggressivenessShift();
-        var hrBias = _signedDivRounded(shift, 3);
-        return _clamp(baseThreshold - hrBias, 0, 20);
-    }
-
-    function _adjustEasePaceThresholdSec(baseThreshold) {
-        var shift = _resolvePhaseAggressivenessShift();
-        var paceBias = _signedDivRounded(shift, 2);
-        return _clamp(baseThreshold - paceBias, -20, -1);
-    }
-
-    function _adjustEaseHeadroomThresholdBpm(baseThreshold) {
-        var shift = _resolvePhaseAggressivenessShift();
-        var hrBias = _signedDivRounded(shift, 3);
-        return _clamp(baseThreshold - hrBias, 0, 20);
     }
 
     function _drawStep3Layout(dc as Gfx.Dc) {
@@ -1730,8 +1701,7 @@ class MarathonCoachField extends Ui.DataField {
         if (paceDeltaSec == null) {
             return false;
         }
-        var easePaceDeltaThreshold = _adjustEasePaceThresholdSec(ACTION_EASE_PACE_DELTA_SEC);
-        return paceDeltaSec <= (easePaceDeltaThreshold - DANGER_PACE_EXTRA_SEC);
+        return paceDeltaSec <= (ACTION_EASE_PACE_DELTA_SEC - DANGER_PACE_EXTRA_SEC);
     }
 
     function _resolveHeartRateGaugeRatio() {
@@ -2070,34 +2040,33 @@ class MarathonCoachField extends Ui.DataField {
         var distanceKm = _extractElapsedDistanceKm(info);
         var phase = _resolveRacePhase(distanceKm);
         var profile = _resolveRaceProfile();
-        var anchors = _resolveHeartRateAnchorInfo(info);
-        _capHeartRateSource = anchors[0];
-        _capLactateThresholdHeartRate = anchors[1];
-        _capProfileMaxHeartRate = anchors[2];
-        _capRestingHeartRate = anchors[3];
+        var anchors = _resolveCapAnchorInfo(info);
+        var deviceLthr = anchors[0];
+        _capDeviceLactateThresholdHeartRate = deviceLthr;
+        _capProfileMaxHeartRate = anchors[1];
+        _capRestingHeartRate = anchors[2];
 
-        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_NONE) {
-            return null;
-        }
-
-        return RaceStrategyUtils.resolveCapHeartRate(
-            _capHeartRateSource,
+        var decision = RaceStrategyUtils.resolveCapHeartRateDecision(
             profile,
             phase,
-            _capLactateThresholdHeartRate,
+            _customCodeDirectCapHeartRates,
+            _propertyLactateThresholdHeartRate,
+            _capDeviceLactateThresholdHeartRate,
             _capProfileMaxHeartRate,
-            _capRestingHeartRate,
-            _resolveHrCapBiasBpm()
+            _capRestingHeartRate
         );
+        _allowedMaxHeartRate = decision[0];
+        _capHeartRateSource = decision[1];
+        _capLactateThresholdHeartRate = decision[2];
+        return _allowedMaxHeartRate;
     }
 
-    function _resolveHeartRateAnchorInfo(info) as Lang.Array {
+    function _resolveCapAnchorInfo(info) as Lang.Array {
         var profile = _getUserHeartRateProfile();
-        var lthr = _resolveLactateThresholdHeartRate(profile, info);
+        var deviceLthr = _resolveDeviceLactateThresholdHeartRate(profile, info);
         var maxHeartRate = _resolveProfileMaxHeartRate(profile, info);
         var restingHeartRate = _resolveProfileRestingHeartRate(profile);
-        var source = RaceStrategyUtils.resolveCapSource(lthr, maxHeartRate, restingHeartRate);
-        return [source, lthr, maxHeartRate, restingHeartRate];
+        return [deviceLthr, maxHeartRate, restingHeartRate];
     }
 
     function _getUserHeartRateProfile() {
@@ -2108,7 +2077,7 @@ class MarathonCoachField extends Ui.DataField {
         }
     }
 
-    function _resolveLactateThresholdHeartRate(profile, info) {
+    function _resolveDeviceLactateThresholdHeartRate(profile, info) {
         var infoValue = _readInfoLactateThresholdHeartRate(info);
         if (infoValue != null) {
             return infoValue;
@@ -2185,8 +2154,14 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveCapHeartRateSourceText() {
-        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_LTHR) {
-            return "LTHR";
+        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_CUSTOM_CODE) {
+            return "CUSTOM_CODE";
+        }
+        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_LTHR_PROPERTY) {
+            return "LTHR_PROPERTY";
+        }
+        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_LTHR_DEVICE) {
+            return "LTHR_DEVICE";
         }
         if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_HRR) {
             return "HRR";
@@ -2198,10 +2173,22 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveCapHeartRateSourceBadgeText() {
+        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_CUSTOM_CODE) {
+            return "CODE";
+        }
+        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_LTHR_PROPERTY) {
+            return "PLT";
+        }
+        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_LTHR_DEVICE) {
+            return "DLT";
+        }
         if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_MAXHR) {
             return "MHR";
         }
-        return _resolveCapHeartRateSourceText();
+        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_HRR) {
+            return "HRR";
+        }
+        return "NONE";
     }
 
     function _resolveHeartRateZone(heartRate, zones as Lang.Array<Lang.Number>) {
@@ -2280,20 +2267,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _normalizeHeartRateValue(value) {
-        if (value == null) {
-            return null;
-        }
-        try {
-            if (value != value) {
-                return null;
-            }
-            if (value < 1 or value > 300) {
-                return null;
-            }
-        } catch (e) {
-            return null;
-        }
-        return value;
+        return RaceStrategyUtils.normalizeHeartRate(value);
     }
 
     function _extractPaceSecPerKm(info) {
@@ -2572,11 +2546,13 @@ class MarathonCoachField extends Ui.DataField {
         var rawRace = SettingsLoader.getPropertyValue(KEY_RACE_DISTANCE_KM);
         var rawHour = SettingsLoader.getPropertyValue(KEY_TARGET_TIME_HOUR);
         var rawMinute = SettingsLoader.getPropertyValue(KEY_TARGET_TIME_MINUTE);
-        var rawCustomCode = SettingsLoader.getPropertyValue(KEY_CUSTOM_MODE_CODE);
+        var rawLthr = SettingsLoader.getPropertyValue(KEY_LTHR_BPM);
+        var rawCustomCode = SettingsLoader.getPropertyValue(KEY_CUSTOM_CODE);
         var line =
             "[SETTINGS] raceRaw=" + _factValue(rawRace) +
             " hourRaw=" + _factValue(rawHour) +
             " minuteRaw=" + _factValue(rawMinute) +
+            " lthrRaw=" + _factValue(rawLthr) +
             " customRaw=" + _factValue(rawCustomCode) +
             " hourNorm=" + _factValue(targetHour) +
             " minuteNorm=" + _factValue(targetMinute) +
@@ -2584,10 +2560,11 @@ class MarathonCoachField extends Ui.DataField {
             " hms=" + _factValue(_targetTimeHms) +
             " sec=" + _factValue(_targetTimeSec) +
             " paceSecPerKm=" + _factValue(_targetPaceSecPerKm) +
-            " mode=" + _factValue(_customMode) +
+            " propertyLthr=" + _factValue(_propertyLactateThresholdHeartRate) +
+            " propertyLthrState=" + _factValue(_propertyLactateThresholdState) +
+            " customCodeActive=" + _factValue(_customCodeActive) +
             " codeValid=" + _factValue(_customCodeValid) +
-            " aggr=" + _factValue(_customPhaseAggressiveness) +
-            " hrBias=" + _factValue(_customHrCapBiasBpm);
+            " directCaps=" + _formatCustomCodeDirectCapSummary();
         if (_isSameText(_lastSettingsLogLine, line)) {
             return;
         }
@@ -2606,9 +2583,13 @@ class MarathonCoachField extends Ui.DataField {
             " judgeHr=" + _factValue(_judgeHeartRate) +
             " cap=" + _factValue(_allowedMaxHeartRate) +
             " capSource=" + _resolveCapHeartRateSourceText() +
-            " lthr=" + _factValue(_capLactateThresholdHeartRate) +
+            " propertyLthr=" + _factValue(_propertyLactateThresholdHeartRate) +
+            " propertyLthrState=" + _factValue(_propertyLactateThresholdState) +
+            " deviceLthr=" + _factValue(_capDeviceLactateThresholdHeartRate) +
+            " selectedLthr=" + _factValue(_capLactateThresholdHeartRate) +
             " maxHr=" + _factValue(_capProfileMaxHeartRate) +
             " restingHr=" + _factValue(_capRestingHeartRate) +
+            " customDirectCaps=" + _formatCustomCodeDirectCapSummary() +
             " state=" + _factValue(_resolveHeartRateGaugeState()) +
             " hrText=" + _factValue(hrText) +
             " capText=" + _factValue(capText);
@@ -2617,6 +2598,21 @@ class MarathonCoachField extends Ui.DataField {
         }
         _lastMediumHrLayoutDiagLine = line;
         Sys.println(line);
+    }
+
+    function _formatCustomCodeDirectCapSummary() {
+        if (
+            _customCodeDirectCapHeartRates == null or
+            !(_customCodeDirectCapHeartRates instanceof Lang.Array) or
+            _customCodeDirectCapHeartRates.size() != 5
+        ) {
+            return "none";
+        }
+        return _factValue(_customCodeDirectCapHeartRates[0]) + "/" +
+            _factValue(_customCodeDirectCapHeartRates[1]) + "/" +
+            _factValue(_customCodeDirectCapHeartRates[2]) + "/" +
+            _factValue(_customCodeDirectCapHeartRates[3]) + "/" +
+            _factValue(_customCodeDirectCapHeartRates[4]);
     }
 
     function _logTopRowLayoutDiag(side, sizeClass, areaX, areaY, areaW, areaH, anchorY, topLineH, bottomLineH, rowGap, blockOffsetY, firstLineH, secondLineH, firstY, secondY, firstText, secondText) {
@@ -3170,8 +3166,8 @@ class MarathonCoachField extends Ui.DataField {
         var distanceKm = _extractElapsedDistanceKm(info);
         var paceDeltaSec = _paceNowSecPerKm - _targetPaceSecPerKm;
         var headroomBpm = _allowedMaxHeartRate - _currentHeartRate;
-        var paceTriggerThreshold = _adjustPushPaceThresholdSec(_getPushPaceDeltaThresholdSec(distanceKm));
-        var headroomTriggerThreshold = _adjustPushHeadroomThresholdBpm(_getPushHeadroomThresholdBpm(distanceKm));
+        var paceTriggerThreshold = _getPushPaceDeltaThresholdSec(distanceKm);
+        var headroomTriggerThreshold = _getPushHeadroomThresholdBpm(distanceKm);
         var canTrigger = (
             paceDeltaSec >= paceTriggerThreshold and
             headroomBpm >= headroomTriggerThreshold

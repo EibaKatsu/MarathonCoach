@@ -1,3 +1,4 @@
+using Toybox.Lang as Lang;
 using Toybox.Math as Math;
 
 module RaceStrategyUtils {
@@ -12,9 +13,14 @@ module RaceStrategyUtils {
     const PHASE_5 = 4;
 
     const CAP_SOURCE_NONE = 0;
-    const CAP_SOURCE_LTHR = 1;
-    const CAP_SOURCE_HRR = 2;
-    const CAP_SOURCE_MAXHR = 3;
+    const CAP_SOURCE_CUSTOM_CODE = 1;
+    const CAP_SOURCE_LTHR_PROPERTY = 2;
+    const CAP_SOURCE_LTHR_DEVICE = 3;
+    const CAP_SOURCE_HRR = 4;
+    const CAP_SOURCE_MAXHR = 5;
+
+    const MIN_VALID_HEART_RATE_BPM = 30;
+    const MAX_VALID_HEART_RATE_BPM = 260;
 
     const CAP_RATIO_LTHR = [
         [0.95, 0.96, 0.97, 0.98, 0.99],
@@ -90,9 +96,12 @@ module RaceStrategyUtils {
         return PHASE_5;
     }
 
-    function resolveCapSource(lthr, maxHeartRate, restingHeartRate) {
-        if (_isValidHeartRateAnchor(lthr)) {
-            return CAP_SOURCE_LTHR;
+    function resolveCapSource(propertyLthr, deviceLthr, maxHeartRate, restingHeartRate) {
+        if (_isValidHeartRateAnchor(propertyLthr)) {
+            return CAP_SOURCE_LTHR_PROPERTY;
+        }
+        if (_isValidHeartRateAnchor(deviceLthr)) {
+            return CAP_SOURCE_LTHR_DEVICE;
         }
         if (
             _isValidHeartRateAnchor(maxHeartRate) and
@@ -107,9 +116,74 @@ module RaceStrategyUtils {
         return CAP_SOURCE_NONE;
     }
 
+    function resolveCapHeartRateDecision(
+        profile,
+        phase,
+        customCodeDirectCapHeartRates,
+        propertyLthr,
+        deviceLthr,
+        maxHeartRate,
+        restingHeartRate
+    ) {
+        var customCodeCap = resolveCustomCodeDirectCapHeartRate(customCodeDirectCapHeartRates, phase);
+        if (customCodeCap != null) {
+            return [customCodeCap, CAP_SOURCE_CUSTOM_CODE, null];
+        }
+
+        var propertyCap = resolveCapHeartRate(
+            CAP_SOURCE_LTHR_PROPERTY,
+            profile,
+            phase,
+            propertyLthr,
+            maxHeartRate,
+            restingHeartRate
+        );
+        if (propertyCap != null) {
+            return [propertyCap, CAP_SOURCE_LTHR_PROPERTY, propertyLthr];
+        }
+
+        var deviceCap = resolveCapHeartRate(
+            CAP_SOURCE_LTHR_DEVICE,
+            profile,
+            phase,
+            deviceLthr,
+            maxHeartRate,
+            restingHeartRate
+        );
+        if (deviceCap != null) {
+            return [deviceCap, CAP_SOURCE_LTHR_DEVICE, deviceLthr];
+        }
+
+        var hrrCap = resolveCapHeartRate(
+            CAP_SOURCE_HRR,
+            profile,
+            phase,
+            null,
+            maxHeartRate,
+            restingHeartRate
+        );
+        if (hrrCap != null) {
+            return [hrrCap, CAP_SOURCE_HRR, null];
+        }
+
+        var maxHrCap = resolveCapHeartRate(
+            CAP_SOURCE_MAXHR,
+            profile,
+            phase,
+            null,
+            maxHeartRate,
+            restingHeartRate
+        );
+        if (maxHrCap != null) {
+            return [maxHrCap, CAP_SOURCE_MAXHR, null];
+        }
+
+        return [null, CAP_SOURCE_NONE, null];
+    }
+
     function resolveCapRatio(profile, phase, source) {
         var table = null;
-        if (source == CAP_SOURCE_LTHR) {
+        if (_isLthrSource(source)) {
             table = CAP_RATIO_LTHR;
         } else if (source == CAP_SOURCE_HRR) {
             table = CAP_RATIO_HRR;
@@ -135,7 +209,7 @@ module RaceStrategyUtils {
             return null;
         }
 
-        if (source == CAP_SOURCE_LTHR) {
+        if (_isLthrSource(source)) {
             if (!_isValidHeartRateAnchor(lthr)) {
                 return null;
             }
@@ -167,7 +241,7 @@ module RaceStrategyUtils {
         var upper = null;
 
         if (profile == PROFILE_FULL) {
-            if (source == CAP_SOURCE_LTHR and _isValidHeartRateAnchor(lthr)) {
+            if (_isLthrSource(source) and _isValidHeartRateAnchor(lthr)) {
                 upper = lthr + 1;
             }
             if (_isValidHeartRateAnchor(maxHeartRate)) {
@@ -177,7 +251,7 @@ module RaceStrategyUtils {
         }
 
         if (profile == PROFILE_HALF) {
-            if (source == CAP_SOURCE_LTHR and _isValidHeartRateAnchor(lthr)) {
+            if (_isLthrSource(source) and _isValidHeartRateAnchor(lthr)) {
                 upper = lthr + 3;
             }
             if (_isValidHeartRateAnchor(maxHeartRate)) {
@@ -200,14 +274,10 @@ module RaceStrategyUtils {
         return 1;
     }
 
-    function resolveCapHeartRate(source, profile, phase, lthr, maxHeartRate, restingHeartRate, hrCapBiasBpm) {
+    function resolveCapHeartRate(source, profile, phase, lthr, maxHeartRate, restingHeartRate) {
         var cap = resolveCapBaseHeartRate(source, profile, phase, lthr, maxHeartRate, restingHeartRate);
         if (cap == null) {
             return null;
-        }
-
-        if (hrCapBiasBpm != null) {
-            cap += hrCapBiasBpm;
         }
 
         var upper = resolveCapUpperClip(profile, source, lthr, maxHeartRate);
@@ -231,6 +301,25 @@ module RaceStrategyUtils {
             rounded = 1;
         }
         return rounded;
+    }
+
+    function resolveCustomCodeDirectCapHeartRate(customCodeDirectCapHeartRates, phase) {
+        if (
+            customCodeDirectCapHeartRates == null or
+            !(customCodeDirectCapHeartRates instanceof Lang.Array) or
+            customCodeDirectCapHeartRates.size() != 5
+        ) {
+            return null;
+        }
+        if (phase == null or phase < PHASE_1 or phase > PHASE_5) {
+            return null;
+        }
+        for (var i = 0; i < customCodeDirectCapHeartRates.size(); i += 1) {
+            if (!_isValidHeartRateAnchor(customCodeDirectCapHeartRates[i])) {
+                return null;
+            }
+        }
+        return roundNearest(customCodeDirectCapHeartRates[phase]);
     }
 
     function getAllowedZoneNumber(
@@ -629,8 +718,34 @@ module RaceStrategyUtils {
         return -Math.floor((-value) + 0.5);
     }
 
+    function normalizeHeartRate(value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            if (value != value) {
+                return null;
+            }
+        } catch (e) {
+            return null;
+        }
+
+        var rounded = roundNearest(value);
+        if (rounded == null) {
+            return null;
+        }
+        if (rounded < MIN_VALID_HEART_RATE_BPM or rounded > MAX_VALID_HEART_RATE_BPM) {
+            return null;
+        }
+        return rounded;
+    }
+
     function _isValidHeartRateAnchor(value) {
-        return value != null and value > 0;
+        return normalizeHeartRate(value) != null;
+    }
+
+    function _isLthrSource(source) {
+        return source == CAP_SOURCE_LTHR_PROPERTY or source == CAP_SOURCE_LTHR_DEVICE;
     }
 
     function _minNonNull(left, right) {

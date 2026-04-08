@@ -11,7 +11,7 @@
 ## ストア入力値
 - アプリ名: `レースナビ BETA`
 - サブタイトル: `公開前の実機テスト版`
-- 短文説明: `距離別の補給通知と心拍ペースに応じたアドバイスで、レース中の迷いを減らし目標達成をサポート。`
+- 短文説明: `心拍CAPと予測ゴールを 1 画面にまとめ、レース中の迷いを減らし目標達成をサポート。`
 - 詳細説明ベース: `tasks/03-1_store-assets/draft.md`
 - 対応機種説明ベース: `tasks/03-1_store-assets/draft.md`
 - 設定方法説明ベース: `tasks/03-1_store-assets/draft.md`
@@ -24,7 +24,7 @@
 - スクリーンショット:
   - `assets/store_shots/shot01_value.jpg`
   - `assets/store_shots/shot02_one_screen.jpg`
-  - `assets/store_shots/shot03_fuel_alerts.jpg`
+  - `assets/store_shots/shot03_hr_cap.jpg`
   - `assets/store_shots/shot04_three_settings.jpg`
 - RELEASEノート: `docs/release/release_notes_0.0.2.md`
 
@@ -35,7 +35,7 @@
 
 ## 想定ユーザー価値
 - レース中の「このままでいいか」を短く判断できる。
-- 補給忘れとオーバーペースの失速リスクを減らせる。
+- 心拍CAPの見誤りとオーバーペースの失速リスクを減らせる。
 - 初回は距離と目標タイムの設定だけで使い始められる。
 
 ## 手動提出メモ
