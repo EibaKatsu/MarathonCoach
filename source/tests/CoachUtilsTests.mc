@@ -231,8 +231,14 @@ function testHeartRateCapText_reflectsLabelAndFallback(logger) {
 function testCapHeartRateSourceBadgeText_usesCompactLabels(logger) {
     var sut = _newUtilsSut();
 
-    sut._capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_LTHR;
-    Test.assertEqual("LTHR", sut._resolveCapHeartRateSourceBadgeText());
+    sut._capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_CUSTOM_CODE;
+    Test.assertEqual("CODE", sut._resolveCapHeartRateSourceBadgeText());
+
+    sut._capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_LTHR_PROPERTY;
+    Test.assertEqual("PLT", sut._resolveCapHeartRateSourceBadgeText());
+
+    sut._capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_LTHR_DEVICE;
+    Test.assertEqual("DLT", sut._resolveCapHeartRateSourceBadgeText());
 
     sut._capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_HRR;
     Test.assertEqual("HRR", sut._resolveCapHeartRateSourceBadgeText());
@@ -449,11 +455,11 @@ function testResolveUsableHeartRateZoneThresholds_acceptsDocumentedSixElementFor
     var actual = sut._resolveUsableHeartRateZoneThresholds([93, 111, 130, 148, 167, 185]);
 
     Test.assertEqual(5, actual.size());
-    Test.assertEqual(111, actual[0]);
-    Test.assertEqual(130, actual[1]);
-    Test.assertEqual(148, actual[2]);
-    Test.assertEqual(167, actual[3]);
-    Test.assertEqual(185, actual[4]);
+    Test.assertMessage(actual[0] == 111, "zone 1 upper should be 111");
+    Test.assertMessage(actual[1] == 130, "zone 2 upper should be 130");
+    Test.assertMessage(actual[2] == 148, "zone 3 upper should be 148");
+    Test.assertMessage(actual[3] == 167, "zone 4 upper should be 167");
+    Test.assertMessage(actual[4] == 185, "zone 5 upper should be 185");
     return true;
 }
 

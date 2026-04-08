@@ -17,7 +17,7 @@
 
 ### 通常版
 - アプリ名: `レースナビ`
-- サブタイトル: `目標達成をサポートするペース&補給ガイド`
+- サブタイトル: `目標達成をサポートするペース&心拍ガイド`
 - 説明文: `tasks/03-1_store-assets/draft.md` で確定した通常版文面を使う
 - カバー画像: `assets/store_shots/cover_normal.png`
 
@@ -32,12 +32,12 @@
 - 公開版はレース中の判断支援に特化する
 - FIT分析やレース後の深掘りは含めない
 - 高度な個別設定は公開版では提供しない
-- 個別最適化はカスタム版導線で案内する
+- 個別最適化は `LTHR` 指定またはカスタムコードで案内する
 
 ## スクリーンショット構成案
 1. アプリの価値
 2. レース中の表示
-3. 補給や通知のイメージ
+3. 心拍CAPと予測ゴールのイメージ
 4. 設定画面
 5. 通常版の使い方
 
@@ -53,7 +53,7 @@
 ## 素材ファイル
 - 通常版カバー画像: `assets/store_shots/cover_normal.png`
 - ベータ版カバー画像: `assets/store_shots/cover_beta.png`
-- 共通スクリーンショット: `assets/store_shots/shot01_value.jpg` / `assets/store_shots/shot02_one_screen.jpg` / `assets/store_shots/shot03_fuel_alerts.jpg` / `assets/store_shots/shot04_three_settings.jpg`
+- 共通スクリーンショット: `assets/store_shots/shot01_value.jpg` / `assets/store_shots/shot02_one_screen.jpg` / `assets/store_shots/shot03_hr_cap.jpg` / `assets/store_shots/shot04_three_settings.jpg`
 - 共通アイコン: `assets/icon_output/launcher_icon_512.png`
 
 ## 参照

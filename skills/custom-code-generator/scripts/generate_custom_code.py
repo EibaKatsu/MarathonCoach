@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate MarathonCoach custom code from 7-item user input."""
+"""Generate MarathonCoach custom code from 5-item user input."""
 
 from __future__ import annotations
 
@@ -12,12 +12,11 @@ BASE36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 PREFIX = "C1"
 
 RANGES = {
-    "firstFuelAfterMin": (1, 99),
-    "fuelIntervalMin": (1, 99),
-    "fuelAlertLeadMin": (0, 5),
-    "phaseAggressiveness": (0, 20),
-    "hrCapBiasBpm": (-8, 8),
-    "driftSensitivity": (0, 7),
+    "customCapS1": (30, 260),
+    "customCapS2": (30, 260),
+    "customCapS3": (30, 260),
+    "customCapS4": (30, 260),
+    "customCapS5": (30, 260),
 }
 
 
@@ -69,7 +68,7 @@ def parse_key_values(text: str) -> Dict[str, str]:
     normalized = normalize_text(text)
     out: Dict[str, str] = {}
     pattern = re.compile(
-        r"^\s*(?:[1-7]\s*[\.\)]\s*)?([A-Za-z][A-Za-z0-9_]*)\s*(?:\([^)]*\))?\s*:\s*(.*?)\s*$"
+        r"^\s*(?:[1-5]\s*[\.\)]\s*)?([A-Za-z][A-Za-z0-9_]*)\s*(?:\([^)]*\))?\s*:\s*(.*?)\s*$"
     )
     for line in normalized.splitlines():
         m = pattern.match(line)
@@ -79,15 +78,6 @@ def parse_key_values(text: str) -> Dict[str, str]:
         val = m.group(2)
         out[key] = val
     return out
-
-
-def parse_fuel_mode(raw: str) -> int:
-    v = raw.strip().lower()
-    if v in {"off", "0", "00", "none", "なし"}:
-        return 0
-    if v in {"time", "1", "01", "on", "有効", "あり"}:
-        return 1
-    raise ValueError("fuelMode must be off/time")
 
 
 def parse_int_in_range(name: str, raw: str, lo: int, hi: int) -> int:
@@ -102,34 +92,28 @@ def parse_int_in_range(name: str, raw: str, lo: int, hi: int) -> int:
 
 def build_code(values: Dict[str, str]) -> str:
     required = [
-        "fuelMode",
-        "firstFuelAfterMin",
-        "fuelIntervalMin",
-        "fuelAlertLeadMin",
-        "phaseAggressiveness",
-        "hrCapBiasBpm",
-        "driftSensitivity",
+        "customCapS1",
+        "customCapS2",
+        "customCapS3",
+        "customCapS4",
+        "customCapS5",
     ]
     missing = [k for k in required if k not in values or values[k].strip() == ""]
     if missing:
         raise ValueError("missing: " + ", ".join(missing))
 
-    fuel_mode = parse_fuel_mode(values["fuelMode"])
-    first_fuel = parse_int_in_range("firstFuelAfterMin", values["firstFuelAfterMin"], *RANGES["firstFuelAfterMin"])
-    fuel_interval = parse_int_in_range("fuelIntervalMin", values["fuelIntervalMin"], *RANGES["fuelIntervalMin"])
-    fuel_lead = parse_int_in_range("fuelAlertLeadMin", values["fuelAlertLeadMin"], *RANGES["fuelAlertLeadMin"])
-    aggr = parse_int_in_range("phaseAggressiveness", values["phaseAggressiveness"], *RANGES["phaseAggressiveness"])
-    hr_bias = parse_int_in_range("hrCapBiasBpm", values["hrCapBiasBpm"], *RANGES["hrCapBiasBpm"])
-    drift = parse_int_in_range("driftSensitivity", values["driftSensitivity"], *RANGES["driftSensitivity"])
+    cap_s1 = parse_int_in_range("customCapS1", values["customCapS1"], *RANGES["customCapS1"])
+    cap_s2 = parse_int_in_range("customCapS2", values["customCapS2"], *RANGES["customCapS2"])
+    cap_s3 = parse_int_in_range("customCapS3", values["customCapS3"], *RANGES["customCapS3"])
+    cap_s4 = parse_int_in_range("customCapS4", values["customCapS4"], *RANGES["customCapS4"])
+    cap_s5 = parse_int_in_range("customCapS5", values["customCapS5"], *RANGES["customCapS5"])
 
     payload = (
-        to_base36_pair(fuel_mode)
-        + to_base36_pair(first_fuel)
-        + to_base36_pair(fuel_interval)
-        + to_base36_pair(fuel_lead)
-        + to_base36_pair(aggr)
-        + to_base36_pair(hr_bias + 8)
-        + to_base36_pair(drift)
+        to_base36_pair(cap_s1)
+        + to_base36_pair(cap_s2)
+        + to_base36_pair(cap_s3)
+        + to_base36_pair(cap_s4)
+        + to_base36_pair(cap_s5)
     )
     base = PREFIX + payload
     return base + checksum(base)
@@ -138,13 +122,11 @@ def build_code(values: Dict[str, str]) -> str:
 def template_text() -> str:
     return "\n".join(
         [
-            "1. fuelMode(00=off, 01=time):",
-            "2. firstFuelAfterMin(1-99):",
-            "3. fuelIntervalMin(1-99):",
-            "4. fuelAlertLeadMin(0-5):",
-            "5. phaseAggressiveness(0-20):",
-            "6. hrCapBiasBpm(-8 to 8):",
-            "7. driftSensitivity(0-7):",
+            "1. customCapS1(30-260):",
+            "2. customCapS2(30-260):",
+            "3. customCapS3(30-260):",
+            "4. customCapS4(30-260):",
+            "5. customCapS5(30-260):",
         ]
     )
 
@@ -178,7 +160,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_t.set_defaults(func=cmd_template)
 
     p_g = sp.add_parser("generate")
-    p_g.add_argument("--text", help="filled 1..7 item text")
+    p_g.add_argument("--text", help="filled 1..5 item text")
     p_g.set_defaults(func=cmd_generate)
     return p
 

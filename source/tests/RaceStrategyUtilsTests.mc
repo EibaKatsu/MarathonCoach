@@ -51,15 +51,14 @@ function _rsAllowedZoneOffset(distanceKm, raceDistanceKm) {
     );
 }
 
-function _rsCap(profile, phase, source, lthr, maxHeartRate, restingHeartRate, biasBpm) {
+function _rsCap(profile, phase, source, lthr, maxHeartRate, restingHeartRate) {
     return RaceStrategyUtils.resolveCapHeartRate(
         source,
         profile,
         phase,
         lthr,
         maxHeartRate,
-        restingHeartRate,
-        biasBpm
+        restingHeartRate
     );
 }
 
@@ -123,18 +122,19 @@ function testRaceStrategyProgressAndPhase(logger) {
 
 (:test)
 function testRaceStrategyCapSourcePriority(logger) {
-    Test.assertEqual(0, RaceStrategyUtils.resolveCapSource(null, null, null));
-    Test.assertEqual(1, RaceStrategyUtils.resolveCapSource(168, 190, 50));
-    Test.assertEqual(2, RaceStrategyUtils.resolveCapSource(null, 190, 50));
-    Test.assertEqual(3, RaceStrategyUtils.resolveCapSource(null, 190, null));
-    Test.assertEqual(3, RaceStrategyUtils.resolveCapSource(null, 190, 190));
+    Test.assertEqual(0, RaceStrategyUtils.resolveCapSource(null, null, null, null));
+    Test.assertEqual(2, RaceStrategyUtils.resolveCapSource(168, 166, 190, 50));
+    Test.assertEqual(3, RaceStrategyUtils.resolveCapSource(null, 168, 190, 50));
+    Test.assertEqual(4, RaceStrategyUtils.resolveCapSource(null, null, 190, 50));
+    Test.assertEqual(5, RaceStrategyUtils.resolveCapSource(null, null, 190, null));
+    Test.assertEqual(5, RaceStrategyUtils.resolveCapSource(null, null, 190, 190));
     return true;
 }
 
 (:test)
 function testRaceStrategyCapRatiosAndRounding(logger) {
     _rsAssertNear(
-        RaceStrategyUtils.resolveCapRatio(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_1, RaceStrategyUtils.CAP_SOURCE_LTHR),
+        RaceStrategyUtils.resolveCapRatio(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_1, RaceStrategyUtils.CAP_SOURCE_LTHR_DEVICE),
         0.95,
         0.0001,
         "full phase 1 LTHR ratio"
@@ -153,19 +153,19 @@ function testRaceStrategyCapRatiosAndRounding(logger) {
     );
 
     _rsAssertNear(
-        _rsCap(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_2, RaceStrategyUtils.CAP_SOURCE_LTHR, 168, 190, 50, 0),
+        _rsCap(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_2, RaceStrategyUtils.CAP_SOURCE_LTHR_DEVICE, 168, 190, 50),
         161.0,
         0.0001,
         "full phase 2 LTHR cap"
     );
     _rsAssertNear(
-        _rsCap(RaceStrategyUtils.PROFILE_HALF, RaceStrategyUtils.PHASE_3, RaceStrategyUtils.CAP_SOURCE_HRR, null, 188, 52, 0),
+        _rsCap(RaceStrategyUtils.PROFILE_HALF, RaceStrategyUtils.PHASE_3, RaceStrategyUtils.CAP_SOURCE_HRR, null, 188, 52),
         170.0,
         0.0001,
         "half phase 3 HRR cap"
     );
     _rsAssertNear(
-        _rsCap(RaceStrategyUtils.PROFILE_SHORT, RaceStrategyUtils.PHASE_4, RaceStrategyUtils.CAP_SOURCE_MAXHR, null, 188, null, 0),
+        _rsCap(RaceStrategyUtils.PROFILE_SHORT, RaceStrategyUtils.PHASE_4, RaceStrategyUtils.CAP_SOURCE_MAXHR, null, 188, null),
         175.0,
         0.0001,
         "short phase 4 MaxHR cap"
@@ -174,25 +174,80 @@ function testRaceStrategyCapRatiosAndRounding(logger) {
 }
 
 (:test)
-function testRaceStrategyCapBiasAndClip(logger) {
+function testRaceStrategyCapClip(logger) {
     _rsAssertNear(
-        _rsCap(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_5, RaceStrategyUtils.CAP_SOURCE_LTHR, 170, 190, 50, 8),
-        171.0,
+        _rsCap(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_5, RaceStrategyUtils.CAP_SOURCE_LTHR_PROPERTY, 170, 190, 50),
+        168.0,
         0.0001,
-        "full LTHR cap should clip after bias"
+        "full LTHR cap should clip"
     );
     _rsAssertNear(
-        _rsCap(RaceStrategyUtils.PROFILE_HALF, RaceStrategyUtils.PHASE_5, RaceStrategyUtils.CAP_SOURCE_HRR, null, 190, 50, 12),
-        188.0,
+        _rsCap(RaceStrategyUtils.PROFILE_HALF, RaceStrategyUtils.PHASE_5, RaceStrategyUtils.CAP_SOURCE_HRR, null, 190, 50),
+        176.0,
         0.0001,
         "half HRR cap should clip to max-based ceiling"
     );
     _rsAssertNear(
-        _rsCap(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_1, RaceStrategyUtils.CAP_SOURCE_HRR, null, 180, 50, -130),
+        _rsCap(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_1, RaceStrategyUtils.CAP_SOURCE_HRR, null, 180, 50),
+        151.0,
+        0.0001,
+        "HRR cap should resolve without bias"
+    );
+    _rsAssertNear(
+        _rsCap(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_1, RaceStrategyUtils.CAP_SOURCE_MAXHR, null, 40, 50),
         51.0,
         0.0001,
-        "large negative bias should respect resting-heart floor"
+        "max hr cap should respect resting-heart floor"
     );
+    return true;
+}
+
+(:test)
+function testRaceStrategyCustomCodePriorityDecision(logger) {
+    var directCaps = [155, 158, 162, 166, 170];
+    var decision = RaceStrategyUtils.resolveCapHeartRateDecision(
+        RaceStrategyUtils.PROFILE_HALF,
+        RaceStrategyUtils.PHASE_3,
+        directCaps,
+        171,
+        168,
+        190,
+        50
+    );
+    Test.assertMessage(decision[0] == 162, "custom code direct cap should win");
+    Test.assertEqual(RaceStrategyUtils.CAP_SOURCE_CUSTOM_CODE, decision[1]);
+    Test.assertMessage(decision[2] == null, "custom code should not expose selected lthr");
+    return true;
+}
+
+(:test)
+function testRaceStrategyPropertyLthrFallbackDecision(logger) {
+    var invalidDirectCaps = [155, 158, null, 166, 170];
+    var propertyDecision = RaceStrategyUtils.resolveCapHeartRateDecision(
+        RaceStrategyUtils.PROFILE_FULL,
+        RaceStrategyUtils.PHASE_2,
+        invalidDirectCaps,
+        168,
+        170,
+        190,
+        50
+    );
+    Test.assertMessage(propertyDecision[0] == 161, "property lthr cap should match phase cap");
+    Test.assertEqual(RaceStrategyUtils.CAP_SOURCE_LTHR_PROPERTY, propertyDecision[1]);
+    Test.assertMessage(propertyDecision[2] == 168, "property lthr should be exposed");
+
+    var deviceDecision = RaceStrategyUtils.resolveCapHeartRateDecision(
+        RaceStrategyUtils.PROFILE_FULL,
+        RaceStrategyUtils.PHASE_2,
+        invalidDirectCaps,
+        null,
+        170,
+        190,
+        50
+    );
+    Test.assertMessage(deviceDecision[0] == 163, "device lthr cap should match phase cap");
+    Test.assertEqual(RaceStrategyUtils.CAP_SOURCE_LTHR_DEVICE, deviceDecision[1]);
+    Test.assertMessage(deviceDecision[2] == 170, "device lthr should be exposed");
     return true;
 }
 

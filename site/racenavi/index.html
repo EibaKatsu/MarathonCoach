@@ -6,7 +6,7 @@
     <title>Race Navi | レースの判断を、ひと目で。</title>
     <meta
       name="description"
-      content="Race Navi は、ペース・心拍・補給タイミングを 1 画面にまとめ、レース中の迷いを減らす Garmin Connect IQ データフィールドです。"
+      content="Race Navi は、ペース・心拍・予測ゴールを 1 画面にまとめ、レース中の迷いを減らす Garmin Connect IQ データフィールドです。"
     >
     <link rel="stylesheet" href="./styles.css">
   </head>
@@ -17,7 +17,7 @@
         <nav class="site-nav" aria-label="Primary">
           <a href="#concept">コンセプト</a>
           <a href="#features">機能</a>
-          <a href="#modes">2つの提供形態</a>
+          <a href="#modes">通常版とカスタムコード</a>
         </nav>
       </header>
 
@@ -28,17 +28,17 @@
             <span class="hero-badge">NORMAL EDITION PREVIEW</span>
             <h1>レースの判断を、<br>ひと目で。</h1>
             <p class="hero-lead">
-              Race Navi は、ペースの迷い、補給の後回し、崩れの見逃しを
+              Race Navi は、ペースの迷い、心拍CAPの見誤り、崩れの見逃しを
               ひとつの画面で受け止めるランナー向けガイドです。
             </p>
             <div class="hero-points" aria-label="Race Navi highlights">
               <p>1画面で判断材料を集約</p>
-              <p>ACTION と FUEL を短文で提示</p>
-              <p>設定は距離と目標タイムだけ</p>
+              <p>CAP心拍と予測ゴールを同時に確認</p>
+              <p>必要なら LTHR とカスタムコードで個別調整</p>
             </div>
             <div class="hero-actions">
               <a class="button button-primary" href="#features">できることを見る</a>
-              <a class="button button-secondary" href="#modes">通常版とカスタム版</a>
+              <a class="button button-secondary" href="#modes">通常版とカスタムコード</a>
             </div>
           </div>
 
@@ -49,7 +49,7 @@
                 src="./assets/cover_normal2.png"
                 alt="Race Navi のカバーイメージ。ランナー向けの 1 画面ガイドと主要機能を紹介。"
               >
-              <div class="hero-note hero-note-top">PACE / HR / FUEL を一画面で整理</div>
+              <div class="hero-note hero-note-top">PACE / HR / GOAL を一画面で整理</div>
               <div class="hero-note hero-note-bottom">公開版は迷わないための最小構成に絞って提供</div>
             </div>
           </div>
@@ -70,12 +70,12 @@
               <p>少し上げるか、少し落とすか。その迷いを ACTION 表示で短く返します。</p>
             </article>
             <article>
-              <h3>補給忘れを防ぐ</h3>
-              <p>考えることが増える後半ほど、補給通知を先回りで受け取れます。</p>
+              <h3>CAP心拍を見失わない</h3>
+              <p>LTHR / HRR / MaxHR に基づく上限を整理し、走りながら判断しやすくします。</p>
             </article>
             <article>
               <h3>失速の兆しを早めに拾う</h3>
-              <p>心拍ゾーンとドリフトの見立てを添えて、無理な押し込みを避けやすくします。</p>
+              <p>心拍と予測ゴールの変化を並べて、無理な押し込みを避けやすくします。</p>
             </article>
           </div>
         </section>
@@ -88,28 +88,28 @@
           <div class="feature-grid">
             <article class="feature-card">
               <span class="feature-index">01</span>
-              <h3>ACTIONカード</h3>
-              <p>「ちょい上げ」「ちょい落とし」「そのまま」を短文で表示し、次の判断をすぐ返します。</p>
+              <h3>CAP心拍ダッシュボード</h3>
+              <p>現在心拍と CAP 心拍を同じ視線で見比べられます。</p>
             </article>
             <article class="feature-card">
               <span class="feature-index">02</span>
-              <h3>補給通知</h3>
-              <p>通常版は 35 分ごとを基準に通知。レース距離に応じて必要な頻度だけ案内します。</p>
+              <h3>予測ゴール時刻</h3>
+              <p>今の走りを続けたときのゴール時刻と差分をすぐ確認できます。</p>
             </article>
             <article class="feature-card">
               <span class="feature-index">03</span>
-              <h3>心拍ZONE上限</h3>
-              <p>Garmin の心拍ゾーンをもとに、今どこまで余裕があるかを一目で把握できます。</p>
+              <h3>ゴールランナーゲージ</h3>
+              <p>目標との差を中央のゲージで直感的に追えます。</p>
             </article>
             <article class="feature-card">
               <span class="feature-index">04</span>
-              <h3>距離通知</h3>
-              <p>1km ごとの進捗に加え、種目ごとの節目で距離カードを表示して集中を切らしません。</p>
+              <h3>LTHR 上書き</h3>
+              <p>端末依存に頼らず、必要なら `LTHR` をプロパティで明示できます。</p>
             </article>
             <article class="feature-card">
               <span class="feature-index">05</span>
-              <h3>ドリフト検知</h3>
-              <p>後半の崩れにつながる変化を早めに捉え、無理なオーバーペースを避けやすくします。</p>
+              <h3>カスタムコード</h3>
+              <p>S1〜S5 の CAP 心拍を直接指定し、通常ロジックより優先して使えます。</p>
             </article>
           </div>
         </section>
@@ -128,7 +128,7 @@
             <article>
               <span>02</span>
               <h3>レース中は 1 画面だけ見る</h3>
-              <p>ペース、心拍、補給の判断材料をまとめているので、視線移動を減らせます。</p>
+              <p>ペース、心拍、予測ゴールをまとめているので、視線移動を減らせます。</p>
             </article>
             <article>
               <span>03</span>
@@ -141,7 +141,7 @@
         <section class="section modes" id="modes">
           <div class="section-heading">
             <p class="section-kicker">Two Modes</p>
-            <h2>まずは通常版で迷いを減らし、必要ならカスタム版で自分向けに寄せる。</h2>
+            <h2>まずは通常版で使い、必要ならカスタムコードで自分向けに寄せる。</h2>
           </div>
           <div class="modes-grid">
             <article class="mode-card">
@@ -149,17 +149,17 @@
               <h3>公開版の最小構成で、すぐ使い始める</h3>
               <ul>
                 <li>距離と目標タイムの 2 項目だけ設定</li>
-                <li>ACTION / FUEL / 距離通知を 1 画面に集約</li>
+                <li>CAP 心拍と予測ゴールを 1 画面に集約</li>
                 <li>市民ランナー向けの標準設計</li>
               </ul>
             </article>
             <article class="mode-card mode-card-accent">
-              <p class="mode-label">カスタム版</p>
-              <h3>自分の傾向に合わせて、判断の精度をさらに寄せる</h3>
+              <p class="mode-label">カスタムコード</p>
+              <h3>心拍CAPだけを、より直接的に自分向けへ寄せる</h3>
               <ul>
-                <li>FIT 分析やヒアリングを前提に個別調整</li>
-                <li>補給や心拍の感度を自分用に最適化</li>
-                <li>今後の申込導線をこのページへ集約予定</li>
+                <li>`LTHR` を明示して通常計算へ反映できる</li>
+                <li>S1〜S5 の CAP 心拍を直接指定できる</li>
+                <li>方針選択ではなく最終値指定へ整理</li>
               </ul>
             </article>
           </div>

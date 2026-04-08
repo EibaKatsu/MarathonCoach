@@ -3,6 +3,7 @@
         <property id="race_distance_km" type="number">1</property>
         <property id="target_time_hour" type="number">5</property>
         <property id="target_time_minute" type="number">15</property>
+        <property id="lthr_bpm" type="string"></property>
         <property id="custom_mode_code" type="string"></property>
     </properties>
 
@@ -10,7 +11,8 @@
         <string id="setting_race_distance">Race Distance (km)</string>
         <string id="setting_target_hour">Target Time Hour</string>
         <string id="setting_target_minute">Target Time Minute</string>
-        <string id="setting_custom_mode_code">Custom Mode Code</string>
+        <string id="setting_lthr_bpm">LTHR (bpm)</string>
+        <string id="setting_custom_mode_code">Custom Code</string>
     </strings>
 
     <settings>
@@ -97,6 +99,9 @@
                 <listEntry value="58">58</listEntry>
                 <listEntry value="59">59</listEntry>
             </settingConfig>
+        </setting>
+        <setting propertyKey="@Properties.lthr_bpm" title="@Strings.setting_lthr_bpm">
+            <settingConfig type="alphaNumeric"></settingConfig>
         </setting>
         <setting propertyKey="@Properties.custom_mode_code" title="@Strings.setting_custom_mode_code">
             <settingConfig type="alphaNumeric"></settingConfig>

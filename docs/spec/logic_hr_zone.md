@@ -18,12 +18,16 @@
 - `S5`: `95%〜Finish`
 
 ## CAP HR 算出優先順位
-1. `LTHR`
-2. `HRR = MaxHR - RestingHR`
-3. `MaxHR`
+1. `custom code direct CAP`
+2. `property LTHR`
+3. `device LTHR`
+4. `HRR = MaxHR - RestingHR`
+5. `MaxHR`
 
 - Garmin のゾーン番号は CAP の主ロジックに使わない
-- `custom_mode` の `hrCapBiasBpm` はアンカー由来の CAP 計算後に加算する
+- `custom code direct CAP` は `S1〜S5` の5値がすべて有効な場合のみ使う
+- `property LTHR` が無効または未指定なら `device LTHR` へフォールバックする
+- direct CAP 使用時は後段バイアスを加えない
 
 ## LTHR ベース係数
 | Profile | S1 | S2 | S3 | S4 | S5 |
@@ -62,6 +66,14 @@
 
 - 最終 CAP HR は bpm の整数へ丸める
 - 下限は `RestingHR` を下回りにくい安全側クリップを入れてよい
+- `custom code direct CAP` は最終値として扱い、LTHR/HRR/MaxHR の係数計算を通さない
+
+## Source 識別
+- `CAP_SOURCE_CUSTOM_CODE`
+- `CAP_SOURCE_LTHR_PROPERTY`
+- `CAP_SOURCE_LTHR_DEVICE`
+- `CAP_SOURCE_HRR`
+- `CAP_SOURCE_MAXHR`
 
 ## HR超過判定
 - 表示用心拍とは別に、判定専用の `judgeHr` を EMA で持つ
