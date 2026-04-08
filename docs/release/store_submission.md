@@ -43,12 +43,28 @@
 
 ## パッケージ作成と申請
 - `manifest.xml` 最終確認
+- `./scripts/build_release_package.sh` で `.iq` を生成
 - `.iq` ファイル出力
 - ストア申請フォーム登録
 - 審査前チェックリスト実施
 - チェック記録: `docs/release/store_review_checklist.md`
 - 提出ログ: `docs/release/store_submission_log.md`
 - 差し戻し対応: `docs/release/store_rejection_flow.md`
+
+## 署名鍵ルール
+- Store 提出用 `.iq` は、過去公開版と同じ旧署名鍵で署名する
+- 既定の公開鍵パスは `/Users/eibakatsu/Downloads/grow/.vscode/developer_key`
+- 鍵の保管場所が変わった場合だけ `CIQ_RELEASE_KEY=/path/to/developer_key` で上書きする
+- `CIQ_DEV_KEY` や `./.vscode/developer_key` は開発用として扱い、Store 提出用パッケージには使わない
+
+## 推奨手順
+1. `CIQ_DEV_KEY=.vscode/developer_key ./scripts/run_unit_tests.sh run fr255`
+2. `CIQ_DEV_KEY=.vscode/developer_key ./scripts/run_manifest_smoke.sh --build-only`
+3. `./scripts/build_release_package.sh`
+
+## 補足
+- `./scripts/build_release_package.sh` は `manifest.xml` の version を読み、`bin/releases/<version>/` に `.iq` と `BUILD.md` を出力する
+- Store にアップロードするファイルは、このスクリプトで生成した `.iq` を使う
 
 ## 素材ファイル
 - 通常版カバー画像: `assets/store_shots/cover_normal.png`
