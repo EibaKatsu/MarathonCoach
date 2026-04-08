@@ -6,8 +6,8 @@
     <string id="setting_race_distance">Race Distance (km)</string>
     <string id="setting_target_hour">Target Time Hour</string>
     <string id="setting_target_minute">Target Time Minute</string>
-    <string id="setting_lthr_bpm">LTHR (bpm)</string>
-    <string id="setting_custom_mode_code">カスタムコード</string>
+    <string id="setting_lthr_bpm">LTHR (bpm) (optional)</string>
+    <string id="setting_custom_mode_code">カスタムコード (optional)</string>
     <string id="GoalTimeLabel">TGT</string>
     <string id="GoalPredictionLabel">予測</string>
     <string id="PredictedDeltaLabel">差</string>
