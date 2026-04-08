@@ -9,7 +9,7 @@ import sys
 from typing import Dict, List, Tuple
 
 BASE36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-PREFIX = "C1"
+PREFIX = "C2"
 
 RANGES = {
     "customCapS1": (30, 260),
