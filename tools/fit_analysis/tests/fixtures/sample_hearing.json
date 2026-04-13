@@ -1,0 +1,9 @@
+{
+  "condition_note": "前半は少しオーバーペース気味。後半は補給が遅れて脚が重くなった。",
+  "heat_impact": "none",
+  "fueling_actual": "late",
+  "stomach_issue": false,
+  "cramp": true,
+  "limit_factor": "後半の脚持ち",
+  "next_plan_preference": "balanced"
+}

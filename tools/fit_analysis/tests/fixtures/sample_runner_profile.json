@@ -1,0 +1,13 @@
+{
+  "runner_id": "runner-001",
+  "goal_race": "Tokyo Marathon Tune-up",
+  "race_distance_km": 42.195,
+  "goal_time": "4:00:00",
+  "pb_full": "4:07:30",
+  "pb_half": "1:53:40",
+  "lthr_bpm": 160,
+  "device_lthr_bpm": 158,
+  "max_hr": 186,
+  "resting_hr": 50,
+  "watch_model": "Forerunner 255"
+}

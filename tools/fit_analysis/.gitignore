@@ -1,0 +1,5 @@
+_vendor/
+__pycache__/
+*.pyc
+local_inputs/
+.env.local

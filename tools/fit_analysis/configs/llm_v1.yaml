@@ -1,0 +1,29 @@
+provider: openai
+model: gpt-5
+temperature: 0.2
+max_output_tokens: 3200
+timeout_sec: 30
+save_audit: true
+save_raw_response: true
+language: ja
+reasoning:
+  effort: low
+text:
+  verbosity: low
+style:
+  tone: "一般ランナー向け、短く明快、営業っぽすぎない"
+  avoid_terms:
+    - "LTHR"
+    - "HRR"
+    - "direct CAP"
+    - "発火"
+    - "deterministic"
+  replacements:
+    CAP: "レース中の心拍上限"
+    baseline: "自動設定"
+    final_cap: "今回のご提案設定"
+    S1: "序盤"
+    S2: "前半"
+    S3: "中盤"
+    S4: "終盤"
+    S5: "ラスト"
