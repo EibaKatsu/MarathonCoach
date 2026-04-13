@@ -1,0 +1,361 @@
+{
+  "adjustments": {
+    "applied_rules": [
+      {
+        "deltas": {
+          "S1": -3,
+          "S2": -3
+        },
+        "label": "前半抑制ルール",
+        "reasons": [
+          "S1平均心拍が基準より4bpm高い",
+          "S2平均心拍が基準より3bpm高い",
+          "35km以降の失速幅が17秒/km"
+        ],
+        "rule_id": "early_restraint",
+        "snapshots": {
+          "early_pace_diff_sec": -7.588,
+          "pace_drop_35_plus_sec": 16.867,
+          "s1_avg_hr_bpm": 156,
+          "s2_avg_hr_bpm": 157
+        },
+        "triggered": true
+      },
+      {
+        "deltas": {
+          "S3": -2
+        },
+        "label": "中盤安定化ルール",
+        "reasons": [
+          "25〜35kmの心拍上昇がS2比で7bpm",
+          "25〜35km平均ペースが目標より11秒/km遅い"
+        ],
+        "rule_id": "mid_stabilize",
+        "snapshots": {
+          "avg_pace_25_35_sec_per_km": 352.0,
+          "hr_rise_25_35_vs_s2_bpm": 7.0,
+          "s3_pace_variability_sec": 11.225
+        },
+        "triggered": true
+      },
+      {
+        "deltas": {
+          "S4": -2,
+          "S5": -2
+        },
+        "label": "終盤失速対策ルール",
+        "reasons": [
+          "35km以降平均心拍がS4基準より6bpm高い"
+        ],
+        "rule_id": "late_fade_protection",
+        "snapshots": {
+          "avg_hr_35_plus_bpm": 163,
+          "pace_drop_35_plus_sec": 16.867,
+          "s4_baseline_bpm": 157
+        },
+        "triggered": true
+      },
+      {
+        "deltas": {
+          "S4": -1,
+          "S5": -1
+        },
+        "label": "補給不安補正",
+        "reasons": [
+          "補給実績が late と申告された"
+        ],
+        "rule_id": "fueling_guard",
+        "snapshots": {
+          "fueling_actual": "late"
+        },
+        "triggered": true
+      },
+      {
+        "deltas": {
+          "S4": -1,
+          "S5": -1
+        },
+        "label": "けいれん保守補正",
+        "reasons": [
+          "けいれん申告があるため終盤側を保守化"
+        ],
+        "rule_id": "cramp_guard",
+        "snapshots": {
+          "cramp": true
+        },
+        "triggered": true
+      }
+    ],
+    "reference_only": false,
+    "total_deltas": {
+      "S1": -3,
+      "S2": -3,
+      "S3": -2,
+      "S4": -4,
+      "S5": -4
+    }
+  },
+  "baseline": {
+    "anchor_lthr_bpm": 160,
+    "debug": {
+      "clips": {
+        "S1": {
+          "lower": 51,
+          "upper": 161
+        },
+        "S2": {
+          "lower": 51,
+          "upper": 161
+        },
+        "S3": {
+          "lower": 51,
+          "upper": 161
+        },
+        "S4": {
+          "lower": 51,
+          "upper": 161
+        },
+        "S5": {
+          "lower": 51,
+          "upper": 161
+        }
+      },
+      "ratios": {
+        "S1": 0.95,
+        "S2": 0.96,
+        "S3": 0.97,
+        "S4": 0.98,
+        "S5": 0.99
+      },
+      "raw_caps": {
+        "S1": 152.0,
+        "S2": 153.6,
+        "S3": 155.2,
+        "S4": 156.8,
+        "S5": 158.4
+      }
+    },
+    "profile": "FULL",
+    "source": "CAP_SOURCE_LTHR_PROPERTY",
+    "values": {
+      "S1": 152,
+      "S2": 154,
+      "S3": 155,
+      "S4": 157,
+      "S5": 158
+    }
+  },
+  "custom_code": "C2454749494ADW",
+  "final_cap": {
+    "S1": 149,
+    "S2": 151,
+    "S3": 153,
+    "S4": 153,
+    "S5": 154
+  },
+  "fit_input": {
+    "file_hash": "aa6ffe36031f2867821b86248e254659afb77a6b82854828b3186a77e89ab813",
+    "file_name": "sample.fit",
+    "integrity_ok": true,
+    "messages_summary": {
+      "activity_mesgs": 1,
+      "event_mesgs": 2,
+      "file_id_mesgs": 1,
+      "lap_mesgs": 1,
+      "record_mesgs": 85,
+      "session_mesgs": 1
+    }
+  },
+  "generated_at": "2026-04-13T00:00:00+00:00",
+  "hearing": {
+    "condition_note": "前半は少しオーバーペース気味。後半は補給が遅れて脚が重くなった。",
+    "cramp": true,
+    "fueling_actual": "late",
+    "heat_impact": "none",
+    "limit_factor": "後半の脚持ち",
+    "next_plan_preference": "balanced",
+    "stomach_issue": false
+  },
+  "metrics": {
+    "avg_hr_25_35_bpm": 164,
+    "avg_hr_35_plus_bpm": 163,
+    "avg_pace_25_35_sec_per_km": 352.0,
+    "avg_pace_35_plus_sec_per_km": 368.867,
+    "early_pace_diff_sec": -7.588,
+    "finish_kick_sec": -31.374,
+    "goal_pace_diff_sec": 2.773,
+    "goal_pace_sec_per_km": 341.273,
+    "heart_rate_rise_bpm": 7.0,
+    "hr_missing_ratio": 0.0,
+    "hr_rise_25_35_vs_s2_bpm": 7.0,
+    "overall": {
+      "avg_hr_bpm": 160,
+      "avg_pace_sec_per_km": 344.046,
+      "distance_km": 42.195,
+      "pace_variability_sec": 17.627,
+      "time_sec": 14517.0
+    },
+    "pace_drop_35_plus_sec": 16.867,
+    "phases": {
+      "S1": {
+        "avg_hr_bpm": 156,
+        "avg_pace_sec_per_km": 330.075,
+        "distance_km": 10.127,
+        "end_km": 10.1268,
+        "goal_pace_diff_sec": -11.198,
+        "pace_variability_sec": 1.275,
+        "start_km": 0.0,
+        "time_sec": 3342.605
+      },
+      "S2": {
+        "avg_hr_bpm": 157,
+        "avg_pace_sec_per_km": 336.16,
+        "distance_km": 14.768,
+        "end_km": 24.895,
+        "goal_pace_diff_sec": -5.113,
+        "pace_variability_sec": 1.073,
+        "start_km": 10.1268,
+        "time_sec": 4964.485
+      },
+      "S3": {
+        "avg_hr_bpm": 164,
+        "avg_pace_sec_per_km": 351.953,
+        "distance_km": 10.127,
+        "end_km": 35.0219,
+        "goal_pace_diff_sec": 10.68,
+        "pace_variability_sec": 11.225,
+        "start_km": 24.895,
+        "time_sec": 3564.188
+      },
+      "S4": {
+        "avg_hr_bpm": 163,
+        "avg_pace_sec_per_km": 378.067,
+        "distance_km": 5.063,
+        "end_km": 40.0852,
+        "goal_pace_diff_sec": 36.794,
+        "pace_variability_sec": 1.162,
+        "start_km": 35.0219,
+        "time_sec": 1914.268
+      },
+      "S5": {
+        "avg_hr_bpm": 162,
+        "avg_pace_sec_per_km": 346.693,
+        "distance_km": 2.11,
+        "end_km": 42.195,
+        "goal_pace_diff_sec": 5.42,
+        "pace_variability_sec": 0.0,
+        "start_km": 40.0852,
+        "time_sec": 731.454
+      }
+    },
+    "stop_ratio": 0.0
+  },
+  "quality_gate": {
+    "applied_checks": [
+      "usable_ok"
+    ],
+    "metrics": {
+      "actual_distance_km": 42.195,
+      "distance_ratio": 1.0,
+      "gps_jump_ratio": 0.0,
+      "hr_missing_ratio": 0.0,
+      "pace_outlier_ratio": 0.0,
+      "stop_ratio": 0.0
+    },
+    "race_profile": "FULL",
+    "reasons": [
+      "レース分析に使える品質です。"
+    ],
+    "status": "usable"
+  },
+  "race_profile": {
+    "phases": [
+      {
+        "end_km": 10.1268,
+        "end_progress": 0.24,
+        "index": 0,
+        "name": "S1",
+        "start_km": 0.0,
+        "start_progress": 0.0
+      },
+      {
+        "end_km": 24.895,
+        "end_progress": 0.59,
+        "index": 1,
+        "name": "S2",
+        "start_km": 10.1268,
+        "start_progress": 0.24
+      },
+      {
+        "end_km": 35.0219,
+        "end_progress": 0.83,
+        "index": 2,
+        "name": "S3",
+        "start_km": 24.895,
+        "start_progress": 0.59
+      },
+      {
+        "end_km": 40.0852,
+        "end_progress": 0.95,
+        "index": 3,
+        "name": "S4",
+        "start_km": 35.0219,
+        "start_progress": 0.83
+      },
+      {
+        "end_km": 42.195,
+        "end_progress": 1.0,
+        "index": 4,
+        "name": "S5",
+        "start_km": 40.0852,
+        "start_progress": 0.95
+      }
+    ],
+    "profile": "FULL"
+  },
+  "rule_version": "rules_v1",
+  "runner_profile": {
+    "device_lthr_bpm": 158,
+    "goal_race": "Tokyo Marathon Tune-up",
+    "goal_time": "4:00:00",
+    "lthr_bpm": 160,
+    "max_hr": 186,
+    "pb_full": "4:07:30",
+    "pb_half": "1:53:40",
+    "race_distance_km": 42.195,
+    "resting_hr": 50,
+    "runner_id": "runner-001",
+    "watch_model": "Forerunner 255"
+  },
+  "summary_items": [
+    {
+      "label": "前半の入り方",
+      "text": "前半は目標差-8秒/kmで、おおむね狙いどおりです。"
+    },
+    {
+      "label": "中盤の安定度",
+      "text": "中盤のペースばらつきは11秒/kmで、やや揺れがあります。"
+    },
+    {
+      "label": "30km前後の崩れ始め",
+      "text": "30km前後で目標より11秒/km遅れ始めています。"
+    },
+    {
+      "label": "35km以降の失速度",
+      "text": "35km以降は17秒/kmの失速が見られます。"
+    },
+    {
+      "label": "心拍の上がり方",
+      "text": "後半で心拍が7bpm上がっており、想定内の上昇です。"
+    },
+    {
+      "label": "終盤の粘り余地",
+      "text": "終盤の粘り余地は限定的で、前半から余力を残す設計が向いています。"
+    },
+    {
+      "label": "次回設定方針",
+      "text": "次回設定方針は前半から中盤を抑え、35km以降の失速を減らす方向です。"
+    }
+  ],
+  "tool_version": "0.1.0"
+}
