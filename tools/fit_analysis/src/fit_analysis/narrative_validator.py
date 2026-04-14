@@ -54,9 +54,9 @@ def validate_narrative_markdown(
         required_tokens = [
             item["label"],
             item["range"],
-            str(item["baseline"]),
+            str(item["sample_avg_hr_bpm"]),
+            item["sample_avg_pace"],
             str(item["final"]),
-            f"{item['delta']:+d}",
         ]
         if not all(token in markdown for token in required_tokens):
             issues.append(f"区間設定の記載が不足しています: {item['label']}")
