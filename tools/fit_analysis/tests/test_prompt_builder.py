@@ -21,6 +21,8 @@ class PromptBuilderTests(unittest.TestCase):
     def test_build_narrative_input_uses_term_replacements(self) -> None:
         narrative_input = build_narrative_input(self.analysis_result, self.llm_config)
         self.assertEqual("序盤", narrative_input["recommended_setting"]["s1"]["label"])
+        self.assertEqual(156, narrative_input["recommended_setting"]["s1"]["sample_avg_hr_bpm"])
+        self.assertEqual("5分30秒/km", narrative_input["recommended_setting"]["s1"]["sample_avg_pace"])
         self.assertEqual("今回のご提案設定", narrative_input["recommended_terms"]["final_cap"])
         self.assertEqual("分析に十分使えるデータでした", narrative_input["quality_summary"])
         self.assertEqual("C2454749494ADW", narrative_input["custom_code"])
@@ -32,6 +34,9 @@ class PromptBuilderTests(unittest.TestCase):
         for heading in SECTION_HEADINGS:
             self.assertIn(heading, bundle.user_prompt)
         self.assertIn('"custom_code": "C2454749494ADW"', bundle.user_prompt)
+        self.assertLess(bundle.user_prompt.index("今回の分析で見えたこと"), bundle.user_prompt.index("なぜこの設定にしたか"))
+        self.assertIn("「今回の分析で見えたこと」で先に事実を整理し", bundle.user_prompt)
+        self.assertIn("今回のサンプル FIT で実際に出た区間ごとの平均心拍と平均ペースを基準に説明してください。", bundle.user_prompt)
 
 
 if __name__ == "__main__":

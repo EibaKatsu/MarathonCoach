@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import yaml
 
-from fit_analysis.client_delivery_renderer import build_client_delivery_artifacts
+from fit_analysis.client_delivery_renderer import build_client_delivery_artifacts, render_client_delivery_html
 from fit_analysis.fallback_template_renderer import render_fallback_client_markdown
 from fit_analysis.narrative_generator import NarrativeGenerationError
 from fit_analysis.prompt_builder import build_narrative_input
@@ -34,6 +34,8 @@ class ClientDeliveryRendererTests(unittest.TestCase):
                 save_llm_audit=True,
             )
         self.assertIn("## 今回の結論", result.markdown)
+        self.assertNotIn("## ご提案設定グラフ", result.markdown)
+        self.assertLess(result.markdown.index("## 今回の分析で見えたこと"), result.markdown.index("## なぜこの設定にしたか"))
         self.assertTrue(result.audit["fallback_used"])
         self.assertTrue(result.validation.ok)
 

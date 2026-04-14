@@ -32,7 +32,12 @@ class ClientDeliveryE2ETests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             out_dir = self._run_cli(tmp_dir, "template")
             self.assertTrue((out_dir / "client_delivery.md").exists())
-            self.assertIn("## 今回のご提案設定", (out_dir / "client_delivery.md").read_text(encoding="utf-8"))
+            text = (out_dir / "client_delivery.md").read_text(encoding="utf-8")
+            self.assertIn("## 今回のご提案設定", text)
+            self.assertIn("サンプル平均心拍", text)
+            self.assertIn("サンプル平均ペース", text)
+            self.assertNotIn("## ご提案設定グラフ", text)
+            self.assertLess(text.index("## 今回の分析で見えたこと"), text.index("## なぜこの設定にしたか"))
             self.assertTrue((out_dir / "llm_generation_audit.json").exists())
 
     def test_auto_mode_uses_ai_when_mock_succeeds(self) -> None:

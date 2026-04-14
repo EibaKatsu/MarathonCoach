@@ -13,9 +13,9 @@ SECTION_HEADINGS = [
     "今回の結論",
     "目標",
     "今回のご提案設定",
+    "今回の分析で見えたこと",
     "なぜこの設定にしたか",
     "区間ごとの見方",
-    "今回の分析で見えたこと",
     "ヒアリング内容の反映",
     "再調整の目安",
     "専用設定コード",
@@ -28,6 +28,7 @@ def build_narrative_input(
 ) -> Dict[str, Any]:
     replacements = llm_config.get("style", {}).get("replacements", {})
     boundaries = analysis_result["race_profile"]["phases"]
+    metrics = analysis_result["metrics"]
     baseline = analysis_result["baseline"]["values"]
     final_cap = analysis_result["final_cap"]
     deltas = analysis_result["adjustments"]["total_deltas"]
@@ -35,16 +36,17 @@ def build_narrative_input(
     recommended_setting = {}
     for phase in PHASE_NAMES:
         boundary = next(item for item in boundaries if item["name"] == phase)
+        phase_metric = metrics["phases"][phase]
         recommended_setting[phase.lower()] = {
             "phase": phase,
             "label": replacements.get(phase, phase),
             "range": f"{boundary['start_km']:.1f}〜{boundary['end_km']:.1f}km",
+            "sample_avg_hr_bpm": phase_metric["avg_hr_bpm"],
+            "sample_avg_pace": format_pace_jp(phase_metric["avg_pace_sec_per_km"]),
             "baseline": baseline[phase],
             "final": final_cap[phase],
             "delta": deltas[phase],
         }
-
-    metrics = analysis_result["metrics"]
     hearing = analysis_result["hearing"]
     summary_lookup = {item["label"]: item["text"] for item in analysis_result["summary_items"]}
 
@@ -120,7 +122,8 @@ def _build_system_prompt(llm_config: Dict[str, Any]) -> str:
 def _build_user_prompt(narrative_input: Dict[str, Any], llm_config: Dict[str, Any]) -> str:
     prompt_sections = "\n".join(f"- {heading}" for heading in SECTION_HEADINGS)
     setting_format_lines = "\n".join(
-        f"- {item['label']}（{item['range']}）: {item['baseline']}bpm → {item['final']}bpm（{item['delta']:+d}bpm）"
+        f"- {item['label']}（{item['range']}）: サンプル平均心拍 {item['sample_avg_hr_bpm']}bpm / "
+        f"サンプル平均ペース {item['sample_avg_pace']} / 今回のご提案上限 {item['final']}bpm"
         for item in narrative_input["recommended_setting"].values()
     )
     required_mentions = [
@@ -141,6 +144,10 @@ def _build_user_prompt(narrative_input: Dict[str, Any], llm_config: Dict[str, An
             "数値、差分、Custom Code は変更しないでください。",
             "内部用語は避け、一般ランナー向けに言い換えてください。",
             "各セクション見出しは必ず '# ' で始めてください。",
+            "利用者向けの説明では、自動設定や標準値を基準にしないでください。",
+            "今回のサンプル FIT で実際に出た区間ごとの平均心拍と平均ペースを基準に説明してください。",
+            "「今回の分析で見えたこと」で先に事実を整理し、その結果として「なぜこの設定にしたか」で設定意図につなげてください。",
+            "「なぜこの設定にしたか」では、上の分析結果を受けて判断したことが分かる書き方にしてください。",
             "出力に含めるセクションは次のとおりです。",
             prompt_sections,
             "",
