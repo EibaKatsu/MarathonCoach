@@ -2064,7 +2064,7 @@ class MarathonCoachField extends Ui.DataField {
     function _resolveCapAnchorInfo(info) as Lang.Array {
         var profile = _getUserHeartRateProfile();
         var deviceLthr = _resolveDeviceLactateThresholdHeartRate(profile, info);
-        var maxHeartRate = _resolveProfileMaxHeartRate(profile, info);
+        var maxHeartRate = _resolveProfileMaxHeartRate(profile);
         var restingHeartRate = _resolveProfileRestingHeartRate(profile);
         return [deviceLthr, maxHeartRate, restingHeartRate];
     }
@@ -2117,25 +2117,12 @@ class MarathonCoachField extends Ui.DataField {
         return null;
     }
 
-    function _resolveProfileMaxHeartRate(profile, info) {
+    function _resolveProfileMaxHeartRate(profile) {
         if (profile != null and profile has :maxHeartRate) {
             var profileMaxHeartRate = _normalizeHeartRateValue(profile.maxHeartRate);
             if (profileMaxHeartRate != null) {
                 return profileMaxHeartRate;
             }
-        }
-
-        var infoMaxHeartRate = null;
-        if (info != null and info has :maxHeartRate) {
-            infoMaxHeartRate = _normalizeHeartRateValue(info.maxHeartRate);
-        }
-        if (infoMaxHeartRate != null) {
-            return infoMaxHeartRate;
-        }
-
-        var fallbackInfo = _getFallbackActivityInfo();
-        if (fallbackInfo != null and fallbackInfo has :maxHeartRate) {
-            return _normalizeHeartRateValue(fallbackInfo.maxHeartRate);
         }
         return null;
     }
