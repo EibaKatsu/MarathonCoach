@@ -61,6 +61,7 @@ class MarathonCoachField extends Ui.DataField {
     const SETTINGS_LOG = false;
     const FIT_FACT_LOG = false;
     const DIST_PROBE_LOG = false;
+    const CAP_HR_DIAG_LOG = false;
     const TOP_ROW_DIAG_LOG = false;
     const SMALL_TOP_ROW_DIAG_LOG = false;
     const MEDIUM_HR_LAYOUT_DIAG_LOG = false;
@@ -199,6 +200,7 @@ class MarathonCoachField extends Ui.DataField {
     var _probeSpeedLastElapsedSec = null;
     var _lastDistanceProbeLogLine = null;
     var _lastFinishDiagLine = null;
+    var _lastCapHrDiagLine = null;
     var _lastMediumDrawBlockDiagLine = null;
     var _drawStage = "idle";
     var _lastResolvedHeartRateTopRowNumberFont = null;
@@ -344,6 +346,7 @@ class MarathonCoachField extends Ui.DataField {
         _sampleCurrentLocationSource = "null";
         _lastFactLogLine = null;
         _lastFinishDiagLine = null;
+        _lastCapHrDiagLine = null;
         _probeLocDistanceM = 0.0;
         _probeLocLastLocation = null;
         _probeLocLastElapsedSec = null;
@@ -2058,13 +2061,14 @@ class MarathonCoachField extends Ui.DataField {
         _allowedMaxHeartRate = decision[0];
         _capHeartRateSource = decision[1];
         _capLactateThresholdHeartRate = decision[2];
+        _logCapHeartRateDiagState(distanceKm, profile, phase);
         return _allowedMaxHeartRate;
     }
 
     function _resolveCapAnchorInfo(info) as Lang.Array {
         var profile = _getUserHeartRateProfile();
         var deviceLthr = _resolveDeviceLactateThresholdHeartRate(profile, info);
-        var maxHeartRate = _resolveProfileMaxHeartRate(profile, info);
+        var maxHeartRate = _resolveProfileMaxHeartRate(profile);
         var restingHeartRate = _resolveProfileRestingHeartRate(profile);
         return [deviceLthr, maxHeartRate, restingHeartRate];
     }
@@ -2117,25 +2121,12 @@ class MarathonCoachField extends Ui.DataField {
         return null;
     }
 
-    function _resolveProfileMaxHeartRate(profile, info) {
+    function _resolveProfileMaxHeartRate(profile) {
         if (profile != null and profile has :maxHeartRate) {
             var profileMaxHeartRate = _normalizeHeartRateValue(profile.maxHeartRate);
             if (profileMaxHeartRate != null) {
                 return profileMaxHeartRate;
             }
-        }
-
-        var infoMaxHeartRate = null;
-        if (info != null and info has :maxHeartRate) {
-            infoMaxHeartRate = _normalizeHeartRateValue(info.maxHeartRate);
-        }
-        if (infoMaxHeartRate != null) {
-            return infoMaxHeartRate;
-        }
-
-        var fallbackInfo = _getFallbackActivityInfo();
-        if (fallbackInfo != null and fallbackInfo has :maxHeartRate) {
-            return _normalizeHeartRateValue(fallbackInfo.maxHeartRate);
         }
         return null;
     }
@@ -2600,6 +2591,34 @@ class MarathonCoachField extends Ui.DataField {
         Sys.println(line);
     }
 
+    function _logCapHeartRateDiagState(distanceKm, profile, phase) {
+        if (!CAP_HR_DIAG_LOG) {
+            return;
+        }
+
+        var line =
+            "[CAP_HR_DIAG]" +
+            " distKm=" + _factValue(distanceKm) +
+            " raceKm=" + _factValue(_raceDistanceKm) +
+            " progress=" + _factValue(_resolveRaceProgress(distanceKm)) +
+            " profile=" + _resolveRaceProfileText(profile) +
+            " phase=" + _resolveRacePhaseText(phase) +
+            " propertyLthr=" + _factValue(_propertyLactateThresholdHeartRate) +
+            " propertyLthrState=" + _factValue(_propertyLactateThresholdState) +
+            " deviceLthr=" + _factValue(_capDeviceLactateThresholdHeartRate) +
+            " selectedLthr=" + _factValue(_capLactateThresholdHeartRate) +
+            " maxHr=" + _factValue(_capProfileMaxHeartRate) +
+            " restingHr=" + _factValue(_capRestingHeartRate) +
+            " source=" + _resolveCapHeartRateSourceText() +
+            " cap=" + _factValue(_allowedMaxHeartRate) +
+            " displayCapText=" + _resolveHeartRateCapValueText();
+        if (_isSameText(_lastCapHrDiagLine, line)) {
+            return;
+        }
+        _lastCapHrDiagLine = line;
+        Sys.println(line);
+    }
+
     function _formatCustomCodeDirectCapSummary() {
         if (
             _customCodeDirectCapHeartRates == null or
@@ -2811,6 +2830,38 @@ class MarathonCoachField extends Ui.DataField {
             " paceNow=" + _factValue(_paceNowSecPerKm) +
             " paceText=" + _factValue(_paceNowText);
         Sys.println(line);
+    }
+
+    function _resolveRaceProfileText(profile) {
+        if (profile == RACE_PROFILE_FULL) {
+            return "FULL";
+        }
+        if (profile == RACE_PROFILE_HALF) {
+            return "HALF";
+        }
+        if (profile == RACE_PROFILE_SHORT) {
+            return "SHORT";
+        }
+        return "UNKNOWN";
+    }
+
+    function _resolveRacePhaseText(phase) {
+        if (phase == RACE_PHASE_1) {
+            return "S1";
+        }
+        if (phase == RACE_PHASE_2) {
+            return "S2";
+        }
+        if (phase == RACE_PHASE_3) {
+            return "S3";
+        }
+        if (phase == RACE_PHASE_4) {
+            return "S4";
+        }
+        if (phase == RACE_PHASE_5) {
+            return "S5";
+        }
+        return "UNKNOWN";
     }
 
     function _resolveRaceProfile() {
