@@ -61,7 +61,7 @@ class MarathonCoachField extends Ui.DataField {
     const SETTINGS_LOG = false;
     const FIT_FACT_LOG = false;
     const DIST_PROBE_LOG = false;
-    const CAP_HR_DIAG_LOG = true;
+    const CAP_HR_DIAG_LOG = false;
     const TOP_ROW_DIAG_LOG = false;
     const SMALL_TOP_ROW_DIAG_LOG = false;
     const MEDIUM_HR_LAYOUT_DIAG_LOG = false;
