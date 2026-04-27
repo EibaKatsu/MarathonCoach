@@ -1,4 +1,5 @@
 using Toybox.Test;
+using Toybox.Lang as Lang;
 
 const RS_SHORT_DISTANCE_MAX_KM = 10.5;
 const RS_HALF_DISTANCE_KM = 21.0975;
@@ -51,12 +52,12 @@ function _rsAllowedZoneOffset(distanceKm, raceDistanceKm) {
     );
 }
 
-function _rsCap(profile, phase, source, lthr, maxHeartRate, restingHeartRate) {
+function _rsCap(profile, phase, source, heartRateAnchor, maxHeartRate, restingHeartRate) {
     return RaceStrategyUtils.resolveCapHeartRate(
         source,
         profile,
         phase,
-        lthr,
+        heartRateAnchor,
         maxHeartRate,
         restingHeartRate
     );
@@ -123,8 +124,8 @@ function testRaceStrategyProgressAndPhase(logger) {
 (:test)
 function testRaceStrategyCapSourcePriority(logger) {
     Test.assertEqual(0, RaceStrategyUtils.resolveCapSource(null, null, null, null));
-    Test.assertEqual(2, RaceStrategyUtils.resolveCapSource(168, 166, 190, 50));
-    Test.assertEqual(3, RaceStrategyUtils.resolveCapSource(null, 168, 190, 50));
+    Test.assertEqual(2, RaceStrategyUtils.resolveCapSource(168, 170, 190, 50));
+    Test.assertEqual(3, RaceStrategyUtils.resolveCapSource(null, 170, 190, 50));
     Test.assertEqual(4, RaceStrategyUtils.resolveCapSource(null, null, 190, 50));
     Test.assertEqual(5, RaceStrategyUtils.resolveCapSource(null, null, 190, null));
     Test.assertEqual(5, RaceStrategyUtils.resolveCapSource(null, null, 190, 190));
@@ -134,10 +135,10 @@ function testRaceStrategyCapSourcePriority(logger) {
 (:test)
 function testRaceStrategyCapRatiosAndRounding(logger) {
     _rsAssertNear(
-        RaceStrategyUtils.resolveCapRatio(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_1, RaceStrategyUtils.CAP_SOURCE_LTHR_DEVICE),
-        0.95,
+        RaceStrategyUtils.resolveCapRatio(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_1, RaceStrategyUtils.CAP_SOURCE_GARMIN_ZONE4_UPPER),
+        0.93,
         0.0001,
-        "full phase 1 LTHR ratio"
+        "phase 1 Garmin Zone4 ratio"
     );
     _rsAssertNear(
         RaceStrategyUtils.resolveCapRatio(RaceStrategyUtils.PROFILE_HALF, RaceStrategyUtils.PHASE_4, RaceStrategyUtils.CAP_SOURCE_HRR),
@@ -153,10 +154,10 @@ function testRaceStrategyCapRatiosAndRounding(logger) {
     );
 
     _rsAssertNear(
-        _rsCap(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_2, RaceStrategyUtils.CAP_SOURCE_LTHR_DEVICE, 168, 190, 50),
-        161.0,
+        _rsCap(RaceStrategyUtils.PROFILE_FULL, RaceStrategyUtils.PHASE_2, RaceStrategyUtils.CAP_SOURCE_GARMIN_ZONE4_UPPER, 170, 190, 50),
+        162.0,
         0.0001,
-        "full phase 2 LTHR cap"
+        "full phase 2 Garmin Zone4 cap"
     );
     _rsAssertNear(
         _rsCap(RaceStrategyUtils.PROFILE_HALF, RaceStrategyUtils.PHASE_3, RaceStrategyUtils.CAP_SOURCE_HRR, null, 188, 52),
@@ -210,13 +211,13 @@ function testRaceStrategyCustomCodePriorityDecision(logger) {
         RaceStrategyUtils.PHASE_3,
         directCaps,
         171,
-        168,
+        170,
         190,
         50
     );
-    Test.assertMessage(decision[0] == 162, "custom code direct cap should win");
-    Test.assertEqual(RaceStrategyUtils.CAP_SOURCE_CUSTOM_CODE, decision[1]);
-    Test.assertMessage(decision[2] == null, "custom code should not expose selected lthr");
+    Test.assertMessage(RaceStrategyUtils.getCapDecisionHeartRate(decision) == 162, "custom code direct cap should win");
+    Test.assertEqual(RaceStrategyUtils.CAP_SOURCE_CUSTOM_CODE, RaceStrategyUtils.getCapDecisionSource(decision));
+    Test.assertMessage(RaceStrategyUtils.getCapDecisionLthr(decision) == null, "custom code should not expose selected lthr");
     return true;
 }
 
@@ -232,11 +233,13 @@ function testRaceStrategyPropertyLthrFallbackDecision(logger) {
         190,
         50
     );
-    Test.assertMessage(propertyDecision[0] == 161, "property lthr cap should match phase cap");
-    Test.assertEqual(RaceStrategyUtils.CAP_SOURCE_LTHR_PROPERTY, propertyDecision[1]);
-    Test.assertMessage(propertyDecision[2] == 168, "property lthr should be exposed");
+    Test.assertMessage(RaceStrategyUtils.getCapDecisionHeartRate(propertyDecision) == 161, "property lthr cap should match phase cap");
+    Test.assertEqual(RaceStrategyUtils.CAP_SOURCE_LTHR_PROPERTY, RaceStrategyUtils.getCapDecisionSource(propertyDecision));
+    Test.assertMessage(RaceStrategyUtils.getCapDecisionLthr(propertyDecision) == 168, "property lthr should be exposed");
+    Test.assertMessage(RaceStrategyUtils.getCapDecisionAnchorBpm(propertyDecision) == 168, "property lthr should stay the anchor");
+    Test.assertEqual("LTHR_PROPERTY", RaceStrategyUtils.getCapDecisionAnchorSource(propertyDecision));
 
-    var deviceDecision = RaceStrategyUtils.resolveCapHeartRateDecision(
+    var zone4Decision = RaceStrategyUtils.resolveCapHeartRateDecision(
         RaceStrategyUtils.PROFILE_FULL,
         RaceStrategyUtils.PHASE_2,
         invalidDirectCaps,
@@ -245,9 +248,30 @@ function testRaceStrategyPropertyLthrFallbackDecision(logger) {
         190,
         50
     );
-    Test.assertMessage(deviceDecision[0] == 163, "device lthr cap should match phase cap");
-    Test.assertEqual(RaceStrategyUtils.CAP_SOURCE_LTHR_DEVICE, deviceDecision[1]);
-    Test.assertMessage(deviceDecision[2] == 170, "device lthr should be exposed");
+    Test.assertMessage(RaceStrategyUtils.getCapDecisionHeartRate(zone4Decision) == 162, "Garmin Zone4 cap should match phase cap");
+    Test.assertEqual(RaceStrategyUtils.CAP_SOURCE_GARMIN_ZONE4_UPPER, RaceStrategyUtils.getCapDecisionSource(zone4Decision));
+    Test.assertMessage(RaceStrategyUtils.getCapDecisionLthr(zone4Decision) == null, "Garmin Zone4 path should not expose LTHR");
+    Test.assertMessage(RaceStrategyUtils.getCapDecisionAnchorBpm(zone4Decision) == 170, "Garmin Zone4 anchor should be exposed");
+    Test.assertEqual("GARMIN_ZONE4_UPPER", RaceStrategyUtils.getCapDecisionAnchorSource(zone4Decision));
+    return true;
+}
+
+(:test)
+function testRaceStrategyInvalidZone4FallsBackToHrr(logger) {
+    var decision = RaceStrategyUtils.resolveCapHeartRateDecision(
+        RaceStrategyUtils.PROFILE_FULL,
+        RaceStrategyUtils.PHASE_2,
+        null,
+        null,
+        0,
+        190,
+        50
+    );
+    Test.assertMessage(RaceStrategyUtils.getCapDecisionHeartRate(decision) == 162, "invalid Garmin Zone4 should fall back to HRR");
+    Test.assertEqual(RaceStrategyUtils.CAP_SOURCE_HRR, RaceStrategyUtils.getCapDecisionSource(decision));
+    Test.assertMessage(RaceStrategyUtils.getCapDecisionLthr(decision) == null, "HRR fallback should not expose LTHR");
+    Test.assertMessage(RaceStrategyUtils.getCapDecisionAnchorBpm(decision) == null, "HRR fallback should not expose anchor bpm");
+    Test.assertMessage(RaceStrategyUtils.getCapDecisionAnchorSource(decision) == null, "HRR fallback should not expose anchor source");
     return true;
 }
 
@@ -262,9 +286,9 @@ function testRaceStrategyIgnoresImplausibleMaxHrClipForLthr(logger) {
         154,
         60
     );
-    Test.assertMessage(decision[0] == 166, "property lthr cap should ignore implausibly low max hr clip");
-    Test.assertEqual(RaceStrategyUtils.CAP_SOURCE_LTHR_PROPERTY, decision[1]);
-    Test.assertMessage(decision[2] == 171, "selected lthr should remain the property value");
+    Test.assertMessage(RaceStrategyUtils.getCapDecisionHeartRate(decision) == 166, "property lthr cap should ignore implausibly low max hr clip");
+    Test.assertEqual(RaceStrategyUtils.CAP_SOURCE_LTHR_PROPERTY, RaceStrategyUtils.getCapDecisionSource(decision));
+    Test.assertMessage(RaceStrategyUtils.getCapDecisionLthr(decision) == 171, "selected lthr should remain the property value");
     return true;
 }
 

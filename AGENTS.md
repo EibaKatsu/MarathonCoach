@@ -30,7 +30,7 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
 - `docs/spec/core.md`: 通常版の仕様
 - `docs/spec/custom_code.md`: カスタムコード仕様
 - `docs/spec/ui.md`: UI方針、文言、多言語、レイアウト
-- `docs/spec/logic_hr_zone.md`: レースプロファイル/HR ZONEロジック
+- `docs/spec/logic_hr_zone.md`: レースプロファイル/HR ZONE/CAP anchor ロジック
 - `docs/spec/logic_action.md`: ACTION判定
 - `docs/spec/logic_drift.md`: DRIFT廃止メモ
 - `docs/spec/logic_fuel.md`: 補給仕様の廃止メモ
@@ -56,6 +56,7 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
 - ユーザーが「ローカルのみ」と明示した場合のみ、`PR作成/独立レビュー/マージ` を省略できる。
 - 新機能追加は原則ストップし、公開に必要な品質向上を優先する。
 - 原因未特定のクラッシュや異常系では、まず `PROCESS.md` の診断ログ方針に従って `入力値 / 判定結果 / 表示値` を採取し、原因特定前に推測の修正やフォールバック追加を進めない。
+- Codex への実行モード指定は、今後の既定として `/fast off` を維持する。
 
 ## 備考
 - `AGENT.md` は廃止し、以後は本構成を正とする。

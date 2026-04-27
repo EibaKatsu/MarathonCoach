@@ -62,6 +62,7 @@ class MarathonCoachField extends Ui.DataField {
     const FIT_FACT_LOG = false;
     const DIST_PROBE_LOG = false;
     const CAP_HR_DIAG_LOG = false;
+    const HR_ZONE_DIAG_LOG = false;
     const TOP_ROW_DIAG_LOG = false;
     const SMALL_TOP_ROW_DIAG_LOG = false;
     const MEDIUM_HR_LAYOUT_DIAG_LOG = false;
@@ -143,6 +144,10 @@ class MarathonCoachField extends Ui.DataField {
     var _propertyLactateThresholdState = "unset";
     var _capLactateThresholdHeartRate = null;
     var _capDeviceLactateThresholdHeartRate = null;
+    var _capGarminZone4UpperHeartRate = null;
+    var _capHeartRateAnchorBpm = null;
+    var _capHeartRateAnchorSource = null;
+    var _capHeartRatePhaseRatio = null;
     var _capProfileMaxHeartRate = null;
     var _capRestingHeartRate = null;
     var _allowedMaxHeartRateZone = null;
@@ -201,6 +206,7 @@ class MarathonCoachField extends Ui.DataField {
     var _lastDistanceProbeLogLine = null;
     var _lastFinishDiagLine = null;
     var _lastCapHrDiagLine = null;
+    var _lastHeartRateZoneDiagLine = null;
     var _lastMediumDrawBlockDiagLine = null;
     var _drawStage = "idle";
     var _lastResolvedHeartRateTopRowNumberFont = null;
@@ -303,6 +309,10 @@ class MarathonCoachField extends Ui.DataField {
         _propertyLactateThresholdState = "unset";
         _capLactateThresholdHeartRate = null;
         _capDeviceLactateThresholdHeartRate = null;
+        _capGarminZone4UpperHeartRate = null;
+        _capHeartRateAnchorBpm = null;
+        _capHeartRateAnchorSource = null;
+        _capHeartRatePhaseRatio = null;
         _capProfileMaxHeartRate = null;
         _capRestingHeartRate = null;
         _allowedMaxHeartRateZone = null;
@@ -310,6 +320,7 @@ class MarathonCoachField extends Ui.DataField {
         _allowedMaxHeartRateZoneLower = null;
         _allowedMaxHeartRateGaugeRatio = null;
         _hrZoneText = "-- / cap --";
+        _lastHeartRateZoneDiagLine = null;
         _hrOverActive = false;
         _hrOverStartSec = null;
         _hrStrongOverStartSec = null;
@@ -1936,7 +1947,8 @@ class MarathonCoachField extends Ui.DataField {
         }
 
         _activeHeartRateZones = _resolveActiveHeartRateZones();
-        _allowedMaxHeartRate = _resolveAllowedMaxHeartRate(info, _activeHeartRateZones);
+        _capGarminZone4UpperHeartRate = _resolveGarminZone4UpperHeartRate();
+        _allowedMaxHeartRate = _resolveAllowedMaxHeartRate(info, _capGarminZone4UpperHeartRate);
         _currentHeartRateZone = _resolveHeartRateZone(_currentHeartRate, _activeHeartRateZones);
         _currentHeartRateZoneUpper = _getZoneUpperHeartRate(_activeHeartRateZones, _currentHeartRateZone);
         _currentHeartRateZoneLower = null;
@@ -2039,7 +2051,7 @@ class MarathonCoachField extends Ui.DataField {
         return true;
     }
 
-    function _resolveAllowedMaxHeartRate(info, zones as Lang.Array<Lang.Number>) {
+    function _resolveAllowedMaxHeartRate(info, garminZone4UpperBpm) {
         var distanceKm = _extractElapsedDistanceKm(info);
         var phase = _resolveRacePhase(distanceKm);
         var profile = _resolveRaceProfile();
@@ -2054,13 +2066,16 @@ class MarathonCoachField extends Ui.DataField {
             phase,
             _customCodeDirectCapHeartRates,
             _propertyLactateThresholdHeartRate,
-            _capDeviceLactateThresholdHeartRate,
+            garminZone4UpperBpm,
             _capProfileMaxHeartRate,
             _capRestingHeartRate
         );
-        _allowedMaxHeartRate = decision[0];
-        _capHeartRateSource = decision[1];
-        _capLactateThresholdHeartRate = decision[2];
+        _allowedMaxHeartRate = RaceStrategyUtils.getCapDecisionHeartRate(decision);
+        _capHeartRateSource = RaceStrategyUtils.getCapDecisionSource(decision);
+        _capLactateThresholdHeartRate = RaceStrategyUtils.getCapDecisionLthr(decision);
+        _capHeartRateAnchorBpm = RaceStrategyUtils.getCapDecisionAnchorBpm(decision);
+        _capHeartRateAnchorSource = RaceStrategyUtils.getCapDecisionAnchorSource(decision);
+        _capHeartRatePhaseRatio = RaceStrategyUtils.resolveCapRatio(profile, phase, _capHeartRateSource);
         _logCapHeartRateDiagState(distanceKm, profile, phase);
         return _allowedMaxHeartRate;
     }
@@ -2145,22 +2160,7 @@ class MarathonCoachField extends Ui.DataField {
     }
 
     function _resolveCapHeartRateSourceText() {
-        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_CUSTOM_CODE) {
-            return "CUSTOM_CODE";
-        }
-        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_LTHR_PROPERTY) {
-            return "LTHR_PROPERTY";
-        }
-        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_LTHR_DEVICE) {
-            return "LTHR_DEVICE";
-        }
-        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_HRR) {
-            return "HRR";
-        }
-        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_MAXHR) {
-            return "MAXHR";
-        }
-        return "NONE";
+        return RaceStrategyUtils.resolveCapSourceText(_capHeartRateSource);
     }
 
     function _resolveCapHeartRateSourceBadgeText() {
@@ -2170,8 +2170,8 @@ class MarathonCoachField extends Ui.DataField {
         if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_LTHR_PROPERTY) {
             return "PLT";
         }
-        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_LTHR_DEVICE) {
-            return "DLT";
+        if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_GARMIN_ZONE4_UPPER) {
+            return "Z4";
         }
         if (_capHeartRateSource == RaceStrategyUtils.CAP_SOURCE_MAXHR) {
             return "MHR";
@@ -2224,6 +2224,51 @@ class MarathonCoachField extends Ui.DataField {
             return null;
         }
 
+        return null;
+    }
+
+    function _resolveGarminZone4UpperHeartRate() {
+        var currentSportRawZones = _getHeartRateZonesForCurrentSport();
+        var genericRawZones = _getGenericHeartRateZones();
+        var currentSportUsableZones = _resolveUsableHeartRateZoneThresholds(currentSportRawZones);
+        var genericUsableZones = _resolveUsableHeartRateZoneThresholds(genericRawZones);
+        var currentSportZone4Upper = _resolveGarminZone4UpperHeartRateFromRawZones(currentSportRawZones);
+        var genericZone4Upper = _resolveGarminZone4UpperHeartRateFromRawZones(genericRawZones);
+        var selectedSource = "NONE";
+        var selectedZone4Upper = null;
+
+        if (currentSportZone4Upper != null) {
+            selectedSource = "CURRENT_SPORT";
+            selectedZone4Upper = currentSportZone4Upper;
+        } else if (genericZone4Upper != null) {
+            selectedSource = "GENERIC";
+            selectedZone4Upper = genericZone4Upper;
+        }
+
+        _logHeartRateZoneDiagState(
+            currentSportRawZones,
+            currentSportUsableZones,
+            currentSportZone4Upper,
+            genericRawZones,
+            genericUsableZones,
+            genericZone4Upper,
+            selectedSource,
+            selectedZone4Upper
+        );
+        return selectedZone4Upper;
+    }
+
+    function _resolveGarminZone4UpperHeartRateFromRawZones(rawZones) {
+        if (rawZones == null or !(rawZones instanceof Lang.Array)) {
+            return null;
+        }
+
+        if (rawZones.size() >= 6) {
+            return _normalizeHeartRateValue(rawZones[4]);
+        }
+        if (rawZones.size() == 5) {
+            return _normalizeHeartRateValue(rawZones[3]);
+        }
         return null;
     }
 
@@ -2577,7 +2622,11 @@ class MarathonCoachField extends Ui.DataField {
             " propertyLthr=" + _factValue(_propertyLactateThresholdHeartRate) +
             " propertyLthrState=" + _factValue(_propertyLactateThresholdState) +
             " deviceLthr=" + _factValue(_capDeviceLactateThresholdHeartRate) +
+            " zone4Upper=" + _factValue(_capGarminZone4UpperHeartRate) +
             " selectedLthr=" + _factValue(_capLactateThresholdHeartRate) +
+            " anchorHr=" + _factValue(_capHeartRateAnchorBpm) +
+            " anchorSource=" + _factValue(_capHeartRateAnchorSource) +
+            " phaseRatio=" + _factValue(_capHeartRatePhaseRatio) +
             " maxHr=" + _factValue(_capProfileMaxHeartRate) +
             " restingHr=" + _factValue(_capRestingHeartRate) +
             " customDirectCaps=" + _formatCustomCodeDirectCapSummary() +
@@ -2606,7 +2655,11 @@ class MarathonCoachField extends Ui.DataField {
             " propertyLthr=" + _factValue(_propertyLactateThresholdHeartRate) +
             " propertyLthrState=" + _factValue(_propertyLactateThresholdState) +
             " deviceLthr=" + _factValue(_capDeviceLactateThresholdHeartRate) +
+            " zone4Upper=" + _factValue(_capGarminZone4UpperHeartRate) +
             " selectedLthr=" + _factValue(_capLactateThresholdHeartRate) +
+            " anchorHr=" + _factValue(_capHeartRateAnchorBpm) +
+            " anchorSource=" + _factValue(_capHeartRateAnchorSource) +
+            " phaseRatio=" + _factValue(_capHeartRatePhaseRatio) +
             " maxHr=" + _factValue(_capProfileMaxHeartRate) +
             " restingHr=" + _factValue(_capRestingHeartRate) +
             " source=" + _resolveCapHeartRateSourceText() +
@@ -2617,6 +2670,55 @@ class MarathonCoachField extends Ui.DataField {
         }
         _lastCapHrDiagLine = line;
         Sys.println(line);
+    }
+
+    function _logHeartRateZoneDiagState(
+        currentSportRawZones,
+        currentSportUsableZones,
+        currentSportZone4Upper,
+        genericRawZones,
+        genericUsableZones,
+        genericZone4Upper,
+        selectedSource,
+        selectedZone4Upper
+    ) {
+        if (!HR_ZONE_DIAG_LOG) {
+            return;
+        }
+
+        var line =
+            "[HR_ZONE_DIAG]" +
+            " sportRaw=" + _formatHeartRateArray(currentSportRawZones) +
+            " sportUsable=" + _formatHeartRateArray(currentSportUsableZones) +
+            " sportZone4Upper=" + _factValue(currentSportZone4Upper) +
+            " genericRaw=" + _formatHeartRateArray(genericRawZones) +
+            " genericUsable=" + _formatHeartRateArray(genericUsableZones) +
+            " genericZone4Upper=" + _factValue(genericZone4Upper) +
+            " selectedSource=" + _factValue(selectedSource) +
+            " selectedZone4Upper=" + _factValue(selectedZone4Upper);
+        if (_isSameText(_lastHeartRateZoneDiagLine, line)) {
+            return;
+        }
+        _lastHeartRateZoneDiagLine = line;
+        Sys.println(line);
+    }
+
+    function _formatHeartRateArray(values) {
+        if (values == null) {
+            return "null";
+        }
+        if (!(values instanceof Lang.Array)) {
+            return _factValue(values);
+        }
+        var text = "[";
+        for (var i = 0; i < values.size(); i += 1) {
+            if (i > 0) {
+                text += ",";
+            }
+            text += _factValue(values[i]);
+        }
+        text += "]";
+        return text;
     }
 
     function _formatCustomCodeDirectCapSummary() {

@@ -53,10 +53,10 @@ python3 scripts/generate_gatechecker_scenarios.py --base-time 22:00
 3. 現在距離が `0.3km` 未満の間に画面を見る
 
 期待表示:
-- line1: `0.3km / HH:MM`
-- line2: `残距離 / 残り時間`
-- line3: `必要ペース | 現在ペース`
-- line4: `現在距離 / 現在時刻`
+- line1: `GATE 0.3km / CUT HH:MM`
+- line2: `REM 残距離 / LEFT 残り時間`
+- line3: `PACE 現在ペース / ETA 到着予測時刻`
+- line4: `DIST 現在距離 / NOW 現在時刻`
 
 期待ログ:
 - `displayState=normal`
@@ -64,7 +64,7 @@ python3 scripts/generate_gatechecker_scenarios.py --base-time 22:00
 ## PACE N/A
 
 目的:
-- `line2` を維持したまま、`line3` 左側だけ `PACE N/A` に切り替わることを確認する
+- `line2` を維持したまま、`line3` が `PACE N/A` に切り替わることを確認する
 
 使う code:
 - `python3 scripts/generate_gatechecker_scenarios.py` の `pace_na`
@@ -76,10 +76,10 @@ python3 scripts/generate_gatechecker_scenarios.py --base-time 22:00
 4. その後に `Simulation > FIT Data > Simulate` を開始する
 
 期待表示:
-- line1: `0.0km / HH:MM`
-- line2: `0.0km / 残り時間`
-- line3: `PACE N/A | 現在ペース`
-- line4: `0.00km / 現在時刻`
+- line1: `GATE 0.0km / CUT HH:MM`
+- line2: `REM 0.0km / LEFT 残り時間`
+- line3: `PACE N/A`
+- line4: `DIST 0.00km / NOW 現在時刻`
 
 期待ログ:
 - `displayState=pace_na`
@@ -91,7 +91,7 @@ python3 scripts/generate_gatechecker_scenarios.py --base-time 22:00
 ## OVER
 
 目的:
-- `OVER` 時に必要ペースが消え、`LATE` 表示が優先されることを確認する
+- `OVER` 時に通常の `PACE / ETA` が消え、`LATE` 表示と `OVER` が優先されることを確認する
 
 使う code:
 - `python3 scripts/generate_gatechecker_scenarios.py` の `over`
@@ -102,10 +102,10 @@ python3 scripts/generate_gatechecker_scenarios.py --base-time 22:00
 3. 現在距離を `0.3km` 未満に保ったまま画面を見る
 
 期待表示:
-- line1: `0.3km / 過去時刻`
-- line2: `残距離 / LATE h:mm`
-- line3: `OVER | 現在ペース`
-- line4: `現在距離 / 現在時刻`
+- line1: `GATE 0.3km / CUT 過去時刻`
+- line2: `REM 残距離 / LATE h:mm`
+- line3: `OVER`
+- line4: `DIST 現在距離 / NOW 現在時刻`
 
 期待ログ:
 - `displayState=over`
@@ -124,10 +124,10 @@ python3 scripts/generate_gatechecker_scenarios.py --base-time 22:00
 3. current distance を `1.2km` より先まで進める
 
 期待表示:
-- line1: `LAST / HH:MM`
+- line1: `LAST / CUT HH:MM`
 - line2: `ALL PASSED`
 - line3: blank
-- line4: `現在距離 / 現在時刻`
+- line4: `DIST 現在距離 / NOW 現在時刻`
 
 期待ログ:
 - `displayState=all_passed`
