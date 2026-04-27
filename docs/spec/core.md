@@ -14,8 +14,9 @@
   - 目標時刻との差分を分単位のコンパクト表記で出す
   - レース距離超過後は `Over` と `+x.xxkm` 表示へ切り替える
 - 心拍管理
-  - `custom code direct CAP -> property LTHR -> device LTHR -> HRR -> MaxHR` の優先順位で CAP 心拍を決める
+  - `custom code direct CAP -> property LTHR -> Garmin Zone4 upper anchor -> HRR -> MaxHR` の優先順位で CAP 心拍を決める
   - レース進行率と距離プロファイルから、その時点の許容心拍上限を決める
+  - Garmin 心拍ゾーンが取れる場合は、Zone4上限を基準心拍としてフェーズ比率で CAP を段階的に引き上げる
   - 心拍アーク色と CAP ティックで上限接近 / 超過を伝える
 - ペース / ゴール差ゲージ
   - 現在ペースを中央主役で表示する
@@ -34,6 +35,7 @@
 ## カスタムコード方針
 - 通常版はシンプルな設定で使えることを優先する
 - 高度な心拍CAP調整は `LTHR` のプロパティ指定またはカスタムコードで扱う
+- 自動算出の既定 anchor は `device LTHR` ではなく `Garmin Zone4 upper anchor` とする
 - カスタムコードの詳細仕様は [custom_code.md](/Users/eibakatsu/codex/MarathonCoach/docs/spec/custom_code.md) を正とする
 
 ## 設定
@@ -56,6 +58,7 @@
 - `custom_mode_code` が有効でも、CAP を変える経路は `S1〜S5` の直接指定だけに限定する
 - `S1〜S5` がすべて有効な場合のみ、通常の CAP 算出より優先して使う
 - `LTHR` を明示したい場合は `lthr_bpm` を使い、通常の係数計算へ流す
+- `lthr_bpm` が未指定なら、通常算出は `Garmin Zone4 upper anchor -> HRR -> MaxHR` の順でフォールバックする
 - 通常版の画面構成はカスタムコード利用時でも同じダッシュボードを維持する
 - カスタムコードは公開版から排除しないが、詳細パラメタの直接編集UIは持たない
 

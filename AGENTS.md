@@ -30,7 +30,7 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
 - `docs/spec/core.md`: 通常版の仕様
 - `docs/spec/custom_code.md`: カスタムコード仕様
 - `docs/spec/ui.md`: UI方針、文言、多言語、レイアウト
-- `docs/spec/logic_hr_zone.md`: レースプロファイル/HR ZONEロジック
+- `docs/spec/logic_hr_zone.md`: レースプロファイル/HR ZONE/CAP anchor ロジック
 - `docs/spec/logic_action.md`: ACTION判定
 - `docs/spec/logic_drift.md`: DRIFT廃止メモ
 - `docs/spec/logic_fuel.md`: 補給仕様の廃止メモ

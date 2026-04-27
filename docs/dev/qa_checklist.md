@@ -31,9 +31,11 @@
 
 ### CAP 優先順位
 - カスタムコードの `S1〜S5` がすべて有効なら direct CAP が最優先になる
-- `lthr_bpm` 指定時は device LTHR より優先される
-- `lthr_bpm` が無効なら device LTHR へフォールバックする
+- `lthr_bpm` 指定時は Garmin Zone4 upper anchor より優先される
+- `lthr_bpm` が無効なら Garmin Zone4 upper anchor へフォールバックする
 - LTHR が取れない場合は `HRR -> MaxHR` の順でフォールバックする
+- Garmin 心拍ゾーンが取れる場合は `Zone4上限 x 93/95/97/99/100%` で S1〜S5 の CAP が決まる
+- Garmin Zone4 上限が `null` / サイズ不足 / `0以下` / 非数値でもクラッシュせず次のフォールバックへ進む
 - direct CAP 使用時は通常係数計算や bias が混ざらない
 
 ### カード表示切り替え

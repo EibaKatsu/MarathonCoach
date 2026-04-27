@@ -16,10 +16,11 @@
 - 1つでも欠ける、または無効値を含む場合は通常の CAP 算出へフォールバックする
 
 ## 通常計算との関係
-- direct CAP は `custom code direct CAP -> property LTHR -> device LTHR -> HRR -> MaxHR` の最上位に置く
+- direct CAP は `custom code direct CAP -> property LTHR -> Garmin Zone4 upper anchor -> HRR -> MaxHR` の最上位に置く
 - direct CAP 使用時は `LTHR / HRR / MaxHR` の係数計算を行わない
 - direct CAP 使用時は後段 bias を加えない
 - `LTHR` を明示したいだけなら、カスタムコードではなく `lthr_bpm` プロパティを使う
+- `lthr_bpm` が未指定なら、通常算出は `Garmin Zone4 upper anchor` を優先して使う
 
 ## コード形式
 - 接頭辞: `C2`
