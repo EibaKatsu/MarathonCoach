@@ -20,4 +20,4 @@
 
 ## メモ
 - 心拍上限表示は左上の HR/CAP に集約する
-- CAP 算出元は `custom code / property LTHR / device LTHR / HRR / MaxHR` を内部で区別する
+- CAP 算出元は `custom code / property LTHR / Garmin Zone4 upper anchor / HRR / MaxHR` を内部で区別する

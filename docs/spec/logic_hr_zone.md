@@ -20,16 +20,37 @@
 ## CAP HR 算出優先順位
 1. `custom code direct CAP`
 2. `property LTHR`
-3. `device LTHR`
+3. `Garmin Zone4 upper anchor`
 4. `HRR = MaxHR - RestingHR`
 5. `MaxHR`
 
-- Garmin のゾーン番号は CAP の主ロジックに使わない
 - `custom code direct CAP` は `S1〜S5` の5値がすべて有効な場合のみ使う
-- `property LTHR` が無効または未指定なら `device LTHR` へフォールバックする
+- `property LTHR` が無効または未指定なら `Garmin Zone4 upper anchor` へフォールバックする
 - direct CAP 使用時は後段バイアスを加えない
 
-## LTHR ベース係数
+## Garmin Zone 取得
+- まず `UserProfile.getHeartRateZones(UserProfile.getCurrentSport())` を試す
+- 取れない場合は `UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_GENERIC)` を試す
+- 取得した値が `null`、サイズ不足、非数値、`0以下` の場合は CAP anchor として使わない
+- Connect IQ の配列が `Zone1下限 / Zone1上限 / Zone2上限 / Zone3上限 / Zone4上限 / Zone5上限` の6値で来る場合は `Zone4上限 = zones[4]`
+- SDK / 端末差異で `Zone1上限 .. Zone5上限` の5値として得られる場合は `4番目の上限値` を `Zone4上限` として扱う
+
+## Garmin Zone4 anchor
+- `Zone4上限` は `LTHR` とみなさない
+- `hrAnchorBpm = round(zone4UpperBpm)` を基準心拍として使う
+- `CAP_SOURCE_GARMIN_ZONE4_UPPER` を source 識別子に使う
+- `CAP HR = round(hrAnchorBpm * phaseRatio)` で各フェーズの CAP を求める
+- Garmin Zone4 anchor 経路では `LTHR + n bpm` のクリップは使わず、通常の `MaxHR` 側クリップだけを適用する
+
+| Phase | Ratio |
+| --- | --- |
+| S1 | 0.93 |
+| S2 | 0.95 |
+| S3 | 0.97 |
+| S4 | 0.99 |
+| S5 | 1.00 |
+
+## Property LTHR ベース係数
 | Profile | S1 | S2 | S3 | S4 | S5 |
 | --- | --- | --- | --- | --- | --- |
 | FULL | 0.95 | 0.96 | 0.97 | 0.98 | 0.99 |
@@ -71,7 +92,7 @@
 ## Source 識別
 - `CAP_SOURCE_CUSTOM_CODE`
 - `CAP_SOURCE_LTHR_PROPERTY`
-- `CAP_SOURCE_LTHR_DEVICE`
+- `CAP_SOURCE_GARMIN_ZONE4_UPPER`
 - `CAP_SOURCE_HRR`
 - `CAP_SOURCE_MAXHR`
 

@@ -15,6 +15,7 @@ class MarathonCoachFieldSmoothingHarness extends MarathonCoachField {
     var _testPaceSecPerKm = null;
     var _testAllowedMaxHeartRate = 150;
     var _testActiveHeartRateZones as Lang.Array<Lang.Number> = [100, 120, 140, 160, 180];
+    var _testGarminZone4UpperHeartRate = 160;
     var _testHrOverTriggerSec = 8;
     var _testHrOverStrongTriggerSec = 3;
     var _testHrOverReleaseSec = 5;
@@ -48,8 +49,12 @@ class MarathonCoachFieldSmoothingHarness extends MarathonCoachField {
         return _testActiveHeartRateZones;
     }
 
-    function _resolveAllowedMaxHeartRate(info, zones as Lang.Array<Lang.Number>) {
+    function _resolveAllowedMaxHeartRate(info, garminZone4UpperBpm) {
         return _testAllowedMaxHeartRate;
+    }
+
+    function _resolveGarminZone4UpperHeartRate() {
+        return _testGarminZone4UpperHeartRate;
     }
 
     function _getHrOverTriggerSec(distanceKm) {
@@ -90,6 +95,13 @@ function _testAbsUtils(value) {
         return -value;
     }
     return value;
+}
+
+function _arrayNumberAt(values as Lang.Array<Lang.Number>, idx) {
+    if (values == null or idx == null or idx < 0 or idx >= values.size()) {
+        return null;
+    }
+    return values[idx];
 }
 
 (:test)
@@ -237,8 +249,8 @@ function testCapHeartRateSourceBadgeText_usesCompactLabels(logger) {
     sut._capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_LTHR_PROPERTY;
     Test.assertEqual("PLT", sut._resolveCapHeartRateSourceBadgeText());
 
-    sut._capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_LTHR_DEVICE;
-    Test.assertEqual("DLT", sut._resolveCapHeartRateSourceBadgeText());
+    sut._capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_GARMIN_ZONE4_UPPER;
+    Test.assertEqual("Z4", sut._resolveCapHeartRateSourceBadgeText());
 
     sut._capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_HRR;
     Test.assertEqual("HRR", sut._resolveCapHeartRateSourceBadgeText());
@@ -248,6 +260,37 @@ function testCapHeartRateSourceBadgeText_usesCompactLabels(logger) {
 
     sut._capHeartRateSource = RaceStrategyUtils.CAP_SOURCE_NONE;
     Test.assertEqual("NONE", sut._resolveCapHeartRateSourceBadgeText());
+    return true;
+}
+
+(:test)
+function testResolveGarminZone4UpperHeartRateFromRawZones(logger) {
+    var sut = _newUtilsSut();
+
+    Test.assertMessage(
+        sut._resolveGarminZone4UpperHeartRateFromRawZones([90, 120, 140, 155, 170, 185]) == 170,
+        "6-value zone array should use raw zone4 upper"
+    );
+    Test.assertMessage(
+        sut._resolveGarminZone4UpperHeartRateFromRawZones([120, 140, 155, 170, 185]) == 170,
+        "5-value upper-bound array should use the fourth upper bound"
+    );
+    Test.assertMessage(
+        sut._resolveGarminZone4UpperHeartRateFromRawZones([90, 120, 140, 155]) == null,
+        "short arrays should be ignored"
+    );
+    Test.assertMessage(
+        sut._resolveGarminZone4UpperHeartRateFromRawZones([90, 120, 140, 155, null, 185]) == null,
+        "null zone4 upper should be ignored"
+    );
+    Test.assertMessage(
+        sut._resolveGarminZone4UpperHeartRateFromRawZones([90, 120, 140, 155, "bad", 185]) == null,
+        "non-numeric zone4 upper should be ignored"
+    );
+    Test.assertMessage(
+        sut._resolveGarminZone4UpperHeartRateFromRawZones([90, 120, 140, 155, 0, 185]) == null,
+        "non-positive zone4 upper should be ignored"
+    );
     return true;
 }
 
@@ -455,11 +498,11 @@ function testResolveUsableHeartRateZoneThresholds_acceptsDocumentedSixElementFor
     var actual = sut._resolveUsableHeartRateZoneThresholds([93, 111, 130, 148, 167, 185]);
 
     Test.assertEqual(5, actual.size());
-    Test.assertMessage(actual[0] == 111, "zone 1 upper should be 111");
-    Test.assertMessage(actual[1] == 130, "zone 2 upper should be 130");
-    Test.assertMessage(actual[2] == 148, "zone 3 upper should be 148");
-    Test.assertMessage(actual[3] == 167, "zone 4 upper should be 167");
-    Test.assertMessage(actual[4] == 185, "zone 5 upper should be 185");
+    Test.assertMessage(_arrayNumberAt(actual, 0) == 111, "zone 1 upper should be 111");
+    Test.assertMessage(_arrayNumberAt(actual, 1) == 130, "zone 2 upper should be 130");
+    Test.assertMessage(_arrayNumberAt(actual, 2) == 148, "zone 3 upper should be 148");
+    Test.assertMessage(_arrayNumberAt(actual, 3) == 167, "zone 4 upper should be 167");
+    Test.assertMessage(_arrayNumberAt(actual, 4) == 185, "zone 5 upper should be 185");
     return true;
 }
 

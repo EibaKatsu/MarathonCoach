@@ -15,9 +15,15 @@ module RaceStrategyUtils {
     const CAP_SOURCE_NONE = 0;
     const CAP_SOURCE_CUSTOM_CODE = 1;
     const CAP_SOURCE_LTHR_PROPERTY = 2;
-    const CAP_SOURCE_LTHR_DEVICE = 3;
+    const CAP_SOURCE_GARMIN_ZONE4_UPPER = 3;
     const CAP_SOURCE_HRR = 4;
     const CAP_SOURCE_MAXHR = 5;
+
+    const CAP_DECISION_HEART_RATE = 0;
+    const CAP_DECISION_SOURCE = 1;
+    const CAP_DECISION_LTHR = 2;
+    const CAP_DECISION_ANCHOR_BPM = 3;
+    const CAP_DECISION_ANCHOR_SOURCE = 4;
 
     const MIN_VALID_HEART_RATE_BPM = 30;
     const MAX_VALID_HEART_RATE_BPM = 260;
@@ -33,6 +39,7 @@ module RaceStrategyUtils {
         [0.83, 0.85, 0.87, 0.89, 0.90],
         [0.88, 0.89, 0.90, 0.91, 0.92]
     ];
+    const CAP_RATIO_GARMIN_ZONE4_UPPER = [0.93, 0.95, 0.97, 0.99, 1.00];
     const CAP_RATIO_MAXHR = [
         [0.84, 0.85, 0.86, 0.87, 0.88],
         [0.88, 0.89, 0.90, 0.91, 0.92],
@@ -97,12 +104,12 @@ module RaceStrategyUtils {
         return PHASE_5;
     }
 
-    function resolveCapSource(propertyLthr, deviceLthr, maxHeartRate, restingHeartRate) {
+    function resolveCapSource(propertyLthr, garminZone4UpperBpm, maxHeartRate, restingHeartRate) {
         if (_isValidHeartRateAnchor(propertyLthr)) {
             return CAP_SOURCE_LTHR_PROPERTY;
         }
-        if (_isValidHeartRateAnchor(deviceLthr)) {
-            return CAP_SOURCE_LTHR_DEVICE;
+        if (_isValidHeartRateAnchor(garminZone4UpperBpm)) {
+            return CAP_SOURCE_GARMIN_ZONE4_UPPER;
         }
         if (
             _isValidHeartRateAnchor(maxHeartRate) and
@@ -122,13 +129,13 @@ module RaceStrategyUtils {
         phase,
         customCodeDirectCapHeartRates,
         propertyLthr,
-        deviceLthr,
+        garminZone4UpperBpm,
         maxHeartRate,
         restingHeartRate
     ) {
         var customCodeCap = resolveCustomCodeDirectCapHeartRate(customCodeDirectCapHeartRates, phase);
         if (customCodeCap != null) {
-            return [customCodeCap, CAP_SOURCE_CUSTOM_CODE, null];
+            return [customCodeCap, CAP_SOURCE_CUSTOM_CODE, null, null, null];
         }
 
         var propertyCap = resolveCapHeartRate(
@@ -140,19 +147,31 @@ module RaceStrategyUtils {
             restingHeartRate
         );
         if (propertyCap != null) {
-            return [propertyCap, CAP_SOURCE_LTHR_PROPERTY, propertyLthr];
+            return [
+                propertyCap,
+                CAP_SOURCE_LTHR_PROPERTY,
+                propertyLthr,
+                propertyLthr,
+                resolveCapSourceText(CAP_SOURCE_LTHR_PROPERTY)
+            ];
         }
 
-        var deviceCap = resolveCapHeartRate(
-            CAP_SOURCE_LTHR_DEVICE,
+        var garminZone4Cap = resolveCapHeartRate(
+            CAP_SOURCE_GARMIN_ZONE4_UPPER,
             profile,
             phase,
-            deviceLthr,
+            garminZone4UpperBpm,
             maxHeartRate,
             restingHeartRate
         );
-        if (deviceCap != null) {
-            return [deviceCap, CAP_SOURCE_LTHR_DEVICE, deviceLthr];
+        if (garminZone4Cap != null) {
+            return [
+                garminZone4Cap,
+                CAP_SOURCE_GARMIN_ZONE4_UPPER,
+                null,
+                normalizeHeartRate(garminZone4UpperBpm),
+                resolveCapSourceText(CAP_SOURCE_GARMIN_ZONE4_UPPER)
+            ];
         }
 
         var hrrCap = resolveCapHeartRate(
@@ -164,7 +183,7 @@ module RaceStrategyUtils {
             restingHeartRate
         );
         if (hrrCap != null) {
-            return [hrrCap, CAP_SOURCE_HRR, null];
+            return [hrrCap, CAP_SOURCE_HRR, null, null, null];
         }
 
         var maxHrCap = resolveCapHeartRate(
@@ -176,13 +195,43 @@ module RaceStrategyUtils {
             restingHeartRate
         );
         if (maxHrCap != null) {
-            return [maxHrCap, CAP_SOURCE_MAXHR, null];
+            return [maxHrCap, CAP_SOURCE_MAXHR, null, null, null];
         }
 
-        return [null, CAP_SOURCE_NONE, null];
+        return [null, CAP_SOURCE_NONE, null, null, null];
+    }
+
+    function getCapDecisionHeartRate(decision as Lang.Array) {
+        return _getDecisionValue(decision, CAP_DECISION_HEART_RATE);
+    }
+
+    function getCapDecisionSource(decision as Lang.Array) {
+        return _getDecisionValue(decision, CAP_DECISION_SOURCE);
+    }
+
+    function getCapDecisionLthr(decision as Lang.Array) {
+        return _getDecisionValue(decision, CAP_DECISION_LTHR);
+    }
+
+    function getCapDecisionAnchorBpm(decision as Lang.Array) {
+        return _getDecisionValue(decision, CAP_DECISION_ANCHOR_BPM);
+    }
+
+    function getCapDecisionAnchorSource(decision as Lang.Array) {
+        return _getDecisionValue(decision, CAP_DECISION_ANCHOR_SOURCE);
     }
 
     function resolveCapRatio(profile, phase, source) {
+        if (phase == null or phase < PHASE_1 or phase > PHASE_5) {
+            return null;
+        }
+        if (source == CAP_SOURCE_GARMIN_ZONE4_UPPER) {
+            return CAP_RATIO_GARMIN_ZONE4_UPPER[phase];
+        }
+        if (profile == null or profile < PROFILE_FULL or profile > PROFILE_SHORT) {
+            return null;
+        }
+
         var table = null;
         if (_isLthrSource(source)) {
             table = CAP_RATIO_LTHR;
@@ -194,27 +243,20 @@ module RaceStrategyUtils {
             return null;
         }
 
-        if (profile == null or profile < PROFILE_FULL or profile > PROFILE_SHORT) {
-            return null;
-        }
-        if (phase == null or phase < PHASE_1 or phase > PHASE_5) {
-            return null;
-        }
-
         return table[profile][phase];
     }
 
-    function resolveCapBaseHeartRate(source, profile, phase, lthr, maxHeartRate, restingHeartRate) {
+    function resolveCapBaseHeartRate(source, profile, phase, heartRateAnchor, maxHeartRate, restingHeartRate) {
         var ratio = resolveCapRatio(profile, phase, source);
         if (ratio == null) {
             return null;
         }
 
-        if (_isLthrSource(source)) {
-            if (!_isValidHeartRateAnchor(lthr)) {
+        if (_isAnchorBasedSource(source)) {
+            if (!_isValidHeartRateAnchor(heartRateAnchor)) {
                 return null;
             }
-            return lthr * ratio;
+            return heartRateAnchor * ratio;
         }
 
         if (source == CAP_SOURCE_HRR) {
@@ -238,13 +280,13 @@ module RaceStrategyUtils {
         return null;
     }
 
-    function resolveCapUpperClip(profile, source, lthr, maxHeartRate) {
+    function resolveCapUpperClip(profile, source, heartRateAnchor, maxHeartRate) {
         var upper = null;
-        var allowMaxHeartRateClip = _canApplyMaxHeartRateClip(source, lthr, maxHeartRate);
+        var allowMaxHeartRateClip = _canApplyMaxHeartRateClip(source, heartRateAnchor, maxHeartRate);
 
         if (profile == PROFILE_FULL) {
-            if (_isLthrSource(source) and _isValidHeartRateAnchor(lthr)) {
-                upper = lthr + 1;
+            if (_isLthrSource(source) and _isValidHeartRateAnchor(heartRateAnchor)) {
+                upper = heartRateAnchor + 1;
             }
             if (allowMaxHeartRateClip) {
                 upper = _minNonNull(upper, maxHeartRate - 3);
@@ -253,8 +295,8 @@ module RaceStrategyUtils {
         }
 
         if (profile == PROFILE_HALF) {
-            if (_isLthrSource(source) and _isValidHeartRateAnchor(lthr)) {
-                upper = lthr + 3;
+            if (_isLthrSource(source) and _isValidHeartRateAnchor(heartRateAnchor)) {
+                upper = heartRateAnchor + 3;
             }
             if (allowMaxHeartRateClip) {
                 upper = _minNonNull(upper, maxHeartRate - 2);
@@ -276,13 +318,13 @@ module RaceStrategyUtils {
         return 1;
     }
 
-    function resolveCapHeartRate(source, profile, phase, lthr, maxHeartRate, restingHeartRate) {
-        var cap = resolveCapBaseHeartRate(source, profile, phase, lthr, maxHeartRate, restingHeartRate);
+    function resolveCapHeartRate(source, profile, phase, heartRateAnchor, maxHeartRate, restingHeartRate) {
+        var cap = resolveCapBaseHeartRate(source, profile, phase, heartRateAnchor, maxHeartRate, restingHeartRate);
         if (cap == null) {
             return null;
         }
 
-        var upper = resolveCapUpperClip(profile, source, lthr, maxHeartRate);
+        var upper = resolveCapUpperClip(profile, source, heartRateAnchor, maxHeartRate);
         if (upper != null and cap > upper) {
             cap = upper;
         }
@@ -303,6 +345,25 @@ module RaceStrategyUtils {
             rounded = 1;
         }
         return rounded;
+    }
+
+    function resolveCapSourceText(source) {
+        if (source == CAP_SOURCE_CUSTOM_CODE) {
+            return "CUSTOM_CODE";
+        }
+        if (source == CAP_SOURCE_LTHR_PROPERTY) {
+            return "LTHR_PROPERTY";
+        }
+        if (source == CAP_SOURCE_GARMIN_ZONE4_UPPER) {
+            return "GARMIN_ZONE4_UPPER";
+        }
+        if (source == CAP_SOURCE_HRR) {
+            return "HRR";
+        }
+        if (source == CAP_SOURCE_MAXHR) {
+            return "MAXHR";
+        }
+        return "NONE";
     }
 
     function resolveCustomCodeDirectCapHeartRate(customCodeDirectCapHeartRates, phase) {
@@ -746,21 +807,25 @@ module RaceStrategyUtils {
         return normalizeHeartRate(value) != null;
     }
 
-    function _canApplyMaxHeartRateClip(source, lthr, maxHeartRate) {
+    function _canApplyMaxHeartRateClip(source, heartRateAnchor, maxHeartRate) {
         if (!_isValidHeartRateAnchor(maxHeartRate)) {
             return false;
         }
         if (!_isLthrSource(source)) {
             return true;
         }
-        if (!_isValidHeartRateAnchor(lthr)) {
+        if (!_isValidHeartRateAnchor(heartRateAnchor)) {
             return false;
         }
-        return maxHeartRate >= (lthr + MIN_PLAUSIBLE_MAXHR_ABOVE_LTHR_BPM);
+        return maxHeartRate >= (heartRateAnchor + MIN_PLAUSIBLE_MAXHR_ABOVE_LTHR_BPM);
+    }
+
+    function _isAnchorBasedSource(source) {
+        return source == CAP_SOURCE_LTHR_PROPERTY or source == CAP_SOURCE_GARMIN_ZONE4_UPPER;
     }
 
     function _isLthrSource(source) {
-        return source == CAP_SOURCE_LTHR_PROPERTY or source == CAP_SOURCE_LTHR_DEVICE;
+        return source == CAP_SOURCE_LTHR_PROPERTY;
     }
 
     function _minNonNull(left, right) {
@@ -774,6 +839,13 @@ module RaceStrategyUtils {
             return left;
         }
         return right;
+    }
+
+    function _getDecisionValue(decision as Lang.Array, idx) {
+        if (decision == null or idx == null or idx < 0 or idx >= decision.size()) {
+            return null;
+        }
+        return decision[idx];
     }
 
     function abs(value) {
