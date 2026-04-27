@@ -109,5 +109,5 @@ After loading the app in the simulator, open the App Settings Editor and edit `G
 ## Human check points for STEP 10
 
 1. The app installs in the simulator without a build error
-2. Normal display shows `gate / close`, `remaining distance / remaining time`, `required pace | current pace`, and `current distance / current time`
+2. Normal display shows `GATE / CUT`, `REM / LEFT`, `PACE / ETA`, and `DIST / NOW`
 3. `OVER`, `ALL PASSED`, and `PACE N/A` each replace only the intended line content

@@ -122,15 +122,42 @@ module GateRemainingTime {
         return hourPart.format("%d") + ":" + minPart.format("%02d");
     }
 
+    function formatRemainingDuration(remainingSec) {
+        if (remainingSec == null) {
+            return "--:--";
+        }
+
+        var absSec = remainingSec;
+        if (absSec < 0) {
+            absSec = -absSec;
+        }
+
+        var totalMinutes = Math.floor((absSec + 59) / 60);
+        var hourPart = Math.floor(totalMinutes / 60);
+        var minPart = totalMinutes - (hourPart * 60);
+        return hourPart.format("%d") + ":" + minPart.format("%02d");
+    }
+
     function formatCurrentClockHourMinute(config) {
         var currentClockSec = getCurrentClockSec(config);
         if (currentClockSec == null) {
             return captureCurrentClockHourMinuteText();
         }
 
-        var hourPart = Math.floor(currentClockSec / 3600);
-        var minPart = Math.floor((currentClockSec - (hourPart * 3600)) / 60);
-        return hourPart.format("%02d") + ":" + minPart.format("%02d");
+        return _formatClockHourMinute(currentClockSec);
+    }
+
+    function computeEtaClockText(config, remainingDistanceKm, paceSecPerKm) {
+        var currentClockSec = getCurrentClockSec(config);
+        if (currentClockSec == null or remainingDistanceKm == null or paceSecPerKm == null) {
+            return null;
+        }
+        if (remainingDistanceKm <= 0 or paceSecPerKm <= 0) {
+            return null;
+        }
+
+        var travelSec = Math.floor((remainingDistanceKm * paceSecPerKm) + 0.5);
+        return _formatClockHourMinute(currentClockSec + travelSec);
     }
 
     function captureCurrentClockHourMinuteText() {
@@ -148,6 +175,23 @@ module GateRemainingTime {
 
     function _formatClockText(hourPart, minutePart, secondPart) {
         return hourPart.format("%02d") + ":" + minutePart.format("%02d") + ":" + secondPart.format("%02d");
+    }
+
+    function _formatClockHourMinute(clockSec) {
+        if (clockSec == null) {
+            return "--:--";
+        }
+
+        while (clockSec < 0) {
+            clockSec += 86400;
+        }
+        while (clockSec >= 86400) {
+            clockSec -= 86400;
+        }
+
+        var hourPart = Math.floor(clockSec / 3600);
+        var minPart = Math.floor((clockSec - (hourPart * 3600)) / 60);
+        return hourPart.format("%02d") + ":" + minPart.format("%02d");
     }
 
     function _getConfigValue(config, index, defaultValue) {

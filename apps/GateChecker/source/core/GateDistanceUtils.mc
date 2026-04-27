@@ -32,13 +32,21 @@ module GateDistanceUtils {
             return "--.-km";
         }
 
+        return formatCompactDistanceKmValue(distanceKm) + "km";
+    }
+
+    function formatCompactDistanceKmValue(distanceKm) {
+        if (distanceKm == null) {
+            return "--.-";
+        }
+
         var roundedTenth = Math.floor((distanceKm * 10.0) + 0.5);
         if (roundedTenth < 0) {
             roundedTenth = 0;
         }
         var kmWhole = Math.floor(roundedTenth / 10);
         var kmDecimal = roundedTenth - (kmWhole * 10);
-        return kmWhole.format("%d") + "." + kmDecimal.format("%d") + "km";
+        return kmWhole.format("%d") + "." + kmDecimal.format("%d");
     }
 
     function formatDistanceTenthKm(distanceTenthKm) {
@@ -55,9 +63,23 @@ module GateDistanceUtils {
         return formatCompactDistanceKm(distanceTenthKm / 10.0);
     }
 
+    function formatCompactDistanceTenthKmValue(distanceTenthKm) {
+        if (distanceTenthKm == null) {
+            return "--.-";
+        }
+        return formatCompactDistanceKmValue(distanceTenthKm / 10.0);
+    }
+
     function formatLiveDistanceKm(distanceKm) {
         if (distanceKm == null) {
             return "--.--km";
+        }
+        return formatLiveDistanceKmValue(distanceKm) + "km";
+    }
+
+    function formatLiveDistanceKmValue(distanceKm) {
+        if (distanceKm == null) {
+            return "--.--";
         }
         if (distanceKm < 1.0) {
             var roundedHundredth = Math.floor((distanceKm * 100.0) + 0.5);
@@ -66,9 +88,9 @@ module GateDistanceUtils {
             }
             var wholePart = Math.floor(roundedHundredth / 100);
             var fracPart = roundedHundredth - (wholePart * 100);
-            return wholePart.format("%d") + "." + fracPart.format("%02d") + "km";
+            return wholePart.format("%d") + "." + fracPart.format("%02d");
         }
-        return formatCompactDistanceKm(distanceKm);
+        return formatCompactDistanceKmValue(distanceKm);
     }
 
     function formatCloseTime(closeHour, closeMinute) {

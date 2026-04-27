@@ -785,6 +785,14 @@ module RaceStrategyUtils {
         if (value == null) {
             return null;
         }
+        if (
+            !(value instanceof Lang.Number) and
+            !(value instanceof Lang.Float) and
+            !(value instanceof Lang.Double) and
+            !(value instanceof Lang.Long)
+        ) {
+            return null;
+        }
         try {
             if (value != value) {
                 return null;

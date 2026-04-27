@@ -11,7 +11,7 @@ SIM_EXEC_PATH="${SIM_APP_PATH}/Contents/MacOS/simulator"
 APP_BASE_NAME="marathoncoach"
 APP_BASE_NAME_UPPER="$(echo "$APP_BASE_NAME" | tr '[:lower:]' '[:upper:]')"
 SIM_TMP_ROOT="${TMPDIR%/}/com.garmin.connectiq"
-SIM_SETTINGS_PATH="$SIM_TMP_ROOT/GARMIN/Settings/${APP_BASE_NAME_UPPER}-settings.json"
+SIM_SETTINGS_PATH="$SIM_TMP_ROOT/GARMIN/Settings/${APP_BASE_NAME}-settings.json"
 SIM_ACTIVITY_PATH="$SIM_TMP_ROOT/GARMIN/Activities/FILE.FIT"
 
 resolve_dev_key() {
@@ -133,7 +133,8 @@ if [[ -z "$APP_SETTINGS_PATH" && -f "$GENERATED_SETTINGS_PATH" ]]; then
 fi
 
 if [[ -n "$APP_SETTINGS_PATH" && -f "$APP_SETTINGS_PATH" ]]; then
-  SETTINGS_DEST_PATH="GARMIN/Settings/${APP_BASE_NAME_UPPER}-settings.json"
+  SETTINGS_BASENAME="${APP_SETTINGS_PATH##*/}"
+  SETTINGS_DEST_PATH="GARMIN/Settings/$SETTINGS_BASENAME"
   MONKEYDO_ARGS+=("-a" "$APP_SETTINGS_PATH:$SETTINGS_DEST_PATH")
   echo "Sending settings file: $APP_SETTINGS_PATH -> $SETTINGS_DEST_PATH"
   echo "If App Settings Editor says no settings file was found, close and reopen"
