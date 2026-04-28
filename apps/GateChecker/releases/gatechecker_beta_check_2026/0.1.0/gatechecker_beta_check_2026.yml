@@ -1,0 +1,32 @@
+race_key: gatechecker_beta_check_2026
+
+display_name:
+  jpn: "GateChecker BETA確認用"
+  eng: "GateChecker Beta Check"
+
+race:
+  date: "2026/04/28"
+  timezone: "Asia/Tokyo"
+  distance_km: 2.5
+
+gates:
+  - point: 0.5
+    cutoff: "2026/04/28 20:00"
+  - point: 1.0
+    cutoff: "2026/04/28 20:30"
+  - point: 1.5
+    cutoff: "2026/04/28 21:00"
+  - point: 2.0
+    cutoff: "2026/04/28 21:30"
+  - point: GOAL
+    cutoff: "2026/04/28 22:00"
+
+aids:
+  - km: 0.3
+  - km: 0.6
+  - km: 0.9
+  - km: 1.2
+  - km: 1.5
+  - km: 1.8
+  - km: 2.1
+  - km: 2.4
