@@ -1,13 +1,12 @@
 using Toybox.Graphics as Gfx;
 using Toybox.Lang as Lang;
 using Toybox.WatchUi as Ui;
-using GateCodeDecoder;
+using GateCurrentPace;
 using GateDistanceUtils;
 using GateNextSelector;
-using GateCurrentPace;
+using GateRaceData;
 using GateRemainingDistance;
 using GateRemainingTime;
-using GateCodeValidator;
 
 module GateDisplayModel {
     const STATE_CODE_ERROR = 0;
@@ -33,8 +32,7 @@ module GateDisplayModel {
     }
 
     function buildDisplayModel(
-        codeConfig,
-        decodeConfig,
+        gates,
         nextGateConfig,
         remainingDistanceConfig,
         requiredPaceConfig,
@@ -43,9 +41,9 @@ module GateDisplayModel {
         currentDistanceKm
     ) as Lang.Array {
         var config = newDefaultConfig();
-        if (!GateCodeValidator.isCodeValid(codeConfig) or !GateCodeDecoder.isDecoded(decodeConfig)) {
+        if (gates == null or !(gates instanceof Lang.Array) or gates.size() <= 0) {
             config[CFG_STATE] = STATE_CODE_ERROR;
-            config[CFG_SINGLE_TEXT] = Ui.loadResource(Rez.Strings.CodeError);
+            config[CFG_SINGLE_TEXT] = Ui.loadResource(Rez.Strings.NoGate);
             return config;
         }
 
@@ -58,7 +56,7 @@ module GateDisplayModel {
         if (!GateNextSelector.hasNextGate(nextGateConfig)) {
             config[CFG_STATE] = STATE_ALL_PASSED;
             config[CFG_SINGLE_TEXT] = "";
-            config[CFG_LINE1] = _buildAllPassedLine1(decodeConfig);
+            config[CFG_LINE1] = _buildAllPassedLine1(gates);
             config[CFG_LINE2] = Ui.loadResource(Rez.Strings.AllPassed);
             config[CFG_LINE3_LEFT] = "";
             config[CFG_LINE3_RIGHT] = "";
@@ -90,7 +88,7 @@ module GateDisplayModel {
             return config;
         }
 
-        if (etaClockText == null) {
+        if (etaClockText == null or GateCurrentPace.getDisplayText(currentPaceConfig) == "--:--") {
             config[CFG_STATE] = STATE_PACE_NA;
             config[CFG_LINE3_LEFT] = Ui.loadResource(Rez.Strings.PaceNa);
             config[CFG_LINE3_RIGHT] = "";
@@ -98,8 +96,8 @@ module GateDisplayModel {
         }
 
         config[CFG_STATE] = STATE_NORMAL;
-        config[CFG_LINE3_LEFT] = "PACE " + GateCurrentPace.getDisplayText(currentPaceConfig) + "/km";
-        config[CFG_LINE3_RIGHT] = "ETA " + etaClockText;
+        config[CFG_LINE3_LEFT] = Ui.loadResource(Rez.Strings.PaceLabel) + " " + GateCurrentPace.getDisplayText(currentPaceConfig) + "/km";
+        config[CFG_LINE3_RIGHT] = Ui.loadResource(Rez.Strings.EtaLabel) + " " + etaClockText;
         return config;
     }
 
@@ -124,7 +122,7 @@ module GateDisplayModel {
         if (state == STATE_NORMAL) {
             return "normal";
         }
-        return "code_error";
+        return "config_error";
     }
 
     function getSingleText(config) {
@@ -155,48 +153,60 @@ module GateDisplayModel {
         return _getConfigValue(config, CFG_LINE3_LEFT_COLOR, Gfx.COLOR_WHITE);
     }
 
-    function _buildAllPassedLine1(decodeConfig) {
-        var gates = GateCodeDecoder.getGates(decodeConfig);
-        if (gates.size() <= 0) {
+    function _buildAllPassedLine1(gates) {
+        if (gates == null or !(gates instanceof Lang.Array) or gates.size() <= 0) {
             return Ui.loadResource(Rez.Strings.Last);
         }
 
         var lastGate = gates[gates.size() - 1];
-        return Ui.loadResource(Rez.Strings.Last) + " / CUT " + GateDistanceUtils.formatCloseTime(
-            GateCodeDecoder.getGateCloseHour(lastGate),
-            GateCodeDecoder.getGateCloseMinute(lastGate)
+        return Ui.loadResource(Rez.Strings.Last) + " / " + Ui.loadResource(Rez.Strings.CutLabel) + " " + GateDistanceUtils.formatCloseTime(
+            GateRaceData.getGateCloseHour(lastGate),
+            GateRaceData.getGateCloseMinute(lastGate)
         );
     }
 
     function _buildGateLine(nextGate, nextIndex) {
         if (nextGate == null) {
-            return "GATE --.-km / CUT --:--";
+            return Ui.loadResource(Rez.Strings.GateLabel) + " -- / " + Ui.loadResource(Rez.Strings.CutLabel) + " --:--";
         }
 
-        return _formatOrdinal(nextIndex) + " GATE " + GateDistanceUtils.formatCompactDistanceTenthKm(GateCodeDecoder.getGateDistanceTenthKm(nextGate)) +
-            " / CUT " +
+        return _buildGateIndexLabel(nextIndex) + " " + GateRaceData.getGateDisplayValue(nextGate) + GateRaceData.getGateDisplayUnit(nextGate) +
+            " / " + Ui.loadResource(Rez.Strings.CutLabel) + " " +
             GateDistanceUtils.formatCloseTime(
-                GateCodeDecoder.getGateCloseHour(nextGate),
-                GateCodeDecoder.getGateCloseMinute(nextGate)
+                GateRaceData.getGateCloseHour(nextGate),
+                GateRaceData.getGateCloseMinute(nextGate)
             );
     }
 
     function _buildFactLine(remainingDistanceConfig, remainingSec) {
-        return "REMAIN " + GateDistanceUtils.formatCompactDistanceKm(GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig)) +
-            " / LEFT " +
+        return Ui.loadResource(Rez.Strings.RemainLabel) + " " + GateDistanceUtils.formatCompactDistanceKm(GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig)) +
+            " / " + Ui.loadResource(Rez.Strings.LeftLabel) + " " +
             GateRemainingTime.formatRemainingDuration(remainingSec);
     }
 
     function _buildLateFactLine(remainingDistanceConfig, remainingSec) {
-        return "REMAIN " + GateDistanceUtils.formatCompactDistanceKm(GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig)) +
-            " / LATE " +
+        return Ui.loadResource(Rez.Strings.RemainLabel) + " " + GateDistanceUtils.formatCompactDistanceKm(GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig)) +
+            " / " + Ui.loadResource(Rez.Strings.LateLabel) + " " +
             GateRemainingTime.formatRemainingDuration(remainingSec);
     }
 
     function _buildCurrentSnapshotLine(currentDistanceKm, remainingTimeConfig) {
-        return "DIST " + GateDistanceUtils.formatLiveDistanceKm(currentDistanceKm) +
-            " / NOW " +
+        return GateDistanceUtils.formatLiveDistanceKm(currentDistanceKm) +
+            " / " +
             GateRemainingTime.formatCurrentClockHourMinute(remainingTimeConfig);
+    }
+
+    function _buildGateIndexLabel(index) {
+        if (index == null or index < 0) {
+            return Ui.loadResource(Rez.Strings.GateLabel);
+        }
+
+        var gateNumber = index + 1;
+        if (_isJapaneseLayout()) {
+            return "第" + gateNumber.format("%d") + Ui.loadResource(Rez.Strings.GateLabel);
+        }
+
+        return _formatOrdinal(index) + " " + Ui.loadResource(Rez.Strings.GateLabel);
     }
 
     function _formatOrdinal(index) {
@@ -218,6 +228,10 @@ module GateDisplayModel {
             }
         }
         return number.format("%d") + suffix;
+    }
+
+    function _isJapaneseLayout() as Lang.Boolean {
+        return Ui.loadResource(Rez.Strings.GateLabel).equals("関門");
     }
 
     function _getConfigValue(config, index, defaultValue) {

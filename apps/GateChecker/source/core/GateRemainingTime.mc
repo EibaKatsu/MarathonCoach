@@ -1,6 +1,8 @@
 using Toybox.Lang as Lang;
 using Toybox.Math as Math;
 using Toybox.System as Sys;
+using Toybox.WatchUi as Ui;
+using GateRaceData;
 
 module GateRemainingTime {
     const REASON_EMPTY = 0;
@@ -18,9 +20,9 @@ module GateRemainingTime {
         return [false, null, REASON_EMPTY, null, null, null];
     }
 
-    function computeRemainingTime(closeHour, closeMinute) as Lang.Array {
+    function computeRemainingTime(closeDayOffset, closeMinuteOfDay) as Lang.Array {
         var config = newDefaultConfig();
-        if (closeHour == null or closeMinute == null) {
+        if (closeDayOffset == null or closeMinuteOfDay == null) {
             return config;
         }
 
@@ -35,8 +37,9 @@ module GateRemainingTime {
             return config;
         }
 
-        var currentClockSec = (clockTime.hour * 3600) + (clockTime.min * 60) + clockTime.sec;
-        var closeClockSec = (closeHour * 3600) + (closeMinute * 60);
+        var currentDayOffset = _computeCurrentRaceDayOffset(clockTime);
+        var currentClockSec = (currentDayOffset * 86400) + (clockTime.hour * 3600) + (clockTime.min * 60) + clockTime.sec;
+        var closeClockSec = (closeDayOffset * 86400) + (closeMinuteOfDay * 60);
 
         config[CFG_HAS_REMAINING] = true;
         config[CFG_REMAINING_SEC] = closeClockSec - currentClockSec;
@@ -84,7 +87,7 @@ module GateRemainingTime {
 
     function formatRemainingLabel(remainingSec) {
         if (remainingSec == null) {
-            return "WAIT TIME";
+            return Ui.loadResource(Rez.Strings.WaitTime);
         }
 
         var isOver = remainingSec < 0;
@@ -97,14 +100,14 @@ module GateRemainingTime {
         var hourPart = Math.floor(totalMinutes / 60);
         var minPart = totalMinutes - (hourPart * 60);
         if (isOver) {
-            return "OVER " + hourPart.format("%d") + ":" + minPart.format("%02d");
+            return Ui.loadResource(Rez.Strings.PaceStateOver) + " " + hourPart.format("%d") + ":" + minPart.format("%02d");
         }
-        return "LEFT " + hourPart.format("%d") + ":" + minPart.format("%02d");
+        return Ui.loadResource(Rez.Strings.LeftLabel) + " " + hourPart.format("%d") + ":" + minPart.format("%02d");
     }
 
     function formatRemainingFact(remainingSec) {
         if (remainingSec == null) {
-            return "WAIT TIME";
+            return Ui.loadResource(Rez.Strings.WaitTime);
         }
 
         var isLate = remainingSec < 0;
@@ -117,7 +120,7 @@ module GateRemainingTime {
         var hourPart = Math.floor(totalMinutes / 60);
         var minPart = totalMinutes - (hourPart * 60);
         if (isLate) {
-            return "LATE " + hourPart.format("%d") + ":" + minPart.format("%02d");
+            return Ui.loadResource(Rez.Strings.LateLabel) + " " + hourPart.format("%d") + ":" + minPart.format("%02d");
         }
         return hourPart.format("%d") + ":" + minPart.format("%02d");
     }
@@ -173,6 +176,36 @@ module GateRemainingTime {
         return clockTime.hour.format("%02d") + ":" + clockTime.min.format("%02d");
     }
 
+    function _computeCurrentRaceDayOffset(clockTime) {
+        if (clockTime == null) {
+            return 0;
+        }
+
+        var currentYear = null;
+        var currentMonth = null;
+        var currentDay = null;
+        if (clockTime has :year) {
+            currentYear = clockTime.year;
+        }
+        if (clockTime has :month) {
+            currentMonth = clockTime.month;
+        }
+        if (clockTime has :day) {
+            currentDay = clockTime.day;
+        }
+
+        var currentDays = _daysFromCivil(currentYear, currentMonth, currentDay);
+        var raceDays = _daysFromCivil(
+            GateRaceData.getRaceYear(),
+            GateRaceData.getRaceMonth(),
+            GateRaceData.getRaceDay()
+        );
+        if (currentDays == null or raceDays == null) {
+            return 0;
+        }
+        return currentDays - raceDays;
+    }
+
     function _formatClockText(hourPart, minutePart, secondPart) {
         return hourPart.format("%02d") + ":" + minutePart.format("%02d") + ":" + secondPart.format("%02d");
     }
@@ -192,6 +225,33 @@ module GateRemainingTime {
         var hourPart = Math.floor(clockSec / 3600);
         var minPart = Math.floor((clockSec - (hourPart * 3600)) / 60);
         return hourPart.format("%02d") + ":" + minPart.format("%02d");
+    }
+
+    function _daysFromCivil(yearPart, monthPart, dayPart) {
+        if (yearPart == null or monthPart == null or dayPart == null) {
+            return null;
+        }
+
+        var adjustedYear = yearPart;
+        if (monthPart <= 2) {
+            adjustedYear -= 1;
+        }
+
+        var era = Math.floor(adjustedYear / 400);
+        var yearOfEra = adjustedYear - (era * 400);
+        var monthPrime = monthPart;
+        if (monthPrime > 2) {
+            monthPrime -= 3;
+        } else {
+            monthPrime += 9;
+        }
+
+        var dayOfYear = Math.floor(((153 * monthPrime) + 2) / 5) + dayPart - 1;
+        var dayOfEra = (yearOfEra * 365) +
+            Math.floor(yearOfEra / 4) -
+            Math.floor(yearOfEra / 100) +
+            dayOfYear;
+        return (era * 146097) + dayOfEra - 719468;
     }
 
     function _getConfigValue(config, index, defaultValue) {
