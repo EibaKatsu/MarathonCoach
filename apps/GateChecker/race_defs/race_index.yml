@@ -1,9 +1,13 @@
 races:
   toyama_marathon_2026:
-    app_id: "214f6dbb-0476-4778-a81b-eb9c7afc901d"
-    definition: "races/toyama_marathon_2026.yml"
-    version: "0.1.0"
+    app_id: 214f6dbb-0476-4778-a81b-eb9c7afc901d
+    definition: races/toyama_marathon_2026.yml
+    version: 0.1.0
   iwate_oshu_kirameki_marathon_2026:
-    app_id: "e7edc6e6-be37-4774-8069-4a115ddc67bd"
-    definition: "races/iwate_oshu_kirameki_marathon_2026.yml"
-    version: "0.1.0"
+    app_id: e7edc6e6-be37-4774-8069-4a115ddc67bd
+    definition: races/iwate_oshu_kirameki_marathon_2026.yml
+    version: 0.1.0
+  gatechecker_beta_check_2026:
+    app_id: 023ed61c-e951-4e8f-a228-7de069c931ea
+    definition: races/gatechecker_beta_check_2026.yml
+    version: 0.1.0
