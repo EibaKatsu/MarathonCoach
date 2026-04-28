@@ -102,12 +102,12 @@ After loading the app in the simulator, open the App Settings Editor and edit `G
 - Sample valid code: `G104000322000006221500092230001222450X`
 - Sample invalid code: `G104000322000006221500092230001222457K`
 - Hyphens are optional because the app normalizes them out before validation
-- STEP 10 adds a 4-line layout with current pace and terminal-state display cleanup
+- STEP 10 adds a 4-line layout with paired `gate` and `aid` display blocks
 - Use `python3 scripts/generate_gatechecker_scenarios.py` when you need fresh simulator scenario codes tied to the current clock
 - State-by-state simulator steps live in `docs/dev/gatechecker_simulator_scenarios.md`
 
 ## Human check points for STEP 10
 
 1. The app installs in the simulator without a build error
-2. Normal display shows `GATE / CUT`, `REM / LEFT`, `PACE / ETA`, and `DIST / NOW`
-3. `OVER`, `ALL PASSED`, and `PACE N/A` each replace only the intended line content
+2. Normal display shows `GATE / CUT`, `REM / LEFT`, `AID / ETA`, and `REM / LEFT`
+3. `OVER`, `ALL PASSED`, and `PACE N/A` each replace only the intended gate-side content

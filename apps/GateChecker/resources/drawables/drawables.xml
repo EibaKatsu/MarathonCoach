@@ -4,8 +4,10 @@
     <bitmap id="icon_left_12" filename="icon_left_12.png"/>
     <bitmap id="icon_pace_12" filename="icon_pace_12.png"/>
     <bitmap id="icon_eta_12" filename="icon_eta_12.png"/>
+    <bitmap id="icon_aid_12" filename="icon_aid_12.png"/>
     <bitmap id="icon_remain_16" filename="icon_remain_16.png"/>
     <bitmap id="icon_left_16" filename="icon_left_16.png"/>
     <bitmap id="icon_pace_16" filename="icon_pace_16.png"/>
     <bitmap id="icon_eta_16" filename="icon_eta_16.png"/>
+    <bitmap id="icon_aid_16" filename="icon_aid_16.png"/>
 </resources>

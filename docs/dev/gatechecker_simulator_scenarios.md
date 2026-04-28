@@ -55,8 +55,8 @@ python3 scripts/generate_gatechecker_scenarios.py --base-time 22:00
 期待表示:
 - line1: `GATE 0.3km / CUT HH:MM`
 - line2: `REM 残距離 / LEFT 残り時間`
-- line3: `PACE 現在ペース / ETA 到着予測時刻`
-- line4: `DIST 現在距離 / NOW 現在時刻`
+- line3: `AID 0.3km / ETA 到着予測時刻`
+- line4: `REM 残距離 / LEFT エイド到達まで`
 
 期待ログ:
 - `displayState=normal`
@@ -64,7 +64,7 @@ python3 scripts/generate_gatechecker_scenarios.py --base-time 22:00
 ## PACE N/A
 
 目的:
-- `line2` を維持したまま、`line3` が `PACE N/A` に切り替わることを確認する
+- 関門側の表示を維持したまま、エイド側の ETA と到達残時間が `--:--` に落ちることを確認する
 
 使う code:
 - `python3 scripts/generate_gatechecker_scenarios.py` の `pace_na`
@@ -78,8 +78,8 @@ python3 scripts/generate_gatechecker_scenarios.py --base-time 22:00
 期待表示:
 - line1: `GATE 0.0km / CUT HH:MM`
 - line2: `REM 0.0km / LEFT 残り時間`
-- line3: `PACE N/A`
-- line4: `DIST 0.00km / NOW 現在時刻`
+- line3: `AID 0.0km / ETA --:--`
+- line4: `REM 0.0km / LEFT --:--`
 
 期待ログ:
 - `displayState=pace_na`
@@ -91,7 +91,7 @@ python3 scripts/generate_gatechecker_scenarios.py --base-time 22:00
 ## OVER
 
 目的:
-- `OVER` 時に通常の `PACE / ETA` が消え、`LATE` 表示と `OVER` が優先されることを確認する
+- `OVER` 時に関門側だけ `LATE` が優先され、エイド側の表示ブロックは維持されることを確認する
 
 使う code:
 - `python3 scripts/generate_gatechecker_scenarios.py` の `over`
@@ -104,8 +104,8 @@ python3 scripts/generate_gatechecker_scenarios.py --base-time 22:00
 期待表示:
 - line1: `GATE 0.3km / CUT 過去時刻`
 - line2: `REM 残距離 / LATE h:mm`
-- line3: `OVER`
-- line4: `DIST 現在距離 / NOW 現在時刻`
+- line3: `AID 0.3km / ETA 到着予測時刻`
+- line4: `REM 残距離 / LEFT エイド到達まで`
 
 期待ログ:
 - `displayState=over`
@@ -113,7 +113,7 @@ python3 scripts/generate_gatechecker_scenarios.py --base-time 22:00
 ## ALL PASSED
 
 目的:
-- 全関門通過後に不要な pace 数値が残らないことを確認する
+- 全関門通過後に関門・エイドの追跡表示が消えることを確認する
 
 使う code:
 - `python3 scripts/generate_gatechecker_scenarios.py` の `all_passed`
@@ -127,7 +127,7 @@ python3 scripts/generate_gatechecker_scenarios.py --base-time 22:00
 - line1: `LAST / CUT HH:MM`
 - line2: `ALL PASSED`
 - line3: blank
-- line4: `DIST 現在距離 / NOW 現在時刻`
+- line4: blank
 
 期待ログ:
 - `displayState=all_passed`
