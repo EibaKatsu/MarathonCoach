@@ -1,4 +1,5 @@
 using Toybox.Graphics as Gfx;
+using Toybox.Math as Math;
 using Toybox.System as Sys;
 using Toybox.WatchUi as Ui;
 using GateAidSelector;
@@ -56,6 +57,7 @@ class GateCheckerField extends Ui.DataField {
     var _currentPaceConfig = null;
     var _lastCodeDiagLine = null;
     var _lastLayoutDiagLine = null;
+    var _displayState = GateDisplayModel.STATE_CODE_ERROR;
 
     function initialize() {
         DataField.initialize();
@@ -78,6 +80,11 @@ class GateCheckerField extends Ui.DataField {
 
         dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
         dc.clear();
+
+        if (_shouldRenderPreStartSplash()) {
+            _drawPreStartSplash(dc, centerX, centerY);
+            return;
+        }
 
         if (_singleText != null and _singleText.length() > 0) {
             dc.drawText(centerX, centerY - Math.floor(singleStateRowHeight / 2), singleStateFont, _singleText, Gfx.TEXT_JUSTIFY_CENTER);
@@ -255,6 +262,7 @@ class GateCheckerField extends Ui.DataField {
             _currentPaceConfig,
             currentDistanceKm
         );
+        _displayState = GateDisplayModel.getState(displayConfig);
         _singleText = GateDisplayModel.getSingleText(displayConfig);
         _line1Text = GateDisplayModel.getLine1(displayConfig);
         _line2Text = GateDisplayModel.getLine2(displayConfig);
@@ -302,7 +310,7 @@ class GateCheckerField extends Ui.DataField {
 
         if (state == GateDisplayModel.STATE_ALL_PASSED) {
             _gateLeftLabelText = Ui.loadResource(Rez.Strings.Last);
-            _gateRightLabelText = "CUT";
+            _gateRightLabelText = Ui.loadResource(Rez.Strings.CutLabel);
             if (gates != null and gates instanceof Lang.Array and gates.size() > 0) {
                 var lastGate = gates[gates.size() - 1];
                 _gateDistanceText = GateRaceData.getGateDisplayValue(lastGate);
@@ -326,7 +334,7 @@ class GateCheckerField extends Ui.DataField {
         var remainingDistanceKm = GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig);
         if (nextGate != null) {
             _gateLeftLabelText = _formatGateLabel(GateNextSelector.getNextIndex(nextGateConfig));
-            _gateRightLabelText = "CUT";
+            _gateRightLabelText = Ui.loadResource(Rez.Strings.CutLabel);
             _gateDistanceText = GateRaceData.getGateDisplayValue(nextGate);
             _gateDistanceUnitText = GateRaceData.getGateDisplayUnit(nextGate);
             _gateTimeText = GateDistanceUtils.formatCloseTime(
@@ -344,14 +352,14 @@ class GateCheckerField extends Ui.DataField {
         _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig);
 
         if (state == GateDisplayModel.STATE_OVER) {
-            _gateRemainRightLabelText = "LATE";
+            _gateRemainRightLabelText = Ui.loadResource(Rez.Strings.LateLabel);
             return;
         }
     }
 
     function _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig) {
-        _aidTitleText = "AID";
-        _aidRightLabelText = "TO AID";
+        _aidTitleText = Ui.loadResource(Rez.Strings.AidLabel);
+        _aidRightLabelText = Ui.loadResource(Rez.Strings.ToAidLabel);
         if (!GateAidSelector.hasNextAid(nextAidConfig)) {
             _aidDistanceText = "--";
             _aidDistanceUnitText = "";
@@ -370,19 +378,19 @@ class GateCheckerField extends Ui.DataField {
     }
 
     function _resetRenderParts() {
-        _gateLeftLabelText = "GATE";
-        _gateRightLabelText = "CUT";
+        _gateLeftLabelText = Ui.loadResource(Rez.Strings.GateLabel);
+        _gateRightLabelText = Ui.loadResource(Rez.Strings.CutLabel);
         _gateSummaryText = "";
         _gateDistanceText = "";
         _gateDistanceUnitText = "";
         _gateTimeText = "";
-        _gateRemainLeftLabelText = "REMAIN";
-        _gateRemainRightLabelText = "LEFT";
+        _gateRemainLeftLabelText = Ui.loadResource(Rez.Strings.RemainLabel);
+        _gateRemainRightLabelText = Ui.loadResource(Rez.Strings.LeftLabel);
         _gateRemainDistanceText = "";
         _gateRemainDistanceUnitText = "";
         _gateLeftTimeText = "";
-        _aidTitleText = "AID";
-        _aidRightLabelText = "TO AID";
+        _aidTitleText = Ui.loadResource(Rez.Strings.AidLabel);
+        _aidRightLabelText = Ui.loadResource(Rez.Strings.ToAidLabel);
         _aidDistanceText = "--";
         _aidDistanceUnitText = "";
         _aidRemainDistanceText = "--";
@@ -391,7 +399,7 @@ class GateCheckerField extends Ui.DataField {
 
     function _formatGateLabel(index) {
         if (index == null or index < 0) {
-            return "GATE";
+            return Ui.loadResource(Rez.Strings.GateLabel);
         }
 
         return "G" + (index + 1).format("%d");
@@ -543,6 +551,110 @@ class GateCheckerField extends Ui.DataField {
         }
         _lastLayoutDiagLine = line;
         Sys.println(line);
+    }
+
+    function _shouldRenderPreStartSplash() {
+        return _displayState == GateDisplayModel.STATE_WAIT_DIST;
+    }
+
+    function _drawPreStartSplash(dc, centerX, centerY) {
+        var appName = Ui.loadResource(Rez.Strings.AppName);
+        var raceName = _resolveLocalizedRaceName();
+        var statusText = _singleText;
+        var maxWidth = _resolvePreStartMaxWidth(dc);
+        var appNameFont = _resolvePreStartTextFont(dc, Gfx.FONT_SMALL, appName, maxWidth);
+        var raceNameFont = _resolvePreStartTextFont(dc, Gfx.FONT_XTINY, raceName, maxWidth);
+        var statusFont = Gfx.FONT_SYSTEM_XTINY;
+        var appNameLines = _wrapTextLines(dc, appName, appNameFont, maxWidth);
+        var raceNameLines = _wrapTextLines(dc, raceName, raceNameFont, maxWidth);
+        var appNameHeight = _measureWrappedTextHeight(dc, appNameLines, appNameFont);
+        var raceNameHeight = _measureWrappedTextHeight(dc, raceNameLines, raceNameFont);
+        var statusHeight = _measureTextHeight(dc, statusText, statusFont);
+        var topGap = 4;
+        var bottomGap = 10;
+        var totalHeight = appNameHeight + topGap + raceNameHeight + bottomGap + statusHeight;
+        var topY = centerY - Math.floor(totalHeight / 2);
+        var appNameY = topY;
+        var raceNameY = appNameY + appNameHeight + topGap;
+        var statusY = raceNameY + raceNameHeight + bottomGap;
+
+        _drawWrappedCenteredLines(dc, centerX, appNameY, appNameLines, appNameFont, Gfx.COLOR_WHITE);
+        _drawWrappedCenteredLines(dc, centerX, raceNameY, raceNameLines, raceNameFont, Gfx.COLOR_WHITE);
+        _drawCenteredLine(dc, centerX, statusY, statusFont, statusText, Gfx.COLOR_WHITE);
+    }
+
+    function _resolvePreStartTextFont(dc, preferredFont, text, maxWidth) {
+        var font = preferredFont;
+        while (_measureTextWidth(dc, text, font) > maxWidth) {
+            var nextFont = _shrinkTextFont(font);
+            if (nextFont == font) {
+                return font;
+            }
+            font = nextFont;
+        }
+        return font;
+    }
+
+    function _resolveLocalizedRaceName() {
+        var appName = Ui.loadResource(Rez.Strings.AppName);
+        if (appName != null and appName.equals("関門ガイド")) {
+            return GateRaceData.getRaceNameJpn();
+        }
+        return GateRaceData.getRaceNameEng();
+    }
+
+    function _resolvePreStartMaxWidth(dc) {
+        var safeWidth = Math.floor((dc.getWidth() * 68) / 100);
+        if (safeWidth < 1) {
+            return dc.getWidth();
+        }
+        return safeWidth;
+    }
+
+    function _wrapTextLines(dc, text, font, maxWidth) {
+        if (text == null or text.length() == 0) {
+            return [""];
+        }
+        if (_measureTextWidth(dc, text, font) <= maxWidth) {
+            return [text];
+        }
+
+        var lines = [];
+        var currentLine = "";
+        for (var i = 0; i < text.length(); i += 1) {
+            var ch = text.substring(i, i + 1);
+            var nextLine = currentLine + ch;
+            if (currentLine.length() > 0 and _measureTextWidth(dc, nextLine, font) > maxWidth) {
+                lines.add(currentLine);
+                currentLine = ch;
+            } else {
+                currentLine = nextLine;
+            }
+        }
+        if (currentLine.length() > 0) {
+            lines.add(currentLine);
+        }
+        return lines;
+    }
+
+    function _measureWrappedTextHeight(dc, lines, font) {
+        if (lines == null or lines.size() <= 0) {
+            return 0;
+        }
+
+        var lineHeight = _measureTextHeight(dc, "A", font);
+        return lineHeight * lines.size();
+    }
+
+    function _drawWrappedCenteredLines(dc, centerX, topY, lines, font, color) {
+        if (lines == null or lines.size() <= 0) {
+            return;
+        }
+
+        var lineHeight = _measureTextHeight(dc, "A", font);
+        for (var i = 0; i < lines.size(); i += 1) {
+            _drawCenteredLine(dc, centerX, topY + (lineHeight * i), font, lines[i], color);
+        }
     }
 
     function _resolveLabelY(blockY, blockHeight, labelHeight, valueHeight) {

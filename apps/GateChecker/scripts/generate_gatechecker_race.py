@@ -33,6 +33,58 @@ UUID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 )
 GOAL_TOKEN = "GOAL"
+APP_NAME_JPN = "関門ガイド"
+APP_NAME_ENG = "Marathon Cutoff Guide"
+STRINGS_COMMON_ENG = {
+    "code_ok": "READY",
+    "code_error": "CONFIG ERROR",
+    "wait_dist": "WAIT START",
+    "wait_time": "WAIT TIME",
+    "no_gate": "NO GATE",
+    "last": "LAST",
+    "all_passed": "ALL PASSED",
+    "pace_na": "PACE N/A",
+    "pace_state_plenty": "PLENTY",
+    "pace_state_ok": "OK",
+    "pace_state_tight": "TIGHT",
+    "pace_state_push": "PUSH",
+    "pace_state_over": "OVER",
+    "gate_label": "GATE",
+    "cut_label": "CUT",
+    "remain_label": "REMAIN",
+    "left_label": "LEFT",
+    "aid_label": "AID",
+    "to_aid_label": "TO AID",
+    "late_label": "LATE",
+    "goal_label": "GOAL",
+    "eta_label": "ETA",
+    "pace_label": "PACE",
+}
+STRINGS_COMMON_JPN = {
+    "code_ok": "準備OK",
+    "code_error": "設定エラー",
+    "wait_dist": "スタート待ち",
+    "wait_time": "時刻待ち",
+    "no_gate": "関門なし",
+    "last": "最終",
+    "all_passed": "全関門通過",
+    "pace_na": "ペース不明",
+    "pace_state_plenty": "余裕",
+    "pace_state_ok": "順調",
+    "pace_state_tight": "厳しめ",
+    "pace_state_push": "要加速",
+    "pace_state_over": "超過",
+    "gate_label": "関門",
+    "cut_label": "閉鎖",
+    "remain_label": "残り",
+    "left_label": "残時間",
+    "aid_label": "エイド",
+    "to_aid_label": "エイドまで",
+    "late_label": "遅れ",
+    "goal_label": "ゴール",
+    "eta_label": "到着",
+    "pace_label": "ペース",
+}
 
 
 class ValidationError(ValueError):
@@ -330,11 +382,11 @@ def write_outputs(entry: RaceEntry, race: RaceMeta) -> None:
     )
     strings_eng_text = render_template(
         TEMPLATES_DIR / "strings.xml.tpl",
-        {"app_name": race.display_name_eng},
+        {"app_name": APP_NAME_ENG, **STRINGS_COMMON_ENG},
     )
     strings_jpn_text = render_template(
         TEMPLATES_DIR / "strings.xml.tpl",
-        {"app_name": race.display_name_jpn},
+        {"app_name": APP_NAME_JPN, **STRINGS_COMMON_JPN},
     )
     generated_text = render_template(
         TEMPLATES_DIR / "GateRaceConfig.mc.tpl",

@@ -18,6 +18,10 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
   - `skills/ciq-simulator-launch/SKILL.md`
 - `custom-code-generator`: `カスタムコード` 指示時に使用
   - `skills/custom-code-generator/SKILL.md`
+- `gatechecker-race-definition`: `GateCheckerに○○の関門データを設定して` / `大会設定ファイルを作って` / `大会名から race 定義を作って` 指示時に使用
+  - `skills/gatechecker-race-definition/SKILL.md`
+- `gatechecker-release-package`: `公開配布用iqを作って` / `大会名とリリースバージョンでiqファイルを作って` / `GateCheckerのリリースパッケージを作って` 指示時に使用
+  - `skills/gatechecker-release-package/SKILL.md`
 - `x-post-writer`: `X投稿文を作って` / `次の投稿を考えて` / `ポスト文を考えて` 指示時に使用
   - `skills/x-post-writer/SKILL.md`
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "GateChecker Race Definition"
+  short_description: "Create GateChecker race YAML from official marathon info"
+  default_prompt: "GateCheckerに大会名から関門とエイドの race 定義を追加して"
