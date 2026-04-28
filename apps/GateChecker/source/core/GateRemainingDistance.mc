@@ -14,9 +14,9 @@ module GateRemainingDistance {
         return [false, null, REASON_EMPTY];
     }
 
-    function computeRemainingDistance(currentDistanceKm, gateDistanceTenthKm) as Lang.Array {
+    function computeRemainingDistance(currentDistanceKm, targetDistanceKm) as Lang.Array {
         var config = newDefaultConfig();
-        if (gateDistanceTenthKm == null or gateDistanceTenthKm < 0) {
+        if (targetDistanceKm == null or targetDistanceKm < 0) {
             config[CFG_REASON] = REASON_GATE_UNAVAILABLE;
             return config;
         }
@@ -25,7 +25,6 @@ module GateRemainingDistance {
             return config;
         }
 
-        var targetDistanceKm = gateDistanceTenthKm / 10.0;
         var remainingDistanceKm = targetDistanceKm - currentDistanceKm;
         if (remainingDistanceKm < 0) {
             remainingDistanceKm = 0.0;

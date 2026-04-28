@@ -1,8 +1,8 @@
 <resources>
-    <string id="AppName">GateChecker</string>
-    <string id="AppTitle">GateChecker</string>
-    <string id="CodeOk">CODE OK</string>
-    <string id="CodeError">CODE ERROR</string>
+    <string id="AppName">Toyama Marathon 2026 Gate Checker</string>
+    <string id="AppTitle">Toyama Marathon 2026 Gate Checker</string>
+    <string id="CodeOk">READY</string>
+    <string id="CodeError">CONFIG ERROR</string>
     <string id="WaitDist">WAIT DIST</string>
     <string id="WaitTime">WAIT TIME</string>
     <string id="NoGate">NO GATE</string>
