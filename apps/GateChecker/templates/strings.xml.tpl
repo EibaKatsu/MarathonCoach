@@ -1,6 +1,6 @@
 <resources>
-    <string id="AppName">富山マラソン2026 関門チェッカー</string>
-    <string id="AppTitle">富山マラソン2026 関門チェッカー</string>
+    <string id="AppName">$app_name</string>
+    <string id="AppTitle">$app_name</string>
     <string id="CodeOk">READY</string>
     <string id="CodeError">CONFIG ERROR</string>
     <string id="WaitDist">WAIT DIST</string>

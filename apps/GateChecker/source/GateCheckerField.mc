@@ -1,20 +1,18 @@
 using Toybox.Graphics as Gfx;
 using Toybox.System as Sys;
 using Toybox.WatchUi as Ui;
-using GateCodeDecoder;
+using GateAidSelector;
 using GateCurrentPace;
 using GateDisplayModel;
 using GateDistanceUtils;
 using GateNextSelector;
 using GatePaceJudge;
+using GateRaceData;
 using GateRemainingDistance;
 using GateRequiredPace;
 using GateRemainingTime;
-using GateCodeValidator;
-using GateSettingsLoader;
 
 class GateCheckerField extends Ui.DataField {
-    const KEY_GATE_CODE = "gate_code";
     const CODE_DEBUG_LOG = false;
     const LAYOUT_DEBUG_LOG = false;
     const USE_ICON_LABELS = false;
@@ -28,8 +26,10 @@ class GateCheckerField extends Ui.DataField {
     const SECTION_DIVIDER_HEIGHT = 2;
     const GATE_FACT_MAX_VALUE_FONT = Gfx.FONT_NUMBER_MILD;
     const AID_FACT_MAX_VALUE_FONT = Gfx.FONT_NUMBER_MILD;
+    const STACKED_LABEL_VALUE_GAP = 0;
+    const STACKED_CELL_HORIZONTAL_INSET = 4;
 
-    var _singleText = "CODE ERROR";
+    var _singleText = "CONFIG ERROR";
     var _line1Text = "";
     var _line2Text = "";
     var _line3LeftText = "";
@@ -38,6 +38,7 @@ class GateCheckerField extends Ui.DataField {
     var _line4Text = "";
     var _gateLeftLabelText = "GATE";
     var _gateRightLabelText = "CUT";
+    var _gateSummaryText = "";
     var _gateDistanceText = "";
     var _gateDistanceUnitText = "";
     var _gateTimeText = "";
@@ -71,6 +72,7 @@ class GateCheckerField extends Ui.DataField {
         var centerY = dc.getHeight() / 2;
         var labelFont = Gfx.FONT_SYSTEM_XTINY;
         var unitFont = Gfx.FONT_SYSTEM_XTINY;
+        var footerFont = Gfx.FONT_SYSTEM_XTINY;
         var singleStateFont = Gfx.FONT_SMALL;
         var singleStateRowHeight = Gfx.getFontHeight(singleStateFont);
 
@@ -82,89 +84,102 @@ class GateCheckerField extends Ui.DataField {
             return;
         }
 
-        var layoutTop = Math.floor((dc.getHeight() * 11) / 100);
-        var layoutBottom = Math.floor((dc.getHeight() * 88) / 100);
+        var layoutTop = Math.floor((dc.getHeight() * 10) / 100);
+        var layoutBottom = Math.floor((dc.getHeight() * 90) / 100);
         var layoutHeight = layoutBottom - layoutTop;
-        var edgeBlockHeight = Math.floor(layoutHeight / 3);
-        var mainBlockHeight = Math.floor(layoutHeight / 3);
-        var aidBlockHeight = layoutBottom - layoutTop - edgeBlockHeight - mainBlockHeight;
+        var edgeBlockHeight = Math.floor((layoutHeight * 20) / 100);
+        var mainBlockHeight = Math.floor((layoutHeight * 30) / 100);
+        var aidBlockHeight = Math.floor((layoutHeight * 30) / 100);
+        var footerBlockHeight = layoutHeight - edgeBlockHeight - mainBlockHeight - aidBlockHeight;
         var gateBlockY = layoutTop;
         var remainBlockY = gateBlockY + edgeBlockHeight;
         var aidBlockY = remainBlockY + mainBlockHeight;
+        var footerBlockY = aidBlockY + aidBlockHeight;
         var outerPadding = Math.floor((dc.getWidth() * 7) / 100);
         var centerGap = Math.floor((dc.getWidth() * 6) / 100);
         var leftCellWidth = centerX - Math.floor(centerGap / 2) - outerPadding;
         var rightCellLeft = centerX + Math.floor(centerGap / 2);
         var rightCellWidth = (dc.getWidth() - outerPadding) - rightCellLeft;
-        var gateLeftRect = _newRect(outerPadding, gateBlockY, leftCellWidth, edgeBlockHeight);
-        var gateRightRect = _newRect(rightCellLeft, gateBlockY, rightCellWidth, edgeBlockHeight);
+        var gateBlockRect = _newRect(outerPadding, gateBlockY, dc.getWidth() - (outerPadding * 2), edgeBlockHeight);
         var gateRemainLeftRect = _newRect(outerPadding, remainBlockY, leftCellWidth, mainBlockHeight);
         var gateRemainRightRect = _newRect(rightCellLeft, remainBlockY, rightCellWidth, mainBlockHeight);
         var aidLeftRect = _newRect(outerPadding, aidBlockY, leftCellWidth, aidBlockHeight);
         var aidRightRect = _newRect(rightCellLeft, aidBlockY, rightCellWidth, aidBlockHeight);
+        var footerRect = _newRect(outerPadding, footerBlockY, dc.getWidth() - (outerPadding * 2), footerBlockHeight);
         var gateRemainSectionRect = _newRect(outerPadding, remainBlockY, dc.getWidth() - (outerPadding * 2), mainBlockHeight);
-        var columnMaxWidth = Math.floor((dc.getWidth() * 41) / 100);
-        var gateLeftValueFont = _resolveValueFont(
+        var gateSummaryFont = _resolveGateSummaryFont(
             dc,
-            GATE_FACT_MAX_VALUE_FONT,
-            _gateDistanceText,
-            unitFont,
-            _gateDistanceUnitText,
-            columnMaxWidth
+            footerFont,
+            labelFont,
+            _gateLeftLabelText,
+            _gateSummaryText,
+            _safeStackedCellWidth(gateBlockRect),
+            _rectHeight(gateBlockRect)
         );
-        var gateRightValueFont = _resolveValueFont(
+        var gateRemainLeftValueFont = _resolveValueFont(
             dc,
-            GATE_FACT_MAX_VALUE_FONT,
-            _gateTimeText,
+            Gfx.FONT_NUMBER_MILD,
+            _gateRemainLeftLabelText,
+            _gateRemainDistanceText,
+            unitFont,
+            _gateRemainDistanceUnitText,
+            labelFont,
+            _safeStackedCellWidth(gateRemainLeftRect),
+            _rectHeight(gateRemainLeftRect)
+        );
+        var gateRemainRightValueFont = _resolveValueFont(
+            dc,
+            Gfx.FONT_NUMBER_MILD,
+            _gateRemainRightLabelText,
+            _gateLeftTimeText,
             unitFont,
             "",
-            columnMaxWidth
+            labelFont,
+            _safeStackedCellWidth(gateRemainRightRect),
+            _rectHeight(gateRemainRightRect)
         );
-        var gateFactGroupFont = _smallerNumberFont(gateLeftValueFont, gateRightValueFont);
-        var gateRemainGroupFont = _resolveRemainGroupFont(
-            dc,
-            Gfx.FONT_NUMBER_MEDIUM,
-            unitFont,
-            _minInt(_rectWidth(gateRemainLeftRect), _rectWidth(gateRemainRightRect)),
-            null,
-            _gateRemainDistanceText,
-            _gateRemainDistanceUnitText,
-            null,
-            _gateLeftTimeText
-        );
+        var gateRemainGroupFont = _smallerNumberFont(gateRemainLeftValueFont, gateRemainRightValueFont);
         var aidLeftValueFont = _resolveValueFont(
             dc,
             AID_FACT_MAX_VALUE_FONT,
+            _aidTitleText,
             _aidDistanceText,
             unitFont,
             _aidDistanceUnitText,
-            _rectWidth(aidLeftRect)
+            labelFont,
+            _safeStackedCellWidth(aidLeftRect),
+            _rectHeight(aidLeftRect)
         );
         var aidRightValueFont = _resolveValueFont(
             dc,
             AID_FACT_MAX_VALUE_FONT,
+            _aidRightLabelText,
             _aidRemainDistanceText,
             unitFont,
             _aidRemainDistanceUnitText,
-            _rectWidth(aidRightRect)
+            labelFont,
+            _safeStackedCellWidth(aidRightRect),
+            _rectHeight(aidRightRect)
         );
         var aidFactGroupFont = _smallerNumberFont(
             aidLeftValueFont,
             aidRightValueFont
         );
         var detailFactGroupFont = _smallerNumberFont(gateRemainGroupFont, aidFactGroupFont);
-        _drawStackedMetricBlockCentered(dc, gateLeftRect, labelFont, _gateLeftLabelText, gateFactGroupFont, _gateDistanceText, unitFont, _gateDistanceUnitText, Gfx.COLOR_WHITE);
-        _drawStackedMetricBlockCentered(dc, gateRightRect, labelFont, _gateRightLabelText, gateFactGroupFont, _gateTimeText, unitFont, "", Gfx.COLOR_WHITE);
+        _drawCenteredCompactInfoBlock(dc, gateBlockRect, labelFont, _gateLeftLabelText, gateSummaryFont, _gateSummaryText, Gfx.COLOR_WHITE);
 
         var renderMainSingleValue = _gateRemainLeftLabelText.length() == 0 and _gateRemainRightLabelText.length() == 0 and _gateLeftTimeText.length() == 0;
         if (renderMainSingleValue) {
             var mainSingleFont = _resolveValueFont(
                 dc,
                 Gfx.FONT_MEDIUM,
+                "",
                 _gateRemainDistanceText,
                 unitFont,
                 _gateRemainDistanceUnitText,
-                _rectWidth(gateRemainSectionRect)
+                labelFont,
+                _safeStackedCellWidth(gateRemainSectionRect),
+                _rectHeight(gateRemainSectionRect)
             );
             var mainSingleHeight = _measureTextHeight(dc, _gateRemainDistanceText, mainSingleFont);
             var mainSingleY = _resolveContentY(remainBlockY, mainBlockHeight, mainSingleHeight);
@@ -181,42 +196,40 @@ class GateCheckerField extends Ui.DataField {
             _drawStackedMetricBlockCentered(dc, aidRightRect, labelFont, _aidRightLabelText, detailFactGroupFont, _aidRemainDistanceText, unitFont, _aidRemainDistanceUnitText, Gfx.COLOR_WHITE);
         }
 
-        _logLayoutDiag(dc, layoutHeight, gateBlockY, remainBlockY, aidBlockY, edgeBlockHeight, mainBlockHeight, aidBlockHeight, labelFont, unitFont, gateFactGroupFont, detailFactGroupFont);
+        if (_line4Text != null and _line4Text.length() > 0) {
+            _drawSectionDivider(dc, footerBlockY, dc.getWidth());
+            var footerTextHeight = _measureTextHeight(dc, _line4Text, footerFont);
+            var footerTextY = _resolveContentY(footerBlockY, footerBlockHeight, footerTextHeight);
+            _drawCenteredLine(dc, _rectCenterX(footerRect), footerTextY, footerFont, _line4Text, Gfx.COLOR_WHITE);
+        }
+
+        _logLayoutDiag(dc, layoutHeight, gateBlockY, remainBlockY, aidBlockY, footerBlockY, edgeBlockHeight, mainBlockHeight, aidBlockHeight, footerBlockHeight, labelFont, unitFont, gateSummaryFont, detailFactGroupFont);
     }
 
     function _loadViewState(info) {
-        var rawCode = GateSettingsLoader.loadGateCode(KEY_GATE_CODE);
-        var codeConfig = GateCodeValidator.inspectGateCode(rawCode);
-        var decodeConfig = GateCodeDecoder.newDefaultConfig();
+        var gates = GateRaceData.getGates();
+        var aids = GateRaceData.getAids();
         var nextGateConfig = GateNextSelector.newDefaultConfig();
+        var nextAidConfig = GateAidSelector.newDefaultConfig();
         var remainingDistanceConfig = GateRemainingDistance.newDefaultConfig();
+        var aidRemainingDistanceConfig = GateRemainingDistance.newDefaultConfig();
         var paceJudgeConfig = GatePaceJudge.newDefaultConfig();
         var requiredPaceConfig = GateRequiredPace.newDefaultConfig();
         var remainingTimeConfig = GateRemainingTime.newDefaultConfig();
         var currentDistanceKm = GateDistanceUtils.extractElapsedDistanceKm(info);
         _currentPaceConfig = GateCurrentPace.updateCurrentPace(_currentPaceConfig, info, currentDistanceKm);
-        if (GateCodeValidator.isCodeValid(codeConfig)) {
-            decodeConfig = GateCodeDecoder.decodeGateList(
-                GateCodeValidator.getNormalizedCode(codeConfig),
-                GateCodeValidator.getGateCount(codeConfig)
-            );
-        }
-        if (GateCodeDecoder.isDecoded(decodeConfig)) {
-            nextGateConfig = GateNextSelector.selectNextGate(
-                GateCodeDecoder.getGates(decodeConfig),
-                currentDistanceKm
-            );
-        }
+        nextGateConfig = GateNextSelector.selectNextGate(gates, currentDistanceKm);
+        nextAidConfig = GateAidSelector.selectNextAid(aids, currentDistanceKm);
 
         if (GateNextSelector.hasNextGate(nextGateConfig)) {
             var nextGate = GateNextSelector.getNextGate(nextGateConfig);
             remainingDistanceConfig = GateRemainingDistance.computeRemainingDistance(
                 currentDistanceKm,
-                GateCodeDecoder.getGateDistanceTenthKm(nextGate)
+                GateRaceData.getGateDistanceKm(nextGate)
             );
             remainingTimeConfig = GateRemainingTime.computeRemainingTime(
-                GateCodeDecoder.getGateCloseHour(nextGate),
-                GateCodeDecoder.getGateCloseMinute(nextGate)
+                GateRaceData.getGateCutoffDayOffset(nextGate),
+                GateRaceData.getGateCutoffMinuteOfDay(nextGate)
             );
             requiredPaceConfig = GateRequiredPace.computeRequiredPace(
                 GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig),
@@ -227,9 +240,14 @@ class GateCheckerField extends Ui.DataField {
                 GateRemainingTime.getRemainingSec(remainingTimeConfig)
             );
         }
+        if (GateAidSelector.hasNextAid(nextAidConfig)) {
+            aidRemainingDistanceConfig = GateRemainingDistance.computeRemainingDistance(
+                currentDistanceKm,
+                GateRaceData.getAidDistanceKm(GateAidSelector.getNextAid(nextAidConfig))
+            );
+        }
         var displayConfig = GateDisplayModel.buildDisplayModel(
-            codeConfig,
-            decodeConfig,
+            gates,
             nextGateConfig,
             remainingDistanceConfig,
             requiredPaceConfig,
@@ -246,19 +264,22 @@ class GateCheckerField extends Ui.DataField {
         _line4Text = GateDisplayModel.getLine4(displayConfig);
         _refreshRenderPartsFromCore(
             displayConfig,
-            decodeConfig,
+            gates,
             nextGateConfig,
+            nextAidConfig,
             remainingDistanceConfig,
+            aidRemainingDistanceConfig,
             remainingTimeConfig,
             _currentPaceConfig,
             currentDistanceKm
         );
         _logCodeDiag(
-            rawCode,
-            codeConfig,
-            decodeConfig,
+            gates,
+            aids,
             nextGateConfig,
+            nextAidConfig,
             remainingDistanceConfig,
+            aidRemainingDistanceConfig,
             paceJudgeConfig,
             requiredPaceConfig,
             remainingTimeConfig,
@@ -274,7 +295,7 @@ class GateCheckerField extends Ui.DataField {
         );
     }
 
-    function _refreshRenderPartsFromCore(displayConfig, decodeConfig, nextGateConfig, remainingDistanceConfig, remainingTimeConfig, currentPaceConfig, currentDistanceKm) {
+    function _refreshRenderPartsFromCore(displayConfig, gates, nextGateConfig, nextAidConfig, remainingDistanceConfig, aidRemainingDistanceConfig, remainingTimeConfig, currentPaceConfig, currentDistanceKm) {
         _resetRenderParts();
 
         var state = GateDisplayModel.getState(displayConfig);
@@ -282,26 +303,22 @@ class GateCheckerField extends Ui.DataField {
         if (state == GateDisplayModel.STATE_ALL_PASSED) {
             _gateLeftLabelText = Ui.loadResource(Rez.Strings.Last);
             _gateRightLabelText = "CUT";
-            var gates = GateCodeDecoder.getGates(decodeConfig);
-            if (gates.size() > 0) {
+            if (gates != null and gates instanceof Lang.Array and gates.size() > 0) {
                 var lastGate = gates[gates.size() - 1];
-                _gateDistanceText = GateDistanceUtils.formatCompactDistanceTenthKmValue(
-                    GateCodeDecoder.getGateDistanceTenthKm(lastGate)
-                );
+                _gateDistanceText = GateRaceData.getGateDisplayValue(lastGate);
+                _gateDistanceUnitText = GateRaceData.getGateDisplayUnit(lastGate);
                 _gateTimeText = GateDistanceUtils.formatCloseTime(
-                    GateCodeDecoder.getGateCloseHour(lastGate),
-                    GateCodeDecoder.getGateCloseMinute(lastGate)
+                    GateRaceData.getGateCloseHour(lastGate),
+                    GateRaceData.getGateCloseMinute(lastGate)
                 );
             }
+            _gateSummaryText = _buildGateSummaryText();
             _gateRemainLeftLabelText = "";
             _gateRemainRightLabelText = "";
             _gateRemainDistanceText = Ui.loadResource(Rez.Strings.AllPassed);
             _gateRemainDistanceUnitText = "";
             _gateLeftTimeText = "";
-            _aidTitleText = "";
-            _aidRightLabelText = "";
-            _aidDistanceText = "";
-            _aidRemainDistanceText = "";
+            _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig);
             return;
         }
 
@@ -310,30 +327,21 @@ class GateCheckerField extends Ui.DataField {
         if (nextGate != null) {
             _gateLeftLabelText = _formatGateLabel(GateNextSelector.getNextIndex(nextGateConfig));
             _gateRightLabelText = "CUT";
-            _gateDistanceText = GateDistanceUtils.formatCompactDistanceTenthKmValue(
-                GateCodeDecoder.getGateDistanceTenthKm(nextGate)
-            );
-            _gateDistanceUnitText = "";
+            _gateDistanceText = GateRaceData.getGateDisplayValue(nextGate);
+            _gateDistanceUnitText = GateRaceData.getGateDisplayUnit(nextGate);
             _gateTimeText = GateDistanceUtils.formatCloseTime(
-                GateCodeDecoder.getGateCloseHour(nextGate),
-                GateCodeDecoder.getGateCloseMinute(nextGate)
+                GateRaceData.getGateCloseHour(nextGate),
+                GateRaceData.getGateCloseMinute(nextGate)
             );
-
-            _aidTitleText = "AID";
-            _aidRightLabelText = "TO AID";
-            _aidDistanceText = GateDistanceUtils.formatCompactDistanceTenthKmValue(
-                GateCodeDecoder.getGateDistanceTenthKm(nextGate)
-            );
-            _aidDistanceUnitText = "";
+            _gateSummaryText = _buildGateSummaryText();
         }
 
         _gateRemainDistanceText = GateDistanceUtils.formatCompactDistanceKmValue(remainingDistanceKm);
-        _gateRemainDistanceUnitText = "";
+        _gateRemainDistanceUnitText = "km";
         _gateLeftTimeText = GateRemainingTime.formatRemainingDuration(
             GateRemainingTime.getRemainingSec(remainingTimeConfig)
         );
-        _aidRemainDistanceText = GateDistanceUtils.formatCompactDistanceKmValue(remainingDistanceKm);
-        _aidRemainDistanceUnitText = "";
+        _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig);
 
         if (state == GateDisplayModel.STATE_OVER) {
             _gateRemainRightLabelText = "LATE";
@@ -341,9 +349,30 @@ class GateCheckerField extends Ui.DataField {
         }
     }
 
+    function _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig) {
+        _aidTitleText = "AID";
+        _aidRightLabelText = "TO AID";
+        if (!GateAidSelector.hasNextAid(nextAidConfig)) {
+            _aidDistanceText = "--";
+            _aidDistanceUnitText = "";
+            _aidRemainDistanceText = "--";
+            _aidRemainDistanceUnitText = "";
+            return;
+        }
+
+        var nextAid = GateAidSelector.getNextAid(nextAidConfig);
+        _aidDistanceText = GateRaceData.getAidDisplayValue(nextAid);
+        _aidDistanceUnitText = GateRaceData.getAidDisplayUnit(nextAid);
+        _aidRemainDistanceText = GateDistanceUtils.formatCompactDistanceKmValue(
+            GateRemainingDistance.getRemainingDistanceKm(aidRemainingDistanceConfig)
+        );
+        _aidRemainDistanceUnitText = "km";
+    }
+
     function _resetRenderParts() {
         _gateLeftLabelText = "GATE";
         _gateRightLabelText = "CUT";
+        _gateSummaryText = "";
         _gateDistanceText = "";
         _gateDistanceUnitText = "";
         _gateTimeText = "";
@@ -368,41 +397,69 @@ class GateCheckerField extends Ui.DataField {
         return "G" + (index + 1).format("%d");
     }
 
-    function _logCodeDiag(rawCode, codeConfig, decodeConfig, nextGateConfig, remainingDistanceConfig, paceJudgeConfig, requiredPaceConfig, remainingTimeConfig, currentPaceConfig, displayConfig, currentDistanceKm, singleText, line1Text, line2Text, line3LeftText, line3RightText, line4Text) {
+    function _buildGateSummaryText() {
+        var summary = "";
+        if (_gateDistanceText != null) {
+            summary += _gateDistanceText;
+        }
+        if (_gateDistanceUnitText != null) {
+            summary += _gateDistanceUnitText;
+        }
+        if (_gateTimeText != null and _gateTimeText.length() > 0) {
+            if (summary.length() > 0) {
+                summary += " / ";
+            }
+            summary += _gateTimeText;
+        }
+        return summary;
+    }
+
+    function _logCodeDiag(gates, aids, nextGateConfig, nextAidConfig, remainingDistanceConfig, aidRemainingDistanceConfig, paceJudgeConfig, requiredPaceConfig, remainingTimeConfig, currentPaceConfig, displayConfig, currentDistanceKm, singleText, line1Text, line2Text, line3LeftText, line3RightText, line4Text) {
         if (!CODE_DEBUG_LOG) {
             return;
         }
 
         var firstGateSummary = "none";
-        var gates = GateCodeDecoder.getGates(decodeConfig);
-        if (gates.size() > 0) {
-            firstGateSummary = GateCodeDecoder.formatGateSummary(gates[0]);
+        if (gates != null and gates instanceof Lang.Array and gates.size() > 0) {
+            firstGateSummary = GateRaceData.formatGateSummary(gates[0]);
         }
 
         var nextGateSummary = "none";
         var nextGate = GateNextSelector.getNextGate(nextGateConfig);
         if (nextGate != null) {
-            nextGateSummary = GateCodeDecoder.formatGateSummary(nextGate);
+            nextGateSummary = GateRaceData.formatGateSummary(nextGate);
+        }
+
+        var nextAidSummary = "none";
+        if (GateAidSelector.hasNextAid(nextAidConfig)) {
+            var nextAid = GateAidSelector.getNextAid(nextAidConfig);
+            nextAidSummary = GateRaceData.getAidDisplayValue(nextAid) + GateRaceData.getAidDisplayUnit(nextAid);
+        }
+
+        var gateCount = 0;
+        if (gates != null and gates instanceof Lang.Array) {
+            gateCount = gates.size();
+        }
+        var aidCount = 0;
+        if (aids != null and aids instanceof Lang.Array) {
+            aidCount = aids.size();
         }
 
         var line =
-            "[GATE_CODE_DIAG]" +
-            " raw=" + _diagValue(rawCode) +
-            " normalized=" + _diagValue(GateCodeValidator.getNormalizedCode(codeConfig)) +
-            " declaredGateCount=" + _diagValue(GateCodeValidator.getGateCount(codeConfig)) +
-            " actualLen=" + _diagValue(GateCodeValidator.getActualLength(codeConfig)) +
-            " minimumLen=" + _diagValue(GateCodeValidator.getMinimumLength(codeConfig)) +
-            " validateReason=" + _diagValue(GateCodeValidator.getReason(codeConfig)) +
-            " validateOk=" + _diagValue(GateCodeValidator.isCodeValid(codeConfig)) +
-            " decodeReason=" + _diagValue(GateCodeDecoder.getReason(decodeConfig)) +
-            " decodedCount=" + _diagValue(GateCodeDecoder.getDecodedCount(decodeConfig)) +
+            "[GATE_RACE_DIAG]" +
+            " raceKey=" + _diagValue(GateRaceData.getRaceKey()) +
+            " gateCount=" + _diagValue(gateCount) +
+            " aidCount=" + _diagValue(aidCount) +
             " firstGate=" + _diagValue(firstGateSummary) +
             " currentDistanceKm=" + _diagValue(currentDistanceKm) +
             " nextReason=" + _diagValue(GateNextSelector.getReason(nextGateConfig)) +
             " nextIndex=" + _diagValue(GateNextSelector.getNextIndex(nextGateConfig)) +
             " nextGate=" + _diagValue(nextGateSummary) +
+            " nextAidReason=" + _diagValue(GateAidSelector.getReason(nextAidConfig)) +
+            " nextAid=" + _diagValue(nextAidSummary) +
             " remainDistReason=" + _diagValue(GateRemainingDistance.getReason(remainingDistanceConfig)) +
             " remainDistKm=" + _diagValue(GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig)) +
+            " aidRemainDistKm=" + _diagValue(GateRemainingDistance.getRemainingDistanceKm(aidRemainingDistanceConfig)) +
             " judgeReason=" + _diagValue(GatePaceJudge.getReason(paceJudgeConfig)) +
             " judgeState=" + _diagValue(_resolvePaceJudgeLabel(paceJudgeConfig)) +
             " paceReason=" + _diagValue(GateRequiredPace.getReason(requiredPaceConfig)) +
@@ -436,7 +493,7 @@ class GateCheckerField extends Ui.DataField {
         return value.toString();
     }
 
-    function _logLayoutDiag(dc, blockHeight, gateBlockY, remainBlockY, aidBlockY, gateBlockHeight, remainBlockHeight, aidBlockHeight, labelFont, unitFont, edgeGroupFont, mainGroupFont) {
+    function _logLayoutDiag(dc, blockHeight, gateBlockY, remainBlockY, aidBlockY, footerBlockY, gateBlockHeight, remainBlockHeight, aidBlockHeight, footerBlockHeight, labelFont, unitFont, edgeGroupFont, mainGroupFont) {
         if (!LAYOUT_DEBUG_LOG) {
             return;
         }
@@ -464,9 +521,11 @@ class GateCheckerField extends Ui.DataField {
             " yGateBlock=" + _diagValue(gateBlockY) +
             " yRemainBlock=" + _diagValue(remainBlockY) +
             " yAidBlock=" + _diagValue(aidBlockY) +
+            " yFooterBlock=" + _diagValue(footerBlockY) +
             " hGateBlock=" + _diagValue(gateBlockHeight) +
             " hRemainBlock=" + _diagValue(remainBlockHeight) +
             " hAidBlock=" + _diagValue(aidBlockHeight) +
+            " hFooterBlock=" + _diagValue(footerBlockHeight) +
             " labelFontH=" + _diagValue(Gfx.getFontHeight(labelFont)) +
             " labelFontA=" + _diagValue(Gfx.getFontAscent(labelFont)) +
             " labelFontD=" + _diagValue(Gfx.getFontDescent(labelFont)) +
@@ -487,13 +546,28 @@ class GateCheckerField extends Ui.DataField {
     }
 
     function _resolveLabelY(blockY, blockHeight, labelHeight, valueHeight) {
-        var labelValueGap = 1;
+        var labelValueGap = STACKED_LABEL_VALUE_GAP;
         var contentHeight = labelHeight + labelValueGap + valueHeight;
         return _resolveContentY(blockY, blockHeight, contentHeight);
     }
 
     function _resolveValueY(labelTopY, labelHeight) {
-        return labelTopY + labelHeight + 1;
+        return labelTopY + labelHeight + STACKED_LABEL_VALUE_GAP;
+    }
+
+    function _resolveGateSummaryFont(dc, preferredFont, labelFont, labelText, summaryText, maxWidth, maxHeight) {
+        var font = preferredFont;
+        while (
+            _measureTextWidth(dc, summaryText, font) > maxWidth or
+            !_fitsStackedTextHeight(dc, labelFont, labelText, font, summaryText, maxHeight)
+        ) {
+            var nextFont = _shrinkTextFont(font);
+            if (nextFont == font) {
+                return font;
+            }
+            font = nextFont;
+        }
+        return font;
     }
 
     function _resolveContentY(blockY, blockHeight, contentHeight) {
@@ -527,6 +601,13 @@ class GateCheckerField extends Ui.DataField {
         }
         var dimensions = dc.getTextDimensions(text, font);
         return dimensions[1];
+    }
+
+    function _measureTextWidth(dc, text, font) {
+        if (text == null or text.length() == 0) {
+            return 0;
+        }
+        return dc.getTextWidthInPixels(text, font);
     }
 
     function _measureLabelHeight(dc, font, text, bitmap) {
@@ -606,22 +687,6 @@ class GateCheckerField extends Ui.DataField {
             font = nextFont;
         }
         return font;
-    }
-
-    function _resolveRemainGroupFont(dc, preferredFont, unitFont, maxWidth, leftIcon, leftText, leftUnitText, rightIcon, rightText) {
-        var reservedIconWidth = _maxInt(_resolveBitmapWidth(leftIcon), _resolveBitmapWidth(rightIcon));
-        if (reservedIconWidth > 0) {
-            reservedIconWidth += INLINE_ICON_GAP;
-        }
-
-        var safeMaxWidth = maxWidth - reservedIconWidth;
-        if (safeMaxWidth < 1) {
-            safeMaxWidth = 1;
-        }
-
-        var leftFont = _resolveValueFont(dc, preferredFont, leftText, unitFont, leftUnitText, safeMaxWidth);
-        var rightFont = _resolveValueFont(dc, preferredFont, rightText, unitFont, "", safeMaxWidth);
-        return _smallerNumberFont(leftFont, rightFont);
     }
 
     function _resolveBitmapWidth(bitmap) {
@@ -715,47 +780,16 @@ class GateCheckerField extends Ui.DataField {
         return _rectLeft(rect) + _rectWidth(rect);
     }
 
-    function _resolveFourValueGroupFont(
-        dc,
-        preferredFont,
-        valueText1,
-        unitText1,
-        valueText2,
-        unitText2,
-        valueText3,
-        unitText3,
-        valueText4,
-        unitText4,
-        unitFont,
-        maxWidth
-    ) {
-        var groupFont = preferredFont;
-        groupFont = _smallerNumberFont(
-            groupFont,
-            _resolveValueFont(dc, preferredFont, valueText1, unitFont, unitText1, maxWidth)
-        );
-        groupFont = _smallerNumberFont(
-            groupFont,
-            _resolveValueFont(dc, preferredFont, valueText2, unitFont, unitText2, maxWidth)
-        );
-        groupFont = _smallerNumberFont(
-            groupFont,
-            _resolveValueFont(dc, preferredFont, valueText3, unitFont, unitText3, maxWidth)
-        );
-        groupFont = _smallerNumberFont(
-            groupFont,
-            _resolveValueFont(dc, preferredFont, valueText4, unitFont, unitText4, maxWidth)
-        );
-        return groupFont;
-    }
-
-    function _resolveValueFont(dc, preferredFont, numberText, unitFont, unitText, maxWidth) {
+    function _resolveValueFont(dc, preferredFont, labelText, numberText, unitFont, unitText, labelFont, maxWidth, maxHeight) {
         if (_useTextValueFont(numberText)) {
-            return Gfx.FONT_MEDIUM;
+            preferredFont = Gfx.FONT_MEDIUM;
         }
 
         var font = preferredFont;
-        while (_measureValueWidth(dc, font, numberText, unitFont, unitText) > maxWidth) {
+        while (
+            _measureValueWidth(dc, font, numberText, unitFont, unitText) > maxWidth or
+            !_fitsStackedMetricHeight(dc, labelFont, labelText, font, numberText, maxHeight)
+        ) {
             var nextFont = _shrinkNumberFont(font);
             if (nextFont == font) {
                 return font;
@@ -810,6 +844,28 @@ class GateCheckerField extends Ui.DataField {
             dc.getTextWidthInPixels(unitText, unitFont);
     }
 
+    function _fitsStackedMetricHeight(dc, labelFont, labelText, valueFont, valueText, maxHeight) {
+        if (maxHeight == null or maxHeight < 1) {
+            return true;
+        }
+
+        var labelHeight = _measureTextHeight(dc, labelText, labelFont);
+        var valueHeight = _measureTextHeight(dc, valueText, valueFont);
+        return (labelHeight + STACKED_LABEL_VALUE_GAP + valueHeight) <= maxHeight;
+    }
+
+    function _fitsStackedTextHeight(dc, labelFont, labelText, valueFont, valueText, maxHeight) {
+        return _fitsStackedMetricHeight(dc, labelFont, labelText, valueFont, valueText, maxHeight);
+    }
+
+    function _safeStackedCellWidth(cellRect) {
+        var safeWidth = _rectWidth(cellRect) - STACKED_CELL_HORIZONTAL_INSET;
+        if (safeWidth < 1) {
+            return 1;
+        }
+        return safeWidth;
+    }
+
     function _shrinkNumberFont(font) {
         if (font == Gfx.FONT_NUMBER_HOT) {
             return Gfx.FONT_NUMBER_MEDIUM;
@@ -831,6 +887,19 @@ class GateCheckerField extends Ui.DataField {
             return leftFont;
         }
         return rightFont;
+    }
+
+    function _shrinkTextFont(font) {
+        if (font == Gfx.FONT_MEDIUM) {
+            return Gfx.FONT_SMALL;
+        }
+        if (font == Gfx.FONT_SMALL) {
+            return Gfx.FONT_XTINY;
+        }
+        if (font == Gfx.FONT_XTINY) {
+            return Gfx.FONT_SYSTEM_XTINY;
+        }
+        return font;
     }
 
     function _numberFontRank(font) {
@@ -946,9 +1015,8 @@ class GateCheckerField extends Ui.DataField {
 
         var labelHeight = _measureTextHeight(dc, labelText, labelFont);
         var valueHeight = _measureTextHeight(dc, valueText, valueFont);
-        var sectionGap = _resolveCenteredStackGap(_rectHeight(cellRect), labelHeight, valueHeight);
-        var labelY = _rectTop(cellRect) + sectionGap;
-        var valueY = _rectTop(cellRect) + (sectionGap * 2) + labelHeight;
+        var labelY = _resolveLabelY(_rectTop(cellRect), _rectHeight(cellRect), labelHeight, valueHeight);
+        var valueY = _resolveValueY(labelY, labelHeight);
         var centerX = _rectCenterX(cellRect);
 
         _drawCenteredLine(dc, centerX, labelY, labelFont, labelText, color);
@@ -962,12 +1030,26 @@ class GateCheckerField extends Ui.DataField {
 
         var labelHeight = _measureTextHeight(dc, labelText, labelFont);
         var valueHeight = _measureTextHeight(dc, valueText, valueFont);
-        var sectionGap = _resolveCenteredStackGap(_rectHeight(cellRect), labelHeight, valueHeight);
-        var labelY = _rectTop(cellRect) + sectionGap;
-        var valueY = _rectTop(cellRect) + (sectionGap * 2) + labelHeight;
+        var labelY = _resolveLabelY(_rectTop(cellRect), _rectHeight(cellRect), labelHeight, valueHeight);
+        var valueY = _resolveValueY(labelY, labelHeight);
 
         _drawAlignedLine(dc, cellRect, alignRight, labelY, labelFont, labelText, color);
         _drawValueWithUnitAligned(dc, cellRect, alignRight, valueY, valueFont, valueText, unitFont, unitText, color);
+    }
+
+    function _drawCenteredCompactInfoBlock(dc, cellRect, labelFont, labelText, valueFont, valueText, color) {
+        if ((labelText == null or labelText.length() == 0) and (valueText == null or valueText.length() == 0)) {
+            return;
+        }
+
+        var labelHeight = _measureTextHeight(dc, labelText, labelFont);
+        var valueHeight = _measureTextHeight(dc, valueText, valueFont);
+        var labelY = _resolveLabelY(_rectTop(cellRect), _rectHeight(cellRect), labelHeight, valueHeight);
+        var valueY = _resolveValueY(labelY, labelHeight);
+        var centerX = _rectCenterX(cellRect);
+
+        _drawCenteredLine(dc, centerX, labelY, labelFont, labelText, color);
+        _drawCenteredLine(dc, centerX, valueY, valueFont, valueText, color);
     }
 
     function _drawLabeledValueRowCentered(dc, rowRect, labelFont, labelText, valueFont, valueText, color) {

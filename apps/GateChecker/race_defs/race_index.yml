@@ -1,0 +1,5 @@
+races:
+  toyama_marathon_2026:
+    app_id: "214f6dbb-0476-4778-a81b-eb9c7afc901d"
+    definition: "races/toyama_marathon_2026.yml"
+    version: "0.1.0"
