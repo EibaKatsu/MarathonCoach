@@ -1,11 +1,20 @@
 using Toybox.Lang as Lang;
 using Toybox.Math as Math;
+using Toybox.WatchUi as Ui;
 using GateDistanceUtils;
 
 module GateRaceData {
     const GATE_POINT = 0;
     const GATE_CUTOFF_DAY_OFFSET = 1;
     const GATE_CUTOFF_MINUTE_OF_DAY = 2;
+
+    function getRaceNameJpn() {
+        return GateRaceConfig.getRaceNameJpn();
+    }
+
+    function getRaceNameEng() {
+        return GateRaceConfig.getRaceNameEng();
+    }
 
     function getRaceKey() {
         return GateRaceConfig.getRaceKey();
@@ -64,7 +73,7 @@ module GateRaceData {
 
     function getGateDisplayValue(gate) {
         if (isGoalGate(gate)) {
-            return "GOAL";
+            return Ui.loadResource(Rez.Strings.GoalLabel);
         }
         return GateDistanceUtils.formatCompactDistanceTenthKmValue(
             getGateDistanceTenthKm(gate)

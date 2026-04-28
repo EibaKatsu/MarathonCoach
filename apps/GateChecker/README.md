@@ -21,8 +21,8 @@ Example:
 race_key: toyama_marathon_2026
 
 display_name:
-  jpn: "富山マラソン2026 関門チェッカー"
-  eng: "Toyama Marathon 2026 Gate Checker"
+  jpn: "富山マラソン2026"
+  eng: "Toyama Marathon 2026"
 
 race:
   date: "2026/11/01"
@@ -50,6 +50,12 @@ Rules:
 - Gates and aids must be strictly ascending
 
 Important: the final gate must remain `GOAL` in generated code. It must not be flattened into a rounded distance such as `42.2km`.
+
+Naming:
+
+- `display_name` is the race name embedded in race data and on-race UI
+- The app name shown by Connect IQ is fixed to `関門ガイド` / `Marathon Cutoff Guide`
+- Changing `display_name` does not rename the app itself
 
 ## Generated Files
 
@@ -86,6 +92,28 @@ apps/GateChecker/scripts/build_gatechecker_race.sh toyama_marathon_2026 fr57042m
 ```
 
 The build artifact is written to `apps/GateChecker/dist/<race_key>/`.
+
+## Release Package
+
+For a race-specific distributable `.iq`:
+
+```bash
+apps/GateChecker/scripts/build_gatechecker_release_package.sh toyama_marathon_2026
+```
+
+To build a different release version without editing `race_index.yml`:
+
+```bash
+apps/GateChecker/scripts/build_gatechecker_release_package.sh toyama_marathon_2026 0.2.0
+```
+
+Behavior:
+
+- The script copies `apps/GateChecker/` to a temporary workspace
+- It resolves the race definition and version there
+- If a version argument is passed, only the temporary copy is updated
+- It packages a signed `.iq` to `apps/GateChecker/releases/<race_key>/<version>/`
+- It also stores `BUILD.md`, the generated `manifest.xml`, the generated `GateRaceConfig.mc`, and the race YAML snapshot for traceability
 
 ## Simulator
 

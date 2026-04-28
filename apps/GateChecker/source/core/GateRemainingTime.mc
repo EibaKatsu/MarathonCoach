@@ -1,6 +1,7 @@
 using Toybox.Lang as Lang;
 using Toybox.Math as Math;
 using Toybox.System as Sys;
+using Toybox.WatchUi as Ui;
 using GateRaceData;
 
 module GateRemainingTime {
@@ -86,7 +87,7 @@ module GateRemainingTime {
 
     function formatRemainingLabel(remainingSec) {
         if (remainingSec == null) {
-            return "WAIT TIME";
+            return Ui.loadResource(Rez.Strings.WaitTime);
         }
 
         var isOver = remainingSec < 0;
@@ -99,14 +100,14 @@ module GateRemainingTime {
         var hourPart = Math.floor(totalMinutes / 60);
         var minPart = totalMinutes - (hourPart * 60);
         if (isOver) {
-            return "OVER " + hourPart.format("%d") + ":" + minPart.format("%02d");
+            return Ui.loadResource(Rez.Strings.PaceStateOver) + " " + hourPart.format("%d") + ":" + minPart.format("%02d");
         }
-        return "LEFT " + hourPart.format("%d") + ":" + minPart.format("%02d");
+        return Ui.loadResource(Rez.Strings.LeftLabel) + " " + hourPart.format("%d") + ":" + minPart.format("%02d");
     }
 
     function formatRemainingFact(remainingSec) {
         if (remainingSec == null) {
-            return "WAIT TIME";
+            return Ui.loadResource(Rez.Strings.WaitTime);
         }
 
         var isLate = remainingSec < 0;
@@ -119,7 +120,7 @@ module GateRemainingTime {
         var hourPart = Math.floor(totalMinutes / 60);
         var minPart = totalMinutes - (hourPart * 60);
         if (isLate) {
-            return "LATE " + hourPart.format("%d") + ":" + minPart.format("%02d");
+            return Ui.loadResource(Rez.Strings.LateLabel) + " " + hourPart.format("%d") + ":" + minPart.format("%02d");
         }
         return hourPart.format("%d") + ":" + minPart.format("%02d");
     }
