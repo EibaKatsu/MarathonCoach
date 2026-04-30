@@ -59,6 +59,7 @@ class GateCheckerField extends Ui.DataField {
     var _gateRemainDistanceText = "";
     var _gateRemainDistanceUnitText = "";
     var _gateLeftTimeText = "";
+    var _remainMergedText = "";
     var _aidTitleText = "AID";
     var _aidRightLabelText = "TO AID";
     var _aidDistanceText = "--";
@@ -122,6 +123,7 @@ class GateCheckerField extends Ui.DataField {
         var aidBlockY = dividerY + SECTION_DIVIDER_HEIGHT + (SECTION_DIVIDER_GAP - Math.floor(SECTION_DIVIDER_GAP / 2));
         var gateLeftRect = _newRect(outerPadding, gateBlockY, leftCellWidth, gateBlockHeight);
         var gateRightRect = _newRect(rightCellLeft, gateBlockY, rightCellWidth, gateBlockHeight);
+        var remainMergedRect = _newRect(outerPadding, remainBlockY, contentWidth, remainBlockHeight);
         var remainLeftRect = _newRect(outerPadding, remainBlockY, leftCellWidth, remainBlockHeight);
         var remainRightRect = _newRect(rightCellLeft, remainBlockY, rightCellWidth, remainBlockHeight);
         var aidLeftRect = _newRect(outerPadding, aidBlockY, leftCellWidth, aidBlockHeight);
@@ -203,22 +205,33 @@ class GateCheckerField extends Ui.DataField {
             _gateRemainDistanceUnitText,
             Gfx.COLOR_WHITE
         );
-        _drawTwoColumnMetricRow(
-            dc,
-            remainLeftRect,
-            remainRightRect,
-            labelFont,
-            unitFont,
-            _gateRemainLeftLabelText,
-            remainLeftValueFont,
-            _gateTimeText,
-            "",
-            _gateRemainRightLabelText,
-            remainRightValueFont,
-            _gateLeftTimeText,
-            "",
-            Gfx.COLOR_WHITE
-        );
+        if (_remainMergedText.length() > 0) {
+            var remainMergedFont = _resolveSingleLineTextFont(
+                dc,
+                Gfx.FONT_MEDIUM,
+                _remainMergedText,
+                _safeStackedCellWidth(remainMergedRect),
+                _rectHeight(remainMergedRect)
+            );
+            _drawCenteredCompactInfoBlock(dc, remainMergedRect, labelFont, "", remainMergedFont, _remainMergedText, Gfx.COLOR_WHITE);
+        } else {
+            _drawTwoColumnMetricRow(
+                dc,
+                remainLeftRect,
+                remainRightRect,
+                labelFont,
+                unitFont,
+                _gateRemainLeftLabelText,
+                remainLeftValueFont,
+                _gateTimeText,
+                "",
+                _gateRemainRightLabelText,
+                remainRightValueFont,
+                _gateLeftTimeText,
+                "",
+                Gfx.COLOR_WHITE
+            );
+        }
 
         var hasAidBlock = _aidTitleText.length() > 0 or _aidRightLabelText.length() > 0 or _aidDistanceText.length() > 0 or _aidRemainDistanceText.length() > 0;
         if (hasAidBlock) {
@@ -384,15 +397,17 @@ class GateCheckerField extends Ui.DataField {
             _gateSummaryText = _buildGateSummaryText();
             _gateRemainLeftLabelText = "";
             _gateRemainRightLabelText = "";
-            _gateRemainDistanceText = Ui.loadResource(Rez.Strings.AllPassed);
+            _gateRemainDistanceText = "--";
             _gateRemainDistanceUnitText = "";
             _gateLeftTimeText = "";
+            _remainMergedText = Ui.loadResource(Rez.Strings.AllPassed);
             _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig);
             return;
         }
 
         _gateRemainLeftLabelText = "";
         _gateRemainRightLabelText = "";
+        _remainMergedText = "";
         var nextGate = GateNextSelector.getNextGate(nextGateConfig);
         var remainingDistanceKm = GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig);
         if (nextGate != null) {
@@ -445,6 +460,7 @@ class GateCheckerField extends Ui.DataField {
         _gateRemainDistanceText = "";
         _gateRemainDistanceUnitText = "";
         _gateLeftTimeText = "";
+        _remainMergedText = "";
         _aidTitleText = AID_LABEL_TEXT;
         _aidRightLabelText = TO_AID_LABEL_TEXT;
         _aidDistanceText = "--";
@@ -782,6 +798,21 @@ class GateCheckerField extends Ui.DataField {
         while (
             _measureTextWidth(dc, summaryText, font) > maxWidth or
             !_fitsStackedTextHeight(dc, labelFont, labelText, font, summaryText, maxHeight)
+        ) {
+            var nextFont = _shrinkTextFont(font);
+            if (nextFont == font) {
+                return font;
+            }
+            font = nextFont;
+        }
+        return font;
+    }
+
+    function _resolveSingleLineTextFont(dc, preferredFont, text, maxWidth, maxHeight) {
+        var font = preferredFont;
+        while (
+            _measureTextWidth(dc, text, font) > maxWidth or
+            _measureTextHeight(dc, text, font) > maxHeight
         ) {
             var nextFont = _shrinkTextFont(font);
             if (nextFont == font) {
