@@ -16,7 +16,7 @@ using GateRemainingTime;
 class GateCheckerField extends Ui.DataField {
     const CODE_DEBUG_LOG = false;
     const LAYOUT_DEBUG_LOG = false;
-    const FONT_DEBUG_LOG = true;
+    const FONT_DEBUG_LOG = false;
     const USE_ICON_LABELS = false;
     const ICON_DEBUG_LOG = false;
     const INLINE_CELL_DEBUG_LOG = false;
