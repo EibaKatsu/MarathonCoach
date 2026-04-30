@@ -22,6 +22,8 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
   - `skills/gatechecker-race-definition/SKILL.md`
 - `gatechecker-release-package`: `公開配布用iqを作って` / `大会名とリリースバージョンでiqファイルを作って` / `GateCheckerのリリースパッケージを作って` 指示時に使用
   - `skills/gatechecker-release-package/SKILL.md`
+- `gatechecker-listing-text`: `Connect IQ Listing Textを作って` / `ストアタイトルと説明文を作って` / `Listing文を作って` 指示時に使用
+  - `skills/gatechecker-listing-text/SKILL.md`
 - `x-post-writer`: `X投稿文を作って` / `次の投稿を考えて` / `ポスト文を考えて` 指示時に使用
   - `skills/x-post-writer/SKILL.md`
 
