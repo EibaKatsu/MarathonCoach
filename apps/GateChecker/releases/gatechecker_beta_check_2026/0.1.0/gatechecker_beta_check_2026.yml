@@ -1,8 +1,8 @@
 race_key: gatechecker_beta_check_2026
 
 display_name:
-  jpn: "GateChecker BETA確認用"
-  eng: "GateChecker Beta Check"
+  jpn: "BETA確認用"
+  eng: "Beta Check"
 
 race:
   date: "2026/04/28"

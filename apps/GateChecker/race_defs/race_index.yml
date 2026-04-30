@@ -10,4 +10,4 @@ races:
   gatechecker_beta_check_2026:
     app_id: 023ed61c-e951-4e8f-a228-7de069c931ea
     definition: races/gatechecker_beta_check_2026.yml
-    version: 0.1.0
+    version: 0.1.1

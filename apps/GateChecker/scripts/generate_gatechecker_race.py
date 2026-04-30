@@ -33,8 +33,8 @@ UUID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 )
 GOAL_TOKEN = "GOAL"
-APP_NAME_JPN = "関門ガイド"
 APP_NAME_ENG = "Marathon Cutoff Guide"
+APP_NAME_JPN = "関門ガイド"
 STRINGS_COMMON_ENG = {
     "code_ok": "READY",
     "code_error": "CONFIG ERROR",
@@ -60,31 +60,7 @@ STRINGS_COMMON_ENG = {
     "eta_label": "ETA",
     "pace_label": "PACE",
 }
-STRINGS_COMMON_JPN = {
-    "code_ok": "準備OK",
-    "code_error": "設定エラー",
-    "wait_dist": "スタート待ち",
-    "wait_time": "時刻待ち",
-    "no_gate": "関門なし",
-    "last": "最終",
-    "all_passed": "全関門通過",
-    "pace_na": "ペース不明",
-    "pace_state_plenty": "余裕",
-    "pace_state_ok": "順調",
-    "pace_state_tight": "厳しめ",
-    "pace_state_push": "要加速",
-    "pace_state_over": "超過",
-    "gate_label": "関門",
-    "cut_label": "閉鎖",
-    "remain_label": "残り",
-    "left_label": "残時間",
-    "aid_label": "エイド",
-    "to_aid_label": "エイドまで",
-    "late_label": "遅れ",
-    "goal_label": "ゴール",
-    "eta_label": "到着",
-    "pace_label": "ペース",
-}
+STRINGS_COMMON_JPN = dict(STRINGS_COMMON_ENG)
 
 
 class ValidationError(ValueError):

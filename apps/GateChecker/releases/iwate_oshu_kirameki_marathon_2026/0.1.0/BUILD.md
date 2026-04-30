@@ -22,5 +22,5 @@ CIQ_RELEASE_KEY="/Users/eibakatsu/Downloads/grow/.vscode/developer_key" apps/Gat
 ```
 
 ## Notes
-- 一時ワークスペースで race/version を解決してからパッケージ化した。
-- 同じ大会でも version を変えて別ディレクトリへ並行出力できる。
+- The package was built after resolving the race/version in a temporary workspace.
+- Different versions for the same race can be output in parallel to separate directories.

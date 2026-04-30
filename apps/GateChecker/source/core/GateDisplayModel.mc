@@ -201,11 +201,6 @@ module GateDisplayModel {
             return Ui.loadResource(Rez.Strings.GateLabel);
         }
 
-        var gateNumber = index + 1;
-        if (_isJapaneseLayout()) {
-            return "第" + gateNumber.format("%d") + Ui.loadResource(Rez.Strings.GateLabel);
-        }
-
         return _formatOrdinal(index) + " " + Ui.loadResource(Rez.Strings.GateLabel);
     }
 
@@ -228,10 +223,6 @@ module GateDisplayModel {
             }
         }
         return number.format("%d") + suffix;
-    }
-
-    function _isJapaneseLayout() as Lang.Boolean {
-        return Ui.loadResource(Rez.Strings.GateLabel).equals("関門");
     }
 
     function _getConfigValue(config, index, defaultValue) {
