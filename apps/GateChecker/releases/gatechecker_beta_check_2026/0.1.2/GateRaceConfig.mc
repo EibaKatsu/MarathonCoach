@@ -2,19 +2,19 @@ module GateRaceConfig {
     const GOAL = -1;
 
     function getRaceKey() {
-        return "iwate_oshu_kirameki_marathon_2026";
+        return "gatechecker_beta_check_2026";
     }
 
     function getRaceNameJpn() {
-        return "2026第10回いわて奥州きらめきマラソン";
+        return "GateChecker BETA確認用";
     }
 
     function getRaceNameEng() {
-        return "Iwate Oshu Kirameki Marathon 2026";
+        return "GateChecker Beta Check";
     }
 
     function getRaceDistanceKm() {
-        return 42.195;
+        return 12.5;
     }
 
     function getRaceYear() {
@@ -22,11 +22,11 @@ module GateRaceConfig {
     }
 
     function getRaceMonth() {
-        return 5;
+        return 4;
     }
 
     function getRaceDay() {
-        return 17;
+        return 28;
     }
 
     function getRaceTimezone() {
@@ -39,17 +39,12 @@ module GateRaceConfig {
     //   GOAL = GateRaceConfig.GOAL
     function getGates() {
         return [
-            [79, 0, 575],
-            [130, 0, 610],
-            [189, 0, 660],
-            [250, 0, 710],
-            [309, 0, 765],
-            [372, 0, 815],
-            [GOAL, 0, 870]
+            [5, 0, 1200],
+            [10, 0, 1230]
         ];
     }
 
     function getAids() {
-        return [18, 57, 94, 115, 141, 181, 209, 236, 268, 286, 320, 342, 372, 401];
+        return [3, 116];
     }
 }
