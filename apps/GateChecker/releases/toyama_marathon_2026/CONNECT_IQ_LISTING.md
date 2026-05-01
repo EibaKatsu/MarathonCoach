@@ -1,0 +1,86 @@
+## Japanese
+
+### Title
+
+関門ガイド for 富山マラソン2026（2026/11/01開催）
+
+### Description
+
+関門ガイド for 富山マラソン2026（2026/11/01開催） は、富山マラソン2026の関門時間とエイド地点をレース中に確認できる Garmin 向けデータフィールドです。
+
+次の関門までの距離、残り時間、関門時刻、次のエイドまでの距離を1画面に表示します。
+
+「次の関門まであと何km？」
+「まだ間に合う？」
+「次のエイドはどこ？」
+
+そんな不安を減らし、ゴールまで落ち着いて進むためのガイドです。
+
+【関門情報】
+・G1: 9.2km / 10:41
+・G2: 14.4km / 11:32
+・G3: 18.3km / 12:09
+・G4: 22.6km / 12:51
+・G5: 26.4km / 13:28
+・G6: 28.9km / 13:52
+・G7: 33.2km / 14:34
+・G8: 35.5km / 14:56
+・G9: 38.5km / 15:25
+・G10: 41.6km / 15:59
+・GOAL: 42.2km / 16:03
+
+【AID情報】
+・5.0km
+・10.5km
+・15.8km
+・21.1km
+・27.0km
+・32.5km
+・38.0km
+
+※本アプリの関門・エイド情報は、作成時点で確認した大会情報を元に設定しています。
+※大会運営による変更、天候・コース変更、ウェーブスタート、公式情報の更新などにより、実際の関門時刻・エイド地点と異なる場合があります。
+※レース当日は必ず大会公式サイト、参加案内、会場案内、スタッフの指示を優先してください。
+
+---
+
+## English
+
+### Title
+
+Marathon Cutoff Guide for Toyama Marathon 2026 (November 1, 2026)
+
+### Description
+
+Marathon Cutoff Guide for Toyama Marathon 2026 (November 1, 2026) is a Garmin data field for checking race cutoffs and aid stations during Toyama Marathon 2026.
+
+It shows the next cutoff point, cutoff time, remaining distance, remaining time, and distance to the next aid station on one screen.
+
+Reduce uncertainty during the race and keep moving calmly toward the finish.
+
+Cutoff points:
+- G1: 9.2 km / 10:41
+- G2: 14.4 km / 11:32
+- G3: 18.3 km / 12:09
+- G4: 22.6 km / 12:51
+- G5: 26.4 km / 13:28
+- G6: 28.9 km / 13:52
+- G7: 33.2 km / 14:34
+- G8: 35.5 km / 14:56
+- G9: 38.5 km / 15:25
+- G10: 41.6 km / 15:59
+- GOAL: 42.2 km / 16:03
+
+Aid stations:
+- 5.0 km
+- 10.5 km
+- 15.8 km
+- 21.1 km
+- 27.0 km
+- 32.5 km
+- 38.0 km
+
+Note:
+The cutoff and aid station data in this app is based on event information available at the time of creation.
+Actual cutoff times and aid station locations may change due to event organizer updates, weather, course changes, wave starts, or other race-day conditions.
+Please always follow the official event website, race guide, on-site announcements, and staff instructions on race day.
