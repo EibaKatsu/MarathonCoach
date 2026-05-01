@@ -27,9 +27,11 @@ class GateCheckerField extends Ui.DataField {
     const SECTION_DIVIDER_COLOR = 0xA8FF33;
     const SECTION_DIVIDER_HEIGHT = 2;
     const GATE_FACT_MAX_VALUE_FONT = Gfx.FONT_NUMBER_MILD;
-    const AID_FACT_MAX_VALUE_FONT = Gfx.FONT_NUMBER_MILD;
+    const AID_FACT_MAX_VALUE_FONT = Gfx.FONT_MEDIUM;
     const STACKED_LABEL_VALUE_GAP = 0;
     const STACKED_CELL_HORIZONTAL_INSET = 4;
+    const AID_STACKED_CELL_HORIZONTAL_INSET = 12;
+    const AID_STACKED_VERTICAL_OFFSET = -6;
     const TO_GATE_LABEL_TEXT = "TO GATE";
     const AID_LABEL_TEXT = "AID";
     const TO_AID_LABEL_TEXT = "TO AID";
@@ -128,6 +130,14 @@ class GateCheckerField extends Ui.DataField {
         var remainRightRect = _newRect(rightCellLeft, remainBlockY, rightCellWidth, remainBlockHeight);
         var aidLeftRect = _newRect(outerPadding, aidBlockY, leftCellWidth, aidBlockHeight);
         var aidRightRect = _newRect(rightCellLeft, aidBlockY, rightCellWidth, aidBlockHeight);
+        var aidLeftRenderRect = _offsetRectVertically(
+            _insetRectHorizontally(aidLeftRect, AID_STACKED_CELL_HORIZONTAL_INSET),
+            AID_STACKED_VERTICAL_OFFSET
+        );
+        var aidRightRenderRect = _offsetRectVertically(
+            _insetRectHorizontally(aidRightRect, AID_STACKED_CELL_HORIZONTAL_INSET),
+            AID_STACKED_VERTICAL_OFFSET
+        );
         var gateLeftValueFont = _resolveStackedRowValueFont(
             dc,
             GATE_FACT_MAX_VALUE_FONT,
@@ -171,7 +181,7 @@ class GateCheckerField extends Ui.DataField {
         var aidLeftValueFont = _resolveStackedRowValueFont(
             dc,
             AID_FACT_MAX_VALUE_FONT,
-            aidLeftRect,
+            aidLeftRenderRect,
             labelFont,
             _aidTitleText,
             _aidDistanceText,
@@ -181,7 +191,7 @@ class GateCheckerField extends Ui.DataField {
         var aidRightValueFont = _resolveStackedRowValueFont(
             dc,
             AID_FACT_MAX_VALUE_FONT,
-            aidRightRect,
+            aidRightRenderRect,
             labelFont,
             _aidRightLabelText,
             _aidRemainDistanceText,
@@ -238,8 +248,8 @@ class GateCheckerField extends Ui.DataField {
             _drawSectionDivider(dc, dividerY, dc.getWidth());
             _drawTwoColumnMetricRow(
                 dc,
-                aidLeftRect,
-                aidRightRect,
+                aidLeftRenderRect,
+                aidRightRenderRect,
                 labelFont,
                 unitFont,
                 _aidTitleText,
@@ -276,8 +286,8 @@ class GateCheckerField extends Ui.DataField {
             gateRightRect,
             remainLeftRect,
             remainRightRect,
-            aidLeftRect,
-            aidRightRect,
+            aidLeftRenderRect,
+            aidRightRenderRect,
             gateLeftValueFont,
             gateRightValueFont,
             remainLeftValueFont,
@@ -1007,6 +1017,27 @@ class GateCheckerField extends Ui.DataField {
 
     function _newRect(left, top, width, height) {
         return [left, top, width, height];
+    }
+
+    function _insetRectHorizontally(rect, inset) {
+        var nextInset = inset;
+        if (nextInset == null or nextInset < 0) {
+            nextInset = 0;
+        }
+
+        var nextWidth = _rectWidth(rect) - (nextInset * 2);
+        if (nextWidth < 1) {
+            nextWidth = 1;
+        }
+        return [_rectLeft(rect) + nextInset, _rectTop(rect), nextWidth, _rectHeight(rect)];
+    }
+
+    function _offsetRectVertically(rect, offset) {
+        var nextOffset = offset;
+        if (nextOffset == null) {
+            nextOffset = 0;
+        }
+        return [_rectLeft(rect), _rectTop(rect) + nextOffset, _rectWidth(rect), _rectHeight(rect)];
     }
 
     function _rectLeft(rect) {
