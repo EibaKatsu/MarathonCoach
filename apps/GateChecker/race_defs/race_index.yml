@@ -23,3 +23,7 @@ races:
     app_id: bef26e98-9cdd-4201-ab4a-89fc6ce2e5f9
     definition: races/pittsburgh_marathon_2026.yml
     version: 0.1.0
+  gatechecker_mile_sample_2026:
+    app_id: 2c112e57-c887-483a-a989-83651cd0b951
+    definition: races/gatechecker_mile_sample_2026.yml
+    version: 0.1.0

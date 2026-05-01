@@ -53,38 +53,44 @@ module GateRaceData {
     }
 
     function getGateDistanceKm(gate) {
+        var pointMeters = getGateDistanceMeters(gate);
+        if (pointMeters == null) {
+            return null;
+        }
+        return pointMeters / 1000.0;
+    }
+
+    function getGateDistanceMeters(gate) {
         var point = _getGateValue(gate, GATE_POINT);
         if (point == null) {
             return null;
         }
         if (isGoalPoint(point)) {
-            return getRaceDistanceKm();
+            return _distanceKmToMeters(getRaceDistanceKm());
         }
-        return point / 10.0;
+        return point;
     }
 
     function getGateDistanceTenthKm(gate) {
-        var point = _getGateValue(gate, GATE_POINT);
-        if (point == null or isGoalPoint(point)) {
+        var distanceMeters = getGateDistanceMeters(gate);
+        if (distanceMeters == null) {
             return null;
         }
-        return point;
+        return Math.floor((distanceMeters / 100.0) + 0.5);
     }
 
     function getGateDisplayValue(gate) {
         if (isGoalGate(gate)) {
             return Ui.loadResource(Rez.Strings.GoalLabel);
         }
-        return GateDistanceUtils.formatCompactDistanceTenthKmValue(
-            getGateDistanceTenthKm(gate)
-        );
+        return GateDistanceUtils.formatCompactDistanceValue(getGateDistanceKm(gate));
     }
 
     function getGateDisplayUnit(gate) {
         if (isGoalGate(gate)) {
             return "";
         }
-        return "km";
+        return GateDistanceUtils.getDisplayDistanceUnit();
     }
 
     function getGateCutoffDayOffset(gate) {
@@ -127,18 +133,26 @@ module GateRaceData {
     }
 
     function getAidDistanceKm(aid) {
+        var aidDistanceMeters = getAidDistanceMeters(aid);
+        if (aidDistanceMeters == null) {
+            return null;
+        }
+        return aidDistanceMeters / 1000.0;
+    }
+
+    function getAidDistanceMeters(aid) {
         if (aid == null) {
             return null;
         }
-        return aid / 10.0;
+        return aid;
     }
 
     function getAidDisplayValue(aid) {
-        return GateDistanceUtils.formatCompactDistanceTenthKmValue(aid);
+        return GateDistanceUtils.formatCompactDistanceValue(getAidDistanceKm(aid));
     }
 
     function getAidDisplayUnit(aid) {
-        return "km";
+        return GateDistanceUtils.getDisplayDistanceUnit();
     }
 
     function _getGateValue(gate, index) {
@@ -149,5 +163,12 @@ module GateRaceData {
             return null;
         }
         return gate[index];
+    }
+
+    function _distanceKmToMeters(distanceKm) {
+        if (distanceKm == null) {
+            return null;
+        }
+        return Math.floor((distanceKm * 1000.0) + 0.5);
     }
 }
