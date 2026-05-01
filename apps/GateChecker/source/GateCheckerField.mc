@@ -27,11 +27,12 @@ class GateCheckerField extends Ui.DataField {
     const SECTION_DIVIDER_COLOR = 0xA8FF33;
     const SECTION_DIVIDER_HEIGHT = 2;
     const GATE_FACT_MAX_VALUE_FONT = Gfx.FONT_NUMBER_MILD;
-    const AID_FACT_MAX_VALUE_FONT = Gfx.FONT_MEDIUM;
+    const AID_FACT_MAX_VALUE_FONT = Gfx.FONT_NUMBER_MILD;
     const STACKED_LABEL_VALUE_GAP = 0;
     const STACKED_CELL_HORIZONTAL_INSET = 4;
     const AID_STACKED_CELL_HORIZONTAL_INSET = 12;
     const AID_STACKED_VERTICAL_OFFSET = -6;
+    const AID_VALUE_UNIT_TIGHT_GAP = 0;
     const TO_GATE_LABEL_TEXT = "TO GATE";
     const AID_LABEL_TEXT = "AID";
     const TO_AID_LABEL_TEXT = "TO AID";
@@ -1352,6 +1353,13 @@ class GateCheckerField extends Ui.DataField {
         _drawValueWithUnitAligned(dc, cellRect, alignRight, valueY, valueFont, valueText, unitFont, unitText, color, boldText);
     }
 
+    function _resolveAidUnitY(dc, cellRect, unitFont, unitText) {
+        if (unitText == null or unitText.length() == 0) {
+            return _rectTop(cellRect) + _rectHeight(cellRect);
+        }
+        return _rectTop(cellRect) + _rectHeight(cellRect) - _measureTextHeight(dc, unitText, unitFont) + _resolveAidBottomMarginHeight(dc);
+    }
+
     function _drawBottomUnitAligned(dc, cellRect, alignRight, unitFont, unitText, color, boldText) {
         if (unitText == null or unitText.length() == 0) {
             return;
@@ -1359,7 +1367,7 @@ class GateCheckerField extends Ui.DataField {
 
         var unitWidth = dc.getTextWidthInPixels(unitText, unitFont);
         var unitX = alignRight ? (_rectRight(cellRect) - unitWidth) : _rectLeft(cellRect);
-        var unitY = _rectTop(cellRect) + _rectHeight(cellRect) - _measureTextHeight(dc, unitText, unitFont) + _resolveAidBottomMarginHeight(dc);
+        var unitY = _resolveAidUnitY(dc, cellRect, unitFont, unitText);
         _drawTextWithOptionalBold(dc, unitX, unitY, unitFont, unitText, Gfx.TEXT_JUSTIFY_LEFT, color, boldText);
     }
 
@@ -1370,8 +1378,12 @@ class GateCheckerField extends Ui.DataField {
 
         var labelHeight = _measureTextHeight(dc, labelText, labelFont);
         var valueHeight = _measureTextHeight(dc, valueText, valueFont);
-        var labelY = _resolveLabelY(_rectTop(cellRect), _rectHeight(cellRect), labelHeight, valueHeight);
-        var valueY = _resolveValueY(labelY, labelHeight);
+        var valueY = _resolveAidUnitY(dc, cellRect, unitFont, unitText) - valueHeight + AID_VALUE_UNIT_TIGHT_GAP;
+        var labelY = valueY - labelHeight - STACKED_LABEL_VALUE_GAP;
+        if (labelY < _rectTop(cellRect)) {
+            labelY = _rectTop(cellRect);
+            valueY = _resolveValueY(labelY, labelHeight);
+        }
         var labelAnchorX = _resolveInnerLabelAnchorX(cellRect, alignRight);
 
         _drawCenteredLine(dc, labelAnchorX, labelY, labelFont, labelText, color, boldText);
