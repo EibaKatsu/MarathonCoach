@@ -32,7 +32,6 @@ class GateCheckerField extends Ui.DataField {
     const STACKED_CELL_HORIZONTAL_INSET = 4;
     const AID_STACKED_CELL_HORIZONTAL_INSET = 12;
     const AID_STACKED_VERTICAL_OFFSET = -6;
-    const AID_BOTTOM_UNIT_GAP = 2;
     const TO_GATE_LABEL_TEXT = "TO GATE";
     const AID_LABEL_TEXT = "AID";
     const TO_AID_LABEL_TEXT = "TO AID";
@@ -1080,11 +1079,6 @@ class GateCheckerField extends Ui.DataField {
     }
 
     function _resolveAidRowValueFont(dc, preferredFont, cellRect, labelFont, labelText, valueText, unitFont, unitText) {
-        var reservedUnitHeight = _resolveAidReservedUnitHeight(dc, unitFont, unitText);
-        var contentHeight = _rectHeight(cellRect) - reservedUnitHeight;
-        if (contentHeight < 1) {
-            contentHeight = _rectHeight(cellRect);
-        }
         return _resolveValueFont(
             dc,
             preferredFont,
@@ -1094,7 +1088,7 @@ class GateCheckerField extends Ui.DataField {
             "",
             labelFont,
             _safeStackedCellWidth(cellRect),
-            contentHeight
+            _rectHeight(cellRect)
         );
     }
 
@@ -1365,7 +1359,7 @@ class GateCheckerField extends Ui.DataField {
 
         var unitWidth = dc.getTextWidthInPixels(unitText, unitFont);
         var unitX = alignRight ? (_rectRight(cellRect) - unitWidth) : _rectLeft(cellRect);
-        var unitY = _rectTop(cellRect) + _rectHeight(cellRect) - _measureTextHeight(dc, unitText, unitFont);
+        var unitY = _rectTop(cellRect) + _rectHeight(cellRect) - _measureTextHeight(dc, unitText, unitFont) + _resolveAidBottomMarginHeight(dc);
         _drawTextWithOptionalBold(dc, unitX, unitY, unitFont, unitText, Gfx.TEXT_JUSTIFY_LEFT, color, boldText);
     }
 
@@ -1376,12 +1370,7 @@ class GateCheckerField extends Ui.DataField {
 
         var labelHeight = _measureTextHeight(dc, labelText, labelFont);
         var valueHeight = _measureTextHeight(dc, valueText, valueFont);
-        var reservedUnitHeight = _resolveAidReservedUnitHeight(dc, unitFont, unitText);
-        var contentHeight = _rectHeight(cellRect) - reservedUnitHeight;
-        if (contentHeight < 1) {
-            contentHeight = _rectHeight(cellRect);
-        }
-        var labelY = _resolveLabelY(_rectTop(cellRect), contentHeight, labelHeight, valueHeight);
+        var labelY = _resolveLabelY(_rectTop(cellRect), _rectHeight(cellRect), labelHeight, valueHeight);
         var valueY = _resolveValueY(labelY, labelHeight);
         var labelAnchorX = _resolveInnerLabelAnchorX(cellRect, alignRight);
 
@@ -1390,11 +1379,8 @@ class GateCheckerField extends Ui.DataField {
         _drawBottomUnitAligned(dc, cellRect, alignRight, unitFont, unitText, color, boldText);
     }
 
-    function _resolveAidReservedUnitHeight(dc, unitFont, unitText) {
-        if (unitText == null or unitText.length() == 0) {
-            return 0;
-        }
-        return _measureTextHeight(dc, unitText, unitFont) + AID_BOTTOM_UNIT_GAP;
+    function _resolveAidBottomMarginHeight(dc) {
+        return Math.floor((dc.getHeight() * (100 - LAYOUT_BOTTOM_PERCENT)) / 100);
     }
 
     function _resolveInnerLabelAnchorX(cellRect, alignRight) {
