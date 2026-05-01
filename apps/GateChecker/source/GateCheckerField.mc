@@ -32,6 +32,7 @@ class GateCheckerField extends Ui.DataField {
     const STACKED_CELL_HORIZONTAL_INSET = 4;
     const AID_STACKED_CELL_HORIZONTAL_INSET = 12;
     const AID_STACKED_VERTICAL_OFFSET = -6;
+    const AID_LABEL_TOP_PADDING = 6;
     const AID_VALUE_UNIT_TIGHT_GAP = 0;
     const TO_GATE_LABEL_TEXT = "TO GATE";
     const AID_LABEL_TEXT = "AID";
@@ -1380,8 +1381,9 @@ class GateCheckerField extends Ui.DataField {
         var valueHeight = _measureTextHeight(dc, valueText, valueFont);
         var valueY = _resolveAidUnitY(dc, cellRect, unitFont, unitText) - valueHeight + AID_VALUE_UNIT_TIGHT_GAP;
         var labelY = valueY - labelHeight - STACKED_LABEL_VALUE_GAP;
-        if (labelY < _rectTop(cellRect)) {
-            labelY = _rectTop(cellRect);
+        var labelMinY = _rectTop(cellRect) + AID_LABEL_TOP_PADDING;
+        if (labelY < labelMinY) {
+            labelY = labelMinY;
             valueY = _resolveValueY(labelY, labelHeight);
         }
         var labelAnchorX = _resolveInnerLabelAnchorX(cellRect, alignRight);
