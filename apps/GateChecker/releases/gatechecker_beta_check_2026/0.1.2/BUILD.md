@@ -1,0 +1,26 @@
+# Build Memo
+
+- built_at: `2026-05-01 12:23:56 +0900`
+- release_type: `GATECHECKER_PUBLIC`
+- race_key: `gatechecker_beta_check_2026`
+- version: `0.1.2`
+- branch: `codex/gatechecker-aid-label-clearance`
+- source_commit: `56262bb23e13c8e8376af307ea93f9d7ee50a82e`
+- app_id: `023ed61c-e951-4e8f-a228-7de069c931ea`
+- signing_key: `/Users/eibakatsu/Downloads/grow/.vscode/developer_key`
+- output: `apps/GateChecker/releases/gatechecker_beta_check_2026/0.1.2/gatechecker-gatechecker_beta_check_2026-0.1.2.iq`
+- manifest: `apps/GateChecker/releases/gatechecker_beta_check_2026/0.1.2/manifest.xml`
+- race_definition: `apps/GateChecker/releases/gatechecker_beta_check_2026/0.1.2/gatechecker_beta_check_2026.yml`
+- generated_source: `apps/GateChecker/releases/gatechecker_beta_check_2026/0.1.2/GateRaceConfig.mc`
+- size: `1856339 bytes`
+- sha256: `a4c1b0abd609228ef2ecb501d442118be593bc5178f5f77d52c76e271419dd2d`
+
+## Build Command
+
+```sh
+CIQ_RELEASE_KEY="/Users/eibakatsu/Downloads/grow/.vscode/developer_key" apps/GateChecker/scripts/build_gatechecker_release_package.sh gatechecker_beta_check_2026 0.1.2
+```
+
+## Notes
+- 一時ワークスペースで race/version を解決してからパッケージ化した。
+- 同じ大会でも version を変えて別ディレクトリへ並行出力できる。
