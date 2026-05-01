@@ -35,7 +35,7 @@ module GateRaceConfig {
 
     // [point, cutoffDayOffset, cutoffMinuteOfDay]
     // point:
-    //   numeric = distanceTenthKm
+    //   numeric = distanceMeters
     //   GOAL = GateRaceConfig.GOAL
     function getGates() {
         return [

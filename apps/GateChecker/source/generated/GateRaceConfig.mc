@@ -35,21 +35,21 @@ module GateRaceConfig {
 
     // [point, cutoffDayOffset, cutoffMinuteOfDay]
     // point:
-    //   numeric = distanceTenthKm
+    //   numeric = distanceMeters
     //   GOAL = GateRaceConfig.GOAL
     function getGates() {
         return [
-            [79, 0, 575],
-            [130, 0, 610],
-            [189, 0, 660],
-            [250, 0, 710],
-            [309, 0, 765],
-            [372, 0, 815],
+            [7900, 0, 575],
+            [13000, 0, 610],
+            [18900, 0, 660],
+            [25000, 0, 710],
+            [30900, 0, 765],
+            [37200, 0, 815],
             [GOAL, 0, 870]
         ];
     }
 
     function getAids() {
-        return [18, 57, 94, 115, 141, 181, 209, 236, 268, 286, 320, 342, 372, 401];
+        return [1800, 5700, 9400, 11500, 14100, 18100, 20900, 23600, 26800, 28600, 32000, 34200, 37200, 40100];
     }
 }

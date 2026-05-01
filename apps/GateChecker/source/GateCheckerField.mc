@@ -434,8 +434,8 @@ class GateCheckerField extends Ui.DataField {
             _gateSummaryText = _buildGateSummaryText();
         }
 
-        _gateRemainDistanceText = GateDistanceUtils.formatCompactDistanceKmValue(remainingDistanceKm);
-        _gateRemainDistanceUnitText = "km";
+        _gateRemainDistanceText = GateDistanceUtils.formatCompactDistanceValue(remainingDistanceKm);
+        _gateRemainDistanceUnitText = GateDistanceUtils.getDisplayDistanceUnit();
         _gateLeftTimeText = _formatGateRemainingTimeValue(GateRemainingTime.getRemainingSec(remainingTimeConfig));
         _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig);
     }
@@ -454,10 +454,10 @@ class GateCheckerField extends Ui.DataField {
         var nextAid = GateAidSelector.getNextAid(nextAidConfig);
         _aidDistanceText = GateRaceData.getAidDisplayValue(nextAid);
         _aidDistanceUnitText = GateRaceData.getAidDisplayUnit(nextAid);
-        _aidRemainDistanceText = GateDistanceUtils.formatCompactDistanceKmValue(
+        _aidRemainDistanceText = GateDistanceUtils.formatCompactDistanceValue(
             GateRemainingDistance.getRemainingDistanceKm(aidRemainingDistanceConfig)
         );
-        _aidRemainDistanceUnitText = "km";
+        _aidRemainDistanceUnitText = GateDistanceUtils.getDisplayDistanceUnit();
     }
 
     function _resetRenderParts() {

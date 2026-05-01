@@ -179,19 +179,19 @@ module GateDisplayModel {
     }
 
     function _buildFactLine(remainingDistanceConfig, remainingSec) {
-        return Ui.loadResource(Rez.Strings.RemainLabel) + " " + GateDistanceUtils.formatCompactDistanceKm(GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig)) +
+        return Ui.loadResource(Rez.Strings.RemainLabel) + " " + GateDistanceUtils.formatCompactDistance(GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig)) +
             " / " + Ui.loadResource(Rez.Strings.LeftLabel) + " " +
             GateRemainingTime.formatRemainingDuration(remainingSec);
     }
 
     function _buildLateFactLine(remainingDistanceConfig, remainingSec) {
-        return Ui.loadResource(Rez.Strings.RemainLabel) + " " + GateDistanceUtils.formatCompactDistanceKm(GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig)) +
+        return Ui.loadResource(Rez.Strings.RemainLabel) + " " + GateDistanceUtils.formatCompactDistance(GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig)) +
             " / " + Ui.loadResource(Rez.Strings.LateLabel) + " " +
             GateRemainingTime.formatRemainingDuration(remainingSec);
     }
 
     function _buildCurrentSnapshotLine(currentDistanceKm, remainingTimeConfig) {
-        return GateDistanceUtils.formatLiveDistanceKm(currentDistanceKm) +
+        return GateDistanceUtils.formatLiveDistance(currentDistanceKm) +
             " / " +
             GateRemainingTime.formatCurrentClockHourMinute(remainingTimeConfig);
     }
