@@ -11,3 +11,15 @@ races:
     app_id: 023ed61c-e951-4e8f-a228-7de069c931ea
     definition: races/gatechecker_beta_check_2026.yml
     version: 0.1.1
+  bmo_vancouver_marathon_2026:
+    app_id: 5435b1ff-486b-4355-9c14-542b631f266c
+    definition: races/bmo_vancouver_marathon_2026.yml
+    version: 0.1.0
+  flying_pig_marathon_2026:
+    app_id: d6f3337a-6862-4ca4-a252-7e0af48ab0c4
+    definition: races/flying_pig_marathon_2026.yml
+    version: 0.1.0
+  pittsburgh_marathon_2026:
+    app_id: bef26e98-9cdd-4201-ab4a-89fc6ce2e5f9
+    definition: races/pittsburgh_marathon_2026.yml
+    version: 0.1.0
