@@ -115,6 +115,20 @@ Behavior:
 - It packages a signed `.iq` to `apps/GateChecker/releases/<race_key>/<version>/`
 - It also stores `BUILD.md`, the generated `manifest.xml`, the generated `GateRaceConfig.mc`, and the race YAML snapshot for traceability
 
+## Connect IQ Listing Text
+
+To generate Connect IQ Store title/description Markdown for a race:
+
+```bash
+python3 apps/GateChecker/scripts/generate_gatechecker_listing_text.py toyama_marathon_2026
+```
+
+Behavior:
+
+- It reads only `apps/GateChecker/race_defs/`
+- It creates Japanese and English titles/descriptions
+- It saves the output to `apps/GateChecker/releases/<race_key>/CONNECT_IQ_LISTING.md`
+
 ## Simulator
 
 From the repository root:
