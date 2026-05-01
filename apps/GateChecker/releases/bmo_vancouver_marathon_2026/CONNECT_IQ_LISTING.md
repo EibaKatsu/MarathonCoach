@@ -2,11 +2,11 @@
 
 ### Title
 
-関門ガイド for 富山マラソン2026（2026/11/01開催）
+関門ガイド for BMOバンクーバーマラソン2026（2026/05/03開催）
 
 ### Description
 
-関門ガイド for 富山マラソン2026（2026/11/01開催） は、富山マラソン2026の関門時間とエイド地点をレース中に確認できる Garmin 向けデータフィールドです。
+関門ガイド for BMOバンクーバーマラソン2026（2026/05/03開催） は、BMOバンクーバーマラソン2026の関門時間とエイド地点をレース中に確認できる Garmin 向けデータフィールドです。
 
 次の関門までの距離、残り時間、関門時刻、次のエイドまでの距離を1画面に表示します。
 
@@ -17,26 +17,26 @@
 そんな不安を減らし、ゴールまで落ち着いて進むためのガイドです。
 
 【関門情報】
-・G1: 9.2km / 10:41
-・G2: 14.4km / 11:32
-・G3: 18.3km / 12:09
-・G4: 22.6km / 12:51
-・G5: 26.4km / 13:28
-・G6: 28.9km / 13:52
-・G7: 33.2km / 14:34
-・G8: 35.5km / 14:56
-・G9: 38.5km / 15:25
-・G10: 41.6km / 15:59
-・GOAL: 42.2km / 16:03
+・G1: 30.0km / 12:30
+・GOAL: 42.2km / 14:30
 
 【AID情報】
-・5.0km
-・10.5km
-・15.8km
+・5.2km
+・8.9km
+・10.8km
+・12.7km
+・16.1km
+・17.8km
 ・21.1km
-・27.0km
-・32.5km
-・38.0km
+・24.4km
+・25.8km
+・28.5km
+・30.8km
+・32.4km
+・34.0km
+・36.7km
+・38.4km
+・39.8km
 
 ※本アプリの関門・エイド情報は、作成時点で確認した大会情報を元に設定しています。
 ※大会運営による変更、天候・コース変更、ウェーブスタート、公式情報の更新などにより、実際の関門時刻・エイド地点と異なる場合があります。
@@ -48,37 +48,37 @@
 
 ### Title
 
-Marathon Cutoff Guide for Toyama Marathon 2026 (November 1, 2026)
+Marathon Cutoff Guide for BMO Vancouver Marathon 2026 (May 3, 2026)
 
 ### Description
 
-Marathon Cutoff Guide for Toyama Marathon 2026 (November 1, 2026) is a Garmin data field for checking race cutoffs and aid stations during Toyama Marathon 2026.
+Marathon Cutoff Guide for BMO Vancouver Marathon 2026 (May 3, 2026) is a Garmin data field for checking race cutoffs and aid stations during BMO Vancouver Marathon 2026.
 
 It shows the next cutoff point, cutoff time, remaining distance, remaining time, and distance to the next aid station on one screen.
 
 Reduce uncertainty during the race and keep moving calmly toward the finish.
 
 Cutoff points:
-- G1: 9.2 km / 10:41
-- G2: 14.4 km / 11:32
-- G3: 18.3 km / 12:09
-- G4: 22.6 km / 12:51
-- G5: 26.4 km / 13:28
-- G6: 28.9 km / 13:52
-- G7: 33.2 km / 14:34
-- G8: 35.5 km / 14:56
-- G9: 38.5 km / 15:25
-- G10: 41.6 km / 15:59
-- GOAL: 42.2 km / 16:03
+- G1: 30.0 km / 12:30
+- GOAL: 42.2 km / 14:30
 
 Aid stations:
-- 5.0 km
-- 10.5 km
-- 15.8 km
+- 5.2 km
+- 8.9 km
+- 10.8 km
+- 12.7 km
+- 16.1 km
+- 17.8 km
 - 21.1 km
-- 27.0 km
-- 32.5 km
-- 38.0 km
+- 24.4 km
+- 25.8 km
+- 28.5 km
+- 30.8 km
+- 32.4 km
+- 34.0 km
+- 36.7 km
+- 38.4 km
+- 39.8 km
 
 Note:
 The cutoff and aid station data in this app is based on event information available at the time of creation.

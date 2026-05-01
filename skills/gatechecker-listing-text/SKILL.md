@@ -20,6 +20,7 @@ description: GateChecker の Connect IQ Store 向け listing text を作るス�
 - 入力ソースは `apps/GateChecker/race_defs` だけを使う。
 - 関門距離、関門時刻、AID 地点は推測で補わない。
 - 大会名は `display_name.jpn` / `display_name.eng` を優先する。
+- 開催日は `race.date` を使い、大会名に併記する。
 - 英語名が未設定でも、無理に翻訳を増やさず既存値または `race_key` 解釈に留める。
 - `GOAL` は最終関門ラベルとして維持し、単なる km 表記へ置き換えない。
 

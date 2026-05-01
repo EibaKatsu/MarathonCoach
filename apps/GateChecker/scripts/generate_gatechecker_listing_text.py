@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import sys
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 from typing import Any
@@ -45,6 +45,7 @@ class RaceListing:
     race_key: str
     event_name_jpn: str
     event_name_eng: str
+    race_date: date
     gates: list[Gate]
     aids: list[Aid]
 
@@ -174,6 +175,15 @@ def parse_race_listing(definition_path: Path) -> RaceListing:
     race = data.get("race")
     if not isinstance(race, dict):
         raise ValidationError(f"{definition_path}: race must be a mapping.")
+    raw_race_date = race.get("date")
+    if not isinstance(raw_race_date, str):
+        raise ValidationError(f"{definition_path}: race.date must be a string.")
+    try:
+        race_date = datetime.strptime(raw_race_date, "%Y/%m/%d").date()
+    except ValueError as exc:
+        raise ValidationError(
+            f"{definition_path}: race.date must be in yyyy/mm/dd format."
+        ) from exc
     distance_km = parse_decimal(race.get("distance_km"), "race.distance_km")
 
     raw_gates = data.get("gates")
@@ -214,11 +224,18 @@ def parse_race_listing(definition_path: Path) -> RaceListing:
         race_key=race_key,
         event_name_jpn=event_name_jpn.strip(),
         event_name_eng=event_name_eng.strip(),
+        race_date=race_date,
         gates=gates,
         aids=aids,
     )
 
 
+def format_race_date_jpn(value: date) -> str:
+    return value.strftime("%Y/%m/%d")
+
+
+def format_race_date_eng(value: date) -> str:
+    return f"{value.strftime('%B')} {value.day}, {value.year}"
 def render_gate_line_jpn(gate: Gate) -> str:
     return f"・{gate.label}: {format_distance_km(gate.distance_km)}km / {gate.cutoff_time}"
 
@@ -247,16 +264,18 @@ def render_listing_markdown(race: RaceListing) -> str:
     gate_lines_eng = "\n".join(render_gate_line_eng(gate) for gate in race.gates)
     aid_lines_jpn = "\n".join(render_aid_line_jpn(aid) for aid in race.aids)
     aid_lines_eng = "\n".join(render_aid_line_eng(aid) for aid in race.aids)
+    race_date_jpn = format_race_date_jpn(race.race_date)
+    race_date_eng = format_race_date_eng(race.race_date)
 
     return f"""## Japanese
 
 ### Title
 
-関門ガイド for {race.event_name_jpn}
+関門ガイド for {race.event_name_jpn}（{race_date_jpn}開催）
 
 ### Description
 
-関門ガイド for {race.event_name_jpn} は、{race.event_name_jpn}の関門時間とエイド地点をレース中に確認できる Garmin 向けデータフィールドです。
+関門ガイド for {race.event_name_jpn}（{race_date_jpn}開催） は、{race.event_name_jpn}の関門時間とエイド地点をレース中に確認できる Garmin 向けデータフィールドです。
 
 次の関門までの距離、残り時間、関門時刻、次のエイドまでの距離を1画面に表示します。
 
@@ -282,11 +301,11 @@ def render_listing_markdown(race: RaceListing) -> str:
 
 ### Title
 
-Marathon Cutoff Guide for {race.event_name_eng}
+Marathon Cutoff Guide for {race.event_name_eng} ({race_date_eng})
 
 ### Description
 
-Marathon Cutoff Guide for {race.event_name_eng} is a Garmin data field for checking race cutoffs and aid stations during {race.event_name_eng}.
+Marathon Cutoff Guide for {race.event_name_eng} ({race_date_eng}) is a Garmin data field for checking race cutoffs and aid stations during {race.event_name_eng}.
 
 It shows the next cutoff point, cutoff time, remaining distance, remaining time, and distance to the next aid station on one screen.
 

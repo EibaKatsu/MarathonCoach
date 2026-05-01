@@ -2,11 +2,11 @@
 
 ### Title
 
-関門ガイド for 2026第10回いわて奥州きらめきマラソン
+関門ガイド for 2026第10回いわて奥州きらめきマラソン（2026/05/17開催）
 
 ### Description
 
-関門ガイド for 2026第10回いわて奥州きらめきマラソン は、2026第10回いわて奥州きらめきマラソンの関門時間とエイド地点をレース中に確認できる Garmin 向けデータフィールドです。
+関門ガイド for 2026第10回いわて奥州きらめきマラソン（2026/05/17開催） は、2026第10回いわて奥州きらめきマラソンの関門時間とエイド地点をレース中に確認できる Garmin 向けデータフィールドです。
 
 次の関門までの距離、残り時間、関門時刻、次のエイドまでの距離を1画面に表示します。
 
@@ -51,11 +51,11 @@
 
 ### Title
 
-Marathon Cutoff Guide for Iwate Oshu Kirameki Marathon 2026
+Marathon Cutoff Guide for Iwate Oshu Kirameki Marathon 2026 (May 17, 2026)
 
 ### Description
 
-Marathon Cutoff Guide for Iwate Oshu Kirameki Marathon 2026 is a Garmin data field for checking race cutoffs and aid stations during Iwate Oshu Kirameki Marathon 2026.
+Marathon Cutoff Guide for Iwate Oshu Kirameki Marathon 2026 (May 17, 2026) is a Garmin data field for checking race cutoffs and aid stations during Iwate Oshu Kirameki Marathon 2026.
 
 It shows the next cutoff point, cutoff time, remaining distance, remaining time, and distance to the next aid station on one screen.
 

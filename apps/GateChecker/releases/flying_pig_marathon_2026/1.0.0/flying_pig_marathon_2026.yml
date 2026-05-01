@@ -1,0 +1,46 @@
+race_key: flying_pig_marathon_2026
+
+display_name:
+  jpn: "シンシナティ フライング・ピッグ・マラソン2026"
+  eng: "Flying Pig Marathon 2026"
+
+race:
+  date: "2026/05/03"
+  timezone: "America/New_York"
+  distance_km: 42.195
+
+gates:
+  - point: 28.2
+    cutoff: "2026/05/03 12:15"
+  - point: GOAL
+    cutoff: "2026/05/03 13:29"
+
+aids:
+  - km: 2.4
+  - km: 4.5
+  - km: 7.4
+  - km: 9.5
+  - km: 11.4
+  - km: 13.5
+  - km: 14.0
+  - km: 15.9
+  - km: 18.0
+  - km: 19.8
+    name:
+      jpn: "Honey Stinger Energy Chews"
+      eng: "Honey Stinger Energy Chews"
+  - km: 21.4
+  - km: 23.7
+  - km: 25.4
+  - km: 26.7
+  - km: 29.5
+  - km: 31.4
+  - km: 33.5
+    name:
+      jpn: "Honey Stinger Energy Chews"
+      eng: "Honey Stinger Energy Chews"
+  - km: 34.4
+  - km: 36.5
+  - km: 38.5
+  - km: 38.6
+  - km: 40.6
