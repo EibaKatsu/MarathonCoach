@@ -6,6 +6,8 @@ module GateDistanceUtils {
     const DISPLAY_UNIT_KM = "km";
     const DISPLAY_UNIT_MI = "mi";
     const KM_PER_MILE = 1.609344;
+    const DISTANCE_PARTS_VALUE = 0;
+    const DISTANCE_PARTS_UNIT = 1;
 
     function extractElapsedDistanceKm(info) {
         var rawDistanceM = (info != null) ? info.elapsedDistance : null;
@@ -23,11 +25,8 @@ module GateDistanceUtils {
     }
 
     function formatDistance(distanceKm) {
-        if (distanceKm == null) {
-            return "--.- " + getDisplayDistanceUnit();
-        }
-
-        return formatCompactDistanceValue(distanceKm) + " " + getDisplayDistanceUnit();
+        var parts = formatCompactDistanceParts(distanceKm);
+        return parts[DISTANCE_PARTS_VALUE] + " " + parts[DISTANCE_PARTS_UNIT];
     }
 
     function formatCompactDistanceKm(distanceKm) {
@@ -35,11 +34,8 @@ module GateDistanceUtils {
     }
 
     function formatCompactDistance(distanceKm) {
-        if (distanceKm == null) {
-            return "--.-" + getDisplayDistanceUnit();
-        }
-
-        return formatCompactDistanceValue(distanceKm) + getDisplayDistanceUnit();
+        var parts = formatCompactDistanceParts(distanceKm);
+        return parts[DISTANCE_PARTS_VALUE] + parts[DISTANCE_PARTS_UNIT];
     }
 
     function formatCompactDistanceKmValue(distanceKm) {
@@ -47,11 +43,16 @@ module GateDistanceUtils {
     }
 
     function formatCompactDistanceValue(distanceKm) {
+        return formatCompactDistanceParts(distanceKm)[DISTANCE_PARTS_VALUE];
+    }
+
+    function formatCompactDistanceParts(distanceKm) {
+        var unit = getDisplayDistanceUnit();
         if (distanceKm == null) {
-            return "--.-";
+            return ["--.-", unit];
         }
 
-        return _formatTenthDistance(_convertKmToDisplayDistance(distanceKm));
+        return [_formatTenthDistance(_convertKmToDisplayDistance(distanceKm, unit)), unit];
     }
 
     function formatDistanceTenthKm(distanceTenthKm) {
@@ -80,10 +81,8 @@ module GateDistanceUtils {
     }
 
     function formatLiveDistance(distanceKm) {
-        if (distanceKm == null) {
-            return "--.--" + getDisplayDistanceUnit();
-        }
-        return formatLiveDistanceValue(distanceKm) + getDisplayDistanceUnit();
+        var parts = formatLiveDistanceParts(distanceKm);
+        return parts[DISTANCE_PARTS_VALUE] + parts[DISTANCE_PARTS_UNIT];
     }
 
     function formatLiveDistanceKmValue(distanceKm) {
@@ -91,15 +90,20 @@ module GateDistanceUtils {
     }
 
     function formatLiveDistanceValue(distanceKm) {
+        return formatLiveDistanceParts(distanceKm)[DISTANCE_PARTS_VALUE];
+    }
+
+    function formatLiveDistanceParts(distanceKm) {
+        var unit = getDisplayDistanceUnit();
         if (distanceKm == null) {
-            return "--.--";
+            return ["--.--", unit];
         }
 
-        var displayDistance = _convertKmToDisplayDistance(distanceKm);
+        var displayDistance = _convertKmToDisplayDistance(distanceKm, unit);
         if (displayDistance < 1.0) {
-            return _formatHundredthDistance(displayDistance);
+            return [_formatHundredthDistance(displayDistance), unit];
         }
-        return _formatTenthDistance(displayDistance);
+        return [_formatTenthDistance(displayDistance), unit];
     }
 
     function getDisplayDistanceUnit() {
@@ -125,11 +129,11 @@ module GateDistanceUtils {
         );
     }
 
-    function _convertKmToDisplayDistance(distanceKm) {
+    function _convertKmToDisplayDistance(distanceKm, unit) {
         if (distanceKm == null) {
             return null;
         }
-        if (getDisplayDistanceUnit() == DISPLAY_UNIT_MI) {
+        if (unit == DISPLAY_UNIT_MI) {
             return distanceKm / KM_PER_MILE;
         }
         return distanceKm;

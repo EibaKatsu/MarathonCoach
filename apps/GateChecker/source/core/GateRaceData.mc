@@ -80,17 +80,18 @@ module GateRaceData {
     }
 
     function getGateDisplayValue(gate) {
-        if (isGoalGate(gate)) {
-            return Ui.loadResource(Rez.Strings.GoalLabel);
-        }
-        return GateDistanceUtils.formatCompactDistanceValue(getGateDistanceKm(gate));
+        return getGateDisplayParts(gate)[0];
     }
 
     function getGateDisplayUnit(gate) {
+        return getGateDisplayParts(gate)[1];
+    }
+
+    function getGateDisplayParts(gate) {
         if (isGoalGate(gate)) {
-            return "";
+            return [Ui.loadResource(Rez.Strings.GoalLabel), ""];
         }
-        return GateDistanceUtils.getDisplayDistanceUnit();
+        return GateDistanceUtils.formatCompactDistanceParts(getGateDistanceKm(gate));
     }
 
     function getGateCutoffDayOffset(gate) {
@@ -148,11 +149,15 @@ module GateRaceData {
     }
 
     function getAidDisplayValue(aid) {
-        return GateDistanceUtils.formatCompactDistanceValue(getAidDistanceKm(aid));
+        return getAidDisplayParts(aid)[0];
     }
 
     function getAidDisplayUnit(aid) {
-        return GateDistanceUtils.getDisplayDistanceUnit();
+        return getAidDisplayParts(aid)[1];
+    }
+
+    function getAidDisplayParts(aid) {
+        return GateDistanceUtils.formatCompactDistanceParts(getAidDistanceKm(aid));
     }
 
     function _getGateValue(gate, index) {
