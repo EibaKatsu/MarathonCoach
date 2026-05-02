@@ -1,0 +1,51 @@
+race_key: kurobe_meisui_marathon_2026
+
+display_name:
+  jpn: "黒部名水マラソン2026"
+  eng: "Kurobe Meisui Marathon 2026"
+
+race:
+  date: "2026/05/24"
+  timezone: "Asia/Tokyo"
+  distance_km: 42.195
+
+gates:
+  - point: 9.0
+    cutoff: "2026/05/24 10:25"
+  - point: 17.1
+    cutoff: "2026/05/24 11:30"
+  - point: 23.2
+    cutoff: "2026/05/24 12:20"
+  - point: 28.2
+    cutoff: "2026/05/24 13:00"
+  - point: 31.8
+    cutoff: "2026/05/24 13:30"
+  - point: 36.5
+    cutoff: "2026/05/24 14:10"
+  - point: 40.3
+    cutoff: "2026/05/24 14:45"
+  - point: GOAL
+    cutoff: "2026/05/24 15:00"
+
+aids:
+  - km: 2.3
+  - km: 4.4
+  - km: 6.7
+  - km: 9.2
+  - km: 11.2
+  - km: 14.0
+  - km: 16.1
+  - km: 17.4
+  - km: 19.5
+  - km: 21.1
+  - km: 23.1
+  - km: 25.4
+  - km: 27.7
+  - km: 29.4
+  - km: 31.8
+  - km: 33.6
+  - km: 35.1
+  - km: 36.5
+  - km: 37.7
+  - km: 39.2
+  - km: 40.9

@@ -1,0 +1,53 @@
+module GateRaceConfig {
+    const GOAL = -1;
+
+    function getRaceKey() {
+        return "stockholm_marathon_2026";
+    }
+
+    function getRaceNameJpn() {
+        return "ストックホルムマラソン2026";
+    }
+
+    function getRaceNameEng() {
+        return "adidas Stockholm Marathon 2026";
+    }
+
+    function getRaceDistanceKm() {
+        return 42.195;
+    }
+
+    function getRaceYear() {
+        return 2026;
+    }
+
+    function getRaceMonth() {
+        return 5;
+    }
+
+    function getRaceDay() {
+        return 30;
+    }
+
+    function getRaceTimezone() {
+        return "Europe/Stockholm";
+    }
+
+    // [point, cutoffDayOffset, cutoffMinuteOfDay]
+    // point:
+    //   numeric = distanceMeters
+    //   GOAL = GateRaceConfig.GOAL
+    function getGates() {
+        return [
+            [21100, 0, 925],
+            [27000, 0, 980],
+            [32000, 0, 1025],
+            [35500, 0, 1060],
+            [GOAL, 0, 1110]
+        ];
+    }
+
+    function getAids() {
+        return [3800, 5600, 7200, 8800, 11200, 12900, 15500, 17400, 20200, 22500, 25500, 27000, 27900, 30100, 32200, 34000, 37400, 40000];
+    }
+}
