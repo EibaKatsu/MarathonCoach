@@ -170,7 +170,8 @@ module GateDisplayModel {
             return Ui.loadResource(Rez.Strings.GateLabel) + " -- / " + Ui.loadResource(Rez.Strings.CutLabel) + " --:--";
         }
 
-        return _buildGateIndexLabel(nextIndex) + " " + GateRaceData.getGateDisplayValue(nextGate) + GateRaceData.getGateDisplayUnit(nextGate) +
+        var gateDisplayParts = GateRaceData.getGateDisplayParts(nextGate);
+        return _buildGateIndexLabel(nextIndex) + " " + gateDisplayParts[0] + gateDisplayParts[1] +
             " / " + Ui.loadResource(Rez.Strings.CutLabel) + " " +
             GateDistanceUtils.formatCloseTime(
                 GateRaceData.getGateCloseHour(nextGate),
