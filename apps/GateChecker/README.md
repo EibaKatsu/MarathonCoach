@@ -2,6 +2,13 @@
 
 GateChecker is a separate Connect IQ data field app that lives alongside MarathonCoach in the same repository. This app now assumes race-specific builds: each marathon gets its own YAML definition, app ID, generated manifest, generated strings, and embedded gate/AID data.
 
+Distance display follows the watch's distance unit setting:
+
+- `Metric` shows `km`
+- `Statute` shows `mi`
+- Internal gate/aid calculations always stay in `km`
+- `GOAL` stays `GOAL` even when the watch is set to miles
+
 ## Race Definition Flow
 
 - Edit `apps/GateChecker/race_defs/races/<race_key>.yml`
@@ -40,12 +47,50 @@ aids:
   - km: 10.5
 ```
 
+Mile-based definitions are also supported:
+
+```yaml
+race_key: gatechecker_mile_sample_2026
+
+display_name:
+  jpn: "GateChecker Mile Sample 2026"
+  eng: "GateChecker Mile Sample 2026"
+
+race:
+  date: "2026/10/18"
+  timezone: "America/New_York"
+  distance_mi: 26.2187575
+
+gates:
+  - point_mi: 5.0
+    cutoff: "2026/10/18 08:10"
+  - point_mi: 13.1
+    cutoff: "2026/10/18 10:00"
+  - point_mi: 20.0
+    cutoff: "2026/10/18 12:00"
+  - point: GOAL
+    cutoff: "2026/10/18 13:30"
+
+aids:
+  - mi: 3.1
+  - mi: 6.2
+  - mi: 9.3
+  - mi: 13.1
+```
+
 Rules:
 
 - `race_key` must match `[a-z0-9_]+`
+- `race` accepts either `distance_km` or `distance_mi`
 - `gates[].point` accepts a numeric km value or `GOAL`
-- `GOAL` is final-gate only and uses `race.distance_km` internally
-- Numeric gate and aid points must align to `0.1km` units
+- `gates[].point_mi` accepts a numeric mile value
+- `aids[].km` accepts a numeric km value
+- `aids[].mi` accepts a numeric mile value
+- `distance_km` and `distance_mi` may not both be set
+- `gates[].point` and `gates[].point_mi` may not both be set
+- `aids[].km` and `aids[].mi` may not both be set
+- `GOAL` is final-gate only and uses the exact normalized race distance internally
+- Numeric `km` gate and aid points must align to `0.1km` units
 - `cutoff` must be `yyyy/mm/dd HH:MM`
 - Gates and aids must be strictly ascending
 
@@ -72,15 +117,16 @@ Generated `GateRaceConfig.mc` stores gates as `[point, cutoffDayOffset, cutoffMi
 Example:
 
 ```monkeyc
-[90, 0, 620]
+[9000, 0, 620]
 [GOAL, 0, 900]
 ```
 
-That keeps `GOAL` distinct from numeric points, so the app can:
+Numeric points are stored as meters. That keeps `GOAL` distinct from numeric points, so the app can:
 
 - show `GOAL` on screen
-- use the exact `42.195km` race distance for remaining-distance math
-- avoid generating `[422, ...]` for the last gate
+- use the exact normalized race distance for remaining-distance math
+- preserve mile-based definitions without forcing `0.1km` rounding
+- avoid generating `[42195, ...]` for the last gate
 
 ## Build
 
@@ -140,6 +186,32 @@ open "$CONNECTIQ_HOME/bin/ConnectIQ.app"
   fr57042mm
 ```
 
+If your local Connect IQ Simulator refuses newly added GateChecker race executables with
+`Unable to connect to simulator.`, use the GateChecker simulator slot script instead:
+
+```bash
+apps/GateChecker/scripts/send_gatechecker_race_to_simulator.sh gatechecker_mile_sample_2026 fr57042mm
+```
+
+Behavior:
+
+- It builds the requested race normally under `apps/GateChecker/dist/<race_key>/`
+- It sends the app through a known-good simulator slot path
+- By default it retries `gatechecker_beta_check_2026`, `toyama_marathon_2026`, then `iwate_oshu_kirameki_marathon_2026`
+- Pin a single slot when needed with `GATECHECKER_SIM_SLOT_RACE=toyama_marathon_2026`
+
+Example:
+
+```bash
+GATECHECKER_SIM_SLOT_RACE=iwate_oshu_kirameki_marathon_2026 \
+  apps/GateChecker/scripts/send_gatechecker_race_to_simulator.sh flying_pig_marathon_2026 fr57042mm
+```
+
+Note:
+
+- The slot script temporarily overwrites the slot `.prg` in `apps/GateChecker/dist/<slot_race_key>/`
+- Rebuild the slot race later if you want to restore that artifact on disk
+
 Because this app is a data field, activity recording does not start automatically. After `monkeydo`, use the simulator menu:
 
 1. `Simulation > FIT Data > Simulate`
@@ -150,5 +222,6 @@ Because this app is a data field, activity recording does not start automaticall
 - The old `gate_code` property workflow is no longer the primary path
 - Next gate selection is based on embedded race gates
 - Next AID selection is based on embedded AID points
+- Distance labels switch between `km` and `mi` from the watch setting
 - If the next gate is `GOAL`, the UI displays `GOAL` and still uses the exact race distance for calculations
 - If all AIDs are passed, the UI keeps a stable `AID --` style display instead of breaking

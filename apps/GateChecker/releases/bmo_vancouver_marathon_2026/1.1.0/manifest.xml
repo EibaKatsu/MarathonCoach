@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
     <iq:application
-        id="d6f3337a-6862-4ca4-a252-7e0af48ab0c4"
+        id="5435b1ff-486b-4355-9c14-542b631f266c"
         type="datafield"
         name="@Strings.AppName"
         entry="GateCheckerApp"
         launcherIcon="@Drawables.LauncherIcon"
         minApiLevel="3.2.0"
-        version="0.1.0">
+        version="1.1.0">
         <iq:products>
             <!-- Match MarathonCoach supported device scope -->
             <iq:product id="enduro3"/>

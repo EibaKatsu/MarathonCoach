@@ -399,8 +399,9 @@ class GateCheckerField extends Ui.DataField {
             _gateRightLabelText = TO_GATE_LABEL_TEXT;
             if (gates != null and gates instanceof Lang.Array and gates.size() > 0) {
                 var lastGate = gates[gates.size() - 1];
-                _gateDistanceText = GateRaceData.getGateDisplayValue(lastGate);
-                _gateDistanceUnitText = GateRaceData.getGateDisplayUnit(lastGate);
+                var lastGateDisplayParts = GateRaceData.getGateDisplayParts(lastGate);
+                _gateDistanceText = lastGateDisplayParts[0];
+                _gateDistanceUnitText = lastGateDisplayParts[1];
                 _gateTimeText = GateDistanceUtils.formatCloseTime(
                     GateRaceData.getGateCloseHour(lastGate),
                     GateRaceData.getGateCloseMinute(lastGate)
@@ -423,10 +424,11 @@ class GateCheckerField extends Ui.DataField {
         var nextGate = GateNextSelector.getNextGate(nextGateConfig);
         var remainingDistanceKm = GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig);
         if (nextGate != null) {
+            var nextGateDisplayParts = GateRaceData.getGateDisplayParts(nextGate);
             _gateLeftLabelText = _formatGateLabel(GateNextSelector.getNextIndex(nextGateConfig));
             _gateRightLabelText = TO_GATE_LABEL_TEXT;
-            _gateDistanceText = GateRaceData.getGateDisplayValue(nextGate);
-            _gateDistanceUnitText = GateRaceData.getGateDisplayUnit(nextGate);
+            _gateDistanceText = nextGateDisplayParts[0];
+            _gateDistanceUnitText = nextGateDisplayParts[1];
             _gateTimeText = GateDistanceUtils.formatCloseTime(
                 GateRaceData.getGateCloseHour(nextGate),
                 GateRaceData.getGateCloseMinute(nextGate)
@@ -434,8 +436,9 @@ class GateCheckerField extends Ui.DataField {
             _gateSummaryText = _buildGateSummaryText();
         }
 
-        _gateRemainDistanceText = GateDistanceUtils.formatCompactDistanceKmValue(remainingDistanceKm);
-        _gateRemainDistanceUnitText = "km";
+        var gateRemainDistanceParts = GateDistanceUtils.formatCompactDistanceParts(remainingDistanceKm);
+        _gateRemainDistanceText = gateRemainDistanceParts[0];
+        _gateRemainDistanceUnitText = gateRemainDistanceParts[1];
         _gateLeftTimeText = _formatGateRemainingTimeValue(GateRemainingTime.getRemainingSec(remainingTimeConfig));
         _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig);
     }
@@ -452,12 +455,14 @@ class GateCheckerField extends Ui.DataField {
         }
 
         var nextAid = GateAidSelector.getNextAid(nextAidConfig);
-        _aidDistanceText = GateRaceData.getAidDisplayValue(nextAid);
-        _aidDistanceUnitText = GateRaceData.getAidDisplayUnit(nextAid);
-        _aidRemainDistanceText = GateDistanceUtils.formatCompactDistanceKmValue(
+        var nextAidDisplayParts = GateRaceData.getAidDisplayParts(nextAid);
+        var aidRemainDistanceParts = GateDistanceUtils.formatCompactDistanceParts(
             GateRemainingDistance.getRemainingDistanceKm(aidRemainingDistanceConfig)
         );
-        _aidRemainDistanceUnitText = "km";
+        _aidDistanceText = nextAidDisplayParts[0];
+        _aidDistanceUnitText = nextAidDisplayParts[1];
+        _aidRemainDistanceText = aidRemainDistanceParts[0];
+        _aidRemainDistanceUnitText = aidRemainDistanceParts[1];
     }
 
     function _resetRenderParts() {
@@ -507,8 +512,20 @@ class GateCheckerField extends Ui.DataField {
     }
 
     function _formatGateRemainingTimeValue(remainingSec) {
-        var remainingText = GateRemainingTime.formatRemainingDuration(remainingSec);
-        if (remainingSec == null or remainingSec >= 0) {
+        if (remainingSec == null) {
+            return "--:--";
+        }
+
+        var absSec = remainingSec;
+        if (absSec < 0) {
+            absSec = -absSec;
+        }
+
+        var totalMinutes = Math.floor((absSec + 59) / 60);
+        var hourPart = Math.floor(totalMinutes / 60);
+        var minPart = totalMinutes - (hourPart * 60);
+        var remainingText = hourPart.format("%d") + "h" + minPart.format("%02d");
+        if (remainingSec >= 0) {
             return remainingText;
         }
         return "-" + remainingText;

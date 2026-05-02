@@ -2,35 +2,35 @@ module GateRaceConfig {
     const GOAL = -1;
 
     function getRaceKey() {
-        return $race_key_literal;
+        return "bmo_vancouver_marathon_2026";
     }
 
     function getRaceNameJpn() {
-        return $race_name_jpn_literal;
+        return "BMOバンクーバーマラソン2026";
     }
 
     function getRaceNameEng() {
-        return $race_name_eng_literal;
+        return "BMO Vancouver Marathon 2026";
     }
 
     function getRaceDistanceKm() {
-        return $race_distance_km;
+        return 42.195;
     }
 
     function getRaceYear() {
-        return $race_year;
+        return 2026;
     }
 
     function getRaceMonth() {
-        return $race_month;
+        return 5;
     }
 
     function getRaceDay() {
-        return $race_day;
+        return 3;
     }
 
     function getRaceTimezone() {
-        return $race_timezone_literal;
+        return "America/Vancouver";
     }
 
     // [point, cutoffDayOffset, cutoffMinuteOfDay]
@@ -39,11 +39,12 @@ module GateRaceConfig {
     //   GOAL = GateRaceConfig.GOAL
     function getGates() {
         return [
-$gates_body
+            [30000, 0, 750],
+            [GOAL, 0, 870]
         ];
     }
 
     function getAids() {
-        return [$aids_body];
+        return [5200, 8900, 10800, 12700, 16100, 17800, 21100, 24400, 25800, 28500, 30800, 32400, 34000, 36700, 38400, 39800];
     }
 }

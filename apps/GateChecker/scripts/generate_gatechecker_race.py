@@ -9,7 +9,7 @@ import sys
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 from string import Template
 from typing import Any
@@ -35,6 +35,8 @@ UUID_RE = re.compile(
 GOAL_TOKEN = "GOAL"
 APP_NAME_ENG = "Marathon Cutoff Guide"
 APP_NAME_JPN = "関門ガイド"
+KM_PER_MILE = Decimal("1.609344")
+METERS_PER_KM = Decimal("1000")
 STRINGS_COMMON_ENG = {
     "code_ok": "READY",
     "code_error": "CONFIG ERROR",
@@ -194,6 +196,60 @@ def parse_tenth_km(raw: Any, label: str, max_distance_km: Decimal) -> int:
     return int(tenth)
 
 
+def ensure_distance_field_xor(
+    mapping: dict[str, Any], km_key: str, mi_key: str, label_prefix: str
+) -> tuple[Any, Any]:
+    raw_km = mapping.get(km_key)
+    raw_mi = mapping.get(mi_key)
+    has_km = raw_km is not None
+    has_mi = raw_mi is not None
+    if has_km and has_mi:
+        raise ValidationError(
+            f"{label_prefix}.{km_key} and {label_prefix}.{mi_key} may not both be set."
+        )
+    if not has_km and not has_mi:
+        raise ValidationError(
+            f"{label_prefix} must define either {label_prefix}.{km_key} or {label_prefix}.{mi_key}."
+        )
+    return raw_km, raw_mi
+
+
+def parse_distance_input_km(
+    mapping: dict[str, Any],
+    km_key: str,
+    mi_key: str,
+    label_prefix: str,
+    *,
+    max_distance_km: Decimal | None = None,
+    enforce_km_tenth: bool = False,
+) -> Decimal:
+    raw_km, raw_mi = ensure_distance_field_xor(mapping, km_key, mi_key, label_prefix)
+    if raw_km is not None:
+        distance_km = parse_decimal(raw_km, f"{label_prefix}.{km_key}")
+        if enforce_km_tenth:
+            parse_tenth_km(raw_km, f"{label_prefix}.{km_key}", max_distance_km)
+    else:
+        distance_mi = parse_decimal(raw_mi, f"{label_prefix}.{mi_key}")
+        if distance_mi <= 0:
+            raise ValidationError(f"{label_prefix}.{mi_key} must be > 0.")
+        distance_km = distance_mi * KM_PER_MILE
+
+    if distance_km <= 0:
+        raise ValidationError(f"{label_prefix} distance must be > 0.")
+    if max_distance_km is not None and distance_km > max_distance_km:
+        raise ValidationError(
+            f"{label_prefix} must be <= race distance ({format_decimal(max_distance_km)}km)."
+        )
+    return distance_km
+
+
+def distance_km_to_meter_int(distance_km: Decimal) -> int:
+    distance_meters = (distance_km * METERS_PER_KM).quantize(
+        Decimal("1"), rounding=ROUND_HALF_UP
+    )
+    return int(distance_meters)
+
+
 def parse_definition(entry: RaceEntry) -> RaceMeta:
     if not entry.definition_path.exists():
         raise ValidationError(f"Definition file not found: {entry.definition_path}")
@@ -221,15 +277,17 @@ def parse_definition(entry: RaceEntry) -> RaceMeta:
         raise ValidationError("race must be a mapping.")
     raw_date = race.get("date")
     raw_timezone = race.get("timezone")
-    raw_distance_km = race.get("distance_km")
     if not isinstance(raw_date, str):
         raise ValidationError("race.date must be a string in yyyy/mm/dd format.")
     if not isinstance(raw_timezone, str) or not raw_timezone:
         raise ValidationError("race.timezone must be a non-empty string.")
     race_date = datetime.strptime(raw_date, "%Y/%m/%d").date()
-    distance_km = parse_decimal(raw_distance_km, "race.distance_km")
-    if distance_km <= 0:
-        raise ValidationError("race.distance_km must be > 0.")
+    distance_km = parse_distance_input_km(
+        race,
+        "distance_km",
+        "distance_mi",
+        "race",
+    )
 
     raw_gates = data.get("gates")
     if not isinstance(raw_gates, list) or not raw_gates:
@@ -244,6 +302,7 @@ def parse_definition(entry: RaceEntry) -> RaceMeta:
             raise ValidationError(f"gates[{index}] must be a mapping.")
 
         point = raw_gate.get("point")
+        point_mi = raw_gate.get("point_mi")
         cutoff_raw = raw_gate.get("cutoff")
         if not isinstance(cutoff_raw, str):
             raise ValidationError(f"gates[{index}].cutoff must be a string.")
@@ -259,6 +318,10 @@ def parse_definition(entry: RaceEntry) -> RaceMeta:
         last_cutoff = cutoff_dt
 
         if point == GOAL_TOKEN:
+            if point_mi is not None:
+                raise ValidationError(
+                    f"gates[{index}].point and gates[{index}].point_mi may not both be set."
+                )
             if goal_seen:
                 raise ValidationError("GOAL may only appear once.")
             if index != len(raw_gates) - 1:
@@ -270,20 +333,23 @@ def parse_definition(entry: RaceEntry) -> RaceMeta:
         if goal_seen:
             raise ValidationError("No gate may appear after GOAL.")
 
-        point_km = parse_decimal(point, f"gates[{index}].point")
-        if point_km <= 0:
-            raise ValidationError(f"gates[{index}].point must be > 0.")
-        if point_km > distance_km:
-            raise ValidationError(
-                f"gates[{index}].point must be <= race.distance_km."
-            )
-        if last_point_km is not None and point_km <= last_point_km:
-            raise ValidationError("gates[].point must be strictly ascending.")
-
-        point_tenth_km = parse_tenth_km(
-            point_km, f"gates[{index}].point", distance_km
+        point_km = parse_distance_input_km(
+            raw_gate,
+            "point",
+            "point_mi",
+            f"gates[{index}]",
+            max_distance_km=distance_km,
+            enforce_km_tenth=True,
         )
-        gates.append([point_tenth_km, cutoff_day_offset, cutoff_minute_of_day])
+        if last_point_km is not None and point_km <= last_point_km:
+            raise ValidationError("gates must be strictly ascending by distance.")
+
+        point_meters = distance_km_to_meter_int(point_km)
+        if gates and point_meters <= gates[-1][0]:
+            raise ValidationError(
+                "gates must remain strictly ascending after km/mi conversion."
+            )
+        gates.append([point_meters, cutoff_day_offset, cutoff_minute_of_day])
         last_point_km = point_km
 
     raw_aids = data.get("aids", [])
@@ -297,11 +363,19 @@ def parse_definition(entry: RaceEntry) -> RaceMeta:
     for index, raw_aid in enumerate(raw_aids):
         if not isinstance(raw_aid, dict):
             raise ValidationError(f"aids[{index}] must be a mapping.")
-        km_tenth = parse_tenth_km(raw_aid.get("km"), f"aids[{index}].km", distance_km)
-        if last_aid is not None and km_tenth <= last_aid:
-            raise ValidationError("aids[].km must be strictly ascending.")
-        aids.append(km_tenth)
-        last_aid = km_tenth
+        aid_distance_km = parse_distance_input_km(
+            raw_aid,
+            "km",
+            "mi",
+            f"aids[{index}]",
+            max_distance_km=distance_km,
+            enforce_km_tenth=True,
+        )
+        aid_meters = distance_km_to_meter_int(aid_distance_km)
+        if last_aid is not None and aid_meters <= last_aid:
+            raise ValidationError("aids must be strictly ascending by distance.")
+        aids.append(aid_meters)
+        last_aid = aid_meters
 
     return RaceMeta(
         race_key=entry.race_key,

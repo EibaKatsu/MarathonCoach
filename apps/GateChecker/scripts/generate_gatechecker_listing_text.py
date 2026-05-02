@@ -29,13 +29,15 @@ class ValidationError(ValueError):
 @dataclass(frozen=True)
 class Gate:
     label: str
-    distance_km: Decimal
+    distance_value: Decimal
+    distance_unit: str
     cutoff_time: str
 
 
 @dataclass(frozen=True)
 class Aid:
-    distance_km: Decimal
+    distance_value: Decimal
+    distance_unit: str
     name_jpn: str | None
     name_eng: str | None
 
@@ -70,9 +72,9 @@ def parse_decimal(raw: Any, label: str) -> Decimal:
     return value
 
 
-def format_distance_km(value: Decimal) -> str:
+def format_distance(value: Decimal, unit: str) -> str:
     rounded = value.quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
-    return f"{rounded:.1f}"
+    return f"{rounded:.1f}{unit}"
 
 
 def parse_cutoff_time(raw: Any, label: str) -> str:
@@ -115,6 +117,27 @@ def parse_aid_name(raw_aid: dict[str, Any]) -> tuple[str | None, str | None]:
     return (
         fallback_jpn.strip() if isinstance(fallback_jpn, str) and fallback_jpn.strip() else None,
         fallback_eng.strip() if isinstance(fallback_eng, str) and fallback_eng.strip() else None,
+    )
+
+
+def parse_distance_fields(
+    raw_mapping: dict[str, Any],
+    km_key: str,
+    mi_key: str,
+    label_prefix: str,
+) -> tuple[Decimal, str]:
+    raw_km = raw_mapping.get(km_key)
+    raw_mi = raw_mapping.get(mi_key)
+    if raw_km is not None and raw_mi is not None:
+        raise ValidationError(
+            f"{label_prefix}.{km_key} and {label_prefix}.{mi_key} may not both be set."
+        )
+    if raw_km is not None:
+        return parse_decimal(raw_km, f"{label_prefix}.{km_key}"), "km"
+    if raw_mi is not None:
+        return parse_decimal(raw_mi, f"{label_prefix}.{mi_key}"), "mi"
+    raise ValidationError(
+        f"{label_prefix} must define either {km_key} or {mi_key}."
     )
 
 
@@ -184,7 +207,12 @@ def parse_race_listing(definition_path: Path) -> RaceListing:
         raise ValidationError(
             f"{definition_path}: race.date must be in yyyy/mm/dd format."
         ) from exc
-    distance_km = parse_decimal(race.get("distance_km"), "race.distance_km")
+    race_distance_value, race_distance_unit = parse_distance_fields(
+        race,
+        "distance_km",
+        "distance_mi",
+        "race",
+    )
 
     raw_gates = data.get("gates")
     if not isinstance(raw_gates, list) or not raw_gates:
@@ -196,15 +224,33 @@ def parse_race_listing(definition_path: Path) -> RaceListing:
         if not isinstance(raw_gate, dict):
             raise ValidationError(f"{definition_path}: gates[{index}] must be a mapping.")
         point = raw_gate.get("point")
+        point_mi = raw_gate.get("point_mi")
         cutoff_time = parse_cutoff_time(raw_gate.get("cutoff"), f"gates[{index}].cutoff")
+        if point == GOAL_TOKEN and point_mi is not None:
+            raise ValidationError(
+                f"gates[{index}].point and gates[{index}].point_mi may not both be set."
+            )
         if point == GOAL_TOKEN:
             label = GOAL_TOKEN
-            gate_distance = distance_km
+            gate_distance_value = race_distance_value
+            gate_distance_unit = race_distance_unit
         else:
-            gate_distance = parse_decimal(point, f"gates[{index}].point")
+            gate_distance_value, gate_distance_unit = parse_distance_fields(
+                raw_gate,
+                "point",
+                "point_mi",
+                f"gates[{index}]",
+            )
             label = f"G{gate_number}"
             gate_number += 1
-        gates.append(Gate(label=label, distance_km=gate_distance, cutoff_time=cutoff_time))
+        gates.append(
+            Gate(
+                label=label,
+                distance_value=gate_distance_value,
+                distance_unit=gate_distance_unit,
+                cutoff_time=cutoff_time,
+            )
+        )
 
     raw_aids = data.get("aids")
     if raw_aids is None:
@@ -216,9 +262,21 @@ def parse_race_listing(definition_path: Path) -> RaceListing:
     for index, raw_aid in enumerate(raw_aids):
         if not isinstance(raw_aid, dict):
             raise ValidationError(f"{definition_path}: aids[{index}] must be a mapping.")
-        distance = parse_decimal(raw_aid.get("km"), f"aids[{index}].km")
+        distance_value, distance_unit = parse_distance_fields(
+            raw_aid,
+            "km",
+            "mi",
+            f"aids[{index}]",
+        )
         name_jpn, name_eng = parse_aid_name(raw_aid)
-        aids.append(Aid(distance_km=distance, name_jpn=name_jpn, name_eng=name_eng))
+        aids.append(
+            Aid(
+                distance_value=distance_value,
+                distance_unit=distance_unit,
+                name_jpn=name_jpn,
+                name_eng=name_eng,
+            )
+        )
 
     return RaceListing(
         race_key=race_key,
@@ -239,22 +297,22 @@ def format_race_date_eng(value: date) -> str:
 
 
 def render_gate_line_jpn(gate: Gate) -> str:
-    return f"・{gate.label}: {format_distance_km(gate.distance_km)}km / {gate.cutoff_time}"
+    return f"・{gate.label}: {format_distance(gate.distance_value, gate.distance_unit)} / {gate.cutoff_time}"
 
 
 def render_gate_line_eng(gate: Gate) -> str:
-    return f"- {gate.label}: {format_distance_km(gate.distance_km)} km / {gate.cutoff_time}"
+    return f"- {gate.label}: {format_distance(gate.distance_value, gate.distance_unit)} / {gate.cutoff_time}"
 
 
 def render_aid_line_jpn(aid: Aid) -> str:
-    base = f"・{format_distance_km(aid.distance_km)}km"
+    base = f"・{format_distance(aid.distance_value, aid.distance_unit)}"
     if aid.name_jpn:
         return f"{base}: {aid.name_jpn}"
     return base
 
 
 def render_aid_line_eng(aid: Aid) -> str:
-    base = f"- {format_distance_km(aid.distance_km)} km"
+    base = f"- {format_distance(aid.distance_value, aid.distance_unit)}"
     name = aid.name_eng or aid.name_jpn
     if name:
         return f"{base}: {name}"
@@ -281,7 +339,7 @@ def render_listing_markdown(race: RaceListing) -> str:
 
 次の関門までの距離、残り時間、関門時刻、次のエイドまでの距離を1画面に表示します。
 
-「次の関門まであと何km？」
+「次の関門まであとどれくらい？」
 「まだ間に合う？」
 「次のエイドはどこ？」
 

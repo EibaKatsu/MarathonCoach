@@ -2,35 +2,35 @@ module GateRaceConfig {
     const GOAL = -1;
 
     function getRaceKey() {
-        return $race_key_literal;
+        return "pittsburgh_marathon_2026";
     }
 
     function getRaceNameJpn() {
-        return $race_name_jpn_literal;
+        return "ピッツバーグマラソン2026";
     }
 
     function getRaceNameEng() {
-        return $race_name_eng_literal;
+        return "Pittsburgh Marathon 2026";
     }
 
     function getRaceDistanceKm() {
-        return $race_distance_km;
+        return 42.19500007008;
     }
 
     function getRaceYear() {
-        return $race_year;
+        return 2026;
     }
 
     function getRaceMonth() {
-        return $race_month;
+        return 5;
     }
 
     function getRaceDay() {
-        return $race_day;
+        return 3;
     }
 
     function getRaceTimezone() {
-        return $race_timezone_literal;
+        return "America/New_York";
     }
 
     // [point, cutoffDayOffset, cutoffMinuteOfDay]
@@ -39,11 +39,14 @@ module GateRaceConfig {
     //   GOAL = GateRaceConfig.GOAL
     function getGates() {
         return [
-$gates_body
+            [7081, 0, 520],
+            [13036, 0, 580],
+            [17059, 0, 640],
+            [GOAL, 0, 840]
         ];
     }
 
     function getAids() {
-        return [$aids_body];
+        return [3219, 5955, 8530, 9978, 12875, 14645, 15772, 15933, 17059, 19956, 20117, 21726, 24301, 26554, 28485, 30256, 31865, 33152, 35727, 37176, 39268, 40877];
     }
 }

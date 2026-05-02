@@ -1,7 +1,14 @@
 using Toybox.Lang as Lang;
 using Toybox.Math as Math;
+using Toybox.System as Sys;
 
 module GateDistanceUtils {
+    const DISPLAY_UNIT_KM = "km";
+    const DISPLAY_UNIT_MI = "mi";
+    const KM_PER_MILE = 1.609344;
+    const DISTANCE_PARTS_VALUE = 0;
+    const DISTANCE_PARTS_UNIT = 1;
+
     function extractElapsedDistanceKm(info) {
         var rawDistanceM = (info != null) ? info.elapsedDistance : null;
         if (!_isNumericValue(rawDistanceM)) {
@@ -14,51 +21,51 @@ module GateDistanceUtils {
     }
 
     function formatDistanceKm(distanceKm) {
-        if (distanceKm == null) {
-            return "--.- km";
-        }
+        return formatDistance(distanceKm);
+    }
 
-        var roundedTenth = Math.floor((distanceKm * 10.0) + 0.5);
-        if (roundedTenth < 0) {
-            roundedTenth = 0;
-        }
-        var kmWhole = Math.floor(roundedTenth / 10);
-        var kmDecimal = roundedTenth - (kmWhole * 10);
-        return kmWhole.format("%d") + "." + kmDecimal.format("%d") + " km";
+    function formatDistance(distanceKm) {
+        var parts = formatCompactDistanceParts(distanceKm);
+        return parts[DISTANCE_PARTS_VALUE] + " " + parts[DISTANCE_PARTS_UNIT];
     }
 
     function formatCompactDistanceKm(distanceKm) {
-        if (distanceKm == null) {
-            return "--.-km";
-        }
+        return formatCompactDistance(distanceKm);
+    }
 
-        return formatCompactDistanceKmValue(distanceKm) + "km";
+    function formatCompactDistance(distanceKm) {
+        var parts = formatCompactDistanceParts(distanceKm);
+        return parts[DISTANCE_PARTS_VALUE] + parts[DISTANCE_PARTS_UNIT];
     }
 
     function formatCompactDistanceKmValue(distanceKm) {
+        return formatCompactDistanceValue(distanceKm);
+    }
+
+    function formatCompactDistanceValue(distanceKm) {
+        return formatCompactDistanceParts(distanceKm)[DISTANCE_PARTS_VALUE];
+    }
+
+    function formatCompactDistanceParts(distanceKm) {
+        var unitSetting = _getDistanceUnitsSetting();
+        var unit = _distanceUnitsSettingToDisplayUnit(unitSetting);
         if (distanceKm == null) {
-            return "--.-";
+            return ["--.-", unit];
         }
 
-        var roundedTenth = Math.floor((distanceKm * 10.0) + 0.5);
-        if (roundedTenth < 0) {
-            roundedTenth = 0;
-        }
-        var kmWhole = Math.floor(roundedTenth / 10);
-        var kmDecimal = roundedTenth - (kmWhole * 10);
-        return kmWhole.format("%d") + "." + kmDecimal.format("%d");
+        return [_formatTenthDistance(_convertKmToDisplayDistance(distanceKm, unitSetting)), unit];
     }
 
     function formatDistanceTenthKm(distanceTenthKm) {
         if (distanceTenthKm == null) {
-            return "--.- km";
+            return "--.- " + getDisplayDistanceUnit();
         }
         return formatDistanceKm(distanceTenthKm / 10.0);
     }
 
     function formatCompactDistanceTenthKm(distanceTenthKm) {
         if (distanceTenthKm == null) {
-            return "--.-km";
+            return "--.-" + getDisplayDistanceUnit();
         }
         return formatCompactDistanceKm(distanceTenthKm / 10.0);
     }
@@ -71,26 +78,38 @@ module GateDistanceUtils {
     }
 
     function formatLiveDistanceKm(distanceKm) {
-        if (distanceKm == null) {
-            return "--.--km";
-        }
-        return formatLiveDistanceKmValue(distanceKm) + "km";
+        return formatLiveDistance(distanceKm);
+    }
+
+    function formatLiveDistance(distanceKm) {
+        var parts = formatLiveDistanceParts(distanceKm);
+        return parts[DISTANCE_PARTS_VALUE] + parts[DISTANCE_PARTS_UNIT];
     }
 
     function formatLiveDistanceKmValue(distanceKm) {
+        return formatLiveDistanceValue(distanceKm);
+    }
+
+    function formatLiveDistanceValue(distanceKm) {
+        return formatLiveDistanceParts(distanceKm)[DISTANCE_PARTS_VALUE];
+    }
+
+    function formatLiveDistanceParts(distanceKm) {
+        var unitSetting = _getDistanceUnitsSetting();
+        var unit = _distanceUnitsSettingToDisplayUnit(unitSetting);
         if (distanceKm == null) {
-            return "--.--";
+            return ["--.--", unit];
         }
-        if (distanceKm < 1.0) {
-            var roundedHundredth = Math.floor((distanceKm * 100.0) + 0.5);
-            if (roundedHundredth < 0) {
-                roundedHundredth = 0;
-            }
-            var wholePart = Math.floor(roundedHundredth / 100);
-            var fracPart = roundedHundredth - (wholePart * 100);
-            return wholePart.format("%d") + "." + fracPart.format("%02d");
+
+        var displayDistance = _convertKmToDisplayDistance(distanceKm, unitSetting);
+        if (displayDistance < 1.0) {
+            return [_formatHundredthDistance(displayDistance), unit];
         }
-        return formatCompactDistanceKmValue(distanceKm);
+        return [_formatTenthDistance(displayDistance), unit];
+    }
+
+    function getDisplayDistanceUnit() {
+        return _distanceUnitsSettingToDisplayUnit(_getDistanceUnitsSetting());
     }
 
     function formatCloseTime(closeHour, closeMinute) {
@@ -107,5 +126,53 @@ module GateDistanceUtils {
             value instanceof Lang.Double or
             value instanceof Lang.Long
         );
+    }
+
+    function _convertKmToDisplayDistance(distanceKm, unitSetting) {
+        if (distanceKm == null) {
+            return null;
+        }
+        if (unitSetting == Sys.UNIT_STATUTE) {
+            return distanceKm / KM_PER_MILE;
+        }
+        return distanceKm;
+    }
+
+    function _getDistanceUnitsSetting() {
+        try {
+            var deviceSettings = Sys.getDeviceSettings();
+            if (deviceSettings != null) {
+                return deviceSettings.distanceUnits;
+            }
+        } catch (e) {
+        }
+        return Sys.UNIT_METRIC;
+    }
+
+    function _distanceUnitsSettingToDisplayUnit(unitSetting) {
+        if (unitSetting == Sys.UNIT_STATUTE) {
+            return DISPLAY_UNIT_MI;
+        }
+        return DISPLAY_UNIT_KM;
+    }
+
+    function _formatTenthDistance(distance) {
+        var roundedTenth = Math.floor((distance * 10.0) + 0.5);
+        if (roundedTenth < 0) {
+            roundedTenth = 0;
+        }
+        var whole = Math.floor(roundedTenth / 10);
+        var decimal = roundedTenth - (whole * 10);
+        return whole.format("%d") + "." + decimal.format("%d");
+    }
+
+    function _formatHundredthDistance(distance) {
+        var roundedHundredth = Math.floor((distance * 100.0) + 0.5);
+        if (roundedHundredth < 0) {
+            roundedHundredth = 0;
+        }
+        var wholePart = Math.floor(roundedHundredth / 100);
+        var fracPart = roundedHundredth - (wholePart * 100);
+        return wholePart.format("%d") + "." + fracPart.format("%02d");
     }
 }

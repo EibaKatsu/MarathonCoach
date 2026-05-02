@@ -170,7 +170,8 @@ module GateDisplayModel {
             return Ui.loadResource(Rez.Strings.GateLabel) + " -- / " + Ui.loadResource(Rez.Strings.CutLabel) + " --:--";
         }
 
-        return _buildGateIndexLabel(nextIndex) + " " + GateRaceData.getGateDisplayValue(nextGate) + GateRaceData.getGateDisplayUnit(nextGate) +
+        var gateDisplayParts = GateRaceData.getGateDisplayParts(nextGate);
+        return _buildGateIndexLabel(nextIndex) + " " + gateDisplayParts[0] + gateDisplayParts[1] +
             " / " + Ui.loadResource(Rez.Strings.CutLabel) + " " +
             GateDistanceUtils.formatCloseTime(
                 GateRaceData.getGateCloseHour(nextGate),
@@ -179,19 +180,19 @@ module GateDisplayModel {
     }
 
     function _buildFactLine(remainingDistanceConfig, remainingSec) {
-        return Ui.loadResource(Rez.Strings.RemainLabel) + " " + GateDistanceUtils.formatCompactDistanceKm(GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig)) +
+        return Ui.loadResource(Rez.Strings.RemainLabel) + " " + GateDistanceUtils.formatCompactDistance(GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig)) +
             " / " + Ui.loadResource(Rez.Strings.LeftLabel) + " " +
             GateRemainingTime.formatRemainingDuration(remainingSec);
     }
 
     function _buildLateFactLine(remainingDistanceConfig, remainingSec) {
-        return Ui.loadResource(Rez.Strings.RemainLabel) + " " + GateDistanceUtils.formatCompactDistanceKm(GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig)) +
+        return Ui.loadResource(Rez.Strings.RemainLabel) + " " + GateDistanceUtils.formatCompactDistance(GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig)) +
             " / " + Ui.loadResource(Rez.Strings.LateLabel) + " " +
             GateRemainingTime.formatRemainingDuration(remainingSec);
     }
 
     function _buildCurrentSnapshotLine(currentDistanceKm, remainingTimeConfig) {
-        return GateDistanceUtils.formatLiveDistanceKm(currentDistanceKm) +
+        return GateDistanceUtils.formatLiveDistance(currentDistanceKm) +
             " / " +
             GateRemainingTime.formatCurrentClockHourMinute(remainingTimeConfig);
     }

@@ -2,35 +2,35 @@ module GateRaceConfig {
     const GOAL = -1;
 
     function getRaceKey() {
-        return $race_key_literal;
+        return "flying_pig_marathon_2026";
     }
 
     function getRaceNameJpn() {
-        return $race_name_jpn_literal;
+        return "シンシナティ フライング・ピッグ・マラソン2026";
     }
 
     function getRaceNameEng() {
-        return $race_name_eng_literal;
+        return "Flying Pig Marathon 2026";
     }
 
     function getRaceDistanceKm() {
-        return $race_distance_km;
+        return 42.19500007008;
     }
 
     function getRaceYear() {
-        return $race_year;
+        return 2026;
     }
 
     function getRaceMonth() {
-        return $race_month;
+        return 5;
     }
 
     function getRaceDay() {
-        return $race_day;
+        return 3;
     }
 
     function getRaceTimezone() {
-        return $race_timezone_literal;
+        return "America/New_York";
     }
 
     // [point, cutoffDayOffset, cutoffMinuteOfDay]
@@ -39,11 +39,12 @@ module GateRaceConfig {
     //   GOAL = GateRaceConfig.GOAL
     function getGates() {
         return [
-$gates_body
+            [28164, 0, 735],
+            [GOAL, 0, 810]
         ];
     }
 
     function getAids() {
-        return [$aids_body];
+        return [1609, 3219, 4828, 6437, 8047, 9656, 11265, 14484, 16093, 17703, 19312, 20921, 22531, 24140, 25750, 27359, 28968, 30578, 32187, 33796, 35406, 37015, 38624, 40234];
     }
 }

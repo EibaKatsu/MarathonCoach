@@ -2,15 +2,15 @@ module GateRaceConfig {
     const GOAL = -1;
 
     function getRaceKey() {
-        return "iwate_oshu_kirameki_marathon_2026";
+        return "flying_pig_marathon_2026";
     }
 
     function getRaceNameJpn() {
-        return "2026第10回いわて奥州きらめきマラソン";
+        return "シンシナティ フライング・ピッグ・マラソン2026";
     }
 
     function getRaceNameEng() {
-        return "Iwate Oshu Kirameki Marathon 2026";
+        return "Flying Pig Marathon 2026";
     }
 
     function getRaceDistanceKm() {
@@ -26,30 +26,25 @@ module GateRaceConfig {
     }
 
     function getRaceDay() {
-        return 17;
+        return 3;
     }
 
     function getRaceTimezone() {
-        return "Asia/Tokyo";
+        return "America/New_York";
     }
 
     // [point, cutoffDayOffset, cutoffMinuteOfDay]
     // point:
-    //   numeric = distanceTenthKm
+    //   numeric = distanceMeters
     //   GOAL = GateRaceConfig.GOAL
     function getGates() {
         return [
-            [79, 0, 575],
-            [130, 0, 610],
-            [189, 0, 660],
-            [250, 0, 710],
-            [309, 0, 765],
-            [372, 0, 815],
-            [GOAL, 0, 870]
+            [28200, 0, 735],
+            [GOAL, 0, 809]
         ];
     }
 
     function getAids() {
-        return [18, 57, 94, 115, 141, 181, 209, 236, 268, 286, 320, 342, 372, 401];
+        return [2400, 4500, 7400, 9500, 11400, 13500, 14000, 15900, 18000, 19800, 21400, 23700, 25400, 26700, 29500, 31400, 33500, 34400, 36500, 38500, 38600, 40600];
     }
 }

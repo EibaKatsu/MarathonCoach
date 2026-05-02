@@ -53,38 +53,45 @@ module GateRaceData {
     }
 
     function getGateDistanceKm(gate) {
+        var pointMeters = getGateDistanceMeters(gate);
+        if (pointMeters == null) {
+            return null;
+        }
+        return pointMeters / 1000.0;
+    }
+
+    function getGateDistanceMeters(gate) {
         var point = _getGateValue(gate, GATE_POINT);
         if (point == null) {
             return null;
         }
         if (isGoalPoint(point)) {
-            return getRaceDistanceKm();
-        }
-        return point / 10.0;
-    }
-
-    function getGateDistanceTenthKm(gate) {
-        var point = _getGateValue(gate, GATE_POINT);
-        if (point == null or isGoalPoint(point)) {
-            return null;
+            return _distanceKmToMeters(getRaceDistanceKm());
         }
         return point;
     }
 
-    function getGateDisplayValue(gate) {
-        if (isGoalGate(gate)) {
-            return Ui.loadResource(Rez.Strings.GoalLabel);
+    function getGateDistanceTenthKm(gate) {
+        var distanceMeters = getGateDistanceMeters(gate);
+        if (distanceMeters == null) {
+            return null;
         }
-        return GateDistanceUtils.formatCompactDistanceTenthKmValue(
-            getGateDistanceTenthKm(gate)
-        );
+        return Math.floor((distanceMeters / 100.0) + 0.5);
+    }
+
+    function getGateDisplayValue(gate) {
+        return getGateDisplayParts(gate)[0];
     }
 
     function getGateDisplayUnit(gate) {
+        return getGateDisplayParts(gate)[1];
+    }
+
+    function getGateDisplayParts(gate) {
         if (isGoalGate(gate)) {
-            return "";
+            return [Ui.loadResource(Rez.Strings.GoalLabel), ""];
         }
-        return "km";
+        return GateDistanceUtils.formatCompactDistanceParts(getGateDistanceKm(gate));
     }
 
     function getGateCutoffDayOffset(gate) {
@@ -127,18 +134,30 @@ module GateRaceData {
     }
 
     function getAidDistanceKm(aid) {
+        var aidDistanceMeters = getAidDistanceMeters(aid);
+        if (aidDistanceMeters == null) {
+            return null;
+        }
+        return aidDistanceMeters / 1000.0;
+    }
+
+    function getAidDistanceMeters(aid) {
         if (aid == null) {
             return null;
         }
-        return aid / 10.0;
+        return aid;
     }
 
     function getAidDisplayValue(aid) {
-        return GateDistanceUtils.formatCompactDistanceTenthKmValue(aid);
+        return getAidDisplayParts(aid)[0];
     }
 
     function getAidDisplayUnit(aid) {
-        return "km";
+        return getAidDisplayParts(aid)[1];
+    }
+
+    function getAidDisplayParts(aid) {
+        return GateDistanceUtils.formatCompactDistanceParts(getAidDistanceKm(aid));
     }
 
     function _getGateValue(gate, index) {
@@ -149,5 +168,12 @@ module GateRaceData {
             return null;
         }
         return gate[index];
+    }
+
+    function _distanceKmToMeters(distanceKm) {
+        if (distanceKm == null) {
+            return null;
+        }
+        return Math.floor((distanceKm * 1000.0) + 0.5);
     }
 }
