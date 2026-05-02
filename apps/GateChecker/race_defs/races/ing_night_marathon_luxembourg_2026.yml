@@ -1,0 +1,31 @@
+race_key: ing_night_marathon_luxembourg_2026
+
+display_name:
+  jpn: "ルクセンブルク ナイトマラソン2026"
+  eng: "ING Night Marathon Luxembourg 2026"
+
+race:
+  date: "2026/05/16"
+  timezone: "Europe/Luxembourg"
+  distance_km: 42.195
+
+gates:
+  - point: GOAL
+    cutoff: "2026/05/17 01:00"
+
+aids:
+  - km: 5.0
+  - km: 7.5
+  - km: 10.0
+  - km: 12.5
+  - km: 15.0
+  - km: 17.5
+  - km: 20.0
+  - km: 22.5
+  - km: 25.0
+  - km: 27.5
+  - km: 30.0
+  - km: 32.5
+  - km: 35.0
+  - km: 37.5
+  - km: 40.0

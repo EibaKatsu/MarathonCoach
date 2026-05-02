@@ -27,3 +27,23 @@ races:
     app_id: 2c112e57-c887-483a-a989-83651cd0b951
     definition: races/gatechecker_mile_sample_2026.yml
     version: 0.1.0
+  tartan_ottawa_international_marathon_2026:
+    app_id: bc7e02d5-9778-4e03-8ed8-d6b986d8dfc6
+    definition: races/tartan_ottawa_international_marathon_2026.yml
+    version: 0.1.0
+  stockholm_marathon_2026:
+    app_id: ebe0b2bf-a312-4e3f-b0c5-b6483a1f940f
+    definition: races/stockholm_marathon_2026.yml
+    version: 0.1.0
+  cleveland_marathon_2026:
+    app_id: 396c147b-b3d1-45ad-9969-1d8d5652afc6
+    definition: races/cleveland_marathon_2026.yml
+    version: 0.1.0
+  kurobe_meisui_marathon_2026:
+    app_id: 7d88321e-96e6-42ed-ac95-70baff556612
+    definition: races/kurobe_meisui_marathon_2026.yml
+    version: 0.1.0
+  ing_night_marathon_luxembourg_2026:
+    app_id: 737184ed-a25a-4446-a4f9-ecfdc9fe4ff1
+    definition: races/ing_night_marathon_luxembourg_2026.yml
+    version: 0.1.0
