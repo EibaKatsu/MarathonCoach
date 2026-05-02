@@ -294,8 +294,6 @@ def format_race_date_jpn(value: date) -> str:
 
 def format_race_date_eng(value: date) -> str:
     return f"{value.strftime('%B')} {value.day}, {value.year}"
-
-
 def render_gate_line_jpn(gate: Gate) -> str:
     return f"・{gate.label}: {format_distance(gate.distance_value, gate.distance_unit)} / {gate.cutoff_time}"
 
