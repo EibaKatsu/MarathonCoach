@@ -47,12 +47,13 @@ module GateDistanceUtils {
     }
 
     function formatCompactDistanceParts(distanceKm) {
-        var unit = getDisplayDistanceUnit();
+        var unitSetting = _getDistanceUnitsSetting();
+        var unit = _distanceUnitsSettingToDisplayUnit(unitSetting);
         if (distanceKm == null) {
             return ["--.-", unit];
         }
 
-        return [_formatTenthDistance(_convertKmToDisplayDistance(distanceKm, unit)), unit];
+        return [_formatTenthDistance(_convertKmToDisplayDistance(distanceKm, unitSetting)), unit];
     }
 
     function formatDistanceTenthKm(distanceTenthKm) {
@@ -94,12 +95,13 @@ module GateDistanceUtils {
     }
 
     function formatLiveDistanceParts(distanceKm) {
-        var unit = getDisplayDistanceUnit();
+        var unitSetting = _getDistanceUnitsSetting();
+        var unit = _distanceUnitsSettingToDisplayUnit(unitSetting);
         if (distanceKm == null) {
             return ["--.--", unit];
         }
 
-        var displayDistance = _convertKmToDisplayDistance(distanceKm, unit);
+        var displayDistance = _convertKmToDisplayDistance(distanceKm, unitSetting);
         if (displayDistance < 1.0) {
             return [_formatHundredthDistance(displayDistance), unit];
         }
@@ -107,10 +109,7 @@ module GateDistanceUtils {
     }
 
     function getDisplayDistanceUnit() {
-        if (_getDistanceUnitsSetting() == Sys.UNIT_STATUTE) {
-            return DISPLAY_UNIT_MI;
-        }
-        return DISPLAY_UNIT_KM;
+        return _distanceUnitsSettingToDisplayUnit(_getDistanceUnitsSetting());
     }
 
     function formatCloseTime(closeHour, closeMinute) {
@@ -129,11 +128,11 @@ module GateDistanceUtils {
         );
     }
 
-    function _convertKmToDisplayDistance(distanceKm, unit) {
+    function _convertKmToDisplayDistance(distanceKm, unitSetting) {
         if (distanceKm == null) {
             return null;
         }
-        if (unit == DISPLAY_UNIT_MI) {
+        if (unitSetting == Sys.UNIT_STATUTE) {
             return distanceKm / KM_PER_MILE;
         }
         return distanceKm;
@@ -148,6 +147,13 @@ module GateDistanceUtils {
         } catch (e) {
         }
         return Sys.UNIT_METRIC;
+    }
+
+    function _distanceUnitsSettingToDisplayUnit(unitSetting) {
+        if (unitSetting == Sys.UNIT_STATUTE) {
+            return DISPLAY_UNIT_MI;
+        }
+        return DISPLAY_UNIT_KM;
     }
 
     function _formatTenthDistance(distance) {
