@@ -2,19 +2,19 @@ module GateRaceConfig {
     const GOAL = -1;
 
     function getRaceKey() {
-        return "flying_pig_marathon_2026";
+        return "pittsburgh_marathon_2026";
     }
 
     function getRaceNameJpn() {
-        return "シンシナティ フライング・ピッグ・マラソン2026";
+        return "ピッツバーグマラソン2026";
     }
 
     function getRaceNameEng() {
-        return "Flying Pig Marathon 2026";
+        return "Pittsburgh Marathon 2026";
     }
 
     function getRaceDistanceKm() {
-        return 42.195;
+        return 42.19500007008;
     }
 
     function getRaceYear() {
@@ -39,12 +39,14 @@ module GateRaceConfig {
     //   GOAL = GateRaceConfig.GOAL
     function getGates() {
         return [
-            [28200, 0, 735],
-            [GOAL, 0, 809]
+            [7081, 0, 520],
+            [13036, 0, 580],
+            [17059, 0, 640],
+            [GOAL, 0, 840]
         ];
     }
 
     function getAids() {
-        return [2400, 4500, 7400, 9500, 11400, 13500, 14000, 15900, 18000, 19800, 21400, 23700, 25400, 26700, 29500, 31400, 33500, 34400, 36500, 38500, 38600, 40600];
+        return [3219, 5955, 8530, 9978, 12875, 14645, 15772, 15933, 17059, 19956, 20117, 21726, 24301, 26554, 28485, 30256, 31865, 33152, 35727, 37176, 39268, 40877];
     }
 }

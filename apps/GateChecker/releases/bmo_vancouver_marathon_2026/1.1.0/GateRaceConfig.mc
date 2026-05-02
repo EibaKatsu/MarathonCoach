@@ -2,15 +2,15 @@ module GateRaceConfig {
     const GOAL = -1;
 
     function getRaceKey() {
-        return "flying_pig_marathon_2026";
+        return "bmo_vancouver_marathon_2026";
     }
 
     function getRaceNameJpn() {
-        return "シンシナティ フライング・ピッグ・マラソン2026";
+        return "BMOバンクーバーマラソン2026";
     }
 
     function getRaceNameEng() {
-        return "Flying Pig Marathon 2026";
+        return "BMO Vancouver Marathon 2026";
     }
 
     function getRaceDistanceKm() {
@@ -30,7 +30,7 @@ module GateRaceConfig {
     }
 
     function getRaceTimezone() {
-        return "America/New_York";
+        return "America/Vancouver";
     }
 
     // [point, cutoffDayOffset, cutoffMinuteOfDay]
@@ -39,12 +39,12 @@ module GateRaceConfig {
     //   GOAL = GateRaceConfig.GOAL
     function getGates() {
         return [
-            [28200, 0, 735],
-            [GOAL, 0, 809]
+            [30000, 0, 750],
+            [GOAL, 0, 870]
         ];
     }
 
     function getAids() {
-        return [2400, 4500, 7400, 9500, 11400, 13500, 14000, 15900, 18000, 19800, 21400, 23700, 25400, 26700, 29500, 31400, 33500, 34400, 36500, 38500, 38600, 40600];
+        return [5200, 8900, 10800, 12700, 16100, 17800, 21100, 24400, 25800, 28500, 30800, 32400, 34000, 36700, 38400, 39800];
     }
 }

@@ -10,39 +10,41 @@
 
 次の関門までの距離、残り時間、関門時刻、次のエイドまでの距離を1画面に表示します。
 
-「次の関門まであと何km？」
+「次の関門まであとどれくらい？」
 「まだ間に合う？」
 「次のエイドはどこ？」
 
 そんな不安を減らし、ゴールまで落ち着いて進むためのガイドです。
 
 【関門情報】
-・G1: 7.1km / 08:40
-・G2: 13.0km / 09:40
-・G3: 17.1km / 10:40
-・GOAL: 42.2km / 13:59
+・G1: 4.4mi / 08:40
+・G2: 8.1mi / 09:40
+・G3: 10.6mi / 10:40
+・GOAL: 26.2mi / 14:00
 
 【AID情報】
-・3.2km
-・6.0km
-・8.5km
-・10.0km
-・12.9km
-・14.6km
-・15.9km: BPN Go Gel
-・17.1km
-・20.0km: BPN Go Gel
-・21.7km
-・24.3km
-・26.6km
-・28.5km
-・30.3km
-・31.9km
-・33.2km: BPN Go Gel
-・35.7km
-・37.2km
-・39.3km
-・40.9km
+・2.0mi
+・3.7mi
+・5.3mi
+・6.2mi
+・8.0mi
+・9.1mi
+・9.8mi: BPN Go Gel
+・9.9mi
+・10.6mi
+・12.4mi
+・12.5mi: BPN Go Gel
+・13.5mi
+・15.1mi
+・16.5mi
+・17.7mi
+・18.8mi
+・19.8mi
+・20.6mi: BPN Go Gel
+・22.2mi
+・23.1mi
+・24.4mi
+・25.4mi
 
 ※本アプリの関門・エイド情報は、作成時点で確認した大会情報を元に設定しています。
 ※大会運営による変更、天候・コース変更、ウェーブスタート、公式情報の更新などにより、実際の関門時刻・エイド地点と異なる場合があります。
@@ -65,32 +67,34 @@ It shows the next cutoff point, cutoff time, remaining distance, remaining time,
 Reduce uncertainty during the race and keep moving calmly toward the finish.
 
 Cutoff points:
-- G1: 7.1 km / 08:40
-- G2: 13.0 km / 09:40
-- G3: 17.1 km / 10:40
-- GOAL: 42.2 km / 13:59
+- G1: 4.4mi / 08:40
+- G2: 8.1mi / 09:40
+- G3: 10.6mi / 10:40
+- GOAL: 26.2mi / 14:00
 
 Aid stations:
-- 3.2 km
-- 6.0 km
-- 8.5 km
-- 10.0 km
-- 12.9 km
-- 14.6 km
-- 15.9 km: BPN Go Gel
-- 17.1 km
-- 20.0 km: BPN Go Gel
-- 21.7 km
-- 24.3 km
-- 26.6 km
-- 28.5 km
-- 30.3 km
-- 31.9 km
-- 33.2 km: BPN Go Gel
-- 35.7 km
-- 37.2 km
-- 39.3 km
-- 40.9 km
+- 2.0mi
+- 3.7mi
+- 5.3mi
+- 6.2mi
+- 8.0mi
+- 9.1mi
+- 9.8mi: BPN Go Gel
+- 9.9mi
+- 10.6mi
+- 12.4mi
+- 12.5mi: BPN Go Gel
+- 13.5mi
+- 15.1mi
+- 16.5mi
+- 17.7mi
+- 18.8mi
+- 19.8mi
+- 20.6mi: BPN Go Gel
+- 22.2mi
+- 23.1mi
+- 24.4mi
+- 25.4mi
 
 Note:
 The cutoff and aid station data in this app is based on event information available at the time of creation.

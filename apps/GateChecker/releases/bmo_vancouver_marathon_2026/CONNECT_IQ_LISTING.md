@@ -10,7 +10,7 @@
 
 次の関門までの距離、残り時間、関門時刻、次のエイドまでの距離を1画面に表示します。
 
-「次の関門まであと何km？」
+「次の関門まであとどれくらい？」
 「まだ間に合う？」
 「次のエイドはどこ？」
 
@@ -59,26 +59,26 @@ It shows the next cutoff point, cutoff time, remaining distance, remaining time,
 Reduce uncertainty during the race and keep moving calmly toward the finish.
 
 Cutoff points:
-- G1: 30.0 km / 12:30
-- GOAL: 42.2 km / 14:30
+- G1: 30.0km / 12:30
+- GOAL: 42.2km / 14:30
 
 Aid stations:
-- 5.2 km
-- 8.9 km
-- 10.8 km
-- 12.7 km
-- 16.1 km
-- 17.8 km
-- 21.1 km
-- 24.4 km
-- 25.8 km
-- 28.5 km
-- 30.8 km
-- 32.4 km
-- 34.0 km
-- 36.7 km
-- 38.4 km
-- 39.8 km
+- 5.2km
+- 8.9km
+- 10.8km
+- 12.7km
+- 16.1km
+- 17.8km
+- 21.1km
+- 24.4km
+- 25.8km
+- 28.5km
+- 30.8km
+- 32.4km
+- 34.0km
+- 36.7km
+- 38.4km
+- 39.8km
 
 Note:
 The cutoff and aid station data in this app is based on event information available at the time of creation.

@@ -512,8 +512,20 @@ class GateCheckerField extends Ui.DataField {
     }
 
     function _formatGateRemainingTimeValue(remainingSec) {
-        var remainingText = GateRemainingTime.formatRemainingDuration(remainingSec);
-        if (remainingSec == null or remainingSec >= 0) {
+        if (remainingSec == null) {
+            return "--:--";
+        }
+
+        var absSec = remainingSec;
+        if (absSec < 0) {
+            absSec = -absSec;
+        }
+
+        var totalMinutes = Math.floor((absSec + 59) / 60);
+        var hourPart = Math.floor(totalMinutes / 60);
+        var minPart = totalMinutes - (hourPart * 60);
+        var remainingText = hourPart.format("%d") + "h" + minPart.format("%02d");
+        if (remainingSec >= 0) {
             return remainingText;
         }
         return "-" + remainingText;

@@ -186,6 +186,32 @@ open "$CONNECTIQ_HOME/bin/ConnectIQ.app"
   fr57042mm
 ```
 
+If your local Connect IQ Simulator refuses newly added GateChecker race executables with
+`Unable to connect to simulator.`, use the GateChecker simulator slot script instead:
+
+```bash
+apps/GateChecker/scripts/send_gatechecker_race_to_simulator.sh gatechecker_mile_sample_2026 fr57042mm
+```
+
+Behavior:
+
+- It builds the requested race normally under `apps/GateChecker/dist/<race_key>/`
+- It sends the app through a known-good simulator slot path
+- By default it retries `gatechecker_beta_check_2026`, `toyama_marathon_2026`, then `iwate_oshu_kirameki_marathon_2026`
+- Pin a single slot when needed with `GATECHECKER_SIM_SLOT_RACE=toyama_marathon_2026`
+
+Example:
+
+```bash
+GATECHECKER_SIM_SLOT_RACE=iwate_oshu_kirameki_marathon_2026 \
+  apps/GateChecker/scripts/send_gatechecker_race_to_simulator.sh flying_pig_marathon_2026 fr57042mm
+```
+
+Note:
+
+- The slot script temporarily overwrites the slot `.prg` in `apps/GateChecker/dist/<slot_race_key>/`
+- Rebuild the slot race later if you want to restore that artifact on disk
+
 Because this app is a data field, activity recording does not start automatically. After `monkeydo`, use the simulator menu:
 
 1. `Simulation > FIT Data > Simulate`

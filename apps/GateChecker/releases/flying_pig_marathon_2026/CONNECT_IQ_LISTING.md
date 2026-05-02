@@ -10,39 +10,41 @@
 
 次の関門までの距離、残り時間、関門時刻、次のエイドまでの距離を1画面に表示します。
 
-「次の関門まであと何km？」
+「次の関門まであとどれくらい？」
 「まだ間に合う？」
 「次のエイドはどこ？」
 
 そんな不安を減らし、ゴールまで落ち着いて進むためのガイドです。
 
 【関門情報】
-・G1: 28.2km / 12:15
-・GOAL: 42.2km / 13:29
+・G1: 17.5mi / 12:15
+・GOAL: 26.2mi / 13:30
 
 【AID情報】
-・2.4km
-・4.5km
-・7.4km
-・9.5km
-・11.4km
-・13.5km
-・14.0km
-・15.9km
-・18.0km
-・19.8km: Honey Stinger Energy Chews
-・21.4km
-・23.7km
-・25.4km
-・26.7km
-・29.5km
-・31.4km
-・33.5km: Honey Stinger Energy Chews
-・34.4km
-・36.5km
-・38.5km
-・38.6km
-・40.6km
+・1.0mi
+・2.0mi
+・3.0mi
+・4.0mi
+・5.0mi
+・6.0mi
+・7.0mi
+・9.0mi
+・10.0mi
+・11.0mi
+・12.0mi
+・13.0mi
+・14.0mi
+・15.0mi
+・16.0mi
+・17.0mi
+・18.0mi: GU Energy Gel
+・19.0mi
+・20.0mi
+・21.0mi: GU Energy Gel
+・22.0mi
+・23.0mi
+・24.0mi
+・25.0mi
 
 ※本アプリの関門・エイド情報は、作成時点で確認した大会情報を元に設定しています。
 ※大会運営による変更、天候・コース変更、ウェーブスタート、公式情報の更新などにより、実際の関門時刻・エイド地点と異なる場合があります。
@@ -65,32 +67,34 @@ It shows the next cutoff point, cutoff time, remaining distance, remaining time,
 Reduce uncertainty during the race and keep moving calmly toward the finish.
 
 Cutoff points:
-- G1: 28.2 km / 12:15
-- GOAL: 42.2 km / 13:29
+- G1: 17.5mi / 12:15
+- GOAL: 26.2mi / 13:30
 
 Aid stations:
-- 2.4 km
-- 4.5 km
-- 7.4 km
-- 9.5 km
-- 11.4 km
-- 13.5 km
-- 14.0 km
-- 15.9 km
-- 18.0 km
-- 19.8 km: Honey Stinger Energy Chews
-- 21.4 km
-- 23.7 km
-- 25.4 km
-- 26.7 km
-- 29.5 km
-- 31.4 km
-- 33.5 km: Honey Stinger Energy Chews
-- 34.4 km
-- 36.5 km
-- 38.5 km
-- 38.6 km
-- 40.6 km
+- 1.0mi
+- 2.0mi
+- 3.0mi
+- 4.0mi
+- 5.0mi
+- 6.0mi
+- 7.0mi
+- 9.0mi
+- 10.0mi
+- 11.0mi
+- 12.0mi
+- 13.0mi
+- 14.0mi
+- 15.0mi
+- 16.0mi
+- 17.0mi
+- 18.0mi: GU Energy Gel
+- 19.0mi
+- 20.0mi
+- 21.0mi: GU Energy Gel
+- 22.0mi
+- 23.0mi
+- 24.0mi
+- 25.0mi
 
 Note:
 The cutoff and aid station data in this app is based on event information available at the time of creation.
