@@ -1,5 +1,6 @@
 using Toybox.Application as App;
 using Toybox.WatchUi as Ui;
+using GateRaceData;
 
 class GateCheckerApp extends App.AppBase {
     function initialize() {
@@ -11,6 +12,7 @@ class GateCheckerApp extends App.AppBase {
     }
 
     function onSettingsChanged() {
+        GateRaceData.resetSelectedCourseCache();
         Ui.requestUpdate();
     }
 }

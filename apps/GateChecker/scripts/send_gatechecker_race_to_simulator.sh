@@ -19,6 +19,7 @@ SIM_EXEC_PATH="${SIM_APP_PATH}/Contents/MacOS/simulator"
 TARGET_DIR="$APP_DIR/dist/$RACE_KEY"
 TARGET_PRG="$TARGET_DIR/gatechecker-${RACE_KEY}-${DEVICE_ID}.prg"
 TARGET_DEBUG_XML="${TARGET_PRG}.debug.xml"
+TARGET_SETTINGS_JSON="${TARGET_PRG%.prg}-settings.json"
 
 typeset -a SLOT_RACE_KEYS
 if [[ -n "${GATECHECKER_SIM_SLOT_RACE:-}" ]]; then
@@ -94,6 +95,19 @@ prepare_slot_artifact() {
   echo "$slot_prg"
 }
 
+build_settings_send_spec() {
+  local send_prg="$1"
+  local send_prg_base="${send_prg:t:r}"
+  local send_settings_name
+  send_settings_name="$(echo "${send_prg_base}-settings.json" | tr '[:lower:]' '[:upper:]')"
+
+  if [[ ! -f "$TARGET_SETTINGS_JSON" ]]; then
+    return 1
+  fi
+
+  echo "$TARGET_SETTINGS_JSON:GARMIN/Settings/$send_settings_name"
+}
+
 if [[ -z "${CONNECTIQ_HOME:-}" ]]; then
   echo "ERROR: CONNECTIQ_HOME is not set." >&2
   exit 1
@@ -117,6 +131,12 @@ SUCCESS_LOG=""
 for slot_race_key in "${SLOT_RACE_KEYS[@]}"; do
   SEND_PRG="$(prepare_slot_artifact "$slot_race_key")"
   ATTEMPT_LOG="$(mktemp)"
+  SETTINGS_SEND_SPEC=""
+  if SETTINGS_SEND_SPEC="$(build_settings_send_spec "$SEND_PRG")"; then
+    :
+  else
+    SETTINGS_SEND_SPEC=""
+  fi
 
   stop_stale_monkeydo
 
@@ -127,8 +147,18 @@ for slot_race_key in "${SLOT_RACE_KEYS[@]}"; do
   else
     echo "Trying direct artifact: $SEND_PRG"
   fi
+  if [[ -n "$SETTINGS_SEND_SPEC" ]]; then
+    echo "Sending settings schema: ${SETTINGS_SEND_SPEC#*:}"
+  else
+    echo "No settings schema generated for this race build"
+  fi
 
-  "$CONNECTIQ_HOME/bin/monkeydo" "$SEND_PRG" "$DEVICE_ID" >"$ATTEMPT_LOG" 2>&1 &
+  MONKEYDO_ARGS=("$SEND_PRG" "$DEVICE_ID")
+  if [[ -n "$SETTINGS_SEND_SPEC" ]]; then
+    MONKEYDO_ARGS+=("-a" "$SETTINGS_SEND_SPEC")
+  fi
+
+  "$CONNECTIQ_HOME/bin/monkeydo" "${MONKEYDO_ARGS[@]}" >"$ATTEMPT_LOG" 2>&1 &
   MONKEYDO_PID=$!
 
   sleep 3

@@ -1,5 +1,11 @@
 module GateRaceConfig {
     const GOAL = -1;
+    const COURSE_CODE = 0;
+    const COURSE_NAME_JPN = 1;
+    const COURSE_NAME_ENG = 2;
+    const COURSE_DISTANCE_KM = 3;
+    const COURSE_GATES = 4;
+    const COURSE_AIDS = 5;
 
     function getRaceKey() {
         return $race_key_literal;
@@ -11,10 +17,6 @@ module GateRaceConfig {
 
     function getRaceNameEng() {
         return $race_name_eng_literal;
-    }
-
-    function getRaceDistanceKm() {
-        return $race_distance_km;
     }
 
     function getRaceYear() {
@@ -33,17 +35,26 @@ module GateRaceConfig {
         return $race_timezone_literal;
     }
 
-    // [point, cutoffDayOffset, cutoffMinuteOfDay]
+    function getDefaultCourseCode() {
+        return $default_course_code_literal;
+    }
+
+    // [
+    //   courseCode,
+    //   courseNameJpn,
+    //   courseNameEng,
+    //   distanceKm,
+    //   gates,
+    //   aids
+    // ]
+    //
+    // gates item: [point, cutoffDayOffset, cutoffMinuteOfDay]
     // point:
     //   numeric = distanceMeters
     //   GOAL = GateRaceConfig.GOAL
-    function getGates() {
+    function getCourses() {
         return [
-$gates_body
+$courses_body
         ];
-    }
-
-    function getAids() {
-        return [$aids_body];
     }
 }
