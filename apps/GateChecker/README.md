@@ -184,8 +184,10 @@ Numeric points are stored as meters. That keeps `GOAL` distinct from numeric poi
 Generated `resources/properties.xml` behavior:
 
 - If the race resolves to exactly one course, no `courseCode` setting is generated
-- If the race has two or more courses, a `courseCode` string setting is generated
-- The Garmin settings screen shows the valid `courseCode` values in the title, and the value itself is entered as text
+- If the race has two or more courses, a `courseIndex` list setting is generated
+- The Garmin settings screen shows a pull-down list labeled `Course / コース`
+- Each list item displays `courseNameJa / courseNameEn`, while `race_defs` still keep the stable `courseCode`
+- The generated resources also keep an internal `courseCode` default so the runtime can resolve a stable course identifier behind the pull-down
 - The generated default is `defaultCourseCode`
 - For simulator-only verification, `GATECHECKER_DEFAULT_COURSE_CODE_OVERRIDE=<course_code>` can temporarily replace the generated default
 
@@ -260,6 +262,7 @@ Behavior:
 - If a settings schema exists, it is sent to `GARMIN/Settings/...-settings.json`
 - `--course` sets `GATECHECKER_DEFAULT_COURSE_CODE_OVERRIDE`, which changes the generated default course for that simulator build only
 - If no `--course` is passed and the race has one course, no settings file is generated or sent
+- If the race has multiple courses, the simulator receives a settings schema with the course pull-down entries
 - Pin a single slot when needed with `GATECHECKER_SIM_SLOT_RACE=toyama_marathon_2026`
 
 Examples:
@@ -292,8 +295,8 @@ Because this app is a data field, activity recording does not start automaticall
 - If all AIDs are passed, the UI keeps a stable `AID --` style display instead of breaking
 - Course resolution order is:
   1. If there is exactly one course, use it
-  2. Otherwise try `courseCode` from properties
+  2. Otherwise try the course selected by the `courseIndex` pull-down
   3. Fall back to `defaultCourseCode`
   4. Fall back to `courses[0]`
   5. If nothing is usable, stay in a safe no-course/no-gate state instead of crashing
-- Invalid `courseCode` values do not crash the app; they fall back to the default or first course
+- Invalid course selections do not crash the app; they fall back to the default or first course

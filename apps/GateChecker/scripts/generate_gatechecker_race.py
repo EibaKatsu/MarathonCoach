@@ -659,6 +659,19 @@ def build_courses_body(courses: list[CourseMeta]) -> str:
     return ",\n".join(rendered)
 
 
+def get_default_course_index(race: RaceMeta) -> int:
+    for index, course in enumerate(race.courses):
+        if course.course_code == race.default_course_code:
+            return index
+    return 0
+
+
+def build_course_setting_label(course: CourseMeta) -> str:
+    if course.course_name_jpn == course.course_name_eng:
+        return course.course_name_jpn
+    return f"{course.course_name_jpn} / {course.course_name_eng}"
+
+
 def build_properties_text(race: RaceMeta) -> str:
     if len(race.courses) <= 1:
         return (
@@ -667,17 +680,25 @@ def build_properties_text(race: RaceMeta) -> str:
             "</resources>\n"
         )
 
-    valid_codes = ", ".join(course.course_code for course in race.courses)
+    default_course_index = get_default_course_index(race)
+    list_entries = "\n".join(
+        f'                <listEntry value="{index}">'
+        f"{xml_escape(build_course_setting_label(course))}</listEntry>"
+        for index, course in enumerate(race.courses)
+    )
     return (
         '<resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
         'xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">\n'
         "    <properties>\n"
         f'        <property id="courseCode" type="string">{xml_escape(race.default_course_code)}</property>\n'
+        f'        <property id="courseIndex" type="number">{default_course_index}</property>\n'
         "    </properties>\n"
         "\n"
         "    <settings>\n"
-        f'        <setting propertyKey="@Properties.courseCode" title="Course Code / コースコード ({xml_escape(valid_codes)})">\n'
-        '            <settingConfig type="alphaNumeric"></settingConfig>\n'
+        '        <setting propertyKey="@Properties.courseIndex" title="Course / コース">\n'
+        '            <settingConfig type="list">\n'
+        f"{list_entries}\n"
+        "            </settingConfig>\n"
         "        </setting>\n"
         "    </settings>\n"
         "</resources>\n"

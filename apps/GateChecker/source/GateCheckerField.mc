@@ -300,6 +300,19 @@ class GateCheckerField extends Ui.DataField {
     }
 
     function _loadViewState(info) {
+        var currentDistanceKm = GateDistanceUtils.extractElapsedDistanceKm(info);
+        if (currentDistanceKm == null) {
+            _displayState = GateDisplayModel.STATE_WAIT_DIST;
+            _singleText = Ui.loadResource(Rez.Strings.WaitDist);
+            _line1Text = "";
+            _line2Text = "";
+            _line3LeftText = "";
+            _line3RightText = "";
+            _line3LeftColor = Gfx.COLOR_WHITE;
+            _line4Text = "";
+            return;
+        }
+
         var gates = GateRaceData.getGates();
         var aids = GateRaceData.getAids();
         var nextGateConfig = GateNextSelector.newDefaultConfig();
@@ -309,7 +322,6 @@ class GateCheckerField extends Ui.DataField {
         var paceJudgeConfig = GatePaceJudge.newDefaultConfig();
         var requiredPaceConfig = GateRequiredPace.newDefaultConfig();
         var remainingTimeConfig = GateRemainingTime.newDefaultConfig();
-        var currentDistanceKm = GateDistanceUtils.extractElapsedDistanceKm(info);
         _currentPaceConfig = GateCurrentPace.updateCurrentPace(_currentPaceConfig, info, currentDistanceKm);
         nextGateConfig = GateNextSelector.selectNextGate(gates, currentDistanceKm);
         nextAidConfig = GateAidSelector.selectNextAid(aids, currentDistanceKm);
@@ -771,9 +783,9 @@ class GateCheckerField extends Ui.DataField {
     function _resolveLocalizedCourseName() {
         var appName = Ui.loadResource(Rez.Strings.AppName);
         if (appName != null and appName.equals("関門ガイド")) {
-            return GateRaceData.getSelectedCourseNameJpn();
+            return GateRaceData.getPreStartCourseNameJpn();
         }
-        return GateRaceData.getSelectedCourseNameEng();
+        return GateRaceData.getPreStartCourseNameEng();
     }
 
     function _resolvePreStartMaxWidth(dc) {
