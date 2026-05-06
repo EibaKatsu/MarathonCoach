@@ -47,3 +47,7 @@ races:
     app_id: 737184ed-a25a-4446-a4f9-ecfdc9fe4ff1
     definition: races/ing_night_marathon_luxembourg_2026.yml
     version: 0.1.0
+  sample_multi_course:
+    app_id: 8efe4e50-38b8-49c3-acad-3797de088084
+    definition: races/sample_multi_course.yml
+    version: 0.1.0

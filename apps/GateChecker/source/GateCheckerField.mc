@@ -565,6 +565,9 @@ class GateCheckerField extends Ui.DataField {
         var line =
             "[GATE_RACE_DIAG]" +
             " raceKey=" + _diagValue(GateRaceData.getRaceKey()) +
+            " requestedCourse=" + _diagValue(GateRaceData.getRequestedCourseCode()) +
+            " selectedCourse=" + _diagValue(GateRaceData.getSelectedCourseCode()) +
+            " courseReason=" + _diagValue(GateRaceData.getSelectedCourseReason()) +
             " gateCount=" + _diagValue(gateCount) +
             " aidCount=" + _diagValue(aidCount) +
             " firstGate=" + _diagValue(firstGateSummary) +
@@ -715,26 +718,33 @@ class GateCheckerField extends Ui.DataField {
     function _drawPreStartSplash(dc, centerX, centerY) {
         var appName = Ui.loadResource(Rez.Strings.AppName);
         var raceName = _resolveLocalizedRaceName();
+        var courseName = _resolveLocalizedCourseName();
         var statusText = _singleText;
         var maxWidth = _resolvePreStartMaxWidth(dc);
         var appNameFont = _resolvePreStartTextFont(dc, Gfx.FONT_SMALL, appName, maxWidth);
         var raceNameFont = _resolvePreStartTextFont(dc, Gfx.FONT_XTINY, raceName, maxWidth);
+        var courseNameFont = _resolvePreStartTextFont(dc, Gfx.FONT_SYSTEM_XTINY, courseName, maxWidth);
         var statusFont = Gfx.FONT_SYSTEM_XTINY;
         var appNameLines = _wrapTextLines(dc, appName, appNameFont, maxWidth);
         var raceNameLines = _wrapTextLines(dc, raceName, raceNameFont, maxWidth);
+        var courseNameLines = _wrapTextLines(dc, courseName, courseNameFont, maxWidth);
         var appNameHeight = _measureWrappedTextHeight(dc, appNameLines, appNameFont);
         var raceNameHeight = _measureWrappedTextHeight(dc, raceNameLines, raceNameFont);
+        var courseNameHeight = _measureWrappedTextHeight(dc, courseNameLines, courseNameFont);
         var statusHeight = _measureTextHeight(dc, statusText, statusFont);
         var topGap = 4;
+        var courseGap = 3;
         var bottomGap = 10;
-        var totalHeight = appNameHeight + topGap + raceNameHeight + bottomGap + statusHeight;
+        var totalHeight = appNameHeight + topGap + raceNameHeight + courseGap + courseNameHeight + bottomGap + statusHeight;
         var topY = centerY - Math.floor(totalHeight / 2);
         var appNameY = topY;
         var raceNameY = appNameY + appNameHeight + topGap;
-        var statusY = raceNameY + raceNameHeight + bottomGap;
+        var courseNameY = raceNameY + raceNameHeight + courseGap;
+        var statusY = courseNameY + courseNameHeight + bottomGap;
 
         _drawWrappedCenteredLines(dc, centerX, appNameY, appNameLines, appNameFont, Gfx.COLOR_WHITE);
         _drawWrappedCenteredLines(dc, centerX, raceNameY, raceNameLines, raceNameFont, Gfx.COLOR_WHITE);
+        _drawWrappedCenteredLines(dc, centerX, courseNameY, courseNameLines, courseNameFont, Gfx.COLOR_WHITE);
         _drawCenteredLine(dc, centerX, statusY, statusFont, statusText, Gfx.COLOR_WHITE, false);
     }
 
@@ -756,6 +766,14 @@ class GateCheckerField extends Ui.DataField {
             return GateRaceData.getRaceNameJpn();
         }
         return GateRaceData.getRaceNameEng();
+    }
+
+    function _resolveLocalizedCourseName() {
+        var appName = Ui.loadResource(Rez.Strings.AppName);
+        if (appName != null and appName.equals("関門ガイド")) {
+            return GateRaceData.getSelectedCourseNameJpn();
+        }
+        return GateRaceData.getSelectedCourseNameEng();
     }
 
     function _resolvePreStartMaxWidth(dc) {

@@ -2,6 +2,14 @@ using Toybox.Application.Properties as Props;
 
 module GateSettingsLoader {
     function loadGateCode(key) {
+        return loadStringProperty(key);
+    }
+
+    function loadCourseCode() {
+        return loadStringProperty("courseCode");
+    }
+
+    function loadStringProperty(key) {
         var value = getPropertyValue(key);
         if (value == null) {
             return "";

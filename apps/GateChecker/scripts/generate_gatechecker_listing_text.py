@@ -48,6 +48,10 @@ class RaceListing:
     event_name_jpn: str
     event_name_eng: str
     race_date: date
+    course_name_jpn: str | None
+    course_name_eng: str | None
+    available_courses_jpn: list[str]
+    available_courses_eng: list[str]
     gates: list[Gate]
     aids: list[Aid]
 
@@ -141,6 +145,113 @@ def parse_distance_fields(
     )
 
 
+def parse_optional_distance_fields(
+    raw_mapping: dict[str, Any],
+    km_key: str,
+    mi_key: str,
+    label_prefix: str,
+) -> tuple[Decimal, str] | None:
+    raw_km = raw_mapping.get(km_key)
+    raw_mi = raw_mapping.get(mi_key)
+    if raw_km is None and raw_mi is None:
+        return None
+    return parse_distance_fields(raw_mapping, km_key, mi_key, label_prefix)
+
+
+def resolve_course_block(
+    data: dict[str, Any],
+    definition_path: Path,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], Decimal, str, str | None, str | None, list[str], list[str]]:
+    race = data.get("race")
+    if not isinstance(race, dict):
+        raise ValidationError(f"{definition_path}: race must be a mapping.")
+    shared_distance = parse_optional_distance_fields(
+        race,
+        "distance_km",
+        "distance_mi",
+        "race",
+    )
+
+    raw_courses = data.get("courses")
+    if raw_courses is None:
+        race_distance_value, race_distance_unit = parse_distance_fields(
+            race,
+            "distance_km",
+            "distance_mi",
+            "race",
+        )
+        raw_gates = data.get("gates")
+        raw_aids = data.get("aids")
+        return (
+            raw_gates,
+            raw_aids,
+            race_distance_value,
+            race_distance_unit,
+            None,
+            None,
+            [],
+            [],
+        )
+
+    if not isinstance(raw_courses, list) or not raw_courses:
+        raise ValidationError(f"{definition_path}: courses must contain at least one item.")
+
+    default_course_code = data.get("defaultCourseCode")
+    if default_course_code is not None and not isinstance(default_course_code, str):
+        raise ValidationError(f"{definition_path}: defaultCourseCode must be a string.")
+
+    selected_course = None
+    available_courses_jpn: list[str] = []
+    available_courses_eng: list[str] = []
+    for index, raw_course in enumerate(raw_courses):
+        if not isinstance(raw_course, dict):
+            raise ValidationError(f"{definition_path}: courses[{index}] must be a mapping.")
+        course_code = raw_course.get("courseCode")
+        course_name_jpn = raw_course.get("courseNameJa")
+        course_name_eng = raw_course.get("courseNameEn")
+        if not isinstance(course_code, str) or not course_code:
+            raise ValidationError(f"{definition_path}: courses[{index}].courseCode must be a string.")
+        if not isinstance(course_name_jpn, str) or not course_name_jpn:
+            raise ValidationError(f"{definition_path}: courses[{index}].courseNameJa must be a string.")
+        if not isinstance(course_name_eng, str) or not course_name_eng:
+            raise ValidationError(f"{definition_path}: courses[{index}].courseNameEn must be a string.")
+        available_courses_jpn.append(course_name_jpn)
+        available_courses_eng.append(course_name_eng)
+        if selected_course is None:
+            selected_course = raw_course
+        if default_course_code is not None and course_code == default_course_code:
+            selected_course = raw_course
+
+    if selected_course is None:
+        raise ValidationError(f"{definition_path}: no course could be resolved.")
+
+    course_distance = parse_optional_distance_fields(
+        selected_course,
+        "distance_km",
+        "distance_mi",
+        "selected course",
+    )
+    if course_distance is None:
+        course_distance = shared_distance
+    if course_distance is None:
+        raise ValidationError(
+            f"{definition_path}: selected course must define distance_km or distance_mi when race distance is omitted."
+        )
+
+    raw_gates = selected_course.get("gates")
+    raw_aids = selected_course.get("aids")
+    return (
+        raw_gates,
+        raw_aids,
+        course_distance[0],
+        course_distance[1],
+        selected_course.get("courseNameJa"),
+        selected_course.get("courseNameEn"),
+        available_courses_jpn,
+        available_courses_eng,
+    )
+
+
 def resolve_definition_path(identifier: str) -> Path:
     index_data = load_yaml(RACE_INDEX_PATH)
     races = index_data.get("races")
@@ -207,14 +318,17 @@ def parse_race_listing(definition_path: Path) -> RaceListing:
         raise ValidationError(
             f"{definition_path}: race.date must be in yyyy/mm/dd format."
         ) from exc
-    race_distance_value, race_distance_unit = parse_distance_fields(
-        race,
-        "distance_km",
-        "distance_mi",
-        "race",
-    )
+    (
+        raw_gates,
+        raw_aids,
+        race_distance_value,
+        race_distance_unit,
+        course_name_jpn,
+        course_name_eng,
+        available_courses_jpn,
+        available_courses_eng,
+    ) = resolve_course_block(data, definition_path)
 
-    raw_gates = data.get("gates")
     if not isinstance(raw_gates, list) or not raw_gates:
         raise ValidationError(f"{definition_path}: gates must contain at least one item.")
 
@@ -252,7 +366,6 @@ def parse_race_listing(definition_path: Path) -> RaceListing:
             )
         )
 
-    raw_aids = data.get("aids")
     if raw_aids is None:
         raw_aids = []
     if not isinstance(raw_aids, list):
@@ -283,6 +396,10 @@ def parse_race_listing(definition_path: Path) -> RaceListing:
         event_name_jpn=event_name_jpn.strip(),
         event_name_eng=event_name_eng.strip(),
         race_date=race_date,
+        course_name_jpn=course_name_jpn.strip() if isinstance(course_name_jpn, str) and course_name_jpn.strip() else None,
+        course_name_eng=course_name_eng.strip() if isinstance(course_name_eng, str) and course_name_eng.strip() else None,
+        available_courses_jpn=available_courses_jpn,
+        available_courses_eng=available_courses_eng,
         gates=gates,
         aids=aids,
     )
@@ -324,6 +441,28 @@ def render_listing_markdown(race: RaceListing) -> str:
     aid_lines_eng = "\n".join(render_aid_line_eng(aid) for aid in race.aids)
     race_date_jpn = format_race_date_jpn(race.race_date)
     race_date_eng = format_race_date_eng(race.race_date)
+    course_heading_jpn = ""
+    course_heading_eng = ""
+    course_note_jpn = ""
+    course_note_eng = ""
+
+    if race.course_name_jpn:
+        course_heading_jpn = f"\n対象コース: {race.course_name_jpn}\n"
+    if race.course_name_eng:
+        course_heading_eng = f"\nSelected course: {race.course_name_eng}\n"
+    if len(race.available_courses_jpn) > 1:
+        course_note_jpn = (
+            "\n※この大会データは複数コースに対応しています。"
+            "既定コースとして以下をもとに listing を生成しています: "
+            + " / ".join(race.available_courses_jpn)
+            + "\n"
+        )
+        course_note_eng = (
+            "\nThis race build supports multiple course options. "
+            "This listing is generated from the default course while the app can switch among: "
+            + " / ".join(race.available_courses_eng)
+            + "\n"
+        )
 
     return f"""## Japanese
 
@@ -336,6 +475,7 @@ def render_listing_markdown(race: RaceListing) -> str:
 関門ガイド for {race.event_name_jpn}（{race_date_jpn}開催） は、{race.event_name_jpn}の関門時間とエイド地点をレース中に確認できる Garmin 向けデータフィールドです。
 
 次の関門までの距離、残り時間、関門時刻、次のエイドまでの距離を1画面に表示します。
+{course_heading_jpn}
 
 「次の関門まであとどれくらい？」
 「まだ間に合う？」
@@ -348,6 +488,7 @@ def render_listing_markdown(race: RaceListing) -> str:
 
 【AID情報】
 {aid_lines_jpn}
+{course_note_jpn}
 
 ※本アプリの関門・エイド情報は、作成時点で確認した大会情報を元に設定しています。
 ※大会運営による変更、天候・コース変更、ウェーブスタート、公式情報の更新などにより、実際の関門時刻・エイド地点と異なる場合があります。
@@ -366,6 +507,7 @@ Marathon Cutoff Guide for {race.event_name_eng} ({race_date_eng})
 Marathon Cutoff Guide for {race.event_name_eng} ({race_date_eng}) is a Garmin data field for checking race cutoffs and aid stations during {race.event_name_eng}.
 
 It shows the next cutoff point, cutoff time, remaining distance, remaining time, and distance to the next aid station on one screen.
+{course_heading_eng}
 
 Reduce uncertainty during the race and keep moving calmly toward the finish.
 
@@ -374,6 +516,7 @@ Cutoff points:
 
 Aid stations:
 {aid_lines_eng}
+{course_note_eng}
 
 Note:
 The cutoff and aid station data in this app is based on event information available at the time of creation.

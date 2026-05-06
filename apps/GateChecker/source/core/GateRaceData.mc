@@ -2,11 +2,26 @@ using Toybox.Lang as Lang;
 using Toybox.Math as Math;
 using Toybox.WatchUi as Ui;
 using GateDistanceUtils;
+using GateSettingsLoader;
 
 module GateRaceData {
     const GATE_POINT = 0;
     const GATE_CUTOFF_DAY_OFFSET = 1;
     const GATE_CUTOFF_MINUTE_OF_DAY = 2;
+
+    const COURSE_CODE = 0;
+    const COURSE_NAME_JPN = 1;
+    const COURSE_NAME_ENG = 2;
+    const COURSE_DISTANCE_KM = 3;
+    const COURSE_GATES = 4;
+    const COURSE_AIDS = 5;
+
+    const RESOLVED_COURSE = 0;
+    const RESOLVED_REQUESTED_CODE = 1;
+    const RESOLVED_EFFECTIVE_CODE = 2;
+    const RESOLVED_REASON = 3;
+
+    var _resolvedCourseState = null;
 
     function getRaceNameJpn() {
         return GateRaceConfig.getRaceNameJpn();
@@ -20,8 +35,55 @@ module GateRaceData {
         return GateRaceConfig.getRaceKey();
     }
 
+    function getSelectedCourseCode() {
+        return _getResolvedCourseStateValue(RESOLVED_EFFECTIVE_CODE);
+    }
+
+    function getSelectedCourseNameJpn() {
+        var course = _getSelectedCourse();
+        var courseName = _getCourseValue(course, COURSE_NAME_JPN);
+        if (courseName == null or courseName.length() <= 0) {
+            return "NO COURSE";
+        }
+        return courseName;
+    }
+
+    function getSelectedCourseNameEng() {
+        var course = _getSelectedCourse();
+        var courseName = _getCourseValue(course, COURSE_NAME_ENG);
+        if (courseName == null or courseName.length() <= 0) {
+            return "NO COURSE";
+        }
+        return courseName;
+    }
+
+    function getSelectedCourseReason() {
+        var reason = _getResolvedCourseStateValue(RESOLVED_REASON);
+        if (reason == null) {
+            return "empty";
+        }
+        return reason;
+    }
+
+    function getRequestedCourseCode() {
+        var requestedCode = _getResolvedCourseStateValue(RESOLVED_REQUESTED_CODE);
+        if (requestedCode == null) {
+            return "";
+        }
+        return requestedCode;
+    }
+
+    function getCourseCount() {
+        var courses = GateRaceConfig.getCourses();
+        if (courses == null or !(courses instanceof Lang.Array)) {
+            return 0;
+        }
+        return courses.size();
+    }
+
     function getRaceDistanceKm() {
-        return GateRaceConfig.getRaceDistanceKm();
+        var course = _getSelectedCourse();
+        return _getCourseValue(course, COURSE_DISTANCE_KM);
     }
 
     function getRaceYear() {
@@ -37,11 +99,21 @@ module GateRaceData {
     }
 
     function getGates() as Lang.Array {
-        return GateRaceConfig.getGates();
+        var course = _getSelectedCourse();
+        var gates = _getCourseValue(course, COURSE_GATES);
+        if (gates == null or !(gates instanceof Lang.Array)) {
+            return [];
+        }
+        return gates;
     }
 
     function getAids() as Lang.Array {
-        return GateRaceConfig.getAids();
+        var course = _getSelectedCourse();
+        var aids = _getCourseValue(course, COURSE_AIDS);
+        if (aids == null or !(aids instanceof Lang.Array)) {
+            return [];
+        }
+        return aids;
     }
 
     function isGoalPoint(point) as Lang.Boolean {
@@ -158,6 +230,150 @@ module GateRaceData {
 
     function getAidDisplayParts(aid) {
         return GateDistanceUtils.formatCompactDistanceParts(getAidDistanceKm(aid));
+    }
+
+    function resetSelectedCourseCache() {
+        _resolvedCourseState = null;
+    }
+
+    function _getSelectedCourse() {
+        return _getResolvedCourseStateValue(RESOLVED_COURSE);
+    }
+
+    function _getResolvedCourseStateValue(index) {
+        var state = _resolveSelectedCourseState();
+        if (state == null or !(state instanceof Lang.Array)) {
+            return null;
+        }
+        if (index < 0 or index >= state.size()) {
+            return null;
+        }
+        return state[index];
+    }
+
+    function _resolveSelectedCourseState() {
+        var courses = GateRaceConfig.getCourses();
+        var requestedCourseCode = GateSettingsLoader.loadCourseCode();
+        var cacheKey = _buildCacheKey(courses, requestedCourseCode);
+        if (_resolvedCourseState != null and _resolvedCourseState instanceof Lang.Array) {
+            var cachedRequestedCode = _getStateValue(_resolvedCourseState, RESOLVED_REQUESTED_CODE);
+            var cachedCourse = _getStateValue(_resolvedCourseState, RESOLVED_COURSE);
+            if (
+                cacheKey == _buildCacheKey(courses, cachedRequestedCode) and
+                cachedCourse != null
+            ) {
+                return _resolvedCourseState;
+            }
+        }
+
+        _resolvedCourseState = _computeResolvedCourseState(courses, requestedCourseCode);
+        return _resolvedCourseState;
+    }
+
+    function _computeResolvedCourseState(courses, requestedCourseCode) {
+        if (courses == null or !(courses instanceof Lang.Array) or courses.size() <= 0) {
+            return [null, requestedCourseCode, null, "no_courses"];
+        }
+
+        if (courses.size() == 1) {
+            var onlyCourse = courses[0];
+            return [
+                onlyCourse,
+                requestedCourseCode,
+                _getCourseValue(onlyCourse, COURSE_CODE),
+                "single_course"
+            ];
+        }
+
+        var normalizedRequestedCode = _normalizeCourseCode(requestedCourseCode);
+        if (normalizedRequestedCode.length() > 0) {
+            var requestedCourse = _findCourseByCode(courses, normalizedRequestedCode);
+            if (requestedCourse != null) {
+                return [
+                    requestedCourse,
+                    normalizedRequestedCode,
+                    _getCourseValue(requestedCourse, COURSE_CODE),
+                    "requested_course"
+                ];
+            }
+        }
+
+        var defaultCourseCode = _normalizeCourseCode(GateRaceConfig.getDefaultCourseCode());
+        if (defaultCourseCode.length() > 0) {
+            var defaultCourse = _findCourseByCode(courses, defaultCourseCode);
+            if (defaultCourse != null) {
+                return [
+                    defaultCourse,
+                    normalizedRequestedCode,
+                    _getCourseValue(defaultCourse, COURSE_CODE),
+                    "default_course"
+                ];
+            }
+        }
+
+        var firstCourse = courses[0];
+        if (firstCourse != null) {
+            return [
+                firstCourse,
+                normalizedRequestedCode,
+                _getCourseValue(firstCourse, COURSE_CODE),
+                "first_course"
+            ];
+        }
+
+        return [null, normalizedRequestedCode, null, "no_course_match"];
+    }
+
+    function _findCourseByCode(courses, courseCode) {
+        if (courses == null or !(courses instanceof Lang.Array)) {
+            return null;
+        }
+        for (var i = 0; i < courses.size(); i += 1) {
+            var course = courses[i];
+            if (_getCourseValue(course, COURSE_CODE) == courseCode) {
+                return course;
+            }
+        }
+        return null;
+    }
+
+    function _buildCacheKey(courses, requestedCourseCode) {
+        var courseCount = 0;
+        if (courses != null and courses instanceof Lang.Array) {
+            courseCount = courses.size();
+        }
+        return courseCount.toString() + "|" + _normalizeCourseCode(requestedCourseCode);
+    }
+
+    function _normalizeCourseCode(rawCourseCode) {
+        if (rawCourseCode == null) {
+            return "";
+        }
+        var text = rawCourseCode.toString();
+        if (text.length() <= 0) {
+            return "";
+        }
+        return text;
+    }
+
+    function _getCourseValue(course, index) {
+        if (course == null or !(course instanceof Lang.Array)) {
+            return null;
+        }
+        if (index < 0 or index >= course.size()) {
+            return null;
+        }
+        return course[index];
+    }
+
+    function _getStateValue(state, index) {
+        if (state == null or !(state instanceof Lang.Array)) {
+            return null;
+        }
+        if (index < 0 or index >= state.size()) {
+            return null;
+        }
+        return state[index];
     }
 
     function _getGateValue(gate, index) {
