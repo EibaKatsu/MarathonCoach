@@ -7,6 +7,8 @@ module GateRaceConfig {
     const COURSE_GATES = 4;
     const COURSE_AIDS = 5;
 
+    var _courses = null;
+
     function getRaceKey() {
         return $race_key_literal;
     }
@@ -53,8 +55,11 @@ module GateRaceConfig {
     //   numeric = distanceMeters
     //   GOAL = GateRaceConfig.GOAL
     function getCourses() {
-        return [
+        if (_courses == null) {
+            _courses = [
 $courses_body
-        ];
+            ];
+        }
+        return _courses;
     }
 }

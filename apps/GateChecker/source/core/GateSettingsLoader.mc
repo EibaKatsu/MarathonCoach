@@ -1,15 +1,29 @@
-using Toybox.Application.Properties as Props;
+using Toybox.Application as App;
 
 module GateSettingsLoader {
     function loadGateCode(key) {
-        return loadStringProperty(key);
+        return loadPropertyString(key);
     }
 
     function loadCourseCode() {
-        return loadStringProperty("courseCode");
+        return loadPropertyString("courseCode");
     }
 
-    function loadStringProperty(key) {
+    function saveCourseCode(courseCode) {
+        if (courseCode == null or courseCode.length() <= 0) {
+            return;
+        }
+        try {
+            var app = App.getApp();
+            if (app != null) {
+                app.setProperty("courseCode", courseCode);
+                app.saveProperties();
+            }
+        } catch (e) {
+        }
+    }
+
+    function loadPropertyString(key) {
         var value = getPropertyValue(key);
         if (value == null) {
             return "";
@@ -17,11 +31,24 @@ module GateSettingsLoader {
         return value.toString();
     }
 
+    function loadAppProperties() {
+        try {
+            var app = App.getApp();
+            if (app != null) {
+                app.loadProperties();
+            }
+        } catch (e) {
+        }
+    }
+
     function getPropertyValue(key) {
         try {
-            return Props.getValue(key);
+            var app = App.getApp();
+            if (app != null) {
+                return app.getProperty(key);
+            }
         } catch (e) {
-            return null;
         }
+        return null;
     }
 }

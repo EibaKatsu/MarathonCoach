@@ -7,16 +7,18 @@ module GateRaceConfig {
     const COURSE_GATES = 4;
     const COURSE_AIDS = 5;
 
+    var _courses = null;
+
     function getRaceKey() {
-        return "flying_pig_marathon_2026";
+        return "sample_multi_course";
     }
 
     function getRaceNameJpn() {
-        return "シンシナティ フライング・ピッグ・マラソン2026";
+        return "GateChecker 複数コース確認用";
     }
 
     function getRaceNameEng() {
-        return "Flying Pig Marathon 2026";
+        return "GateChecker Multi Course Sample";
     }
 
     function getRaceYear() {
@@ -24,19 +26,19 @@ module GateRaceConfig {
     }
 
     function getRaceMonth() {
-        return 5;
+        return 10;
     }
 
     function getRaceDay() {
-        return 3;
+        return 18;
     }
 
     function getRaceTimezone() {
-        return "America/New_York";
+        return "Asia/Tokyo";
     }
 
     function getDefaultCourseCode() {
-        return "main";
+        return "full_main";
     }
 
     // [
@@ -53,18 +55,61 @@ module GateRaceConfig {
     //   numeric = distanceMeters
     //   GOAL = GateRaceConfig.GOAL
     function getCourses() {
-        return [
+        if (_courses == null) {
+            _courses = [
             [
-                "main",
-                "メインコース",
-                "Main Course",
-                42.19500007008,
+                "full_main",
+                "フルマラソン",
+                "Full Marathon",
+                42.195,
                 [
-                    [28164, 0, 735],
-                    [GOAL, 0, 810]
+                    [10000, 0, 580],
+                    [21100, 0, 675],
+                    [32000, 0, 765],
+                    [GOAL, 0, 870]
                 ],
-                [1609, 3219, 4828, 6437, 8047, 9656, 11265, 14484, 16093, 17703, 19312, 20921, 22531, 24140, 25750, 27359, 28968, 30578, 32187, 33796, 35406, 37015, 38624, 40234]
+                [5000, 10000, 15000, 21100, 28000, 35000, 39000]
+            ],
+            [
+                "full_wave2",
+                "フルマラソン 第2ウェーブ",
+                "Full Marathon Wave 2",
+                42.195,
+                [
+                    [10000, 0, 595],
+                    [21100, 0, 690],
+                    [32000, 0, 780],
+                    [GOAL, 0, 885]
+                ],
+                [5000, 10000, 15000, 21100, 28000, 35000, 39000]
+            ],
+            [
+                "ultra_100k",
+                "100K",
+                "100K",
+                100,
+                [
+                    [30000, 0, 690],
+                    [60000, 0, 945],
+                    [85000, 0, 1150],
+                    [GOAL, 0, 1260]
+                ],
+                [10000, 20000, 30000, 42000, 55000, 68000, 80000, 90000]
+            ],
+            [
+                "ultra_70k",
+                "70K",
+                "70K",
+                70,
+                [
+                    [25000, 0, 670],
+                    [50000, 0, 880],
+                    [GOAL, 0, 1040]
+                ],
+                [10000, 20000, 30000, 42000, 55000, 64000]
             ]
-        ];
+            ];
+        }
+        return _courses;
     }
 }
