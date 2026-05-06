@@ -20,6 +20,8 @@ module GateRaceData {
     const RESOLVED_REQUESTED_CODE = 1;
     const RESOLVED_REASON = 2;
 
+    var _requestedCourseCode = null;
+
     function getRaceNameJpn() {
         return GateRaceConfig.getRaceNameJpn();
     }
@@ -56,7 +58,7 @@ module GateRaceData {
     }
 
     function getPreStartCourseNameJpn() {
-        var course = _getDefaultOrFirstCourse();
+        var course = _getResolvedCourse();
         var courseName = _getCourseValue(course, COURSE_NAME_JPN);
         if (courseName == null or courseName.length() <= 0) {
             return "NO COURSE";
@@ -65,7 +67,7 @@ module GateRaceData {
     }
 
     function getPreStartCourseNameEng() {
-        var course = _getDefaultOrFirstCourse();
+        var course = _getResolvedCourse();
         var courseName = _getCourseValue(course, COURSE_NAME_ENG);
         if (courseName == null or courseName.length() <= 0) {
             return "NO COURSE";
@@ -82,11 +84,7 @@ module GateRaceData {
     }
 
     function getRequestedCourseCode() {
-        var requestedCourseCode = _getResolvedCourseStateValue(RESOLVED_REQUESTED_CODE);
-        if (requestedCourseCode == null) {
-            return "";
-        }
-        return requestedCourseCode;
+        return _normalizeCourseCode(_requestedCourseCode);
     }
 
     function getCourseCount() {
@@ -249,7 +247,7 @@ module GateRaceData {
     }
 
     function resetSelectedCourseCache() {
-        // Course selection is resolved from the latest properties on demand.
+        _requestedCourseCode = null;
     }
 
     function getCourseCodeForPropertyValue(propertyValue) {
@@ -267,6 +265,16 @@ module GateRaceData {
             }
         }
         return null;
+    }
+
+    function applyCourseSelectionFromPropertyValue(propertyValue) {
+        _requestedCourseCode = getCourseCodeForPropertyValue(propertyValue);
+        return _requestedCourseCode;
+    }
+
+    function loadRequestedCourseCodeFromProperties() {
+        _requestedCourseCode = _normalizeCourseCode(GateSettingsLoader.loadCourseCode());
+        return _requestedCourseCode;
     }
 
     function _getDefaultOrFirstCourse() {
@@ -312,7 +320,7 @@ module GateRaceData {
             ];
         }
 
-        var requestedCourseCode = _normalizeCourseCode(GateSettingsLoader.loadCourseCode());
+        var requestedCourseCode = _normalizeCourseCode(_requestedCourseCode);
         if (requestedCourseCode.length() > 0) {
             var requestedCourse = _findCourseByCode(courses, requestedCourseCode);
             if (requestedCourse != null) {
