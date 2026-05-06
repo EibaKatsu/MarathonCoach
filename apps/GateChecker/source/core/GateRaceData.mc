@@ -1,5 +1,6 @@
 using Toybox.Lang as Lang;
 using Toybox.Math as Math;
+using Toybox.System as Sys;
 using Toybox.WatchUi as Ui;
 using GateDistanceUtils;
 using GateSettingsLoader;
@@ -19,6 +20,7 @@ module GateRaceData {
     const RESOLVED_COURSE = 0;
     const RESOLVED_REQUESTED_CODE = 1;
     const RESOLVED_REASON = 2;
+    const COURSE_DEBUG_LOG = true;
 
     var _requestedCourseCode = null;
 
@@ -269,11 +271,41 @@ module GateRaceData {
 
     function applyCourseSelectionFromPropertyValue(propertyValue) {
         _requestedCourseCode = getCourseCodeForPropertyValue(propertyValue);
+        _log(
+            "applyCourseSelectionFromPropertyValue",
+            "propertyValue=" + _diag(propertyValue) +
+            " requestedCourseCode=" + _diag(_requestedCourseCode)
+        );
         return _requestedCourseCode;
     }
 
     function loadRequestedCourseCodeFromProperties() {
-        _requestedCourseCode = _normalizeCourseCode(GateSettingsLoader.loadCourseCode());
+        var courseCount = getCourseCount();
+        var requestedCourseIndex = GateSettingsLoader.loadCourseIndex();
+        var requestedCourseCode = _normalizeCourseCode(GateSettingsLoader.loadCourseCode());
+
+        if (courseCount > 1 and requestedCourseIndex != null) {
+            _requestedCourseCode = getCourseCodeForPropertyValue(requestedCourseIndex);
+            if (_requestedCourseCode != null and _requestedCourseCode.length() > 0) {
+                _log(
+                    "loadRequestedCourseCodeFromProperties",
+                    "courseCount=" + _diag(courseCount) +
+                    " courseIndex=" + _diag(requestedCourseIndex) +
+                    " storedCourseCode=" + _diag(requestedCourseCode) +
+                    " resolved=requested_index"
+                );
+                return _requestedCourseCode;
+            }
+        }
+
+        _requestedCourseCode = requestedCourseCode;
+        _log(
+            "loadRequestedCourseCodeFromProperties",
+            "courseCount=" + _diag(courseCount) +
+            " courseIndex=" + _diag(requestedCourseIndex) +
+            " storedCourseCode=" + _diag(requestedCourseCode) +
+            " resolved=requested_code"
+        );
         return _requestedCourseCode;
     }
 
@@ -324,6 +356,12 @@ module GateRaceData {
         if (requestedCourseCode.length() > 0) {
             var requestedCourse = _findCourseByCode(courses, requestedCourseCode);
             if (requestedCourse != null) {
+                _log(
+                    "_resolveSelectedCourseState",
+                    "requested=" + _diag(requestedCourseCode) +
+                    " selected=" + _diag(_getCourseValue(requestedCourse, COURSE_CODE)) +
+                    " reason=requested_code"
+                );
                 return [
                     requestedCourse,
                     requestedCourseCode,
@@ -338,6 +376,12 @@ module GateRaceData {
             if (requestedCourseCode.length() > 0) {
                 defaultReason = "invalid_code_default";
             }
+            _log(
+                "_resolveSelectedCourseState",
+                "requested=" + _diag(requestedCourseCode) +
+                " selected=" + _diag(_getCourseValue(defaultCourse, COURSE_CODE)) +
+                " reason=" + defaultReason
+            );
             return [
                 defaultCourse,
                 requestedCourseCode,
@@ -349,6 +393,12 @@ module GateRaceData {
         if (requestedCourseCode.length() > 0) {
             firstReason = "invalid_code_first";
         }
+        _log(
+            "_resolveSelectedCourseState",
+            "requested=" + _diag(requestedCourseCode) +
+            " selected=" + _diag(_getCourseValue(courses[0], COURSE_CODE)) +
+            " reason=" + firstReason
+        );
         return [
             courses[0],
             requestedCourseCode,
@@ -428,5 +478,19 @@ module GateRaceData {
             return null;
         }
         return Math.floor((distanceKm * 1000.0) + 0.5);
+    }
+
+    function _log(tag, message) {
+        if (!COURSE_DEBUG_LOG) {
+            return;
+        }
+        Sys.println("[GATE_COURSE] " + tag + " " + message);
+    }
+
+    function _diag(value) {
+        if (value == null) {
+            return "null";
+        }
+        return value.toString();
     }
 }
