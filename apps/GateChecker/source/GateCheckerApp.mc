@@ -10,6 +10,7 @@ class GateCheckerApp extends App.AppBase {
 
     function onStart(state) {
         GateSettingsLoader.loadAppProperties();
+        GateRaceData.loadRequestedCourseCodeFromProperties();
     }
 
     function getInitialView() {
@@ -18,14 +19,14 @@ class GateCheckerApp extends App.AppBase {
 
     function onValidateProperty(key, value) {
         if (key == "courseIndex") {
-            var courseCode = GateRaceData.getCourseCodeForPropertyValue(value);
+            var courseCode = GateRaceData.applyCourseSelectionFromPropertyValue(value);
             GateSettingsLoader.saveCourseCode(courseCode);
         }
         return true;
     }
 
     function onSettingsChanged() {
-        GateRaceData.resetSelectedCourseCache();
+        GateRaceData.loadRequestedCourseCodeFromProperties();
         Ui.requestUpdate();
     }
 }
