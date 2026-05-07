@@ -1,0 +1,48 @@
+race_key: 20260503_flying_pig_marathon
+
+display_name:
+  jpn: "シンシナティ フライング・ピッグ・マラソン2026"
+  eng: "Flying Pig Marathon 2026"
+
+race:
+  date: "2026/05/03"
+  timezone: "America/New_York"
+  distance_mi: 26.2187575
+
+gates:
+  - point_mi: 17.5
+    cutoff: "2026/05/03 12:15"
+  - point: GOAL
+    cutoff: "2026/05/03 13:30"
+
+aids:
+  - mi: 1.0
+  - mi: 2.0
+  - mi: 3.0
+  - mi: 4.0
+  - mi: 5.0
+  - mi: 6.0
+  - mi: 7.0
+  - mi: 9.0
+  - mi: 10.0
+  - mi: 11.0
+  - mi: 12.0
+  - mi: 13.0
+  - mi: 14.0
+  - mi: 15.0
+  - mi: 16.0
+  - mi: 17.0
+  - mi: 18.0
+    name:
+      jpn: "GU Energy Gel"
+      eng: "GU Energy Gel"
+  - mi: 19.0
+  - mi: 20.0
+  - mi: 21.0
+    name:
+      jpn: "GU Energy Gel"
+      eng: "GU Energy Gel"
+  - mi: 22.0
+  - mi: 23.0
+  - mi: 24.0
+  - mi: 25.0

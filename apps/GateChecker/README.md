@@ -29,7 +29,7 @@ Single-course races can stay in the legacy format. They are treated as one impli
 Example:
 
 ```yaml
-race_key: toyama_marathon_2026
+race_key: 20261101_toyama_marathon
 
 display_name:
   jpn: "富山マラソン2026"
@@ -54,7 +54,7 @@ aids:
 Multi-course races add a `course` layer above the existing `gates` / `aids` payload. The gate and aid item formats themselves do not change.
 
 ```yaml
-race_key: sample_multi_course
+race_key: 20261018_sample_multi_course
 
 display_name:
   jpn: "GateChecker 複数コース確認用"
@@ -97,7 +97,7 @@ courses:
 Mile-based definitions are also supported:
 
 ```yaml
-race_key: gatechecker_mile_sample_2026
+race_key: 20261018_gatechecker_mile_sample
 
 display_name:
   jpn: "GateChecker Mile Sample 2026"
@@ -128,6 +128,7 @@ aids:
 Rules:
 
 - `race_key` must match `[a-z0-9_]+`
+- `race_key` should use `YYYYMMDD_<race_name>` for real races
 - `race.date` and `race.timezone` are always required
 - Legacy single-course format keeps `race.distance_km` or `race.distance_mi` at the top level
 - Multi-course format may keep a shared top-level race distance, or each course may define its own `distance_km` or `distance_mi`
@@ -196,8 +197,8 @@ Generated `resources/properties.xml` behavior:
 From the repository root:
 
 ```bash
-python3 apps/GateChecker/scripts/generate_gatechecker_race.py toyama_marathon_2026
-apps/GateChecker/scripts/build_gatechecker_race.sh toyama_marathon_2026 fr57042mm
+python3 apps/GateChecker/scripts/generate_gatechecker_race.py 20261101_toyama_marathon
+apps/GateChecker/scripts/build_gatechecker_race.sh 20261101_toyama_marathon fr57042mm
 ```
 
 The build artifact is written to `apps/GateChecker/dist/<race_key>/`.
@@ -207,13 +208,13 @@ The build artifact is written to `apps/GateChecker/dist/<race_key>/`.
 For a race-specific distributable `.iq`:
 
 ```bash
-apps/GateChecker/scripts/build_gatechecker_release_package.sh toyama_marathon_2026
+apps/GateChecker/scripts/build_gatechecker_release_package.sh 20261101_toyama_marathon
 ```
 
 To build a different release version without editing `race_index.yml`:
 
 ```bash
-apps/GateChecker/scripts/build_gatechecker_release_package.sh toyama_marathon_2026 0.2.0
+apps/GateChecker/scripts/build_gatechecker_release_package.sh 20261101_toyama_marathon 0.2.0
 ```
 
 Behavior:
@@ -229,7 +230,7 @@ Behavior:
 To generate Connect IQ Store title/description Markdown for a race:
 
 ```bash
-python3 apps/GateChecker/scripts/generate_gatechecker_listing_text.py toyama_marathon_2026
+python3 apps/GateChecker/scripts/generate_gatechecker_listing_text.py 20261101_toyama_marathon
 ```
 
 Behavior:
@@ -245,13 +246,13 @@ Use the GateChecker simulator wrapper from the repository root.
 Single-course race, no settings file required:
 
 ```bash
-apps/GateChecker/scripts/run_gatechecker_sim.sh --race toyama_marathon_2026
+apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261101_toyama_marathon
 ```
 
 Multi-course race, select a course and send the generated settings schema:
 
 ```bash
-apps/GateChecker/scripts/run_gatechecker_sim.sh --race sample_multi_course --course full_wave2
+apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261018_sample_multi_course --course full_wave2
 ```
 
 Behavior:
@@ -263,15 +264,15 @@ Behavior:
 - `--course` sets `GATECHECKER_DEFAULT_COURSE_CODE_OVERRIDE`, which changes the generated default course for that simulator build only
 - If no `--course` is passed and the race has one course, no settings file is generated or sent
 - If the race has multiple courses, the simulator receives a settings schema with the course pull-down entries
-- Pin a single slot when needed with `GATECHECKER_SIM_SLOT_RACE=toyama_marathon_2026`
+- Pin a single slot when needed with `GATECHECKER_SIM_SLOT_RACE=20261101_toyama_marathon`
 
 Examples:
 
 ```bash
-apps/GateChecker/scripts/run_gatechecker_sim.sh --race gatechecker_mile_sample_2026 --device fr57042mm
+apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261018_gatechecker_mile_sample --device fr57042mm
 
-GATECHECKER_SIM_SLOT_RACE=iwate_oshu_kirameki_marathon_2026 \
-  apps/GateChecker/scripts/run_gatechecker_sim.sh --race sample_multi_course --course ultra_100k
+GATECHECKER_SIM_SLOT_RACE=20260517_iwate_oshu_kirameki_marathon \
+  apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261018_sample_multi_course --course ultra_100k
 ```
 
 Notes:
@@ -304,7 +305,7 @@ apps/GateChecker/scripts/build_gatechecker_race.sh <race_key> <device_id>
 Example:
 
 ```bash
-apps/GateChecker/scripts/build_gatechecker_race.sh sample_multi_course fr57042mm
+apps/GateChecker/scripts/build_gatechecker_race.sh 20261018_sample_multi_course fr57042mm
 ```
 
 The built `.prg` is written to:
@@ -316,7 +317,7 @@ apps/GateChecker/dist/<race_key>/gatechecker-<race_key>-<device_id>.prg
 Send a single-course race with no settings file:
 
 ```bash
-apps/GateChecker/scripts/send_gatechecker_race_to_simulator.sh toyama_marathon_2026 fr57042mm
+apps/GateChecker/scripts/send_gatechecker_race_to_simulator.sh 20261101_toyama_marathon fr57042mm
 ```
 
 Behavior:
@@ -328,7 +329,7 @@ Behavior:
 Send a multi-course race with a generated settings file:
 
 ```bash
-apps/GateChecker/scripts/run_gatechecker_sim.sh --race sample_multi_course --device fr57042mm --course full_wave2
+apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261018_sample_multi_course --device fr57042mm --course full_wave2
 ```
 
 Behavior:
@@ -350,13 +351,13 @@ Manual command summary:
 open "$CONNECTIQ_HOME/bin/ConnectIQ.app"
 
 # build only
-apps/GateChecker/scripts/build_gatechecker_race.sh sample_multi_course fr57042mm
+apps/GateChecker/scripts/build_gatechecker_race.sh 20261018_sample_multi_course fr57042mm
 
 # send a single-course race
-apps/GateChecker/scripts/send_gatechecker_race_to_simulator.sh toyama_marathon_2026 fr57042mm
+apps/GateChecker/scripts/send_gatechecker_race_to_simulator.sh 20261101_toyama_marathon fr57042mm
 
 # send a multi-course race with a selected default course
-apps/GateChecker/scripts/run_gatechecker_sim.sh --race sample_multi_course --device fr57042mm --course ultra_100k
+apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261018_sample_multi_course --device fr57042mm --course ultra_100k
 ```
 
 Because this app is a data field, activity recording does not start automatically. After `monkeydo`, use the simulator menu:

@@ -1,0 +1,50 @@
+race_key: 20260524_tartan_ottawa_international_marathon
+
+display_name:
+  jpn: "オタワ国際マラソン2026"
+  eng: "Tartan Ottawa International Marathon 2026"
+
+race:
+  date: "2026/05/24"
+  timezone: "America/Toronto"
+  distance_km: 42.195
+
+gates:
+  - point: 27.0
+    cutoff: "2026/05/24 11:30"
+  - point: GOAL
+    cutoff: "2026/05/24 14:00"
+
+aids:
+  - km: 3.0
+  - km: 6.0
+  - km: 9.0
+  - km: 11.5
+    name:
+      jpn: "XACT Energy Fruit Bar"
+      eng: "XACT Energy Fruit Bar"
+  - km: 12.0
+  - km: 15.0
+  - km: 16.9
+    name:
+      jpn: "Cooling Station"
+      eng: "Cooling Station"
+  - km: 18.0
+  - km: 21.0
+  - km: 24.0
+  - km: 27.0
+    name:
+      jpn: "XACT Energy Fruit Bar"
+      eng: "XACT Energy Fruit Bar"
+  - km: 30.0
+  - km: 32.0
+    name:
+      jpn: "Cooling Station"
+      eng: "Cooling Station"
+  - km: 33.0
+  - km: 36.0
+  - km: 38.0
+    name:
+      jpn: "XACT Energy Fruit Bar"
+      eng: "XACT Energy Fruit Bar"
+  - km: 39.0

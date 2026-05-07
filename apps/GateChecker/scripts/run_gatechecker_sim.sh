@@ -39,8 +39,8 @@ Usage:
   apps/GateChecker/scripts/run_gatechecker_sim.sh --race <race_key> [--device <device_id>] [--course <course_code>]
 
 Examples:
-  apps/GateChecker/scripts/run_gatechecker_sim.sh --race toyama_marathon_2026
-  apps/GateChecker/scripts/run_gatechecker_sim.sh --race sample_multi_course --course full_wave2
+  apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261101_toyama_marathon
+  apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261018_sample_multi_course --course full_wave2
 EOF
       exit 0
       ;;

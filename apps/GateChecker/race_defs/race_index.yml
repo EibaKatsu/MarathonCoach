@@ -1,73 +1,73 @@
 races:
-  toyama_marathon_2026:
+  20261101_toyama_marathon:
     app_id: 214f6dbb-0476-4778-a81b-eb9c7afc901d
-    definition: races/toyama_marathon_2026.yml
+    definition: races/20261101_toyama_marathon.yml
     version: 0.1.0
-  iwate_oshu_kirameki_marathon_2026:
+  20260517_iwate_oshu_kirameki_marathon:
     app_id: e7edc6e6-be37-4774-8069-4a115ddc67bd
-    definition: races/iwate_oshu_kirameki_marathon_2026.yml
+    definition: races/20260517_iwate_oshu_kirameki_marathon.yml
     version: 0.1.0
-  gatechecker_beta_check_2026:
+  20260428_gatechecker_beta_check:
     app_id: 023ed61c-e951-4e8f-a228-7de069c931ea
-    definition: races/gatechecker_beta_check_2026.yml
+    definition: races/20260428_gatechecker_beta_check.yml
     version: 0.1.1
-  bmo_vancouver_marathon_2026:
+  20260503_bmo_vancouver_marathon:
     app_id: 5435b1ff-486b-4355-9c14-542b631f266c
-    definition: races/bmo_vancouver_marathon_2026.yml
+    definition: races/20260503_bmo_vancouver_marathon.yml
     version: 0.1.0
-  flying_pig_marathon_2026:
+  20260503_flying_pig_marathon:
     app_id: d6f3337a-6862-4ca4-a252-7e0af48ab0c4
-    definition: races/flying_pig_marathon_2026.yml
+    definition: races/20260503_flying_pig_marathon.yml
     version: 0.1.0
-  pittsburgh_marathon_2026:
+  20260503_pittsburgh_marathon:
     app_id: bef26e98-9cdd-4201-ab4a-89fc6ce2e5f9
-    definition: races/pittsburgh_marathon_2026.yml
+    definition: races/20260503_pittsburgh_marathon.yml
     version: 0.1.0
-  gatechecker_mile_sample_2026:
+  20261018_gatechecker_mile_sample:
     app_id: 2c112e57-c887-483a-a989-83651cd0b951
-    definition: races/gatechecker_mile_sample_2026.yml
+    definition: races/20261018_gatechecker_mile_sample.yml
     version: 0.1.0
-  tartan_ottawa_international_marathon_2026:
+  20260524_tartan_ottawa_international_marathon:
     app_id: bc7e02d5-9778-4e03-8ed8-d6b986d8dfc6
-    definition: races/tartan_ottawa_international_marathon_2026.yml
+    definition: races/20260524_tartan_ottawa_international_marathon.yml
     version: 0.1.0
-  stockholm_marathon_2026:
+  20260530_stockholm_marathon:
     app_id: ebe0b2bf-a312-4e3f-b0c5-b6483a1f940f
-    definition: races/stockholm_marathon_2026.yml
+    definition: races/20260530_stockholm_marathon.yml
     version: 0.1.0
-  cleveland_marathon_2026:
+  20260517_cleveland_marathon:
     app_id: 396c147b-b3d1-45ad-9969-1d8d5652afc6
-    definition: races/cleveland_marathon_2026.yml
+    definition: races/20260517_cleveland_marathon.yml
     version: 0.1.0
-  kurobe_meisui_marathon_2026:
+  20260524_kurobe_meisui_marathon:
     app_id: 7d88321e-96e6-42ed-ac95-70baff556612
-    definition: races/kurobe_meisui_marathon_2026.yml
+    definition: races/20260524_kurobe_meisui_marathon.yml
     version: 0.1.0
-  ing_night_marathon_luxembourg_2026:
+  20260516_ing_night_marathon_luxembourg:
     app_id: 737184ed-a25a-4446-a4f9-ecfdc9fe4ff1
-    definition: races/ing_night_marathon_luxembourg_2026.yml
+    definition: races/20260516_ing_night_marathon_luxembourg.yml
     version: 0.1.0
-  edinburgh_marathon_2026:
+  20260524_edinburgh_marathon:
     app_id: 9fa5a8f6-1602-4f29-b220-c41634fba5bf
-    definition: races/edinburgh_marathon_2026.yml
+    definition: races/20260524_edinburgh_marathon.yml
     version: 0.1.0
-  grandmas_marathon_2026:
+  20260620_grandmas_marathon:
     app_id: 62c9a871-54d0-4afa-99a7-7ad0ae965e64
-    definition: races/grandmas_marathon_2026.yml
+    definition: races/20260620_grandmas_marathon.yml
     version: 0.1.0
-  midnight_sun_marathon_2026:
+  20260620_midnight_sun_marathon:
     app_id: 469d958f-0b5e-4f47-b017-9b2bc5319832
-    definition: races/midnight_sun_marathon_2026.yml
+    definition: races/20260620_midnight_sun_marathon.yml
     version: 0.1.0
-  hakodate_marathon_2026:
+  20260628_hakodate_marathon:
     app_id: e19ff169-f77f-44f1-a9ac-7c5ca2aa53f8
-    definition: races/hakodate_marathon_2026.yml
+    definition: races/20260628_hakodate_marathon.yml
     version: 0.1.0
-  lake_saroma_100km_ultra_marathon_2026:
+  20260628_lake_saroma_100km_ultra_marathon:
     app_id: 662bad21-6d5e-4b20-949a-e27b75c8e3b7
-    definition: races/lake_saroma_100km_ultra_marathon_2026.yml
+    definition: races/20260628_lake_saroma_100km_ultra_marathon.yml
     version: 0.1.0
-  sample_multi_course:
+  20261018_sample_multi_course:
     app_id: 8efe4e50-38b8-49c3-acad-3797de088084
-    definition: races/sample_multi_course.yml
+    definition: races/20261018_sample_multi_course.yml
     version: 0.1.0
