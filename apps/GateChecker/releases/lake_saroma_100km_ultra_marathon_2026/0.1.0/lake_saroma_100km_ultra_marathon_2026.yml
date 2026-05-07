@@ -1,0 +1,75 @@
+race_key: lake_saroma_100km_ultra_marathon_2026
+
+display_name:
+  jpn: "サロマ湖100kmウルトラマラソン2026"
+  eng: "Lake Saroma 100km Ultra Marathon 2026"
+
+race:
+  date: "2026/06/28"
+  timezone: "Asia/Tokyo"
+  distance_km: 100.0
+
+gates:
+  - point: 10.0
+    cutoff: "2026/06/28 06:23"
+  - point: 20.0
+    cutoff: "2026/06/28 07:39"
+  - point: 30.0
+    cutoff: "2026/06/28 08:55"
+  - point: 41.0
+    cutoff: "2026/06/28 10:20"
+  - point: 50.0
+    cutoff: "2026/06/28 11:30"
+  - point: 60.0
+    cutoff: "2026/06/28 12:48"
+  - point: 69.3
+    cutoff: "2026/06/28 14:02"
+  - point: 79.3
+    cutoff: "2026/06/28 15:19"
+  - point: 91.5
+    cutoff: "2026/06/28 16:54"
+  - point: GOAL
+    cutoff: "2026/06/28 18:00"
+
+aids:
+  - km: 5.0
+  - km: 8.5
+  - km: 10.0
+  - km: 12.5
+  - km: 15.0
+  - km: 17.5
+  - km: 20.0
+  - km: 22.5
+  - km: 25.0
+  - km: 27.5
+  - km: 30.0
+    name:
+      jpn: "Special Water Station"
+      eng: "Special Water Station"
+  - km: 32.5
+  - km: 35.0
+  - km: 37.5
+  - km: 40.0
+  - km: 42.5
+  - km: 45.0
+  - km: 52.0
+  - km: 54.5
+  - km: 60.0
+  - km: 63.5
+    name:
+      jpn: "Special Water Station"
+      eng: "Special Water Station"
+  - km: 68.0
+  - km: 69.0
+  - km: 72.5
+  - km: 73.8
+  - km: 77.5
+  - km: 80.0
+    name:
+      jpn: "Special Water Station"
+      eng: "Special Water Station"
+  - km: 82.5
+  - km: 85.0
+  - km: 87.5
+  - km: 90.0
+  - km: 95.0

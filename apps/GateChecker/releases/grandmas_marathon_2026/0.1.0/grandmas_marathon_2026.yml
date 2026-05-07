@@ -1,0 +1,38 @@
+race_key: grandmas_marathon_2026
+
+display_name:
+  jpn: "グランマズマラソン2026"
+  eng: "Grandma's Marathon 2026"
+
+race:
+  date: "2026/06/20"
+  timezone: "America/Chicago"
+  distance_mi: 26.2187575
+
+gates:
+  - point: GOAL
+    cutoff: "2026/06/20 14:45"
+
+aids:
+  - mi: 3.0
+  - mi: 5.0
+  - mi: 7.0
+  - mi: 9.0
+  - mi: 11.0
+  - mi: 13.0
+  - mi: 15.0
+  - mi: 17.0
+  - mi: 19.0
+    name:
+      jpn: "Fresh Fruit"
+      eng: "Fresh Fruit"
+  - mi: 20.0
+  - mi: 21.0
+  - mi: 22.0
+  - mi: 23.0
+  - mi: 23.5
+    name:
+      jpn: "Fresh Fruit"
+      eng: "Fresh Fruit"
+  - mi: 24.0
+  - mi: 25.0
