@@ -3,452 +3,125 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>RaceNavi | Garmin向けレース支援アプリ</title>
-  <meta
-    name="description"
-    content="RaceNaviはGarmin向けの個人開発レース支援アプリです。心拍・ペースを見るRaceNaviと、関門・エイドを見る関門ガイドを提供しています。"
-  />
-
+  <meta name="description" content="RaceNaviはGarmin向けの個人開発レース支援アプリです。心拍・ペースを見るRaceNaviと、関門・エイドを見る関門ガイドを提供しています。" />
+  <link rel="canonical" href="https://racenavi.jpn.org/" />
+  <link rel="alternate" hreflang="ja" href="https://racenavi.jpn.org/" />
+  <link rel="alternate" hreflang="en" href="https://racenavi.jpn.org/en/" />
   <meta property="og:title" content="RaceNavi | Garmin向けレース支援アプリ" />
-  <meta
-    property="og:description"
-    content="心拍・ペースを見るRaceNavi。関門・エイドを見る関門ガイド。Garminでレース中の情報確認を支える個人開発アプリです。"
-  />
+  <meta property="og:description" content="RaceNaviはGarmin向けの個人開発レース支援アプリです。心拍・ペースを見るRaceNaviと、関門・エイドを見る関門ガイドを提供しています。" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://racenavi.jpn.org/" />
   <meta property="og:image" content="https://racenavi.jpn.org/assets/shot02_one_screen.png" />
-
-  <style>
-    :root {
-      --bg: #07111c;
-      --bg2: #0d1b2a;
-      --card: rgba(255, 255, 255, 0.06);
-      --card-strong: rgba(255, 255, 255, 0.1);
-      --line: rgba(255, 255, 255, 0.14);
-      --text: #f4f7fb;
-      --muted: #b5c4d6;
-      --accent: #ff7a45;
-      --cyan: #52d6d3;
-      --yellow: #ffd166;
-      --shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      color: var(--text);
-      font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Hiragino Sans",
-        "Yu Gothic",
-        "YuGothic",
-        "Helvetica Neue",
-        Arial,
-        sans-serif;
-      line-height: 1.8;
-      background:
-        radial-gradient(circle at top left, rgba(82, 214, 211, 0.16), transparent 30%),
-        radial-gradient(circle at top right, rgba(255, 122, 69, 0.16), transparent 32%),
-        linear-gradient(180deg, #06101a 0%, #07111c 54%, #0d1b2a 100%);
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    img {
-      display: block;
-      max-width: 100%;
-    }
-
-    .container {
-      width: min(1080px, calc(100% - 32px));
-      margin: 0 auto;
-    }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 24px;
-      padding: 22px 0;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 900;
-      letter-spacing: 0.06em;
-    }
-
-    .logo-mark {
-      width: 34px;
-      height: 34px;
-      border-radius: 11px;
-      background: linear-gradient(135deg, var(--cyan), var(--accent));
-      box-shadow: 0 10px 24px rgba(82, 214, 211, 0.22);
-    }
-
-    .nav {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 18px;
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    .nav a:hover {
-      color: var(--text);
-    }
-
-    .hero {
-      padding: 64px 0 42px;
-      text-align: center;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      margin-bottom: 18px;
-      padding: 7px 13px;
-      border: 1px solid rgba(82, 214, 211, 0.34);
-      border-radius: 999px;
-      color: var(--cyan);
-      background: rgba(82, 214, 211, 0.08);
-      font-size: 0.78rem;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    h1 {
-      max-width: 860px;
-      margin: 0 auto 22px;
-      font-size: clamp(2.5rem, 6vw, 5rem);
-      line-height: 1.05;
-      letter-spacing: -0.055em;
-    }
-
-    .lead {
-      max-width: 720px;
-      margin: 0 auto;
-      color: var(--muted);
-      font-size: 1.08rem;
-    }
-
-    .apps {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 22px;
-      padding: 34px 0 76px;
-    }
-
-    .app-card {
-      display: flex;
-      flex-direction: column;
-      padding: 30px;
-      border: 1px solid var(--line);
-      border-radius: 30px;
-      background: var(--card);
-      box-shadow: var(--shadow);
-    }
-
-    .app-label {
-      width: fit-content;
-      margin-bottom: 18px;
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: 0.78rem;
-      font-weight: 900;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    .label-racenavi {
-      color: var(--cyan);
-      background: rgba(82, 214, 211, 0.1);
-    }
-
-    .label-gate {
-      color: var(--yellow);
-      background: rgba(255, 209, 102, 0.1);
-    }
-
-    h2 {
-      margin: 0 0 16px;
-      font-size: clamp(2rem, 4vw, 3.1rem);
-      line-height: 1.08;
-      letter-spacing: -0.045em;
-    }
-
-    .app-summary {
-      margin: 0 0 24px;
-      color: var(--muted);
-      font-size: 1.02rem;
-    }
-
-    .app-image {
-      overflow: hidden;
-      margin: 0 0 24px;
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      background: rgba(0, 0, 0, 0.18);
-    }
-
-    .app-image img {
-      width: 100%;
-    }
-
-    .info-block {
-      margin: 0 0 22px;
-      padding: 20px;
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      background: rgba(255, 255, 255, 0.04);
-    }
-
-    .info-block h3 {
-      margin: 0 0 10px;
-      font-size: 1.08rem;
-    }
-
-    .info-block ul {
-      margin: 0;
-      padding-left: 1.2em;
-      color: var(--muted);
-    }
-
-    .info-block li + li {
-      margin-top: 5px;
-    }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: auto;
-    }
-
-    .button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 48px;
-      padding: 0 18px;
-      border-radius: 999px;
-      font-weight: 800;
-    }
-
-    .button-primary {
-      background: linear-gradient(135deg, var(--accent), #ff9b70);
-      color: #fff;
-      box-shadow: 0 14px 30px rgba(255, 122, 69, 0.24);
-    }
-
-    .button-secondary {
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .notice {
-      margin-bottom: 70px;
-      padding: 24px;
-      border: 1px solid var(--line);
-      border-radius: 26px;
-      background: var(--card-strong);
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .notice strong {
-      color: var(--text);
-    }
-
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      flex-wrap: wrap;
-      padding: 36px 0 44px;
-      border-top: 1px solid var(--line);
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .footer-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-    }
-
-    @media (max-width: 860px) {
-      .apps {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .container {
-        width: min(100% - 24px, 1080px);
-      }
-
-      .header {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .nav {
-        gap: 10px 14px;
-        font-size: 0.88rem;
-      }
-
-      .hero {
-        padding: 40px 0 26px;
-        text-align: left;
-      }
-
-      h1,
-      .lead {
-        margin-left: 0;
-        margin-right: 0;
-      }
-
-      .apps {
-        padding-bottom: 48px;
-      }
-
-      .app-card {
-        padding: 24px;
-        border-radius: 24px;
-      }
-    }
-  </style>
+  <meta property="og:locale" content="ja_JP" />
+  <meta name="theme-color" content="#071423" />
+  <link rel="icon" type="image/png" href="/assets/mainIcon.png" />
+  <link rel="apple-touch-icon" href="/assets/mainIcon.png" />
+  <link rel="stylesheet" href="/styles.css" />
 </head>
-
 <body>
-  <header class="container header">
-    <a class="logo" href="/">
-      <span class="logo-mark" aria-hidden="true"></span>
+
+  <header class="page-shell site-header">
+    <a class="site-logo" href="/">
+      <img class="site-logo-mark" src="/assets/mainIcon.png" alt="RaceNavi icon" />
       <span>RaceNavi</span>
     </a>
-
-    <nav class="nav" aria-label="メインナビゲーション">
-      <a href="/racenavi/">RaceNavi</a>
-      <a href="/racenavi/custom/">カスタム設定</a>
-      <a href="/gatechecker/">関門ガイド</a>
-      <a href="/gatechecker/races/">対応大会</a>
+    <nav class="site-nav" aria-label="メインナビゲーション">
+      <a href="/racenavi/">RaceNavi</a><a href="/racenavi/custom/">カスタム設定</a><a href="/gatechecker/">関門ガイド</a><a href="/gatechecker/races/">対応大会</a><a href="/en/">English</a>
     </nav>
   </header>
 
-  <main>
-    <section class="container hero">
-      <span class="eyebrow">Garmin race support apps</span>
 
-      <h1>Garminで、レース中に見たい情報を確認する。</h1>
-
-      <p class="lead">
-        RaceNaviは、Garmin向けの個人開発アプリです。
-        目的の違う2つのアプリを開発しています。
-      </p>
+  <main class="page-shell">
+    <section class="hero">
+      <div class="hero-card">
+        <div>
+          <span class="eyebrow">Garmin race support apps</span>
+          <h1>Garminで、レース中に見たい情報を確認する。</h1>
+          <p class="lead">RaceNaviは、Garmin向けアプリです。目的の違う2つのアプリを開発しています。</p>
+        </div>
+      </div>
     </section>
 
-    <section class="container apps" aria-label="アプリ一覧">
-      <article class="app-card">
-        <span class="app-label label-racenavi">RaceNavi</span>
+    <section class="page-section" aria-label="アプリ一覧">
+      <div class="app-grid">
+        <article class="app-card">
+          <span class="app-label label-racenavi">RaceNavi</span>
+          <h2>心拍・ペースを見るアプリ</h2>
+          <p class="app-summary">フルマラソン中に、今の心拍・ペース・目標との差を確認するためのGarminアプリです。</p>
+          <div class="app-image">
+            <img src="/assets/shot02_one_screen.png" alt="RaceNaviの画面イメージ。心拍、ペース、目標との差、予測タイムを表示するGarminアプリ。" />
+          </div>
+          <div class="info-card">
+            <h3>表示する情報</h3>
+            <ul>
+              <li>現在の心拍</li>
+              <li>心拍の上限目安</li>
+              <li>現在のペース</li>
+              <li>目標との差</li>
+              <li>予測ゴールタイム</li>
+            </ul>
+          </div>
+          <div class="actions">
+            <a class="button button-primary" href="/racenavi/">RaceNaviを見る</a>
+            <a class="button button-secondary" href="/racenavi/custom/">カスタム設定</a>
+          </div>
+        </article>
 
-        <h2>心拍・ペースを見るアプリ</h2>
-
-        <p class="app-summary">
-          フルマラソン中に、今の心拍・ペース・目標との差を確認するためのGarminアプリです。
-        </p>
-
-        <div class="app-image">
-          <img
-            src="./assets/shot02_one_screen.png"
-            alt="RaceNaviの画面イメージ。心拍、ペース、目標との差、予測タイムを表示するGarminアプリ。"
-          />
-        </div>
-
-        <div class="info-block">
-          <h3>表示する情報</h3>
-          <ul>
-            <li>現在の心拍</li>
-            <li>心拍の上限目安</li>
-            <li>現在のペース</li>
-            <li>目標との差</li>
-            <li>予測ゴールタイム</li>
-          </ul>
-        </div>
-
-        <div class="actions">
-          <a class="button button-primary" href="/racenavi/">RaceNaviを見る</a>
-          <a class="button button-secondary" href="/racenavi/custom/">カスタム設定</a>
-        </div>
-      </article>
-
-      <article class="app-card">
-        <span class="app-label label-gate">関門ガイド</span>
-
-        <h2>関門・エイドを見るアプリ</h2>
-
-        <p class="app-summary">
-          マラソン中に、次の関門とエイドを確認するためのGarminアプリです。
-        </p>
-
-        <div class="info-block">
-          <h3>表示する情報</h3>
-          <ul>
-            <li>次の関門地点</li>
-            <li>関門までの残り距離</li>
-            <li>関門時刻</li>
-            <li>関門までの残り時間</li>
-            <li>次のエイド地点</li>
-            <li>エイドまでの残り距離</li>
-          </ul>
-        </div>
-
-        <div class="info-block">
-          <h3>提供方法</h3>
-          <ul>
-            <li>大会ごとに関門・エイド情報を登録</li>
-            <li>対応大会ページで対象レースを確認</li>
-            <li>海外大会向けには英語名「Cutoff Guide」も想定</li>
-          </ul>
-        </div>
-
-        <div class="actions">
-          <a class="button button-primary" href="/gatechecker/">関門ガイドを見る</a>
-          <a class="button button-secondary" href="/gatechecker/races/">対応大会を見る</a>
-        </div>
-      </article>
+        <article class="app-card">
+          <span class="app-label label-gate">関門ガイド</span>
+          <h2>関門・エイドを見るアプリ</h2>
+          <p class="app-summary">マラソン中に、次の関門とエイドを確認するためのGarminアプリです。</p>
+          <div class="app-image">
+            <img src="/assets/gatechecker_hero_jp.png" alt="関門ガイドの画面イメージ。次の関門とエイドまでの情報をGarminで確認するアプリ。" />
+          </div>
+          <div class="info-card">
+            <h3>表示する情報</h3>
+            <ul>
+              <li>次の関門地点</li>
+              <li>関門までの残り距離</li>
+              <li>関門時刻</li>
+              <li>関門までの残り時間</li>
+              <li>次のエイド地点</li>
+              <li>エイドまでの残り距離</li>
+            </ul>
+          </div>
+          <div class="info-card">
+            <h3>提供方法</h3>
+            <ul>
+              <li>大会ごとに関門・エイド情報を登録</li>
+              <li>対応大会ページで対象レースを確認</li>
+              <li>海外大会向けには英語名「Cutoff Guide」も想定</li>
+            </ul>
+          </div>
+          <div class="actions">
+            <a class="button button-primary" href="/gatechecker/">関門ガイドを見る</a>
+            <a class="button button-secondary" href="/gatechecker/races/">対応大会を見る</a>
+          </div>
+        </article>
+      </div>
     </section>
 
-    <section class="container notice">
-      <strong>注意事項：</strong>
-      RaceNaviと関門ガイドは、個人開発のGarmin向けアプリです。
-      Garmin公式、または各大会公式のアプリではありません。
-      関門・エイド情報は、必ず大会公式情報も確認してください。
+    <section class="page-section">
+      <div class="notice">
+        <strong>注意事項：</strong>
+        RaceNaviと関門ガイドはGarmin向けアプリです。Garmin公式、または各大会公式のアプリではありません。関門・エイド情報は、必ず大会公式情報も確認してください。
+      </div>
     </section>
   </main>
 
-  <footer class="container footer">
-    <div>
-      <strong>RaceNavi</strong><br />
-      Garminでレース中の情報確認を支える、個人開発アプリ。
-    </div>
 
+  <footer class="page-shell site-footer">
+    <div class="footer-block">
+      <strong>RaceNavi</strong>
+      <p>マラソン中に見たい情報をGarminで確認するためのアプリ群。</p>
+      <p>RaceNaviと関門ガイドはGarmin向けアプリです。Garmin公式、または各大会公式のアプリではありません。</p>
+      <p>問い合わせ先: <a href="https://x.com/racenavi_run" target="_blank" rel="noreferrer">X のDM @racenavi_run</a></p>
+    </div>
     <div class="footer-links">
-      <a href="/racenavi/">RaceNavi</a>
-      <a href="/racenavi/custom/">カスタム設定</a>
-      <a href="/gatechecker/">関門ガイド</a>
-      <a href="/gatechecker/races/">対応大会</a>
+      <a href="/">トップ</a><a href="/racenavi/">RaceNavi</a><a href="/racenavi/custom/">カスタム設定</a><a href="/gatechecker/">関門ガイド</a><a href="/gatechecker/races/">対応大会</a><a href="/en/">English</a>
     </div>
   </footer>
+
 </body>
 </html>
