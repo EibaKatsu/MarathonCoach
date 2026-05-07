@@ -15,11 +15,12 @@ description: 未取り込みのフルマラソンやウルトラマラソンを�
 4. 採用レースの `apps/GateChecker/race_defs/races/*.yml` と `apps/GateChecker/race_defs/race_index.yml` を更新する。
 5. `python3 apps/GateChecker/scripts/generate_gatechecker_race.py <race_key>` で検証する。
 6. `python3 apps/GateChecker/scripts/generate_gatechecker_listing_text.py <race_key>` で Listing を生成する。
-7. `apps/GateChecker/scripts/build_gatechecker_release_package.sh <race_key> [version]` で公開用 `.iq` を生成する。
-8. `python3 site/racenavi/scripts/generate_race_pages.py` で対応大会一覧と大会詳細 HTML を更新する。
-9. `./scripts/run_unit_tests.sh` を実行する。
-10. PR 作成、独立レビュー結果の記録、main マージまで実施する。
-11. `./scripts/racenavi_deploy.sh check` で公開先接続を確認し、問題なければ `./scripts/racenavi_deploy.sh upload` でサイト公開まで実施する。
+7. 関門情報・エイド情報の取得元 URL を `apps/GateChecker/releases/<race_key>/CONNECT_IQ_LISTING.md` に記録する。
+8. `apps/GateChecker/scripts/build_gatechecker_release_package.sh <race_key> [version]` で公開用 `.iq` を生成する。
+9. `python3 site/racenavi/scripts/generate_race_pages.py` で対応大会一覧と大会詳細 HTML を更新する。
+10. `./scripts/run_unit_tests.sh` を実行する。
+11. PR 作成、独立レビュー結果の記録、main マージまで実施する。
+12. `./scripts/racenavi_deploy.sh check` で公開先接続を確認し、問題なければ `./scripts/racenavi_deploy.sh upload` でサイト公開まで実施する。
 
 ## Selection Rules
 
@@ -35,6 +36,7 @@ description: 未取り込みのフルマラソンやウルトラマラソンを�
 - 公式が mile 表記なら、race 定義も mile 表記のまま作る。
 - 公式が近似表現しか出していない場合は、その近似に沿って定義し、最終報告で明示する。
 - 前年版の公式資料を使う場合は、当年版が未公開であることを確認し、暫定利用だと明示する。
+- 関門情報・エイド情報の取得元 URL は、各大会の `apps/GateChecker/releases/<race_key>/CONNECT_IQ_LISTING.md` に明記する。
 
 ## HTML / Publish Rules
 
