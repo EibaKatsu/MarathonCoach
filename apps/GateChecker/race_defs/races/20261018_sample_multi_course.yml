@@ -1,0 +1,98 @@
+race_key: 20261018_sample_multi_course
+
+display_name:
+  jpn: "GateChecker 複数コース確認用"
+  eng: "GateChecker Multi Course Sample"
+
+race:
+  date: "2026/10/18"
+  timezone: "Asia/Tokyo"
+
+defaultCourseCode: full_main
+
+courses:
+  - courseCode: full_main
+    courseNameJa: "フルマラソン"
+    courseNameEn: "Full Marathon"
+    distance_km: 42.195
+    gates:
+      - point: 10.0
+        cutoff: "2026/10/18 09:40"
+      - point: 21.1
+        cutoff: "2026/10/18 11:15"
+      - point: 32.0
+        cutoff: "2026/10/18 12:45"
+      - point: GOAL
+        cutoff: "2026/10/18 14:30"
+    aids:
+      - km: 5.0
+      - km: 10.0
+      - km: 15.0
+      - km: 21.1
+      - km: 28.0
+      - km: 35.0
+      - km: 39.0
+
+  - courseCode: full_wave2
+    courseNameJa: "フルマラソン 第2ウェーブ"
+    courseNameEn: "Full Marathon Wave 2"
+    distance_km: 42.195
+    gates:
+      - point: 10.0
+        cutoff: "2026/10/18 09:55"
+      - point: 21.1
+        cutoff: "2026/10/18 11:30"
+      - point: 32.0
+        cutoff: "2026/10/18 13:00"
+      - point: GOAL
+        cutoff: "2026/10/18 14:45"
+    aids:
+      - km: 5.0
+      - km: 10.0
+      - km: 15.0
+      - km: 21.1
+      - km: 28.0
+      - km: 35.0
+      - km: 39.0
+
+  - courseCode: ultra_100k
+    courseNameJa: "100K"
+    courseNameEn: "100K"
+    distance_km: 100.0
+    gates:
+      - point: 30.0
+        cutoff: "2026/10/18 11:30"
+      - point: 60.0
+        cutoff: "2026/10/18 15:45"
+      - point: 85.0
+        cutoff: "2026/10/18 19:10"
+      - point: GOAL
+        cutoff: "2026/10/18 21:00"
+    aids:
+      - km: 10.0
+      - km: 20.0
+      - km: 30.0
+      - km: 42.0
+      - km: 55.0
+      - km: 68.0
+      - km: 80.0
+      - km: 90.0
+
+  - courseCode: ultra_70k
+    courseNameJa: "70K"
+    courseNameEn: "70K"
+    distance_km: 70.0
+    gates:
+      - point: 25.0
+        cutoff: "2026/10/18 11:10"
+      - point: 50.0
+        cutoff: "2026/10/18 14:40"
+      - point: GOAL
+        cutoff: "2026/10/18 17:20"
+    aids:
+      - km: 10.0
+      - km: 20.0
+      - km: 30.0
+      - km: 42.0
+      - km: 55.0
+      - km: 64.0

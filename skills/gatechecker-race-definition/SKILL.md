@@ -28,7 +28,7 @@ description: GateChecker 向けの大会定義を作るスキル。ユーザー�
 ## File Rules
 
 - race 定義ファイルは `apps/GateChecker/race_defs/races/<race_key>.yml` に置く。
-- `race_key` は英小文字と underscore を使い、年も含める。例: `iwate_oshu_kirameki_marathon_2026`
+- `race_key` は `YYYYMMDD_<race_name>` 形式にする。例: `20260517_iwate_oshu_kirameki_marathon`
 - `display_name.jpn` は大会名のみを入れる。`関門チェッカー` は付けない。
 - `display_name.eng` も大会名のみを基本にする。`Gate Checker` は付けない。公式英語名がなければ過度に凝らず一貫したローマ字/英訳にする。
 - `race.timezone` は日本国内大会なら通常 `Asia/Tokyo`
@@ -60,5 +60,5 @@ description: GateChecker 向けの大会定義を作るスキル。ユーザー�
 
 - 形式確認: `apps/GateChecker/README.md`
 - index: `apps/GateChecker/race_defs/race_index.yml`
-- 既存例: `apps/GateChecker/race_defs/races/toyama_marathon_2026.yml`
+- 既存例: `apps/GateChecker/race_defs/races/20261101_toyama_marathon.yml`
 - 生成検証: `apps/GateChecker/scripts/generate_gatechecker_race.py`

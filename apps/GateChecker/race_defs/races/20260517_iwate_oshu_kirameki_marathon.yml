@@ -1,0 +1,42 @@
+race_key: 20260517_iwate_oshu_kirameki_marathon
+
+display_name:
+  jpn: "2026第10回いわて奥州きらめきマラソン"
+  eng: "Iwate Oshu Kirameki Marathon 2026"
+
+race:
+  date: "2026/05/17"
+  timezone: "Asia/Tokyo"
+  distance_km: 42.195
+
+gates:
+  - point: 7.9
+    cutoff: "2026/05/17 09:35"
+  - point: 13.0
+    cutoff: "2026/05/17 10:10"
+  - point: 18.9
+    cutoff: "2026/05/17 11:00"
+  - point: 25.0
+    cutoff: "2026/05/17 11:50"
+  - point: 30.9
+    cutoff: "2026/05/17 12:45"
+  - point: 37.2
+    cutoff: "2026/05/17 13:35"
+  - point: GOAL
+    cutoff: "2026/05/17 14:30"
+
+aids:
+  - km: 1.8
+  - km: 5.7
+  - km: 9.4
+  - km: 11.5
+  - km: 14.1
+  - km: 18.1
+  - km: 20.9
+  - km: 23.6
+  - km: 26.8
+  - km: 28.6
+  - km: 32.0
+  - km: 34.2
+  - km: 37.2
+  - km: 40.1

@@ -172,25 +172,7 @@ def resolve_country(slug: str, timezone: str) -> tuple[str, str]:
     }
     if timezone in by_timezone:
         return by_timezone[timezone]
-
-    by_slug = {
-        "toyama_marathon_2026": ("日本", "Japan"),
-        "iwate_oshu_kirameki_marathon_2026": ("日本", "Japan"),
-        "kurobe_meisui_marathon_2026": ("日本", "Japan"),
-        "bmo_vancouver_marathon_2026": ("カナダ", "Canada"),
-        "tartan_ottawa_international_marathon_2026": ("カナダ", "Canada"),
-        "flying_pig_marathon_2026": ("アメリカ", "United States"),
-        "pittsburgh_marathon_2026": ("アメリカ", "United States"),
-        "cleveland_marathon_2026": ("アメリカ", "United States"),
-        "grandmas_marathon_2026": ("アメリカ", "United States"),
-        "stockholm_marathon_2026": ("スウェーデン", "Sweden"),
-        "ing_night_marathon_luxembourg_2026": ("ルクセンブルク", "Luxembourg"),
-        "edinburgh_marathon_2026": ("イギリス", "United Kingdom"),
-        "midnight_sun_marathon_2026": ("ノルウェー", "Norway"),
-        "hakodate_marathon_2026": ("日本", "Japan"),
-        "lake_saroma_100km_ultra_marathon_2026": ("日本", "Japan"),
-    }
-    return by_slug.get(slug, ("その他", "Other"))
+    return ("その他", "Other")
 
 
 def is_public_race(slug: str, name_ja: str, name_en: str) -> bool:

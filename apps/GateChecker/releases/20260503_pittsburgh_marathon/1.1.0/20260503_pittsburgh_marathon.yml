@@ -1,0 +1,53 @@
+race_key: 20260503_pittsburgh_marathon
+
+display_name:
+  jpn: "ピッツバーグマラソン2026"
+  eng: "Pittsburgh Marathon 2026"
+
+race:
+  date: "2026/05/03"
+  timezone: "America/New_York"
+  distance_mi: 26.2187575
+
+gates:
+  - point_mi: 4.4
+    cutoff: "2026/05/03 08:40"
+  - point_mi: 8.1
+    cutoff: "2026/05/03 09:40"
+  - point_mi: 10.6
+    cutoff: "2026/05/03 10:40"
+  - point: GOAL
+    cutoff: "2026/05/03 14:00"
+
+aids:
+  - mi: 2.0
+  - mi: 3.7
+  - mi: 5.3
+  - mi: 6.2
+  - mi: 8.0
+  - mi: 9.1
+  - mi: 9.8
+    name:
+      jpn: "BPN Go Gel"
+      eng: "BPN Go Gel"
+  - mi: 9.9
+  - mi: 10.6
+  - mi: 12.4
+  - mi: 12.5
+    name:
+      jpn: "BPN Go Gel"
+      eng: "BPN Go Gel"
+  - mi: 13.5
+  - mi: 15.1
+  - mi: 16.5
+  - mi: 17.7
+  - mi: 18.8
+  - mi: 19.8
+  - mi: 20.6
+    name:
+      jpn: "BPN Go Gel"
+      eng: "BPN Go Gel"
+  - mi: 22.2
+  - mi: 23.1
+  - mi: 24.4
+  - mi: 25.4

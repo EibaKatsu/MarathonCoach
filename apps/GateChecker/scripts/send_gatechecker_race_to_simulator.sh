@@ -26,9 +26,9 @@ if [[ -n "${GATECHECKER_SIM_SLOT_RACE:-}" ]]; then
   SLOT_RACE_KEYS=("${GATECHECKER_SIM_SLOT_RACE}")
 else
   SLOT_RACE_KEYS=(
-    "gatechecker_beta_check_2026"
-    "toyama_marathon_2026"
-    "iwate_oshu_kirameki_marathon_2026"
+    "20260428_gatechecker_beta_check"
+    "20261101_toyama_marathon"
+    "20260517_iwate_oshu_kirameki_marathon"
   )
 fi
 
