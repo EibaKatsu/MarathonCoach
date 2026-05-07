@@ -47,6 +47,26 @@ races:
     app_id: 737184ed-a25a-4446-a4f9-ecfdc9fe4ff1
     definition: races/ing_night_marathon_luxembourg_2026.yml
     version: 0.1.0
+  edinburgh_marathon_2026:
+    app_id: 9fa5a8f6-1602-4f29-b220-c41634fba5bf
+    definition: races/edinburgh_marathon_2026.yml
+    version: 0.1.0
+  grandmas_marathon_2026:
+    app_id: 62c9a871-54d0-4afa-99a7-7ad0ae965e64
+    definition: races/grandmas_marathon_2026.yml
+    version: 0.1.0
+  midnight_sun_marathon_2026:
+    app_id: 469d958f-0b5e-4f47-b017-9b2bc5319832
+    definition: races/midnight_sun_marathon_2026.yml
+    version: 0.1.0
+  hakodate_marathon_2026:
+    app_id: e19ff169-f77f-44f1-a9ac-7c5ca2aa53f8
+    definition: races/hakodate_marathon_2026.yml
+    version: 0.1.0
+  lake_saroma_100km_ultra_marathon_2026:
+    app_id: 662bad21-6d5e-4b20-949a-e27b75c8e3b7
+    definition: races/lake_saroma_100km_ultra_marathon_2026.yml
+    version: 0.1.0
   sample_multi_course:
     app_id: 8efe4e50-38b8-49c3-acad-3797de088084
     definition: races/sample_multi_course.yml

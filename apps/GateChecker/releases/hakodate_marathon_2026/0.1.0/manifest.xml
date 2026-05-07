@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
     <iq:application
-        id="662bad21-6d5e-4b20-949a-e27b75c8e3b7"
+        id="e19ff169-f77f-44f1-a9ac-7c5ca2aa53f8"
         type="datafield"
         name="@Strings.AppName"
         entry="GateCheckerApp"

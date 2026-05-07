@@ -10,15 +10,15 @@ module GateRaceConfig {
     var _courses = null;
 
     function getRaceKey() {
-        return "lake_saroma_100km_ultra_marathon_2026";
+        return "edinburgh_marathon_2026";
     }
 
     function getRaceNameJpn() {
-        return "サロマ湖100kmウルトラマラソン2026";
+        return "エディンバラマラソン2026";
     }
 
     function getRaceNameEng() {
-        return "Lake Saroma 100km Ultra Marathon 2026";
+        return "Edinburgh Marathon 2026";
     }
 
     function getRaceYear() {
@@ -26,15 +26,15 @@ module GateRaceConfig {
     }
 
     function getRaceMonth() {
-        return 6;
+        return 5;
     }
 
     function getRaceDay() {
-        return 28;
+        return 24;
     }
 
     function getRaceTimezone() {
-        return "Asia/Tokyo";
+        return "Europe/London";
     }
 
     function getDefaultCourseCode() {
@@ -61,20 +61,11 @@ module GateRaceConfig {
                 "main",
                 "メインコース",
                 "Main Course",
-                100,
+                42.19500007008,
                 [
-                    [10000, 0, 383],
-                    [20000, 0, 459],
-                    [30000, 0, 535],
-                    [41000, 0, 620],
-                    [50000, 0, 690],
-                    [60000, 0, 768],
-                    [69300, 0, 842],
-                    [79300, 0, 919],
-                    [91500, 0, 1014],
-                    [GOAL, 0, 1080]
+                    [GOAL, 0, 990]
                 ],
-                [5000, 8500, 10000, 12500, 15000, 17500, 20000, 22500, 25000, 27500, 30000, 32500, 35000, 37500, 40000, 42500, 45000, 52000, 54500, 60000, 63500, 68000, 69000, 72500, 73800, 77500, 80000, 82500, 85000, 87500, 90000, 95000]
+                [4989, 9978, 14484, 14967, 19956, 24945, 26071, 29934, 34923, 35084, 38946, 39107]
             ]
             ];
         }
