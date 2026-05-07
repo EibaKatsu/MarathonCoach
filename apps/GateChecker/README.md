@@ -280,10 +280,95 @@ Notes:
 - Rebuild the slot race later if you want to restore that artifact on disk
 - On the pre-start / GPS-wait title screen, the app shows both `raceName` and the selected `courseName`
 
+## Manual Simulator Steps
+
+If you want to avoid using Codex for simulator work, run the steps below from the repository root.
+
+Prerequisites:
+
+- `CONNECTIQ_HOME` points to your Connect IQ SDK
+- A developer key is available through `CIQ_DEV_KEY` or `./.vscode/developer_key`
+
+Launch the simulator manually:
+
+```bash
+open "$CONNECTIQ_HOME/bin/ConnectIQ.app"
+```
+
+Build for a specific device model:
+
+```bash
+apps/GateChecker/scripts/build_gatechecker_race.sh <race_key> <device_id>
+```
+
+Example:
+
+```bash
+apps/GateChecker/scripts/build_gatechecker_race.sh sample_multi_course fr57042mm
+```
+
+The built `.prg` is written to:
+
+```text
+apps/GateChecker/dist/<race_key>/gatechecker-<race_key>-<device_id>.prg
+```
+
+Send a single-course race with no settings file:
+
+```bash
+apps/GateChecker/scripts/send_gatechecker_race_to_simulator.sh toyama_marathon_2026 fr57042mm
+```
+
+Behavior:
+
+- The script builds the race if needed
+- It sends only the `.prg` when the race resolves to exactly one course
+- No course selection file is generated or sent
+
+Send a multi-course race with a generated settings file:
+
+```bash
+apps/GateChecker/scripts/run_gatechecker_sim.sh --race sample_multi_course --device fr57042mm --course full_wave2
+```
+
+Behavior:
+
+- `--course` changes the generated default course for that simulator build
+- The script sends the `.prg`
+- If the race has multiple courses, it also sends the generated settings schema with the course pull-down entries
+
+The generated simulator settings file is:
+
+```text
+apps/GateChecker/dist/<race_key>/gatechecker-<race_key>-<device_id>-settings.json
+```
+
+Manual command summary:
+
+```bash
+# launch simulator
+open "$CONNECTIQ_HOME/bin/ConnectIQ.app"
+
+# build only
+apps/GateChecker/scripts/build_gatechecker_race.sh sample_multi_course fr57042mm
+
+# send a single-course race
+apps/GateChecker/scripts/send_gatechecker_race_to_simulator.sh toyama_marathon_2026 fr57042mm
+
+# send a multi-course race with a selected default course
+apps/GateChecker/scripts/run_gatechecker_sim.sh --race sample_multi_course --device fr57042mm --course ultra_100k
+```
+
 Because this app is a data field, activity recording does not start automatically. After `monkeydo`, use the simulator menu:
 
 1. `Simulation > FIT Data > Simulate`
 2. `Data Fields > Timer > Start Activity`
+
+Log file for simulator troubleshooting:
+
+```text
+$TMPDIR/com.garmin.connectiq/GARMIN/APPS/LOGS/CIQ_LOG.YML
+```
 
 ## Runtime Notes
 
