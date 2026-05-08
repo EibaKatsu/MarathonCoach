@@ -58,11 +58,11 @@
 
 ### Title
 
-Marathon Cutoff Guide for Flying Pig Marathon 2026 (May 3, 2026)
+Cutoff Guide for Flying Pig Marathon 2026 (May 3, 2026)
 
 ### Description
 
-Marathon Cutoff Guide for Flying Pig Marathon 2026 (May 3, 2026) is a Garmin data field for checking race cutoffs and aid stations during Flying Pig Marathon 2026.
+Cutoff Guide for Flying Pig Marathon 2026 (May 3, 2026) is a Garmin data field for checking race cutoffs and aid stations during Flying Pig Marathon 2026.
 
 It shows the next cutoff point, cutoff time, remaining distance, remaining time, and distance to the next aid station on one screen.
 

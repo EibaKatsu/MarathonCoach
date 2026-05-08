@@ -43,22 +43,6 @@ races:
     app_id: 7d88321e-96e6-42ed-ac95-70baff556612
     definition: races/20260524_kurobe_meisui_marathon.yml
     version: 0.1.0
-  20260516_ing_night_marathon_luxembourg:
-    app_id: 737184ed-a25a-4446-a4f9-ecfdc9fe4ff1
-    definition: races/20260516_ing_night_marathon_luxembourg.yml
-    version: 0.1.0
-  20260524_edinburgh_marathon:
-    app_id: 9fa5a8f6-1602-4f29-b220-c41634fba5bf
-    definition: races/20260524_edinburgh_marathon.yml
-    version: 0.1.0
-  20260620_grandmas_marathon:
-    app_id: 62c9a871-54d0-4afa-99a7-7ad0ae965e64
-    definition: races/20260620_grandmas_marathon.yml
-    version: 0.1.0
-  20260620_midnight_sun_marathon:
-    app_id: 469d958f-0b5e-4f47-b017-9b2bc5319832
-    definition: races/20260620_midnight_sun_marathon.yml
-    version: 0.1.0
   20260628_hakodate_marathon:
     app_id: e19ff169-f77f-44f1-a9ac-7c5ca2aa53f8
     definition: races/20260628_hakodate_marathon.yml

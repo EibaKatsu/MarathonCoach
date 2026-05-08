@@ -4,6 +4,9 @@ display_name:
   jpn: "シンシナティ フライング・ピッグ・マラソン2026"
   eng: "Flying Pig Marathon 2026"
 
+connect_iq:
+  icon_place_label: "Cincinnati"
+
 race:
   date: "2026/05/03"
   timezone: "America/New_York"

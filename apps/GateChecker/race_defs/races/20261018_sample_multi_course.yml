@@ -4,6 +4,9 @@ display_name:
   jpn: "GateChecker 複数コース確認用"
   eng: "GateChecker Multi Course Sample"
 
+connect_iq:
+  icon_place_label: "Sample"
+
 race:
   date: "2026/10/18"
   timezone: "Asia/Tokyo"

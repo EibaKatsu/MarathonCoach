@@ -74,11 +74,11 @@
 
 ### Title
 
-Marathon Cutoff Guide for Lake Saroma 100km Ultra Marathon 2026 (June 28, 2026)
+Cutoff Guide for Lake Saroma 100km Ultra Marathon 2026 (June 28, 2026)
 
 ### Description
 
-Marathon Cutoff Guide for Lake Saroma 100km Ultra Marathon 2026 (June 28, 2026) is a Garmin data field for checking race cutoffs and aid stations during Lake Saroma 100km Ultra Marathon 2026.
+Cutoff Guide for Lake Saroma 100km Ultra Marathon 2026 (June 28, 2026) is a Garmin data field for checking race cutoffs and aid stations during Lake Saroma 100km Ultra Marathon 2026.
 
 It shows the next cutoff point, cutoff time, remaining distance, remaining time, and distance to the next aid station on one screen.
 

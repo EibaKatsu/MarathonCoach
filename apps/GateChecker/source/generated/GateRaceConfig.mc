@@ -10,15 +10,15 @@ module GateRaceConfig {
     var _courses = null;
 
     function getRaceKey() {
-        return "20261101_toyama_marathon";
+        return "20260628_hakodate_marathon";
     }
 
     function getRaceNameJpn() {
-        return "富山マラソン2026";
+        return "函館マラソン2026";
     }
 
     function getRaceNameEng() {
-        return "Toyama Marathon 2026";
+        return "Hakodate Marathon 2026";
     }
 
     function getRaceYear() {
@@ -26,11 +26,11 @@ module GateRaceConfig {
     }
 
     function getRaceMonth() {
-        return 11;
+        return 6;
     }
 
     function getRaceDay() {
-        return 1;
+        return 28;
     }
 
     function getRaceTimezone() {
@@ -63,19 +63,18 @@ module GateRaceConfig {
                 "Main Course",
                 42.195,
                 [
-                    [9200, 0, 641],
-                    [14400, 0, 692],
-                    [18300, 0, 729],
-                    [22600, 0, 771],
-                    [26400, 0, 808],
-                    [28900, 0, 832],
-                    [33200, 0, 874],
-                    [35500, 0, 896],
-                    [38500, 0, 925],
-                    [41600, 0, 959],
-                    [GOAL, 0, 963]
+                    [5000, 0, 594],
+                    [8300, 0, 619],
+                    [13700, 0, 660],
+                    [19300, 0, 700],
+                    [24300, 0, 744],
+                    [29400, 0, 788],
+                    [33500, 0, 824],
+                    [37300, 0, 857],
+                    [39900, 0, 880],
+                    [GOAL, 0, 900]
                 ],
-                [5000, 10500, 15800, 21100, 27000, 32500, 38000]
+                [4700, 8400, 10300, 14100, 17800, 21500, 24100, 26500, 28700, 30000, 31300, 33500, 35800, 37300, 39400]
             ]
             ];
         }

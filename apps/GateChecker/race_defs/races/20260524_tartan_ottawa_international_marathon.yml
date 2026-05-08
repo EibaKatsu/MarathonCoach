@@ -4,6 +4,9 @@ display_name:
   jpn: "オタワ国際マラソン2026"
   eng: "Tartan Ottawa International Marathon 2026"
 
+connect_iq:
+  icon_place_label: "Ottawa"
+
 race:
   date: "2026/05/24"
   timezone: "America/Toronto"

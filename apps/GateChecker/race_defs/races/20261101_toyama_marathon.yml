@@ -4,6 +4,9 @@ display_name:
   jpn: "富山マラソン2026"
   eng: "Toyama Marathon 2026"
 
+connect_iq:
+  icon_place_label: "Toyama"
+
 race:
   date: "2026/11/01"
   timezone: "Asia/Tokyo"

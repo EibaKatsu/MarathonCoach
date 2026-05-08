@@ -4,6 +4,9 @@ display_name:
   jpn: "黒部名水マラソン2026"
   eng: "Kurobe Meisui Marathon 2026"
 
+connect_iq:
+  icon_place_label: "Kurobe"
+
 race:
   date: "2026/05/24"
   timezone: "Asia/Tokyo"
