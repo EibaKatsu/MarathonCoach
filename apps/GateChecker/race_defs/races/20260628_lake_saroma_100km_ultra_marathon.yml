@@ -4,6 +4,9 @@ display_name:
   jpn: "サロマ湖100kmウルトラマラソン2026"
   eng: "Lake Saroma 100km Ultra Marathon 2026"
 
+connect_iq:
+  icon_place_label: "Saroma"
+
 race:
   date: "2026/06/28"
   timezone: "Asia/Tokyo"

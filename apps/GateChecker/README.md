@@ -153,7 +153,7 @@ Naming:
 
 - `display_name` is the race name embedded in race data and on-race UI
 - `courseNameJa` / `courseNameEn` are shown on the pre-start title screen
-- The app name shown by Connect IQ is fixed to `関門ガイド` / `Marathon Cutoff Guide`
+- The app name shown by Connect IQ is fixed to `関門ガイド` / `Cutoff Guide`
 - Changing `display_name` does not rename the app itself
 
 ## Generated Files
@@ -237,7 +237,8 @@ Behavior:
 
 - It reads only `apps/GateChecker/race_defs/`
 - It creates Japanese and English titles/descriptions
-- It saves the output to `apps/GateChecker/releases/<race_key>/CONNECT_IQ_LISTING.md`
+- It generates a `500x500` store icon with `connect_iq.icon_place_label` at top-left and the race year at bottom-right
+- It saves the outputs to `apps/GateChecker/releases/<race_key>/CONNECT_IQ_LISTING.md` and `apps/GateChecker/releases/<race_key>/RunToCoal_Image.png`
 
 ## Simulator
 

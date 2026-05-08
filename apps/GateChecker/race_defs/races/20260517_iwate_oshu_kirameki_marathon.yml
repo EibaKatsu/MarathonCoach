@@ -4,6 +4,9 @@ display_name:
   jpn: "2026第10回いわて奥州きらめきマラソン"
   eng: "Iwate Oshu Kirameki Marathon 2026"
 
+connect_iq:
+  icon_place_label: "Oshu"
+
 race:
   date: "2026/05/17"
   timezone: "Asia/Tokyo"

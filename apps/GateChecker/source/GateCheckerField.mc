@@ -170,15 +170,14 @@ class GateCheckerField extends Ui.DataField {
             unitFont,
             ""
         );
-        var remainRightValueFont = _resolveStackedRowValueFont(
+        var remainRightValueFont = _resolveRemainingTimeValueFont(
             dc,
             Gfx.FONT_NUMBER_HOT,
             remainRightRect,
             labelFont,
             _gateRemainRightLabelText,
             _gateLeftTimeText,
-            unitFont,
-            ""
+            unitFont
         );
         var aidLeftValueFont = _resolveAidRowValueFont(
             dc,
@@ -227,21 +226,30 @@ class GateCheckerField extends Ui.DataField {
             );
             _drawCenteredCompactInfoBlock(dc, remainMergedRect, labelFont, "", remainMergedFont, _remainMergedText, Gfx.COLOR_WHITE);
         } else {
-            _drawTwoColumnMetricRow(
+            _drawStackedMetricBlockAligned(
                 dc,
                 remainLeftRect,
-                remainRightRect,
+                true,
                 labelFont,
-                unitFont,
                 _gateRemainLeftLabelText,
                 remainLeftValueFont,
                 _gateTimeText,
+                unitFont,
                 "",
+                Gfx.COLOR_WHITE,
+                false
+            );
+            _drawRemainingTimeMetricBlockAligned(
+                dc,
+                remainRightRect,
+                false,
+                labelFont,
                 _gateRemainRightLabelText,
                 remainRightValueFont,
                 _gateLeftTimeText,
-                "",
-                Gfx.COLOR_WHITE
+                unitFont,
+                Gfx.COLOR_WHITE,
+                true
             );
         }
 
@@ -1141,6 +1149,26 @@ class GateCheckerField extends Ui.DataField {
         );
     }
 
+    function _resolveRemainingTimeValueFont(dc, preferredFont, cellRect, labelFont, labelText, valueText, unitFont) {
+        var timeParts = _splitRemainingTimeParts(valueText);
+        if (timeParts == null) {
+            return _resolveStackedRowValueFont(dc, preferredFont, cellRect, labelFont, labelText, valueText, unitFont, "");
+        }
+
+        var font = preferredFont;
+        while (
+            _measureRemainingTimeValueWidth(dc, font, timeParts, unitFont) > _safeStackedCellWidth(cellRect) or
+            !_fitsStackedRemainingTimeHeight(dc, labelFont, labelText, font, timeParts, unitFont, _rectHeight(cellRect))
+        ) {
+            var nextFont = _shrinkNumberFont(font);
+            if (nextFont == font) {
+                return font;
+            }
+            font = nextFont;
+        }
+        return font;
+    }
+
     function _resolveValueFont(dc, preferredFont, labelText, numberText, unitFont, unitText, labelFont, maxWidth, maxHeight) {
         if (_useTextValueFont(numberText)) {
             preferredFont = Gfx.FONT_MEDIUM;
@@ -1208,6 +1236,28 @@ class GateCheckerField extends Ui.DataField {
             dc.getTextWidthInPixels(unitText, unitFont);
     }
 
+    function _measureRemainingTimeValueWidth(dc, valueFont, timeParts, unitFont) {
+        if (timeParts == null) {
+            return 0;
+        }
+
+        return _measureTextWidth(dc, timeParts[0], valueFont) +
+            _measureTextWidth(dc, timeParts[1], unitFont) +
+            _measureTextWidth(dc, timeParts[2], valueFont);
+    }
+
+    function _measureRemainingTimeValueHeight(dc, valueFont, timeParts, unitFont) {
+        if (timeParts == null) {
+            return 0;
+        }
+
+        var valueHeight = _maxInt(
+            _measureTextHeight(dc, timeParts[0], valueFont),
+            _measureTextHeight(dc, timeParts[2], valueFont)
+        );
+        return _maxInt(valueHeight, _measureTextHeight(dc, timeParts[1], unitFont));
+    }
+
     function _fitsStackedMetricHeight(dc, labelFont, labelText, valueFont, valueText, maxHeight) {
         if (maxHeight == null or maxHeight < 1) {
             return true;
@@ -1220,6 +1270,16 @@ class GateCheckerField extends Ui.DataField {
 
     function _fitsStackedTextHeight(dc, labelFont, labelText, valueFont, valueText, maxHeight) {
         return _fitsStackedMetricHeight(dc, labelFont, labelText, valueFont, valueText, maxHeight);
+    }
+
+    function _fitsStackedRemainingTimeHeight(dc, labelFont, labelText, valueFont, timeParts, unitFont, maxHeight) {
+        if (maxHeight == null or maxHeight < 1) {
+            return true;
+        }
+
+        var labelHeight = _measureTextHeight(dc, labelText, labelFont);
+        var valueHeight = _measureRemainingTimeValueHeight(dc, valueFont, timeParts, unitFont);
+        return (labelHeight + STACKED_LABEL_VALUE_GAP + valueHeight) <= maxHeight;
     }
 
     function _safeStackedCellWidth(cellRect) {
@@ -1401,6 +1461,22 @@ class GateCheckerField extends Ui.DataField {
         _drawValueWithUnitAligned(dc, cellRect, alignRight, valueY, valueFont, valueText, unitFont, unitText, color, boldText);
     }
 
+    function _drawRemainingTimeMetricBlockAligned(dc, cellRect, alignRight, labelFont, labelText, valueFont, valueText, unitFont, color, boldText) {
+        if ((labelText == null or labelText.length() == 0) and (valueText == null or valueText.length() == 0)) {
+            return;
+        }
+
+        var timeParts = _splitRemainingTimeParts(valueText);
+        var labelHeight = _measureTextHeight(dc, labelText, labelFont);
+        var valueHeight = timeParts == null ? _measureTextHeight(dc, valueText, valueFont) : _measureRemainingTimeValueHeight(dc, valueFont, timeParts, unitFont);
+        var labelY = _resolveLabelY(_rectTop(cellRect), _rectHeight(cellRect), labelHeight, valueHeight);
+        var valueY = _resolveValueY(labelY, labelHeight);
+        var labelAnchorX = _resolveInnerLabelAnchorX(cellRect, alignRight);
+
+        _drawCenteredLine(dc, labelAnchorX, labelY, labelFont, labelText, color, boldText);
+        _drawRemainingTimeValueAligned(dc, cellRect, alignRight, valueY, valueFont, valueText, unitFont, color, boldText);
+    }
+
     function _resolveAidUnitY(dc, cellRect, unitFont, unitText) {
         if (unitText == null or unitText.length() == 0) {
             return _rectTop(cellRect) + _rectHeight(cellRect);
@@ -1459,6 +1535,25 @@ class GateCheckerField extends Ui.DataField {
         var textWidth = dc.getTextWidthInPixels(text, font);
         var textX = alignRight ? (_rectRight(cellRect) - textWidth) : _rectLeft(cellRect);
         _drawTextWithOptionalBold(dc, textX, y, font, text, Gfx.TEXT_JUSTIFY_LEFT, color, boldText);
+    }
+
+    function _drawRemainingTimeValueAligned(dc, cellRect, alignRight, y, valueFont, valueText, unitFont, color, boldText) {
+        var timeParts = _splitRemainingTimeParts(valueText);
+        if (timeParts == null) {
+            _drawTextAligned(dc, cellRect, alignRight, y, valueFont, valueText, color, boldText);
+            return;
+        }
+
+        var leftWidth = _measureTextWidth(dc, timeParts[0], valueFont);
+        var unitWidth = _measureTextWidth(dc, timeParts[1], unitFont);
+        var rightWidth = _measureTextWidth(dc, timeParts[2], valueFont);
+        var totalWidth = leftWidth + unitWidth + rightWidth;
+        var startX = alignRight ? (_rectRight(cellRect) - totalWidth) : _rectLeft(cellRect);
+        var unitY = y + Math.floor((Gfx.getFontHeight(valueFont) * 58) / 100) - Math.floor(Gfx.getFontHeight(unitFont) / 2);
+
+        _drawTextWithOptionalBold(dc, startX, y, valueFont, timeParts[0], Gfx.TEXT_JUSTIFY_LEFT, color, boldText);
+        _drawTextWithOptionalBold(dc, startX + leftWidth, unitY, unitFont, timeParts[1], Gfx.TEXT_JUSTIFY_LEFT, color, boldText);
+        _drawTextWithOptionalBold(dc, startX + leftWidth + unitWidth, y, valueFont, timeParts[2], Gfx.TEXT_JUSTIFY_LEFT, color, boldText);
     }
 
     function _drawTwoColumnMetricRow(
@@ -1662,6 +1757,23 @@ class GateCheckerField extends Ui.DataField {
 
     function _drawLabelCentered(dc, centerX, y, font, text, color, bitmap) {
         _drawCenteredLine(dc, centerX, y, font, text, color, false);
+    }
+
+    function _splitRemainingTimeParts(valueText) {
+        if (valueText == null or valueText.length() == 0) {
+            return null;
+        }
+
+        var unitIndex = valueText.find("h");
+        if (unitIndex == null or unitIndex <= 0 or unitIndex >= (valueText.length() - 1)) {
+            return null;
+        }
+
+        return [
+            valueText.substring(0, unitIndex),
+            "h",
+            valueText.substring(unitIndex + 1, valueText.length())
+        ];
     }
 
     function _maxInt(leftValue, rightValue) {

@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import os
+import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -19,6 +21,9 @@ RACE_DEFS_DIR = APP_DIR / "race_defs"
 RACE_INDEX_PATH = RACE_DEFS_DIR / "race_index.yml"
 RELEASES_DIR = APP_DIR / "releases"
 OUTPUT_FILE_NAME = "CONNECT_IQ_LISTING.md"
+ICON_FILE_NAME = "RunToCoal_Image.png"
+ICON_GENERATOR_PATH = APP_DIR / "scripts" / "generate_release_icons.swift"
+APP_NAME_ENG = "Cutoff Guide"
 GOAL_TOKEN = "GOAL"
 
 
@@ -48,6 +53,7 @@ class RaceListing:
     event_name_jpn: str
     event_name_eng: str
     race_date: date
+    icon_place_label: str
     course_name_jpn: str | None
     course_name_eng: str | None
     available_courses_jpn: list[str]
@@ -318,6 +324,14 @@ def parse_race_listing(definition_path: Path) -> RaceListing:
         raise ValidationError(
             f"{definition_path}: race.date must be in yyyy/mm/dd format."
         ) from exc
+    connect_iq = data.get("connect_iq")
+    if not isinstance(connect_iq, dict):
+        raise ValidationError(f"{definition_path}: connect_iq must be a mapping.")
+    icon_place_label = connect_iq.get("icon_place_label")
+    if not isinstance(icon_place_label, str) or not icon_place_label.strip():
+        raise ValidationError(
+            f"{definition_path}: connect_iq.icon_place_label must be a non-empty string."
+        )
     (
         raw_gates,
         raw_aids,
@@ -396,6 +410,7 @@ def parse_race_listing(definition_path: Path) -> RaceListing:
         event_name_jpn=event_name_jpn.strip(),
         event_name_eng=event_name_eng.strip(),
         race_date=race_date,
+        icon_place_label=icon_place_label.strip(),
         course_name_jpn=course_name_jpn.strip() if isinstance(course_name_jpn, str) and course_name_jpn.strip() else None,
         course_name_eng=course_name_eng.strip() if isinstance(course_name_eng, str) and course_name_eng.strip() else None,
         available_courses_jpn=available_courses_jpn,
@@ -500,11 +515,11 @@ def render_listing_markdown(race: RaceListing) -> str:
 
 ### Title
 
-Marathon Cutoff Guide for {race.event_name_eng} ({race_date_eng})
+{APP_NAME_ENG} for {race.event_name_eng} ({race_date_eng})
 
 ### Description
 
-Marathon Cutoff Guide for {race.event_name_eng} ({race_date_eng}) is a Garmin data field for checking race cutoffs and aid stations during {race.event_name_eng}.
+{APP_NAME_ENG} for {race.event_name_eng} ({race_date_eng}) is a Garmin data field for checking race cutoffs and aid stations during {race.event_name_eng}.
 
 It shows the next cutoff point, cutoff time, remaining distance, remaining time, and distance to the next aid station on one screen.
 {course_heading_eng}
@@ -533,6 +548,31 @@ def write_output(race: RaceListing, markdown: str) -> Path:
     return output_path
 
 
+def write_icon(race: RaceListing) -> Path:
+    env = os.environ.copy()
+    env["HOME"] = env.get("HOME", "/tmp")
+    env["SWIFT_MODULECACHE_PATH"] = env.get("SWIFT_MODULECACHE_PATH", "/tmp/swift-module-cache")
+    env["CLANG_MODULE_CACHE_PATH"] = env.get("CLANG_MODULE_CACHE_PATH", "/tmp/clang-module-cache")
+    try:
+        subprocess.run(
+            [
+                "swift",
+                str(ICON_GENERATOR_PATH),
+                race.race_key,
+                race.icon_place_label,
+                str(race.race_date.year),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+    except subprocess.CalledProcessError as exc:
+        detail = exc.stderr.strip() or exc.stdout.strip() or str(exc)
+        raise ValidationError(f"Icon generation failed: {detail}") from exc
+    return RELEASES_DIR / race.race_key / ICON_FILE_NAME
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Generate Connect IQ Store listing text for a GateChecker race."
@@ -559,11 +599,13 @@ def main() -> int:
             print(markdown)
             return 0
         output_path = write_output(race, markdown)
+        icon_path = write_icon(race)
     except ValidationError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
     print(output_path)
+    print(icon_path)
     return 0
 
 

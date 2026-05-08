@@ -1,6 +1,6 @@
 <resources>
-    <string id="AppName">Marathon Cutoff Guide</string>
-    <string id="AppTitle">Marathon Cutoff Guide</string>
+    <string id="AppName">Cutoff Guide</string>
+    <string id="AppTitle">Cutoff Guide</string>
     <string id="CodeOk">READY</string>
     <string id="CodeError">CONFIG ERROR</string>
     <string id="WaitDist">WAIT START</string>

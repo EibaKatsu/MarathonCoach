@@ -53,11 +53,11 @@
 
 ### Title
 
-Marathon Cutoff Guide for Iwate Oshu Kirameki Marathon 2026 (May 17, 2026)
+Cutoff Guide for Iwate Oshu Kirameki Marathon 2026 (May 17, 2026)
 
 ### Description
 
-Marathon Cutoff Guide for Iwate Oshu Kirameki Marathon 2026 (May 17, 2026) is a Garmin data field for checking race cutoffs and aid stations during Iwate Oshu Kirameki Marathon 2026.
+Cutoff Guide for Iwate Oshu Kirameki Marathon 2026 (May 17, 2026) is a Garmin data field for checking race cutoffs and aid stations during Iwate Oshu Kirameki Marathon 2026.
 
 It shows the next cutoff point, cutoff time, remaining distance, remaining time, and distance to the next aid station on one screen.
 

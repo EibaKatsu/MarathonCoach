@@ -4,6 +4,9 @@ display_name:
   jpn: "函館マラソン2026"
   eng: "Hakodate Marathon 2026"
 
+connect_iq:
+  icon_place_label: "Hakodate"
+
 race:
   date: "2026/06/28"
   timezone: "Asia/Tokyo"

@@ -4,6 +4,9 @@ display_name:
   jpn: "ピッツバーグマラソン2026"
   eng: "Pittsburgh Marathon 2026"
 
+connect_iq:
+  icon_place_label: "Pittsburgh"
+
 race:
   date: "2026/05/03"
   timezone: "America/New_York"
