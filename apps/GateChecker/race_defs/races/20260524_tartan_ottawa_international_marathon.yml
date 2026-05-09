@@ -6,6 +6,7 @@ display_name:
 
 connect_iq:
   icon_place_label: "Ottawa"
+  iq_apl_id: "4d4604ef-0a56-40ed-ba65-18a925a8db7a"
 
 race:
   date: "2026/05/24"

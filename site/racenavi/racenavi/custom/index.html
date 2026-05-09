@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RaceNaviカスタム設定 | 目標タイムと心拍に合わせたレース設定</title>
-  <meta name="description" content="RaceNaviカスタム設定は、目標タイムや心拍情報をもとに、レース中に使う心拍上限やペース方針を整理するサービスです。" />
+  <title>RaceNaviカスタム設定 | 目標レースに合わせたモニター募集予定ページ</title>
+  <meta name="description" content="RaceNaviのカスタム設定は、目標タイム、心拍情報、過去のレースデータをもとに設定を整理するモニター募集予定ページです。" />
   <link rel="canonical" href="https://racenavi.jpn.org/racenavi/custom/" />
   <link rel="alternate" hreflang="ja" href="https://racenavi.jpn.org/racenavi/custom/" />
   <link rel="alternate" hreflang="en" href="https://racenavi.jpn.org/en/racenavi/custom/" />
-  <meta property="og:title" content="RaceNaviカスタム設定 | 目標タイムと心拍に合わせたレース設定" />
-  <meta property="og:description" content="RaceNaviカスタム設定は、目標タイムや心拍情報をもとに、レース中に使う心拍上限やペース方針を整理するサービスです。" />
+  <meta property="og:title" content="RaceNaviカスタム設定 | 目標レースに合わせたモニター募集予定ページ" />
+  <meta property="og:description" content="RaceNaviのカスタム設定は、目標タイム、心拍情報、過去のレースデータをもとに設定を整理するモニター募集予定ページです。" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://racenavi.jpn.org/racenavi/custom/" />
-  <meta property="og:image" content="https://racenavi.jpn.org/assets/shot02_one_screen.png" />
+  <meta property="og:image" content="https://racenavi.jpn.org/assets/heroImage_jpn.png" />
   <meta property="og:locale" content="ja_JP" />
   <meta name="theme-color" content="#071423" />
   <link rel="icon" type="image/png" href="/assets/mainIcon.png" />
@@ -27,7 +27,7 @@
       <span>RaceNavi</span>
     </a>
     <nav class="site-nav" aria-label="メインナビゲーション">
-      <a href="/racenavi/">RaceNavi</a><a href="/racenavi/custom/">カスタム設定</a><a href="/gatechecker/">関門ガイド</a><a href="/gatechecker/races/">対応大会</a><a href="/en/">English</a>
+      <a href="/racenavi/">RaceNavi</a><a href="/gatechecker/">関門ガイド</a><a href="/gatechecker/races/">対応大会</a><a href="/racenavi/custom/">カスタム設定</a><a href="/en/">English</a>
     </nav>
   </header>
 
@@ -37,8 +37,9 @@
       <div class="hero-card">
         <div>
           <span class="eyebrow">Custom Setup</span>
-          <h1>RaceNaviを、自分のレース用に調整する。</h1>
-          <p class="lead">目標タイム、心拍情報、過去の走行データをもとに、RaceNaviで使う設定を整理します。</p>
+          <h1>RaceNaviを、自分の目標レース用に調整する。</h1>
+          <p class="lead">同じサブ4狙いでも、心拍の上がり方や後半の落ち方は人によって違います。カスタム設定では、目標タイム、心拍情報、過去のレースデータをもとに、RaceNaviで使う設定を整理します。</p>
+          <div class="actions"><a class="button button-primary" href="https://x.com/racenavi_run" target="_blank" rel="noreferrer">モニター希望をXで送る</a><a class="button button-secondary" href="#needed-info">必要な情報を見る</a></div>
         </div>
       </div>
     </section>
@@ -46,63 +47,44 @@
     <section class="page-section">
       <div class="info-grid">
         <article class="info-card">
-          <h2>できること</h2>
-          <ul>
-            <li>目標タイムの確認</li>
-            <li>心拍情報の整理</li>
-            <li>CAP心拍の目安設定</li>
-            <li>レース中の判断方針の整理</li>
-            <li>RaceNavi用カスタムコードの作成予定</li>
-          </ul>
+          <h2>こんな人向け</h2>
+          <ul><li>目標タイムに合わせて、心拍の上限目安を整理したい</li><li>後半に失速しやすく、序盤の抑え方を決めておきたい</li><li>GarminやFITデータはあるが、どう見ればいいか分からない</li><li>RaceNaviを自分のレース用に調整して使いたい</li></ul>
         </article>
-        <article class="info-card">
+        <article class="info-card" id="needed-info">
           <h2>必要な情報</h2>
-          <ul>
-            <li>目標タイム</li>
-            <li>最大心拍</li>
-            <li>安静時心拍</li>
-            <li>LTHRがあればLTHR</li>
-            <li>過去のレースデータまたはFITデータ</li>
-            <li>出場予定レース</li>
-          </ul>
+          <ul><li>目標タイム</li><li>最大心拍</li><li>安静時心拍</li><li>LTHRがあればLTHR</li><li>過去のレースデータまたはFITデータ</li><li>出場予定レース</li></ul>
         </article>
       </div>
     </section>
 
     <section class="page-section">
       <article class="cta-panel">
-        <span class="badge badge-racenavi">Status</span>
-        <h2>価格・募集</h2>
-        <ul class="link-list">
-          <li>先着モニター募集予定</li>
-          <li>通常価格は検討中</li>
-          <li>以前検討した価格 4,980円 は、現時点では予定または検討中の扱いです。</li>
-        </ul>
+        <span class="badge badge-racenavi">Monitor</span>
+        <h2>現在の募集状況</h2>
+        <p class="page-copy">現在は正式販売前のため、先着モニター募集の形を検討しています。希望があれば、XのDMで「RaceNaviカスタム設定希望」と送ってください。提供内容・価格・募集人数は、準備ができ次第案内します。</p>
         <div class="actions">
-          <span class="button button-secondary button-disabled" aria-disabled="true">準備中</span>
+          <a class="button button-primary" href="https://x.com/racenavi_run" target="_blank" rel="noreferrer">Xでモニター希望を送る</a>
         </div>
       </article>
     </section>
 
     <section class="page-section">
       <div class="notice">
-        <strong>注意事項：</strong>
-        医療的助言ではありません。体調や気象条件によって適切な心拍は変わります。最終判断はランナー本人が行ってください。
+        <strong>注意事項:</strong>
+        <ul class="page-link-list"><li>医療的助言ではありません。</li><li>体調、暑さ、コース条件によって適切な心拍は変わります。</li><li>最終判断はランナー本人が行ってください。</li></ul>
       </div>
     </section>
-
   </main>
 
 
   <footer class="page-shell site-footer">
     <div class="footer-block">
       <strong>RaceNavi</strong>
-      <p>マラソン中に見たい情報をGarminで確認するためのアプリ群。</p>
-      <p>RaceNaviと関門ガイドはGarmin向けアプリです。Garmin公式、または各大会公式のアプリではありません。</p>
-      <p>問い合わせ先: <a href="https://x.com/racenavi_run" target="_blank" rel="noreferrer">X のDM @racenavi_run</a></p>
+      <p>RaceNaviは、レース中の判断を減らすためのGarmin向けアプリサイトです。</p>
+      <p>RaceNaviと関門ガイドはGarmin公式・大会公式のアプリではありません。</p>
     </div>
     <div class="footer-links">
-      <a href="/">トップ</a><a href="/racenavi/">RaceNavi</a><a href="/racenavi/custom/">カスタム設定</a><a href="/gatechecker/">関門ガイド</a><a href="/gatechecker/races/">対応大会</a><a href="/en/">English</a>
+      <a href="/racenavi/">RaceNavi</a><a href="/gatechecker/">関門ガイド</a><a href="/gatechecker/races/">対応大会</a><a href="/racenavi/custom/">カスタム設定</a><a href="/en/">English</a><a href="https://x.com/racenavi_run" target="_blank" rel="noreferrer">X DM</a>
     </div>
   </footer>
 

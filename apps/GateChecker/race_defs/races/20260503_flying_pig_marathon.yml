@@ -6,6 +6,7 @@ display_name:
 
 connect_iq:
   icon_place_label: "Cincinnati"
+  iq_apl_id: "d1f453b8-a26b-473d-9b56-a20b8c08bf7b"
 
 race:
   date: "2026/05/03"

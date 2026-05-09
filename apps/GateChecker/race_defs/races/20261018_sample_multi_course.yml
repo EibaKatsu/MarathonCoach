@@ -6,6 +6,7 @@ display_name:
 
 connect_iq:
   icon_place_label: "Sample"
+  iq_apl_id: ""
 
 race:
   date: "2026/10/18"
@@ -18,6 +19,7 @@ courses:
     courseNameJa: "フルマラソン"
     courseNameEn: "Full Marathon"
     distance_km: 42.195
+    start_time: "09:00"
     gates:
       - point: 10.0
         cutoff: "2026/10/18 09:40"
@@ -40,6 +42,7 @@ courses:
     courseNameJa: "フルマラソン 第2ウェーブ"
     courseNameEn: "Full Marathon Wave 2"
     distance_km: 42.195
+    start_time: "09:15"
     gates:
       - point: 10.0
         cutoff: "2026/10/18 09:55"
@@ -62,6 +65,7 @@ courses:
     courseNameJa: "100K"
     courseNameEn: "100K"
     distance_km: 100.0
+    start_time: "04:30"
     gates:
       - point: 30.0
         cutoff: "2026/10/18 11:30"
@@ -85,6 +89,7 @@ courses:
     courseNameJa: "70K"
     courseNameEn: "70K"
     distance_km: 70.0
+    start_time: "05:30"
     gates:
       - point: 25.0
         cutoff: "2026/10/18 11:10"
