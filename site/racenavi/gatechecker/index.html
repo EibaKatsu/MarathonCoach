@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>関門ガイド | マラソンの関門・エイドをGarminで確認</title>
-  <meta name="description" content="関門ガイドは、大会ごとの関門時刻とエイド地点をもとに、次の関門までの残り距離・残り時間、次のエイドまでの距離をGarminで確認するアプリです。" />
+  <meta name="description" content="関門ガイドは、大会ごとの関門時刻とエイド地点をGarminで確認するアプリです。対応大会にないレースも、公式情報を確認できる場合は個別大会用の関門ガイド作成リクエストをGoogleフォームから受け付けます。" />
   <link rel="canonical" href="https://racenavi.jpn.org/gatechecker/" />
   <link rel="alternate" hreflang="ja" href="https://racenavi.jpn.org/gatechecker/" />
   <link rel="alternate" hreflang="en" href="https://racenavi.jpn.org/en/gatechecker/" />
   <meta property="og:title" content="関門ガイド | マラソンの関門・エイドをGarminで確認" />
-  <meta property="og:description" content="関門ガイドは、大会ごとの関門時刻とエイド地点をもとに、次の関門までの残り距離・残り時間、次のエイドまでの距離をGarminで確認するアプリです。" />
+  <meta property="og:description" content="関門ガイドは、大会ごとの関門時刻とエイド地点をGarminで確認するアプリです。対応大会にないレースも、公式情報を確認できる場合は個別大会用の関門ガイド作成リクエストをGoogleフォームから受け付けます。" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://racenavi.jpn.org/gatechecker/" />
   <meta property="og:image" content="https://racenavi.jpn.org/assets/heroImage_jpn.png" />
@@ -39,7 +39,7 @@
           <span class="eyebrow eyebrow-gate">関門ガイド</span>
           <h1>Garminで関門情報とエイド情報を確認する。</h1>
           <p class="lead">関門ガイドは、大会ごとの関門時刻とエイド地点をもとに、次の関門までの残り距離・残り時間、次のエイドまでの距離をGarminで確認するアプリです。スマホを取り出したり、頭の中で関門時刻を計算したりする余裕がない場面を想定しています。</p>
-          <div class="actions"><a class="button button-primary" href="/gatechecker/races/">対応大会を見る</a><a class="button button-secondary" href="https://x.com/racenavi_run" target="_blank" rel="noreferrer">追加リクエストをXで送る</a></div>
+          <div class="actions"><a class="button button-primary" href="/gatechecker/races/">対応大会を見る</a><a class="button button-secondary" href="/gatechecker/request/">作成リクエストを見る</a></div>
         </div>
         <div class="hero-image-panel">
           <img src="/assets/GateChecker_Hero_Image_jp.png" alt="関門ガイドのHeroイメージ" />
@@ -76,19 +76,21 @@
 
     <section class="page-section">
       <article class="cta-panel">
-          <span class="badge badge-gate">Race-specific</span>
-          <h2>大会別に提供します</h2>
-          <p class="page-copy">関門ガイドは、大会ごとに関門・エイド情報を登録して提供します。大会によって関門時刻、エイド地点、ウェーブスタート、コース変更が異なるため、対応大会ページから対象レースを確認してください。</p>
-          <div class="actions">
-            <a class="button button-primary" href="/gatechecker/races/">対応大会を見る</a>
-          </div>
+        <span class="badge badge-gate">作成リクエスト</span>
+        <h2>未対応大会の作成リクエスト</h2>
+        <p class="page-copy">希望する大会が未対応の場合は、作成リクエストの詳細ページから料金と流れを確認できます。</p>
+        <p class="page-copy">作成した大会版は、他のユーザーも利用できる形でConnect IQ Storeに公開します。</p>
+        <div class="actions">
+          <a class="button button-primary" href="/gatechecker/request/">希望する大会が未対応の場合はこちら</a>
+          <a class="button button-secondary" href="/gatechecker/races/">対応大会を見る</a>
+        </div>
       </article>
     </section>
 
     <section class="page-section">
       <div class="notice">
         <strong>注意事項:</strong>
-        <ul class="page-link-list"><li>Garmin公式、大会公式アプリではありません。</li><li>関門・エイド情報は必ず大会公式情報も確認してください。</li><li>情報に誤りや更新漏れがある可能性があります。</li><li>追加リクエストや誤り連絡はX DMへ送ってください。</li></ul>
+        <ul class="page-link-list"><li>Garmin公式アプリではありません。</li><li>大会公式アプリではありません。</li><li>関門・エイド情報は必ず大会公式情報も確認してください。</li><li>コース変更、ウェーブスタート、天候、主催者発表により情報が変わる場合があります。</li><li>完走、関門通過、記録達成を保証するものではありません。</li></ul>
       </div>
     </section>
   </main>
@@ -101,7 +103,7 @@
       <p>RaceNaviと関門ガイドはGarmin公式・大会公式のアプリではありません。</p>
     </div>
     <div class="footer-links">
-      <a href="/racenavi/">RaceNavi</a><a href="/gatechecker/">関門ガイド</a><a href="/gatechecker/races/">対応大会</a><a href="/racenavi/custom/">カスタム設定</a><a href="/en/">English</a><a href="https://x.com/racenavi_run" target="_blank" rel="noreferrer">X DM</a>
+      <a href="/racenavi/">RaceNavi</a><a href="/gatechecker/">関門ガイド</a><a href="/gatechecker/races/">対応大会</a><a href="/gatechecker/request/">作成リクエスト</a><a href="/racenavi/custom/">カスタム設定</a><a href="/en/">English</a><a href="https://x.com/racenavi_run" target="_blank" rel="noreferrer">X DM</a>
     </div>
   </footer>
 
