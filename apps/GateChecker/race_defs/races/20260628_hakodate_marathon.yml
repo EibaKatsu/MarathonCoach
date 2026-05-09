@@ -6,6 +6,7 @@ display_name:
 
 connect_iq:
   icon_place_label: "Hakodate"
+  iq_apl_id: ""
 
 race:
   date: "2026/06/28"

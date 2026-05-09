@@ -6,6 +6,7 @@ display_name:
 
 connect_iq:
   icon_place_label: "Vancouver"
+  iq_apl_id: "b7fc074a-a5e1-4ac6-b17a-1e4803a826d8"
 
 race:
   date: "2026/05/03"

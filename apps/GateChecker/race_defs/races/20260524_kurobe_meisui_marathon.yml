@@ -6,6 +6,7 @@ display_name:
 
 connect_iq:
   icon_place_label: "Kurobe"
+  iq_apl_id: "9288d2f7-d1a0-43e0-bf70-c7b9b478956f"
 
 race:
   date: "2026/05/24"

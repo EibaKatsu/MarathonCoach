@@ -6,6 +6,7 @@ display_name:
 
 connect_iq:
   icon_place_label: "Pittsburgh"
+  iq_apl_id: "76a2224d-ef75-4a89-a1e0-144e42ec812e"
 
 race:
   date: "2026/05/03"

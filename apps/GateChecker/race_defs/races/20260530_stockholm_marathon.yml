@@ -6,6 +6,7 @@ display_name:
 
 connect_iq:
   icon_place_label: "Stockholm"
+  iq_apl_id: "4b33d9bf-8862-4d57-b2ef-08229e390e88"
 
 race:
   date: "2026/05/30"

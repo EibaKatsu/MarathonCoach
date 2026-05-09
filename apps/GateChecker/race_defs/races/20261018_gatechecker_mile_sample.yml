@@ -6,6 +6,7 @@ display_name:
 
 connect_iq:
   icon_place_label: "Mile"
+  iq_apl_id: ""
 
 race:
   date: "2026/10/18"

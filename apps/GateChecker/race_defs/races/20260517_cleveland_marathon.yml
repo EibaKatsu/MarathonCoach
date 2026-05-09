@@ -6,6 +6,7 @@ display_name:
 
 connect_iq:
   icon_place_label: "Cleveland"
+  iq_apl_id: "1e151255-20a5-4d0e-b822-4a0dbb5b90ad"
 
 race:
   date: "2026/05/17"
