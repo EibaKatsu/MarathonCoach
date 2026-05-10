@@ -20,9 +20,10 @@ module GateRaceData {
     const RESOLVED_COURSE = 0;
     const RESOLVED_REQUESTED_CODE = 1;
     const RESOLVED_REASON = 2;
-    const COURSE_DEBUG_LOG = true;
+    const COURSE_DEBUG_LOG = false;
 
     var _requestedCourseCode = null;
+    var _resolvedCourseStateCache = null;
 
     function getRaceNameJpn() {
         return GateRaceConfig.getRaceNameJpn();
@@ -250,6 +251,7 @@ module GateRaceData {
 
     function resetSelectedCourseCache() {
         _requestedCourseCode = null;
+        _resolvedCourseStateCache = null;
     }
 
     function getCourseCodeForPropertyValue(propertyValue) {
@@ -271,6 +273,7 @@ module GateRaceData {
 
     function applyCourseSelectionFromPropertyValue(propertyValue) {
         _requestedCourseCode = getCourseCodeForPropertyValue(propertyValue);
+        _resolvedCourseStateCache = null;
         _log(
             "applyCourseSelectionFromPropertyValue",
             "propertyValue=" + _diag(propertyValue) +
@@ -280,6 +283,7 @@ module GateRaceData {
     }
 
     function loadRequestedCourseCodeFromProperties() {
+        _resolvedCourseStateCache = null;
         var courseCount = getCourseCount();
         var requestedCourseIndex = GateSettingsLoader.loadCourseIndex();
         var requestedCourseCode = _normalizeCourseCode(GateSettingsLoader.loadCourseCode());
@@ -325,7 +329,8 @@ module GateRaceData {
     }
 
     function _getResolvedCourse() {
-        return _getResolvedCourseStateValue(RESOLVED_COURSE);
+        var course = _getResolvedCourseStateValue(RESOLVED_COURSE);
+        return course;
     }
 
     function _getResolvedCourseStateValue(index) {
@@ -340,6 +345,15 @@ module GateRaceData {
     }
 
     function _resolveSelectedCourseState() {
+        if (_resolvedCourseStateCache != null and _resolvedCourseStateCache instanceof Lang.Array) {
+            return _resolvedCourseStateCache;
+        }
+
+        _resolvedCourseStateCache = _buildResolvedCourseState();
+        return _resolvedCourseStateCache;
+    }
+
+    function _buildResolvedCourseState() {
         var courses = GateRaceConfig.getCourses();
         if (courses == null or !(courses instanceof Lang.Array) or courses.size() <= 0) {
             return [null, "", "no_courses"];
