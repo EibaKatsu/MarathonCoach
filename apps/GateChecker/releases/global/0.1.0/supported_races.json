@@ -1,0 +1,337 @@
+[
+  {
+    "race_id": "20260428_gatechecker_beta_check",
+    "display_name": {
+      "eng": "GateChecker Beta Check",
+      "jpn": "GateChecker BETA確認用"
+    },
+    "country": "ZZ",
+    "region": "Sample",
+    "category": "sample",
+    "sample_free": true,
+    "courses": [
+      {
+        "course_id": "12k",
+        "course_name": {
+          "eng": "12.5K",
+          "jpn": "12.5km"
+        },
+        "race_code": "BETA26-12K-H4N7",
+        "distance_meters": 12500
+      }
+    ]
+  },
+  {
+    "race_id": "20260503_bmo_vancouver_marathon",
+    "display_name": {
+      "eng": "BMO Vancouver Marathon 2026",
+      "jpn": "BMOバンクーバーマラソン2026"
+    },
+    "country": "CA",
+    "region": "North America",
+    "category": "marathon",
+    "sample_free": false,
+    "courses": [
+      {
+        "course_id": "full",
+        "course_name": {
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
+        },
+        "race_code": "BMO26-F42-2QTP",
+        "distance_meters": 42195
+      }
+    ]
+  },
+  {
+    "race_id": "20260503_flying_pig_marathon",
+    "display_name": {
+      "eng": "Flying Pig Marathon 2026",
+      "jpn": "シンシナティ フライング・ピッグ・マラソン2026"
+    },
+    "country": "US",
+    "region": "North America",
+    "category": "marathon",
+    "sample_free": false,
+    "courses": [
+      {
+        "course_id": "full",
+        "course_name": {
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
+        },
+        "race_code": "FLYI26-F42-YNM5",
+        "distance_meters": 42195
+      }
+    ]
+  },
+  {
+    "race_id": "20260503_pittsburgh_marathon",
+    "display_name": {
+      "eng": "Pittsburgh Marathon 2026",
+      "jpn": "ピッツバーグマラソン2026"
+    },
+    "country": "US",
+    "region": "North America",
+    "category": "marathon",
+    "sample_free": false,
+    "courses": [
+      {
+        "course_id": "full",
+        "course_name": {
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
+        },
+        "race_code": "PITT26-F42-MOKV",
+        "distance_meters": 42195
+      }
+    ]
+  },
+  {
+    "race_id": "20260517_cleveland_marathon",
+    "display_name": {
+      "eng": "Cleveland Marathon 2026",
+      "jpn": "クリーブランドマラソン2026"
+    },
+    "country": "US",
+    "region": "North America",
+    "category": "marathon",
+    "sample_free": false,
+    "courses": [
+      {
+        "course_id": "full",
+        "course_name": {
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
+        },
+        "race_code": "CLEV26-F42-FEAB",
+        "distance_meters": 42195
+      }
+    ]
+  },
+  {
+    "race_id": "20260517_iwate_oshu_kirameki_marathon",
+    "display_name": {
+      "eng": "Iwate Oshu Kirameki Marathon 2026",
+      "jpn": "2026第10回いわて奥州きらめきマラソン"
+    },
+    "country": "JP",
+    "region": "Asia",
+    "category": "marathon",
+    "sample_free": false,
+    "courses": [
+      {
+        "course_id": "full",
+        "course_name": {
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
+        },
+        "race_code": "IWAT26-F42-N2DL",
+        "distance_meters": 42195
+      }
+    ]
+  },
+  {
+    "race_id": "20260524_kurobe_meisui_marathon",
+    "display_name": {
+      "eng": "Kurobe Meisui Marathon 2026",
+      "jpn": "黒部名水マラソン2026"
+    },
+    "country": "JP",
+    "region": "Asia",
+    "category": "marathon",
+    "sample_free": false,
+    "courses": [
+      {
+        "course_id": "full",
+        "course_name": {
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
+        },
+        "race_code": "KURO26-F42-M1AF",
+        "distance_meters": 42195
+      }
+    ]
+  },
+  {
+    "race_id": "20260524_tartan_ottawa_international_marathon",
+    "display_name": {
+      "eng": "Tartan Ottawa International Marathon 2026",
+      "jpn": "オタワ国際マラソン2026"
+    },
+    "country": "CA",
+    "region": "North America",
+    "category": "marathon",
+    "sample_free": false,
+    "courses": [
+      {
+        "course_id": "full",
+        "course_name": {
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
+        },
+        "race_code": "TART26-F42-CCFZ",
+        "distance_meters": 42195
+      }
+    ]
+  },
+  {
+    "race_id": "20260530_stockholm_marathon",
+    "display_name": {
+      "eng": "adidas Stockholm Marathon 2026",
+      "jpn": "ストックホルムマラソン2026"
+    },
+    "country": "SE",
+    "region": "Europe",
+    "category": "marathon",
+    "sample_free": false,
+    "courses": [
+      {
+        "course_id": "full",
+        "course_name": {
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
+        },
+        "race_code": "ADID26-F42-MHMH",
+        "distance_meters": 42195
+      }
+    ]
+  },
+  {
+    "race_id": "20260628_hakodate_marathon",
+    "display_name": {
+      "eng": "Hakodate Marathon 2026",
+      "jpn": "函館マラソン2026"
+    },
+    "country": "JP",
+    "region": "Asia",
+    "category": "marathon",
+    "sample_free": false,
+    "courses": [
+      {
+        "course_id": "full",
+        "course_name": {
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
+        },
+        "race_code": "HAKO26-F42-JQ59",
+        "distance_meters": 42195
+      }
+    ]
+  },
+  {
+    "race_id": "20260628_lake_saroma_100km_ultra_marathon",
+    "display_name": {
+      "eng": "Lake Saroma 100km Ultra Marathon 2026",
+      "jpn": "サロマ湖100kmウルトラマラソン2026"
+    },
+    "country": "JP",
+    "region": "Asia",
+    "category": "ultra",
+    "sample_free": false,
+    "courses": [
+      {
+        "course_id": "100k",
+        "course_name": {
+          "eng": "100K",
+          "jpn": "100km"
+        },
+        "race_code": "LAKE26-100K-6LS6",
+        "distance_meters": 100000
+      }
+    ]
+  },
+  {
+    "race_id": "20261018_gatechecker_mile_sample",
+    "display_name": {
+      "eng": "GateChecker Mile Sample 2026",
+      "jpn": "GateChecker Mile Sample 2026"
+    },
+    "country": "ZZ",
+    "region": "Sample",
+    "category": "sample",
+    "sample_free": true,
+    "courses": [
+      {
+        "course_id": "full",
+        "course_name": {
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
+        },
+        "race_code": "MILE26-F42-P6C4",
+        "distance_meters": 42195
+      }
+    ]
+  },
+  {
+    "race_id": "20261018_sample_multi_course",
+    "display_name": {
+      "eng": "GateChecker Multi Course Sample",
+      "jpn": "GateChecker 複数コース確認用"
+    },
+    "country": "ZZ",
+    "region": "Sample",
+    "category": "sample",
+    "sample_free": true,
+    "courses": [
+      {
+        "course_id": "full_main",
+        "course_name": {
+          "eng": "Full Marathon",
+          "jpn": "フルマラソン"
+        },
+        "race_code": "SAMP26-F42-A7K3",
+        "distance_meters": 42195
+      },
+      {
+        "course_id": "full_wave2",
+        "course_name": {
+          "eng": "Full Marathon Wave 2",
+          "jpn": "フルマラソン 第2ウェーブ"
+        },
+        "race_code": "SAMP26-F42-B8N4",
+        "distance_meters": 42195
+      },
+      {
+        "course_id": "ultra_100k",
+        "course_name": {
+          "eng": "100K",
+          "jpn": "100K"
+        },
+        "race_code": "SAMP26-100K-C4P8",
+        "distance_meters": 100000
+      },
+      {
+        "course_id": "ultra_70k",
+        "course_name": {
+          "eng": "70K",
+          "jpn": "70K"
+        },
+        "race_code": "SAMP26-70K-D2Q6",
+        "distance_meters": 70000
+      }
+    ]
+  },
+  {
+    "race_id": "20261101_toyama_marathon",
+    "display_name": {
+      "eng": "Toyama Marathon 2026",
+      "jpn": "富山マラソン2026"
+    },
+    "country": "JP",
+    "region": "Asia",
+    "category": "marathon",
+    "sample_free": false,
+    "courses": [
+      {
+        "course_id": "full",
+        "course_name": {
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
+        },
+        "race_code": "TOYA26-F42-V1C5",
+        "distance_meters": 42195
+      }
+    ]
+  }
+]
