@@ -24,4 +24,8 @@
     <string id="GoalLabel">$goal_label</string>
     <string id="EtaLabel">$eta_label</string>
     <string id="PaceLabel">$pace_label</string>
+    <string id="RaceCodeLabel">$race_code_label</string>
+    <string id="RaceCodeNotFound">$race_code_not_found</string>
+    <string id="RaceCodeNotSet">$race_code_not_set</string>
+    <string id="CheckAppSettings">$check_app_settings</string>
 </resources>

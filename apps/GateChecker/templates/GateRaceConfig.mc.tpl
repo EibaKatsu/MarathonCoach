@@ -62,4 +62,8 @@ $courses_body
         }
         return _courses;
     }
+
+    function getRaceCourses() {
+        return getCourses();
+    }
 }

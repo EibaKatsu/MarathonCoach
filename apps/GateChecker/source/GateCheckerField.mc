@@ -340,6 +340,19 @@ class GateCheckerField extends Ui.DataField {
     }
 
     function _loadViewState(info) {
+        if (!GateRaceData.hasResolvedRaceCode()) {
+            _displayState = GateDisplayModel.STATE_CODE_ERROR;
+            _singleText = Ui.loadResource(Rez.Strings.CheckAppSettings);
+            _line1Text = "";
+            _line2Text = "";
+            _line3LeftText = "";
+            _line3RightText = "";
+            _line3LeftColor = Gfx.COLOR_WHITE;
+            _line4Text = "";
+            _resetRenderParts();
+            return;
+        }
+
         var currentDistanceKm = GateDistanceUtils.extractElapsedDistanceKm(info);
         if (currentDistanceKm == null) {
             _displayState = GateDisplayModel.STATE_WAIT_DIST;
@@ -619,10 +632,11 @@ class GateCheckerField extends Ui.DataField {
 
         var line =
             "[GATE_RACE_DIAG]" +
-            " raceKey=" + _diagValue(GateRaceData.getRaceKey()) +
-            " requestedCourse=" + _diagValue(GateRaceData.getRequestedCourseCode()) +
-            " selectedCourse=" + _diagValue(GateRaceData.getSelectedCourseCode()) +
-            " courseReason=" + _diagValue(GateRaceData.getSelectedCourseReason()) +
+            " raceId=" + _diagValue(GateRaceData.getRaceId()) +
+            " requestedRaceCode=" + _diagValue(GateRaceData.getRequestedRaceCode()) +
+            " selectedRaceCode=" + _diagValue(GateRaceData.getSelectedRaceCode()) +
+            " selectedCourseId=" + _diagValue(GateRaceData.getSelectedCourseId()) +
+            " raceReason=" + _diagValue(GateRaceData.getSelectedRaceReason()) +
             " gateCount=" + _diagValue(gateCount) +
             " aidCount=" + _diagValue(aidCount) +
             " firstGate=" + _diagValue(firstGateSummary) +
@@ -781,7 +795,13 @@ class GateCheckerField extends Ui.DataField {
     }
 
     function _shouldRenderPreStartSplash() {
-        return _displayState == GateDisplayModel.STATE_WAIT_DIST;
+        if (_displayState == GateDisplayModel.STATE_WAIT_DIST) {
+            return true;
+        }
+        if (_displayState != GateDisplayModel.STATE_CODE_ERROR) {
+            return false;
+        }
+        return GateRaceData.isRaceCodeMissing() or GateRaceData.isRaceCodeNotFound();
     }
 
     function _drawPreStartSplash(dc, centerX, centerY) {
@@ -861,6 +881,9 @@ class GateCheckerField extends Ui.DataField {
     }
 
     function _resolveLocalizedRaceName() {
+        if (GateRaceData.isRaceCodeMissing() or GateRaceData.isRaceCodeNotFound()) {
+            return Ui.loadResource(Rez.Strings.RaceCodeLabel);
+        }
         var appName = Ui.loadResource(Rez.Strings.AppName);
         if (appName != null and appName.equals("関門ガイド")) {
             return GateRaceData.getRaceNameJpn();
@@ -869,6 +892,12 @@ class GateCheckerField extends Ui.DataField {
     }
 
     function _resolveLocalizedCourseName() {
+        if (GateRaceData.isRaceCodeMissing()) {
+            return Ui.loadResource(Rez.Strings.RaceCodeNotSet);
+        }
+        if (GateRaceData.isRaceCodeNotFound()) {
+            return Ui.loadResource(Rez.Strings.RaceCodeNotFound);
+        }
         var appName = Ui.loadResource(Rez.Strings.AppName);
         if (appName != null and appName.equals("関門ガイド")) {
             return GateRaceData.getPreStartCourseNameJpn();
