@@ -62,23 +62,29 @@ trap cleanup EXIT
 WORK_APP_DIR="$TMP_ROOT/GateChecker"
 cp -R "$APP_DIR" "$WORK_APP_DIR"
 
-python3 - "$WORK_APP_DIR/manifest.xml" "$OUTPUT_VERSION" <<'PY'
+python3 - "$WORK_APP_DIR/race_defs/race_index.yml" "$OUTPUT_VERSION" <<'PY'
 from pathlib import Path
 import sys
-import xml.etree.ElementTree as ET
+import yaml
 
-manifest_path = Path(sys.argv[1])
+index_path = Path(sys.argv[1])
 version = sys.argv[2]
 
-tree = ET.parse(manifest_path)
-root = tree.getroot()
-namespace = {"iq": "http://www.garmin.com/xml/connectiq"}
-application = root.find("iq:application", namespace)
-if application is None:
-    raise SystemExit("manifest.xml does not contain iq:application")
+data = yaml.safe_load(index_path.read_text(encoding="utf-8")) or {}
+global_app = data.get("global_app")
+if not isinstance(global_app, dict):
+    raise SystemExit("race_index.yml must define global_app.")
 
-application.set("version", version)
-tree.write(manifest_path, encoding="UTF-8", xml_declaration=True)
+global_app["version"] = version
+index_path.write_text(
+    yaml.safe_dump(
+        data,
+        allow_unicode=True,
+        sort_keys=False,
+        default_flow_style=False,
+    ),
+    encoding="utf-8",
+)
 PY
 
 python3 "$WORK_APP_DIR/scripts/generate_gatechecker_all_races.py"

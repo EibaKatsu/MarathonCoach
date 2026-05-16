@@ -7,7 +7,7 @@
         entry="GateCheckerApp"
         launcherIcon="@Drawables.LauncherIcon"
         minApiLevel="3.2.0"
-        version="1.0.0">
+        version="0.1.0">
         <iq:products>
             <!-- Match MarathonCoach supported device scope -->
             <iq:product id="enduro3"/>
