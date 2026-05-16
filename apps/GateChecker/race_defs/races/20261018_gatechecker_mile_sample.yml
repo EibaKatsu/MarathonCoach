@@ -11,28 +11,31 @@ meta:
   sample_free: true
   race_abbr: "MILE"
 
-race_code: "MILE26-F42-P6C4"
-
 race:
   date: "2026/10/18"
   timezone: "America/New_York"
-  distance_mi: 26.2187575
 
-gates:
-  - point_mi: 5.0
-    cutoff: "2026/10/18 08:10"
-  - point_mi: 13.1
-    cutoff: "2026/10/18 10:00"
-  - point_mi: 20.0
-    cutoff: "2026/10/18 12:00"
-  - point: GOAL
-    cutoff: "2026/10/18 13:30"
-
-aids:
-  - mi: 3.1
-  - mi: 6.2
-  - mi: 9.3
-  - mi: 13.1
-  - mi: 17.0
-  - mi: 20.0
-  - mi: 23.0
+courses:
+  - course_id: "full"
+    race_code: "MILE26-F42-P6C4"
+    course_name:
+      jpn: "フルマラソン"
+      eng: "Marathon"
+    distance_mi: 26.2187575
+    gates:
+      - point_mi: 5.0
+        cutoff: "2026/10/18 08:10"
+      - point_mi: 13.1
+        cutoff: "2026/10/18 10:00"
+      - point_mi: 20.0
+        cutoff: "2026/10/18 12:00"
+      - point: GOAL
+        cutoff: "2026/10/18 13:30"
+    aids:
+      - mi: 3.1
+      - mi: 6.2
+      - mi: 9.3
+      - mi: 13.1
+      - mi: 17.0
+      - mi: 20.0
+      - mi: 23.0

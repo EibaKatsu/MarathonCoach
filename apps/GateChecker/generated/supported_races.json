@@ -11,10 +11,10 @@
     "sample_free": true,
     "courses": [
       {
-        "course_id": "main",
+        "course_id": "12k",
         "course_name": {
-          "eng": "Main Course",
-          "jpn": "メインコース"
+          "eng": "12.5K",
+          "jpn": "12.5km"
         },
         "race_code": "BETA26-12K-H4N7",
         "distance_meters": 12500
@@ -33,10 +33,10 @@
     "sample_free": false,
     "courses": [
       {
-        "course_id": "main",
+        "course_id": "full",
         "course_name": {
-          "eng": "Main Course",
-          "jpn": "メインコース"
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
         },
         "race_code": "BMO26-F42-2QTP",
         "distance_meters": 42195
@@ -55,10 +55,10 @@
     "sample_free": false,
     "courses": [
       {
-        "course_id": "main",
+        "course_id": "full",
         "course_name": {
-          "eng": "Main Course",
-          "jpn": "メインコース"
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
         },
         "race_code": "FLYI26-F42-YNM5",
         "distance_meters": 42195
@@ -77,10 +77,10 @@
     "sample_free": false,
     "courses": [
       {
-        "course_id": "main",
+        "course_id": "full",
         "course_name": {
-          "eng": "Main Course",
-          "jpn": "メインコース"
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
         },
         "race_code": "PITT26-F42-MOKV",
         "distance_meters": 42195
@@ -99,10 +99,10 @@
     "sample_free": false,
     "courses": [
       {
-        "course_id": "main",
+        "course_id": "full",
         "course_name": {
-          "eng": "Main Course",
-          "jpn": "メインコース"
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
         },
         "race_code": "CLEV26-F42-FEAB",
         "distance_meters": 42195
@@ -121,10 +121,10 @@
     "sample_free": false,
     "courses": [
       {
-        "course_id": "main",
+        "course_id": "full",
         "course_name": {
-          "eng": "Main Course",
-          "jpn": "メインコース"
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
         },
         "race_code": "IWAT26-F42-N2DL",
         "distance_meters": 42195
@@ -143,10 +143,10 @@
     "sample_free": false,
     "courses": [
       {
-        "course_id": "main",
+        "course_id": "full",
         "course_name": {
-          "eng": "Main Course",
-          "jpn": "メインコース"
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
         },
         "race_code": "KURO26-F42-M1AF",
         "distance_meters": 42195
@@ -165,10 +165,10 @@
     "sample_free": false,
     "courses": [
       {
-        "course_id": "main",
+        "course_id": "full",
         "course_name": {
-          "eng": "Main Course",
-          "jpn": "メインコース"
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
         },
         "race_code": "TART26-F42-CCFZ",
         "distance_meters": 42195
@@ -187,10 +187,10 @@
     "sample_free": false,
     "courses": [
       {
-        "course_id": "main",
+        "course_id": "full",
         "course_name": {
-          "eng": "Main Course",
-          "jpn": "メインコース"
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
         },
         "race_code": "ADID26-F42-MHMH",
         "distance_meters": 42195
@@ -209,10 +209,10 @@
     "sample_free": false,
     "courses": [
       {
-        "course_id": "main",
+        "course_id": "full",
         "course_name": {
-          "eng": "Main Course",
-          "jpn": "メインコース"
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
         },
         "race_code": "HAKO26-F42-JQ59",
         "distance_meters": 42195
@@ -231,10 +231,10 @@
     "sample_free": false,
     "courses": [
       {
-        "course_id": "main",
+        "course_id": "100k",
         "course_name": {
-          "eng": "Main Course",
-          "jpn": "メインコース"
+          "eng": "100K",
+          "jpn": "100km"
         },
         "race_code": "LAKE26-100K-6LS6",
         "distance_meters": 100000
@@ -253,10 +253,10 @@
     "sample_free": true,
     "courses": [
       {
-        "course_id": "main",
+        "course_id": "full",
         "course_name": {
-          "eng": "Main Course",
-          "jpn": "メインコース"
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
         },
         "race_code": "MILE26-F42-P6C4",
         "distance_meters": 42195
@@ -324,10 +324,10 @@
     "sample_free": false,
     "courses": [
       {
-        "course_id": "main",
+        "course_id": "full",
         "course_name": {
-          "eng": "Main Course",
-          "jpn": "メインコース"
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
         },
         "race_code": "TOYA26-F42-V1C5",
         "distance_meters": 42195

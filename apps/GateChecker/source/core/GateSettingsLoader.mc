@@ -1,4 +1,5 @@
 using Toybox.Application as App;
+using Toybox.Application.Properties as Props;
 using Toybox.System as Sys;
 
 module GateSettingsLoader {
@@ -19,27 +20,17 @@ module GateSettingsLoader {
     }
 
     function loadAppProperties() {
-        try {
-            var app = App.getApp();
-            if (app != null) {
-                app.loadProperties();
-                _log(
-                    "loadAppProperties",
-                    "raceCode=" + _diag(getPropertyValue("raceCode"))
-                );
-            }
-        } catch (e) {
-            _log("loadAppProperties", "error=" + e.toString());
-        }
+        _log(
+            "loadAppProperties",
+            "raceCode=" + _diag(getPropertyValue("raceCode"))
+        );
     }
 
     function getPropertyValue(key) {
         try {
-            var app = App.getApp();
-            if (app != null) {
-                return app.getProperty(key);
-            }
+            return Props.getValue(key);
         } catch (e) {
+            _log("getPropertyValue", "key=" + key + " error=" + e.toString());
         }
         return null;
     }

@@ -11,21 +11,24 @@ meta:
   sample_free: true
   race_abbr: "BETA"
 
-race_code: "BETA26-12K-H4N7"
-
 race:
   date: "2026/04/28"
   timezone: "Asia/Tokyo"
-  distance_km: 12.5
 
-gates:
-  - point: 0.5
-    cutoff: "2026/04/28 20:00"
-  - point: 1.0
-    cutoff: "2026/04/28 20:30"
-  - point: GOAL
-    cutoff: "2026/04/28 22:00"
-
-aids:
-  - km: 0.3
-  - km: 11.6
+courses:
+  - course_id: "12k"
+    race_code: "BETA26-12K-H4N7"
+    course_name:
+      jpn: "12.5km"
+      eng: "12.5K"
+    distance_km: 12.5
+    gates:
+      - point: 0.5
+        cutoff: "2026/04/28 20:00"
+      - point: 1.0
+        cutoff: "2026/04/28 20:30"
+      - point: GOAL
+        cutoff: "2026/04/28 22:00"
+    aids:
+      - km: 0.3
+      - km: 11.6

@@ -370,7 +370,7 @@ module GateRaceData {
         }
         for (var i = 0; i < courses.size(); i += 1) {
             var course = courses[i];
-            if (_getEntryValue(course, ENTRY_RACE_CODE) == raceCode) {
+            if (_stringEquals(_getEntryValue(course, ENTRY_RACE_CODE), raceCode)) {
                 return course;
             }
         }
@@ -424,6 +424,38 @@ module GateRaceData {
             return "ABCDEFGHIJKLMNOPQRSTUVWXYZ".substring(code - 65, (code - 65) + 1);
         }
         return "";
+    }
+
+    function _stringEquals(a, b) as Lang.Boolean {
+        if (a == null or b == null) {
+            return a == b;
+        }
+
+        var aText = a.toString();
+        var bText = b.toString();
+        if (aText.length() != bText.length()) {
+            return false;
+        }
+
+        var aChars = aText.toCharArray();
+        var bChars = bText.toCharArray();
+        if (
+            !(aChars instanceof Lang.Array) or
+            !(bChars instanceof Lang.Array) or
+            aChars.size() != bChars.size()
+        ) {
+            return false;
+        }
+
+        for (var i = 0; i < aChars.size(); i += 1) {
+            if (aChars[i] == null or bChars[i] == null) {
+                return false;
+            }
+            if (aChars[i].toNumber() != bChars[i].toNumber()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     function _getEntryValue(course, index) {
