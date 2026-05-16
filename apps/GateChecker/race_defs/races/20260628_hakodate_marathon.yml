@@ -1,68 +1,61 @@
-race_key: 20260628_hakodate_marathon
+race_id: 20260628_hakodate_marathon
 
 display_name:
   jpn: "函館マラソン2026"
   eng: "Hakodate Marathon 2026"
 
-connect_iq:
-  icon_place_label: "Hakodate"
-  iq_apl_id: ""
+meta:
+  country: "JP"
+  region: "Asia"
+  category: "marathon"
+  sample_free: false
+  race_abbr: "HAKO"
 
 race:
   date: "2026/06/28"
   timezone: "Asia/Tokyo"
-  distance_km: 42.195
 
-gates:
-  - point: 5.0
-    cutoff: "2026/06/28 09:54"
-  - point: 8.3
-    cutoff: "2026/06/28 10:19"
-  - point: 13.7
-    cutoff: "2026/06/28 11:00"
-  - point: 19.3
-    cutoff: "2026/06/28 11:40"
-  - point: 24.3
-    cutoff: "2026/06/28 12:24"
-  - point: 29.4
-    cutoff: "2026/06/28 13:08"
-  - point: 33.5
-    cutoff: "2026/06/28 13:44"
-  - point: 37.3
-    cutoff: "2026/06/28 14:17"
-  - point: 39.9
-    cutoff: "2026/06/28 14:40"
-  - point: GOAL
-    cutoff: "2026/06/28 15:00"
-
-aids:
-  - km: 4.7
-  - km: 8.4
-  - km: 10.3
-  - km: 14.1
-    name:
-      jpn: "Bananas / Mini Tomatoes"
-      eng: "Bananas / Mini Tomatoes"
-  - km: 17.8
-  - km: 21.5
-    name:
-      jpn: "Mini Canned Yokan / Barley Tea"
-      eng: "Mini Canned Yokan / Barley Tea"
-  - km: 24.1
-  - km: 26.5
-  - km: 28.7
-  - km: 30.0
-    name:
-      jpn: "Amino Vital Station"
-      eng: "Amino Vital Station"
-  - km: 31.3
-    name:
-      jpn: "Cheese Omelet / Coca-Cola / Kasutera Manju"
-      eng: "Cheese Omelet / Coca-Cola / Kasutera Manju"
-  - km: 33.5
-  - km: 35.8
-    name:
-      jpn: "Gagome Rice Bowl / Mini Seafood Bowl / Chilled Salt Ramen"
-      eng: "Gagome Rice Bowl / Mini Seafood Bowl / Chilled Salt Ramen"
-  - km: 37.3
-  - km: 39.4
+courses:
+  - course_id: "full"
+    race_code: "HAKO26-F42-JQ59"
+    course_name:
+      jpn: "フルマラソン"
+      eng: "Marathon"
+    distance_km: 42.195
+    gates:
+      - point: 5.0
+        cutoff: "2026/06/28 09:54"
+      - point: 8.3
+        cutoff: "2026/06/28 10:19"
+      - point: 13.7
+        cutoff: "2026/06/28 11:00"
+      - point: 19.3
+        cutoff: "2026/06/28 11:40"
+      - point: 24.3
+        cutoff: "2026/06/28 12:24"
+      - point: 29.4
+        cutoff: "2026/06/28 13:08"
+      - point: 33.5
+        cutoff: "2026/06/28 13:44"
+      - point: 37.3
+        cutoff: "2026/06/28 14:17"
+      - point: 39.9
+        cutoff: "2026/06/28 14:40"
+      - point: GOAL
+        cutoff: "2026/06/28 15:00"
+    aids:
+      - km: 4.7
+      - km: 8.4
+      - km: 10.3
+      - km: 14.1
+      - km: 17.8
+      - km: 21.5
+      - km: 24.1
+      - km: 26.5
+      - km: 28.7
+      - km: 30.0
+      - km: 31.3
+      - km: 33.5
+      - km: 35.8
+      - km: 37.3
+      - km: 39.4

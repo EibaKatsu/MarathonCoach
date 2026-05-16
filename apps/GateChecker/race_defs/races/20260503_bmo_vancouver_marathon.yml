@@ -1,38 +1,46 @@
-race_key: 20260503_bmo_vancouver_marathon
+race_id: 20260503_bmo_vancouver_marathon
 
 display_name:
   jpn: "BMOバンクーバーマラソン2026"
   eng: "BMO Vancouver Marathon 2026"
 
-connect_iq:
-  icon_place_label: "Vancouver"
-  iq_apl_id: "b7fc074a-a5e1-4ac6-b17a-1e4803a826d8"
+meta:
+  country: "CA"
+  region: "North America"
+  category: "marathon"
+  sample_free: false
+  race_abbr: "BMO"
 
 race:
   date: "2026/05/03"
   timezone: "America/Vancouver"
-  distance_km: 42.195
 
-gates:
-  - point: 30.0
-    cutoff: "2026/05/03 12:30"
-  - point: GOAL
-    cutoff: "2026/05/03 14:30"
-
-aids:
-  - km: 5.2
-  - km: 8.9
-  - km: 10.8
-  - km: 12.7
-  - km: 16.1
-  - km: 17.8
-  - km: 21.1
-  - km: 24.4
-  - km: 25.8
-  - km: 28.5
-  - km: 30.8
-  - km: 32.4
-  - km: 34.0
-  - km: 36.7
-  - km: 38.4
-  - km: 39.8
+courses:
+  - course_id: "full"
+    race_code: "BMO26-F42-2QTP"
+    course_name:
+      jpn: "フルマラソン"
+      eng: "Marathon"
+    distance_km: 42.195
+    gates:
+      - point: 30.0
+        cutoff: "2026/05/03 12:30"
+      - point: GOAL
+        cutoff: "2026/05/03 14:30"
+    aids:
+      - km: 5.2
+      - km: 8.9
+      - km: 10.8
+      - km: 12.7
+      - km: 16.1
+      - km: 17.8
+      - km: 21.1
+      - km: 24.4
+      - km: 25.8
+      - km: 28.5
+      - km: 30.8
+      - km: 32.4
+      - km: 34.0
+      - km: 36.7
+      - km: 38.4
+      - km: 39.8
