@@ -24,4 +24,8 @@
     <string id="GoalLabel">GOAL</string>
     <string id="EtaLabel">ETA</string>
     <string id="PaceLabel">PACE</string>
+    <string id="RaceCodeLabel">Race Code</string>
+    <string id="RaceCodeNotFound">Not Found</string>
+    <string id="RaceCodeNotSet">Not Set</string>
+    <string id="CheckAppSettings">Check app settings</string>
 </resources>

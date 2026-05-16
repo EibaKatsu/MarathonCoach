@@ -24,4 +24,8 @@
     <string id="GoalLabel">GOAL</string>
     <string id="EtaLabel">ETA</string>
     <string id="PaceLabel">PACE</string>
+    <string id="RaceCodeLabel">Race Code</string>
+    <string id="RaceCodeNotFound">が見つかりません</string>
+    <string id="RaceCodeNotSet">が未設定です</string>
+    <string id="CheckAppSettings">設定を確認してください</string>
 </resources>

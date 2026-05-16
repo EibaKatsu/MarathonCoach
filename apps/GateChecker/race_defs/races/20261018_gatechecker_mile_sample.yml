@@ -1,12 +1,17 @@
-race_key: 20261018_gatechecker_mile_sample
+race_id: 20261018_gatechecker_mile_sample
 
 display_name:
   jpn: "GateChecker Mile Sample 2026"
   eng: "GateChecker Mile Sample 2026"
 
-connect_iq:
-  icon_place_label: "Mile"
-  iq_apl_id: ""
+meta:
+  country: "ZZ"
+  region: "Sample"
+  category: "sample"
+  sample_free: true
+  race_abbr: "MILE"
+
+race_code: "MILE26-F42-P6C4"
 
 race:
   date: "2026/10/18"

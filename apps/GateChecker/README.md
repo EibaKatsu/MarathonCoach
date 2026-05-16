@@ -1,389 +1,245 @@
 # GateChecker
 
-GateChecker is a separate Connect IQ data field app that lives alongside MarathonCoach in the same repository. This app now assumes race-specific builds: each race gets its own YAML definition, app ID, generated manifest, generated strings, and embedded gate/AID data.
+GateChecker / Cutoff Guide is now a single Connect IQ data field app.
 
-One race can contain one or more `courses`. This is used for wave starts, weather/course-change patterns, and distance variants such as `100K / 70K / 50K`.
+- Users install one app
+- Users enter one `Race Code` in Garmin Connect app settings
+- `Race Code` identifies `race + course`
+- The app does not use `Unlock Key`
+- The app does not judge free vs paid
+- The app does not perform network access, license checks, or payment handling
 
-Distance display follows the watch's distance unit setting:
+If the entered `Race Code` exists in the generated internal course list, the app shows that race/course. If it does not exist, the app shows a clear `Race Code` error screen and asks the user to check app settings.
 
-- `Metric` shows `km`
-- `Statute` shows `mi`
-- Internal gate/aid calculations always stay in `km`
-- `GOAL` stays `GOAL` even when the watch is set to miles
+## Current Model
 
-## Race Definition Flow
+- `apps/GateChecker/race_defs/race_index.yml`
+  - global app metadata
+  - race file index
+  - site/management metadata such as `sample_free`
+  - optional `legacy` metadata for old per-race builds
+- `apps/GateChecker/race_defs/races/*.yml`
+  - human-edited race definitions
+  - one file per race
+  - new schema uses `race_id` and `courses[].race_code`
+- `apps/GateChecker/source/generated/GateRaceConfig.mc`
+  - generated flattened course table embedded into the app
+- `apps/GateChecker/generated/supported_races.json`
+  - generated site/helper output
 
-- Edit `apps/GateChecker/race_defs/races/<race_key>.yml`
-- Register the race in `apps/GateChecker/race_defs/race_index.yml`
-- Run `python3 apps/GateChecker/scripts/generate_gatechecker_race.py <race_key>`
-- Build the race-specific binary with `apps/GateChecker/scripts/build_gatechecker_race.sh <race_key> [device_id]`
+## Race Code
 
-`race_index.yml` is the app ID ledger. If `app_id` is `null`, the generator creates a UUID once and writes it back to the file. Existing `app_id` values are preserved and reused on later builds.
+Recommended format:
 
-## Definition Files
-
-Race definitions live under `apps/GateChecker/race_defs/races/`.
-
-Single-course races can stay in the legacy format. They are treated as one implicit course, so no `courseCode` setting file is generated.
-
-Example:
-
-```yaml
-race_key: 20261101_toyama_marathon
-
-display_name:
-  jpn: "富山マラソン2026"
-  eng: "Toyama Marathon 2026"
-
-race:
-  date: "2026/11/01"
-  timezone: "Asia/Tokyo"
-  distance_km: 42.195
-
-gates:
-  - point: 9.0
-    cutoff: "2026/11/01 10:20"
-  - point: GOAL
-    cutoff: "2026/11/01 15:00"
-
-aids:
-  - km: 5.0
-  - km: 10.5
+```text
+{RACE_ABBR}{YY}-{COURSE}-{CHECK}
 ```
 
-Multi-course races add a `course` layer above the existing `gates` / `aids` payload. The gate and aid item formats themselves do not change.
+Examples:
 
-```yaml
-race_key: 20261018_sample_multi_course
-
-display_name:
-  jpn: "GateChecker 複数コース確認用"
-  eng: "GateChecker Multi Course Sample"
-
-race:
-  date: "2026/10/18"
-  timezone: "Asia/Tokyo"
-
-defaultCourseCode: full_main
-
-courses:
-  - courseCode: full_main
-    courseNameJa: "フルマラソン"
-    courseNameEn: "Full Marathon"
-    distance_km: 42.195
-    gates:
-      - point: 10.0
-        cutoff: "2026/10/18 09:40"
-      - point: GOAL
-        cutoff: "2026/10/18 14:30"
-    aids:
-      - km: 5.0
-      - km: 10.0
-
-  - courseCode: full_wave2
-    courseNameJa: "フルマラソン 第2ウェーブ"
-    courseNameEn: "Full Marathon Wave 2"
-    distance_km: 42.195
-    gates:
-      - point: 10.0
-        cutoff: "2026/10/18 09:55"
-      - point: GOAL
-        cutoff: "2026/10/18 14:45"
-    aids:
-      - km: 5.0
-      - km: 10.0
-```
-
-Mile-based definitions are also supported:
-
-```yaml
-race_key: 20261018_gatechecker_mile_sample
-
-display_name:
-  jpn: "GateChecker Mile Sample 2026"
-  eng: "GateChecker Mile Sample 2026"
-
-race:
-  date: "2026/10/18"
-  timezone: "America/New_York"
-  distance_mi: 26.2187575
-
-gates:
-  - point_mi: 5.0
-    cutoff: "2026/10/18 08:10"
-  - point_mi: 13.1
-    cutoff: "2026/10/18 10:00"
-  - point_mi: 20.0
-    cutoff: "2026/10/18 12:00"
-  - point: GOAL
-    cutoff: "2026/10/18 13:30"
-
-aids:
-  - mi: 3.1
-  - mi: 6.2
-  - mi: 9.3
-  - mi: 13.1
+```text
+TKY26-F42-A7K3
+HIDA26-100K-K7P2
+SARO26-100K-Z8T4
 ```
 
 Rules:
 
-- `race_key` must match `[a-z0-9_]+`
-- `race_key` should use `YYYYMMDD_<race_name>` for real races
-- `race.date` and `race.timezone` are always required
-- Legacy single-course format keeps `race.distance_km` or `race.distance_mi` at the top level
-- Multi-course format may keep a shared top-level race distance, or each course may define its own `distance_km` or `distance_mi`
-- `defaultCourseCode` is optional; if omitted, `courses[0]` becomes the default
-- `courses[].courseCode` must match `[a-z0-9_]+`
-- `courses[].courseNameJa` and `courses[].courseNameEn` are required in multi-course format
-- `gates[].point` accepts a numeric km value or `GOAL`
-- `gates[].point_mi` accepts a numeric mile value
-- `aids[].km` accepts a numeric km value
-- `aids[].mi` accepts a numeric mile value
-- `distance_km` and `distance_mi` may not both be set
-- `gates[].point` and `gates[].point_mi` may not both be set
-- `aids[].km` and `aids[].mi` may not both be set
-- `GOAL` is final-gate only and uses the exact normalized race distance internally
-- Numeric `km` gate and aid points must align to `0.1km` units
-- `cutoff` must be `yyyy/mm/dd HH:MM`
-- Gates and aids must be strictly ascending
+- Do not expose raw `race_id + course_id` as the code
+- Codes are human-enterable but only lightly obfuscated
+- App-side matching is exact after normalization
+- Normalization removes spaces and uppercases ASCII letters
+- Course selection is inside the `Race Code`, so there is no separate course setting
 
-Important: the final gate must remain `GOAL` in generated code. It must not be flattened into a rounded distance such as `42.2km`.
+Code generation helper:
 
-Naming:
-
-- `display_name` is the race name embedded in race data and on-race UI
-- `courseNameJa` / `courseNameEn` are shown on the pre-start title screen
-- The app name shown by Connect IQ is fixed to `関門ガイド` / `Cutoff Guide`
-- Changing `display_name` does not rename the app itself
-
-## Generated Files
-
-The generator updates only files under `apps/GateChecker/`:
-
-- `manifest.xml`
-- `resources/strings/strings.xml`
-- `resources-jpn/strings/strings.xml`
-- `resources/properties.xml`
-- `source/generated/GateRaceConfig.mc`
-
-Generated `GateRaceConfig.mc` stores gates as `[point, cutoffDayOffset, cutoffMinuteOfDay]`.
-
-Example:
-
-```monkeyc
-[9000, 0, 620]
-[GOAL, 0, 900]
+```bash
+python3 apps/GateChecker/scripts/generate_race_code.py \
+  --race-id 20261018_sample_multi_course \
+  --course-id ultra_100k \
+  --year 2026 \
+  --race-abbr SAMP \
+  --course-label 100K
 ```
 
-Numeric points are stored as meters. That keeps `GOAL` distinct from numeric points, so the app can:
+Optional salt:
 
-- show `GOAL` on screen
-- use the exact normalized race distance for remaining-distance math
-- preserve mile-based definitions without forcing `0.1km` rounding
-- avoid generating `[42195, ...]` for the last gate
+```bash
+GATECHECKER_RACE_CODE_SALT="local-only-salt" \
+python3 apps/GateChecker/scripts/generate_race_code.py ...
+```
 
-Generated `resources/properties.xml` behavior:
+The salt is optional and must not be committed.
 
-- If the race resolves to exactly one course, no `courseCode` setting is generated
-- If the race has two or more courses, a `courseIndex` list setting is generated
-- The Garmin settings screen shows a pull-down list labeled `Course / コース`
-- Each list item displays `courseNameJa / courseNameEn`, while `race_defs` still keep the stable `courseCode`
-- The generated resources also keep an internal `courseCode` default so the runtime can resolve a stable course identifier behind the pull-down
-- The generated default is `defaultCourseCode`
-- For simulator-only verification, `GATECHECKER_DEFAULT_COURSE_CODE_OVERRIDE=<course_code>` can temporarily replace the generated default
+## Race Definition Schema
+
+New schema example:
+
+```yaml
+race_id: london_marathon_2026
+
+display_name:
+  jpn: "ロンドンマラソン2026"
+  eng: "London Marathon 2026"
+
+meta:
+  country: "GB"
+  region: "Europe"
+  category: "marathon"
+  sample_free: true
+  race_abbr: "LDN"
+
+race:
+  date: "2026/04/26"
+  timezone: "Europe/London"
+
+courses:
+  - course_id: full
+    race_code: "LDN26-F42-Q9M2"
+    course_name:
+      jpn: "フルマラソン"
+      eng: "Marathon"
+    distance_mi: 26.2187575
+    gates:
+      - point_mi: 13.1
+        cutoff: "2026/04/26 13:00"
+      - point: GOAL
+        cutoff: "2026/04/26 17:00"
+    aids:
+      - mi: 3.0
+      - mi: 6.0
+```
+
+Compatibility:
+
+- Legacy files that still use `race_key` are still accepted
+- Legacy multi-course files that still use `courseCode`, `courseNameJa`, `courseNameEn` are still accepted
+- Legacy single-course files without `race_code` are still accepted
+- Missing legacy `race_code` values are auto-generated during global build
+
+Validation performed by the generators:
+
+- `race_id` uniqueness in `race_index.yml`
+- `race_code` uniqueness across all courses
+- `race_code` non-empty and roughly format-compliant
+- `course_id` uniqueness inside a race
+- `distance_km` and `distance_mi` are mutually exclusive
+- `gates[].point` and `gates[].point_mi` are mutually exclusive
+- `aids[].km` and `aids[].mi` are mutually exclusive
+- gates are ascending
+- aids are ascending
+- `GOAL` can appear only once and only as the last gate
+- `display_name.eng/jpn` and `course_name.eng/jpn` are required
+
+## Internal Data Model
+
+The app is generated as a flat list of race courses.
+
+- Distances are stored internally in meters
+- Existing watch unit behavior remains intact
+- `GOAL` is kept as a sentinel, not converted to a numeric distance
+- Gate cutoff times are stored as `dayOffset + minuteOfDay`
+- Existing gate / aid rendering logic is preserved as much as possible
+
+## App Settings
+
+Garmin Connect app settings now contain:
+
+- `Race Code`
+  - example: `SAMP26-100K-C4P8`
+  - input type: alphanumeric string
+  - normalized by trim + uppercase + space removal
+
+There is no course chooser in settings anymore.
+
+## Runtime Behavior
+
+At startup or settings refresh:
+
+1. Read `Race Code`
+2. Normalize it
+3. Search generated internal course list
+4. If found, use that race/course
+5. If not found, show an error splash
+
+Error splash:
+
+- English:
+  - `Race Code`
+  - `Not Found` or `Not Set`
+  - `Check app settings`
+- Japanese:
+  - `Race Code`
+  - `が見つかりません` or `が未設定です`
+  - `設定を確認してください`
+
+The normal pre-start splash still shows:
+
+- app name
+- resolved race name
+- resolved course name
+- `WAIT START`
+
+## Free / Paid Handling
+
+The app itself does not distinguish free and paid races.
+
+- `sample_free` is only for website / management metadata
+- Any internally defined `Race Code` is accepted
+- Unknown codes are rejected
+- Free sample race codes are intended to be published on the website
+- Paid race codes are intended to be delivered from the website after purchase
 
 ## Build
 
-From the repository root:
+Global single-app build:
 
 ```bash
-python3 apps/GateChecker/scripts/generate_gatechecker_race.py 20261101_toyama_marathon
-apps/GateChecker/scripts/build_gatechecker_race.sh 20261101_toyama_marathon fr57042mm
+python3 apps/GateChecker/scripts/generate_gatechecker_all_races.py
+apps/GateChecker/scripts/build_gatechecker_global.sh fr57042mm
 ```
 
-The build artifact is written to `apps/GateChecker/dist/<race_key>/`.
+Generated outputs:
 
-## Release Package
-
-For a race-specific distributable `.iq`:
-
-```bash
-apps/GateChecker/scripts/build_gatechecker_release_package.sh 20261101_toyama_marathon
-```
-
-To build a different release version without editing `race_index.yml`:
-
-```bash
-apps/GateChecker/scripts/build_gatechecker_release_package.sh 20261101_toyama_marathon 0.2.0
-```
-
-Behavior:
-
-- The script copies `apps/GateChecker/` to a temporary workspace
-- It resolves the race definition and version there
-- If a version argument is passed, only the temporary copy is updated
-- It packages a signed `.iq` to `apps/GateChecker/releases/<race_key>/<version>/`
-- It also stores `BUILD.md`, the generated `manifest.xml`, the generated `GateRaceConfig.mc`, and the race YAML snapshot for traceability
-
-## Connect IQ Listing Text
-
-To generate Connect IQ Store title/description Markdown for a race:
-
-```bash
-python3 apps/GateChecker/scripts/generate_gatechecker_listing_text.py 20261101_toyama_marathon
-```
-
-Behavior:
-
-- It reads only `apps/GateChecker/race_defs/`
-- It creates Japanese and English titles/descriptions
-- It generates a `500x500` store icon with `connect_iq.icon_place_label` at top-left and the race year at bottom-right
-- It saves the outputs to `apps/GateChecker/releases/<race_key>/CONNECT_IQ_LISTING.md` and `apps/GateChecker/releases/<race_key>/RunToCoal_Image.png`
+- `apps/GateChecker/source/generated/GateRaceConfig.mc`
+- `apps/GateChecker/resources/properties.xml`
+- `apps/GateChecker/resources/strings/strings.xml`
+- `apps/GateChecker/resources-jpn/strings/strings.xml`
+- `apps/GateChecker/generated/supported_races.json`
+- `apps/GateChecker/dist/global/gatechecker-global-<device>.prg`
 
 ## Simulator
 
-Use the GateChecker simulator wrapper from the repository root.
-
-Single-course race, no settings file required:
+Recommended flow for the global app:
 
 ```bash
-apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261101_toyama_marathon
+apps/GateChecker/scripts/build_gatechecker_global.sh fr57042mm
+apps/GateChecker/scripts/run_gatechecker_global_sim.sh --race-code SAMP26-F42-A7K3
 ```
 
-Multi-course race, select a course and send the generated settings schema:
+`run_gatechecker_global_sim.sh` builds the global app, injects the requested `Race Code` into the generated settings JSON, and sends both PRG and settings JSON to the simulator via `monkeydo`.
+
+Legacy race-specific simulator helper still exists:
 
 ```bash
 apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261018_sample_multi_course --course full_wave2
 ```
 
-Behavior:
+That path is legacy and does not represent the new store model.
 
-- `run_gatechecker_sim.sh` calls the slot-based simulator sender
-- It builds the requested race under `apps/GateChecker/dist/<race_key>/`
-- It retries known-good simulator slot paths if direct launch is rejected
-- If a settings schema exists, it is sent to `GARMIN/Settings/...-settings.json`
-- `--course` sets `GATECHECKER_DEFAULT_COURSE_CODE_OVERRIDE`, which changes the generated default course for that simulator build only
-- If no `--course` is passed and the race has one course, no settings file is generated or sent
-- If the race has multiple courses, the simulator receives a settings schema with the course pull-down entries
-- Pin a single slot when needed with `GATECHECKER_SIM_SLOT_RACE=20261101_toyama_marathon`
+## Legacy Per-Race Build
 
-Examples:
+Race-specific build scripts are still kept for compatibility:
 
-```bash
-apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261018_gatechecker_mile_sample --device fr57042mm
+- `apps/GateChecker/scripts/generate_gatechecker_race.py`
+- `apps/GateChecker/scripts/build_gatechecker_race.sh`
+- `apps/GateChecker/scripts/build_gatechecker_release_package.sh`
+- `apps/GateChecker/scripts/run_gatechecker_sim.sh`
 
-GATECHECKER_SIM_SLOT_RACE=20260517_iwate_oshu_kirameki_marathon \
-  apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261018_sample_multi_course --course ultra_100k
-```
+These are legacy workflows. The primary product direction is the single global app.
 
-Notes:
+## Notes
 
-- The slot script temporarily overwrites the slot `.prg` in `apps/GateChecker/dist/<slot_race_key>/`
-- Rebuild the slot race later if you want to restore that artifact on disk
-- On the pre-start / GPS-wait title screen, the app shows both `raceName` and the selected `courseName`
-
-## Manual Simulator Steps
-
-If you want to avoid using Codex for simulator work, run the steps below from the repository root.
-
-Prerequisites:
-
-- `CONNECTIQ_HOME` points to your Connect IQ SDK
-- A developer key is available through `CIQ_DEV_KEY` or `./.vscode/developer_key`
-
-Launch the simulator manually:
-
-```bash
-open "$CONNECTIQ_HOME/bin/ConnectIQ.app"
-```
-
-Build for a specific device model:
-
-```bash
-apps/GateChecker/scripts/build_gatechecker_race.sh <race_key> <device_id>
-```
-
-Example:
-
-```bash
-apps/GateChecker/scripts/build_gatechecker_race.sh 20261018_sample_multi_course fr57042mm
-```
-
-The built `.prg` is written to:
-
-```text
-apps/GateChecker/dist/<race_key>/gatechecker-<race_key>-<device_id>.prg
-```
-
-Send a single-course race with no settings file:
-
-```bash
-apps/GateChecker/scripts/send_gatechecker_race_to_simulator.sh 20261101_toyama_marathon fr57042mm
-```
-
-Behavior:
-
-- The script builds the race if needed
-- It sends only the `.prg` when the race resolves to exactly one course
-- No course selection file is generated or sent
-
-Send a multi-course race with a generated settings file:
-
-```bash
-apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261018_sample_multi_course --device fr57042mm --course full_wave2
-```
-
-Behavior:
-
-- `--course` changes the generated default course for that simulator build
-- The script sends the `.prg`
-- If the race has multiple courses, it also sends the generated settings schema with the course pull-down entries
-
-The generated simulator settings file is:
-
-```text
-apps/GateChecker/dist/<race_key>/gatechecker-<race_key>-<device_id>-settings.json
-```
-
-Manual command summary:
-
-```bash
-# launch simulator
-open "$CONNECTIQ_HOME/bin/ConnectIQ.app"
-
-# build only
-apps/GateChecker/scripts/build_gatechecker_race.sh 20261018_sample_multi_course fr57042mm
-
-# send a single-course race
-apps/GateChecker/scripts/send_gatechecker_race_to_simulator.sh 20261101_toyama_marathon fr57042mm
-
-# send a multi-course race with a selected default course
-apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261018_sample_multi_course --device fr57042mm --course ultra_100k
-```
-
-Because this app is a data field, activity recording does not start automatically. After `monkeydo`, use the simulator menu:
-
-1. `Simulation > FIT Data > Simulate`
-2. `Data Fields > Timer > Start Activity`
-
-Log file for simulator troubleshooting:
-
-```text
-$TMPDIR/com.garmin.connectiq/GARMIN/APPS/LOGS/CIQ_LOG.YML
-```
-
-## Runtime Notes
-
-- The old `gate_code` property workflow is no longer the primary path
-- Next gate selection is based on the selected course's embedded gates
-- Next AID selection is based on the selected course's embedded AID points
-- Distance labels switch between `km` and `mi` from the watch setting
-- If the next gate is `GOAL`, the UI displays `GOAL` and still uses the exact race distance for calculations
-- If all AIDs are passed, the UI keeps a stable `AID --` style display instead of breaking
-- Course resolution order is:
-  1. If there is exactly one course, use it
-  2. Otherwise try the course selected by the `courseIndex` pull-down
-  3. Fall back to `defaultCourseCode`
-  4. Fall back to `courses[0]`
-  5. If nothing is usable, stay in a safe no-course/no-gate state instead of crashing
-- Invalid course selections do not crash the app; they fall back to the default or first course
+- `km` / `mi` race definitions are both supported
+- `GOAL` is always treated as the last gate sentinel
+- MarathonCoach main app should remain unaffected; GateChecker lives under `apps/GateChecker`

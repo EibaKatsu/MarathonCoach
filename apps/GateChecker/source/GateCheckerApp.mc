@@ -13,12 +13,12 @@ class GateCheckerApp extends App.AppBase {
 
     function onStart(state) {
         GateSettingsLoader.loadAppProperties();
-        GateRaceData.loadRequestedCourseCodeFromProperties();
+        GateRaceData.loadRequestedRaceCodeFromProperties();
         _log(
             "onStart",
-            "requested=" + GateRaceData.getRequestedCourseCode() +
-            " selected=" + GateRaceData.getSelectedCourseCode() +
-            " reason=" + GateRaceData.getSelectedCourseReason()
+            "requested=" + GateRaceData.getRequestedRaceCode() +
+            " selected=" + GateRaceData.getSelectedRaceCode() +
+            " reason=" + GateRaceData.getSelectedRaceReason()
         );
     }
 
@@ -27,26 +27,25 @@ class GateCheckerApp extends App.AppBase {
     }
 
     function onValidateProperty(key, value) {
-        if (key == "courseIndex") {
-            var courseCode = GateRaceData.applyCourseSelectionFromPropertyValue(value);
+        if (key == "raceCode") {
+            GateRaceData.applyRaceCodeSelectionFromPropertyValue(value);
             _log(
                 "onValidateProperty",
                 "key=" + key +
                 " value=" + value.toString() +
-                " mappedCourse=" + courseCode
+                " normalized=" + GateRaceData.getRequestedRaceCode()
             );
-            GateSettingsLoader.saveCourseCode(courseCode);
         }
         return true;
     }
 
     function onSettingsChanged() {
-        GateRaceData.loadRequestedCourseCodeFromProperties();
+        GateRaceData.loadRequestedRaceCodeFromProperties();
         _log(
             "onSettingsChanged",
-            "requested=" + GateRaceData.getRequestedCourseCode() +
-            " selected=" + GateRaceData.getSelectedCourseCode() +
-            " reason=" + GateRaceData.getSelectedCourseReason()
+            "requested=" + GateRaceData.getRequestedRaceCode() +
+            " selected=" + GateRaceData.getSelectedRaceCode() +
+            " reason=" + GateRaceData.getSelectedRaceReason()
         );
         Ui.requestUpdate();
     }

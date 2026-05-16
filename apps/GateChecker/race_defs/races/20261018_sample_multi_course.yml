@@ -1,25 +1,27 @@
-race_key: 20261018_sample_multi_course
+race_id: 20261018_sample_multi_course
 
 display_name:
   jpn: "GateChecker 複数コース確認用"
   eng: "GateChecker Multi Course Sample"
 
-connect_iq:
-  icon_place_label: "Sample"
-  iq_apl_id: ""
+meta:
+  country: "ZZ"
+  region: "Sample"
+  category: "sample"
+  sample_free: true
+  race_abbr: "SAMP"
 
 race:
   date: "2026/10/18"
   timezone: "Asia/Tokyo"
 
-defaultCourseCode: full_main
-
 courses:
-  - courseCode: full_main
-    courseNameJa: "フルマラソン"
-    courseNameEn: "Full Marathon"
+  - course_id: full_main
+    race_code: "SAMP26-F42-A7K3"
+    course_name:
+      jpn: "フルマラソン"
+      eng: "Full Marathon"
     distance_km: 42.195
-    start_time: "09:00"
     gates:
       - point: 10.0
         cutoff: "2026/10/18 09:40"
@@ -38,11 +40,12 @@ courses:
       - km: 35.0
       - km: 39.0
 
-  - courseCode: full_wave2
-    courseNameJa: "フルマラソン 第2ウェーブ"
-    courseNameEn: "Full Marathon Wave 2"
+  - course_id: full_wave2
+    race_code: "SAMP26-F42-B8N4"
+    course_name:
+      jpn: "フルマラソン 第2ウェーブ"
+      eng: "Full Marathon Wave 2"
     distance_km: 42.195
-    start_time: "09:15"
     gates:
       - point: 10.0
         cutoff: "2026/10/18 09:55"
@@ -61,11 +64,12 @@ courses:
       - km: 35.0
       - km: 39.0
 
-  - courseCode: ultra_100k
-    courseNameJa: "100K"
-    courseNameEn: "100K"
+  - course_id: ultra_100k
+    race_code: "SAMP26-100K-C4P8"
+    course_name:
+      jpn: "100K"
+      eng: "100K"
     distance_km: 100.0
-    start_time: "04:30"
     gates:
       - point: 30.0
         cutoff: "2026/10/18 11:30"
@@ -85,11 +89,12 @@ courses:
       - km: 80.0
       - km: 90.0
 
-  - courseCode: ultra_70k
-    courseNameJa: "70K"
-    courseNameEn: "70K"
+  - course_id: ultra_70k
+    race_code: "SAMP26-70K-D2Q6"
+    course_name:
+      jpn: "70K"
+      eng: "70K"
     distance_km: 70.0
-    start_time: "05:30"
     gates:
       - point: 25.0
         cutoff: "2026/10/18 11:10"
