@@ -195,6 +195,30 @@ img {
   background: rgba(255, 209, 102, 0.1);
 }
 
+.badge-free {
+  color: #8ef0b6;
+  border-color: rgba(142, 240, 182, 0.34);
+  background: rgba(142, 240, 182, 0.12);
+}
+
+.badge-paid {
+  color: #ffb067;
+  border-color: rgba(255, 176, 103, 0.34);
+  background: rgba(255, 176, 103, 0.12);
+}
+
+.badge-request {
+  color: var(--race-cyan);
+  border-color: rgba(93, 215, 226, 0.34);
+  background: rgba(93, 215, 226, 0.1);
+}
+
+.badge-support {
+  color: #ffd9a8;
+  border-color: rgba(255, 217, 168, 0.34);
+  background: rgba(255, 217, 168, 0.12);
+}
+
 .label-racenavi,
 .badge-racenavi {
   color: var(--race-cyan);
@@ -622,12 +646,41 @@ h3 {
   padding: 20px;
 }
 
+.code-box {
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px;
+  border: 1px solid rgba(170, 194, 215, 0.14);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.code-label {
+  color: var(--muted);
+  font-size: 0.88rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.code-value {
+  font-family: "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: clamp(1rem, 2.6vw, 1.3rem);
+  line-height: 1.35;
+  word-break: break-all;
+  color: var(--text);
+}
+
 .bullet-copy li strong {
   color: var(--text);
 }
 
 .todo-note {
   font-size: 0.93rem;
+}
+
+.todo-note code {
+  font-family: "SFMono-Regular", "Menlo", "Consolas", monospace;
+  color: var(--muted-strong);
 }
 
 .empty-note {
