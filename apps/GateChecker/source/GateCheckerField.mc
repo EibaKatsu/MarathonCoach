@@ -37,9 +37,10 @@ class GateCheckerField extends Ui.DataField {
     const AID_LABEL_TOP_PADDING = 6;
     const AID_VALUE_UNIT_TIGHT_GAP = 0;
     const AID_BOTTOM_PADDING = 2;
+    const GATE_TEXT_SAFE_MARGIN = 12;
+    const AID_TEXT_SAFE_MARGIN = 12;
     const TO_GATE_LABEL_TEXT = "TO GATE";
-    const AID_LABEL_TEXT = "AID";
-    const TO_AID_LABEL_TEXT = "TO AID";
+    const TO_NEXT_AID_LABEL_TEXT = "TO NEXT AID";
     const GATE_HEADER_VALUE_GAP = 2;
     const LAYOUT_TOP_PERCENT = 6;
     const LAYOUT_BOTTOM_PERCENT = 94;
@@ -69,9 +70,9 @@ class GateCheckerField extends Ui.DataField {
     var _gateRemainDistanceUnitText = "";
     var _gateLeftTimeText = "";
     var _remainMergedText = "";
-    var _aidTitleText = "AID";
-    var _aidRightLabelText = "TO AID";
-    var _aidDistanceText = "--";
+    var _aidTitleText = "TO NEXT AID";
+    var _aidRightLabelText = "";
+    var _aidDistanceText = "";
     var _aidDistanceUnitText = "";
     var _aidRemainDistanceText = "--";
     var _aidRemainDistanceUnitText = "";
@@ -161,14 +162,9 @@ class GateCheckerField extends Ui.DataField {
         var remainMergedRect = _newRect(outerPadding, remainBlockY, contentWidth, remainBlockHeight);
         var remainLeftRect = _newRect(outerPadding, remainBlockY, leftCellWidth, remainBlockHeight);
         var remainRightRect = _newRect(rightCellLeft, remainBlockY, rightCellWidth, remainBlockHeight);
-        var aidLeftRect = _newRect(outerPadding, aidBlockY, leftCellWidth, aidBlockHeight);
-        var aidRightRect = _newRect(rightCellLeft, aidBlockY, rightCellWidth, aidBlockHeight);
-        var aidLeftRenderRect = _offsetRectVertically(
-            _insetRectHorizontally(aidLeftRect, AID_STACKED_CELL_HORIZONTAL_INSET),
-            AID_STACKED_VERTICAL_OFFSET
-        );
-        var aidRightRenderRect = _offsetRectVertically(
-            _insetRectHorizontally(aidRightRect, AID_STACKED_CELL_HORIZONTAL_INSET),
+        var aidMergedRect = _newRect(outerPadding, aidBlockY, contentWidth, aidBlockHeight);
+        var aidRenderRect = _offsetRectVertically(
+            _insetRectHorizontally(aidMergedRect, AID_STACKED_CELL_HORIZONTAL_INSET),
             AID_STACKED_VERTICAL_OFFSET
         );
         var gateLeftValueFont = _resolveValueFont(
@@ -179,7 +175,7 @@ class GateCheckerField extends Ui.DataField {
             unitFont,
             _gateDistanceUnitText,
             labelFont,
-            _safeStackedCellWidth(gateLeftRect),
+            _safeStackedCellWidthWithExtraMargin(gateLeftRect, GATE_TEXT_SAFE_MARGIN),
             _rectHeight(gateLeftRect)
         );
         var gateRightValueFont = _resolveValueFont(
@@ -190,7 +186,7 @@ class GateCheckerField extends Ui.DataField {
             unitFont,
             "",
             labelFont,
-            _safeStackedCellWidth(gateRightRect),
+            _safeStackedCellWidthWithExtraMargin(gateRightRect, GATE_TEXT_SAFE_MARGIN),
             _rectHeight(gateRightRect)
         );
         var gateSharedValueFont = _smallerNumberFont(gateLeftValueFont, gateRightValueFont);
@@ -213,25 +209,15 @@ class GateCheckerField extends Ui.DataField {
             _gateLeftTimeText,
             unitFont
         );
-        var aidLeftValueFont = _resolveAidRowValueFont(
+        var aidValueFont = _resolveAidRowValueFont(
             dc,
             AID_FACT_MAX_VALUE_FONT,
-            aidLeftRenderRect,
+            aidRenderRect,
             labelFont,
             _aidTitleText,
-            _aidDistanceText,
-            unitFont,
-            ""
-        );
-        var aidRightValueFont = _resolveAidRowValueFont(
-            dc,
-            AID_FACT_MAX_VALUE_FONT,
-            aidRightRenderRect,
-            labelFont,
-            _aidRightLabelText,
             _aidRemainDistanceText,
             unitFont,
-            ""
+            _aidRemainDistanceUnitText
         );
 
         _drawGateHeaderMetricRow(
@@ -288,19 +274,14 @@ class GateCheckerField extends Ui.DataField {
         var hasAidBlock = _aidTitleText.length() > 0 or _aidRightLabelText.length() > 0 or _aidDistanceText.length() > 0 or _aidRemainDistanceText.length() > 0;
         if (hasAidBlock) {
             _drawSectionDivider(dc, dividerY, dc.getWidth());
-            _drawTwoColumnAidMetricRow(
+            _drawStackedMetricBlockCentered(
                 dc,
-                aidLeftRenderRect,
-                aidRightRenderRect,
+                aidRenderRect,
                 labelFont,
-                unitFont,
                 _aidTitleText,
-                aidLeftValueFont,
-                _aidDistanceText,
-                _aidDistanceUnitText,
-                _aidRightLabelText,
-                aidRightValueFont,
+                aidValueFont,
                 _aidRemainDistanceText,
+                unitFont,
                 _aidRemainDistanceUnitText,
                 Gfx.COLOR_WHITE
             );
@@ -328,14 +309,14 @@ class GateCheckerField extends Ui.DataField {
             gateRightRect,
             remainLeftRect,
             remainRightRect,
-            aidLeftRenderRect,
-            aidRightRenderRect,
+            aidRenderRect,
+            aidRenderRect,
             gateSharedValueFont,
             gateSharedValueFont,
             remainLeftValueFont,
             remainRightValueFont,
-            aidLeftValueFont,
-            aidRightValueFont
+            aidValueFont,
+            aidValueFont
         );
     }
 
@@ -511,23 +492,21 @@ class GateCheckerField extends Ui.DataField {
     }
 
     function _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig) {
-        _aidTitleText = AID_LABEL_TEXT;
-        _aidRightLabelText = TO_AID_LABEL_TEXT;
+        _aidTitleText = TO_NEXT_AID_LABEL_TEXT;
+        _aidRightLabelText = "";
         if (!GateAidSelector.hasNextAid(nextAidConfig)) {
-            _aidDistanceText = "--";
+            _aidDistanceText = "";
             _aidDistanceUnitText = "";
             _aidRemainDistanceText = "--";
             _aidRemainDistanceUnitText = "";
             return;
         }
 
-        var nextAid = GateAidSelector.getNextAid(nextAidConfig);
-        var nextAidDisplayParts = GateRaceData.getAidDisplayParts(nextAid);
         var aidRemainDistanceParts = GateDistanceUtils.formatCompactDistanceParts(
             GateRemainingDistance.getRemainingDistanceKm(aidRemainingDistanceConfig)
         );
-        _aidDistanceText = nextAidDisplayParts[0];
-        _aidDistanceUnitText = nextAidDisplayParts[1];
+        _aidDistanceText = "";
+        _aidDistanceUnitText = "";
         _aidRemainDistanceText = aidRemainDistanceParts[0];
         _aidRemainDistanceUnitText = aidRemainDistanceParts[1];
     }
@@ -546,9 +525,9 @@ class GateCheckerField extends Ui.DataField {
         _gateRemainDistanceUnitText = "";
         _gateLeftTimeText = "";
         _remainMergedText = "";
-        _aidTitleText = AID_LABEL_TEXT;
-        _aidRightLabelText = TO_AID_LABEL_TEXT;
-        _aidDistanceText = "--";
+        _aidTitleText = TO_NEXT_AID_LABEL_TEXT;
+        _aidRightLabelText = "";
+        _aidDistanceText = "";
         _aidDistanceUnitText = "";
         _aidRemainDistanceText = "--";
         _aidRemainDistanceUnitText = "";
@@ -1281,9 +1260,9 @@ class GateCheckerField extends Ui.DataField {
             labelText,
             valueText,
             unitFont,
-            "",
+            unitText,
             labelFont,
-            _safeStackedCellWidth(cellRect),
+            _safeStackedCellWidthWithExtraMargin(cellRect, AID_TEXT_SAFE_MARGIN),
             _rectHeight(cellRect)
         );
     }
@@ -1423,6 +1402,19 @@ class GateCheckerField extends Ui.DataField {
 
     function _safeStackedCellWidth(cellRect) {
         var safeWidth = _rectWidth(cellRect) - STACKED_CELL_HORIZONTAL_INSET;
+        if (safeWidth < 1) {
+            return 1;
+        }
+        return safeWidth;
+    }
+
+    function _safeStackedCellWidthWithExtraMargin(cellRect, extraMargin) {
+        var safeWidth = _safeStackedCellWidth(cellRect);
+        var margin = extraMargin;
+        if (margin == null or margin < 0) {
+            margin = 0;
+        }
+        safeWidth -= margin;
         if (safeWidth < 1) {
             return 1;
         }

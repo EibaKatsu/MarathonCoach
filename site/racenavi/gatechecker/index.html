@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>関門ガイド | マラソンの関門・エイドをGarminで確認</title>
-  <meta name="description" content="関門ガイドは、大会ごとの関門時刻とエイド地点をGarminで確認するアプリです。対応大会にないレースも、公式情報を確認できる場合は個別大会用の関門ガイド作成リクエストをGoogleフォームから受け付けます。" />
+  <title>関門ガイド | Garminで関門・エイド・残り時間を確認</title>
+  <meta name="description" content="関門ガイドは、マラソンやウルトラマラソンの関門時刻とエイド地点をGarminで確認するアプリです。1つのアプリにRace Codeを入力して大会とコースを選びます。" />
   <link rel="canonical" href="https://racenavi.jpn.org/gatechecker/" />
   <link rel="alternate" hreflang="ja" href="https://racenavi.jpn.org/gatechecker/" />
   <link rel="alternate" hreflang="en" href="https://racenavi.jpn.org/en/gatechecker/" />
-  <meta property="og:title" content="関門ガイド | マラソンの関門・エイドをGarminで確認" />
-  <meta property="og:description" content="関門ガイドは、大会ごとの関門時刻とエイド地点をGarminで確認するアプリです。対応大会にないレースも、公式情報を確認できる場合は個別大会用の関門ガイド作成リクエストをGoogleフォームから受け付けます。" />
+  <meta property="og:title" content="関門ガイド | Garminで関門・エイド・残り時間を確認" />
+  <meta property="og:description" content="関門ガイドは、マラソンやウルトラマラソンの関門時刻とエイド地点をGarminで確認するアプリです。1つのアプリにRace Codeを入力して大会とコースを選びます。" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://racenavi.jpn.org/gatechecker/" />
   <meta property="og:image" content="https://racenavi.jpn.org/assets/heroImage_jpn.png" />
@@ -27,7 +27,7 @@
       <span>RaceNavi</span>
     </a>
     <nav class="site-nav" aria-label="メインナビゲーション">
-      <a href="/racenavi/">RaceNavi</a><a href="/gatechecker/">関門ガイド</a><a href="/gatechecker/races/">対応大会</a><a href="/racenavi/custom/">カスタム設定</a><a href="/en/">English</a>
+      <a href="/racenavi/">RaceNavi</a><a href="/gatechecker/">関門ガイド</a><a href="/gatechecker/races/">対応大会</a><a href="/gatechecker/request/">大会リクエスト</a><a href="/en/">English</a>
     </nav>
   </header>
 
@@ -37,9 +37,12 @@
       <div class="hero-card hero-media">
         <div>
           <span class="eyebrow eyebrow-gate">関門ガイド</span>
-          <h1>Garminで関門情報とエイド情報を確認する。</h1>
-          <p class="lead">関門ガイドは、大会ごとの関門時刻とエイド地点をもとに、次の関門までの残り距離・残り時間、次のエイドまでの距離をGarminで確認するアプリです。スマホを取り出したり、頭の中で関門時刻を計算したりする余裕がない場面を想定しています。</p>
-          <div class="actions"><a class="button button-primary" href="/gatechecker/races/">対応大会を見る</a><a class="button button-secondary" href="/gatechecker/request/">作成リクエストを見る</a></div>
+          <h1>Garminで関門・エイド・残り時間を確認する</h1>
+          <p class="lead">関門ガイドは、マラソンやウルトラマラソンの関門時刻とエイド地点をGarminで確認するためのアプリです。アプリは1つで、Garmin Connectの設定画面にRace Codeを入力すると、その大会・コースの関門情報を表示します。</p>
+          <p class="section-copy">レース中にスマホを取り出したり、頭の中で関門時刻を計算したりする余裕がない場面を想定しています。</p>
+          <div class="actions"><span class="button button-primary button-disabled" aria-disabled="true">リンク準備中</span><a class="button button-secondary" href="/gatechecker/races/">対応大会を見る</a><a class="button button-secondary" href="/gatechecker/request/">大会をリクエストする</a><span class="button button-secondary button-disabled" aria-disabled="true">リンク準備中</span></div>
+          <p class="todo-note">現在のプレースホルダー: <code>TODO_CONNECT_IQ_URL</code></p>
+          <p class="todo-note">現在のプレースホルダー: <code>TODO_BUY_ME_A_COFFEE_URL</code></p>
         </div>
         <div class="hero-image-panel">
           <img src="/assets/GateChecker_Hero_Image_jp.png" alt="関門ガイドのHeroイメージ" />
@@ -51,11 +54,12 @@
       <div class="info-grid">
         <article class="info-card">
           <h2>レース中に確認できること</h2>
-          <ul><li>次の関門はどこか</li><li>関門まであと何kmか</li><li>制限時刻まであと何分あるか</li><li>次のエイドはどこか</li><li>エイドまであと何kmか</li></ul>
+          <ul><li>次の関門地点</li><li>関門までの残り距離</li><li>関門時刻</li><li>関門までの残り時間</li><li>次のエイド地点</li><li>エイドまでの残り距離</li></ul>
         </article>
         <article class="info-card">
-          <h2>こんな人向け</h2>
-          <ul><li>関門が多い大会に出る人</li><li>完走狙いで余裕時間を見ながら走りたい人</li><li>ウルトラマラソンや海外マラソンで、関門・エイド情報を確認したい人</li><li>レース中にスマホを見るのが面倒、または難しい人</li></ul>
+          <h2>Race Codeで大会を選ぶ</h2>
+          <p class="page-copy">関門ガイドは、大会ごとにアプリを分けず、1つのアプリで複数の大会に対応します。このサイトでRace Codeを確認し、Garmin Connectのアプリ設定に入力してください。Race Codeは大会とコースを選ぶためのコードです。</p>
+          <ul><li>Connect IQ Storeから関門ガイドをインストール</li><li>このサイトでRace Codeを確認</li><li>Garmin Connectのアプリ設定でRace Codeを入力</li><li>時計に同期</li><li>レース中に関門・エイド情報を確認</li></ul>
         </article>
       </div>
     </section>
@@ -76,21 +80,63 @@
 
     <section class="page-section">
       <article class="cta-panel">
-        <span class="badge badge-gate">作成リクエスト</span>
-        <h2>未対応大会の作成リクエスト</h2>
-        <p class="page-copy">希望する大会が未対応の場合は、作成リクエストの詳細ページから料金と流れを確認できます。</p>
-        <p class="page-copy">作成した大会版は、他のユーザーも利用できる形でConnect IQ Storeに公開します。</p>
-        <div class="actions">
-          <a class="button button-primary" href="/gatechecker/request/">希望する大会が未対応の場合はこちら</a>
-          <a class="button button-secondary" href="/gatechecker/races/">対応大会を見る</a>
+        <span class="badge badge-free">無料サンプル大会</span>
+        <h2>無料サンプル大会</h2>
+        <p class="page-copy">現在、以下の大会は無料サンプルとしてRace Codeを公開しています。全関門・全AID情報を利用できます。</p>
+        <div class="race-list-grid">
+
+        <article class="race-list-card">
+          <span class="badge badge-free">無料サンプル</span>
+          <h3>BMOバンクーバーマラソン2026</h3>
+          <div class="meta-stack">
+            <div class="meta-row"><span class="meta-label">種別</span><span>フルマラソン</span></div><div class="meta-row"><span class="meta-label">国</span><span>カナダ</span></div><div class="meta-row"><span class="meta-label">コース</span><span>42.195 km</span></div><div class="meta-row"><span class="meta-label">価格</span><span>無料</span></div>
+          </div>
+          <div class="code-box">
+            <span class="code-label">Race Code</span>
+            <strong class="code-value">BMO26-F42-2QTP</strong>
+          </div>
+          <div class="actions">
+            <a class="button button-primary" href="/gatechecker/races/20260503_bmo_vancouver_marathon/">使い方を見る</a>
+          </div>
+        </article>
+
+        <article class="race-list-card">
+          <span class="badge badge-free">無料サンプル</span>
+          <h3>黒部名水マラソン2026</h3>
+          <div class="meta-stack">
+            <div class="meta-row"><span class="meta-label">種別</span><span>フルマラソン</span></div><div class="meta-row"><span class="meta-label">国</span><span>日本</span></div><div class="meta-row"><span class="meta-label">コース</span><span>42.195 km</span></div><div class="meta-row"><span class="meta-label">価格</span><span>無料</span></div>
+          </div>
+          <div class="code-box">
+            <span class="code-label">Race Code</span>
+            <strong class="code-value">KURO26-F42-M1AF</strong>
+          </div>
+          <div class="actions">
+            <a class="button button-primary" href="/gatechecker/races/20260524_kurobe_meisui_marathon/">使い方を見る</a>
+          </div>
+        </article>
+
         </div>
+      </article>
+    </section>
+
+    <section class="page-section">
+      <article class="cta-panel">
+        <span class="badge badge-support">開発を応援する</span>
+        <h2>開発を応援する</h2>
+        <p class="page-copy">関門ガイドは個人開発のアプリです。役に立った場合は、今後の大会対応や情報更新のために、コーヒー1杯分で応援してもらえるとうれしいです。</p>
+        <div class="actions">
+          <span class="button button-primary button-disabled" aria-disabled="true">リンク準備中</span>
+          <a class="button button-secondary" href="/gatechecker/request/">大会をリクエストする</a>
+        </div>
+        <p class="pricing-disclaimer">チップは任意であり、作成保証や個別対応の対価ではありません。</p>
+        <p class="todo-note">現在のプレースホルダー: <code>TODO_BUY_ME_A_COFFEE_URL</code></p>
       </article>
     </section>
 
     <section class="page-section">
       <div class="notice">
         <strong>注意事項:</strong>
-        <ul class="page-link-list"><li>Garmin公式アプリではありません。</li><li>大会公式アプリではありません。</li><li>関門・エイド情報は必ず大会公式情報も確認してください。</li><li>コース変更、ウェーブスタート、天候、主催者発表により情報が変わる場合があります。</li><li>完走、関門通過、記録達成を保証するものではありません。</li></ul>
+        <ul class="page-link-list"><li>Garmin公式アプリではありません。</li><li>大会公式アプリではありません。</li><li>関門・エイド情報は公式情報をもとに作成しますが、必ず大会公式情報も確認してください。</li><li>コース変更、ウェーブスタート、天候、主催者発表により情報が変わる場合があります。</li><li>完走、関門通過、記録達成を保証するものではありません。</li><li>Race Codeは大会とコースを選ぶためのコードです。</li><li>有料Race Codeはアプリ本体ではなく、大会別データを利用するためのコードです。</li><li>チップは任意であり、作成保証や個別対応の対価ではありません。</li></ul>
       </div>
     </section>
   </main>
@@ -103,7 +149,7 @@
       <p>RaceNaviと関門ガイドはGarmin公式・大会公式のアプリではありません。</p>
     </div>
     <div class="footer-links">
-      <a href="/racenavi/">RaceNavi</a><a href="/gatechecker/">関門ガイド</a><a href="/gatechecker/races/">対応大会</a><a href="/gatechecker/request/">作成リクエスト</a><a href="/racenavi/custom/">カスタム設定</a><a href="/en/">English</a><a href="https://x.com/racenavi_run" target="_blank" rel="noreferrer">X DM</a>
+      <a href="/racenavi/">RaceNavi</a><a href="/gatechecker/">関門ガイド</a><a href="/gatechecker/races/">対応大会</a><a href="/gatechecker/request/">大会リクエスト</a><a href="/en/">English</a><a href="https://x.com/racenavi_run" target="_blank" rel="noreferrer">X DM</a>
     </div>
   </footer>
 
