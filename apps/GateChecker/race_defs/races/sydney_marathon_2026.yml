@@ -1,0 +1,67 @@
+race_id: sydney_marathon_2026
+
+# Sources checked on 2026-05-18:
+# - https://www.tcssydneymarathon.com/marathon
+# - https://www.tcssydneymarathon.com/_files/ugd/cbc827_5d5e4e5aa5b0453da816c48efe7e53c6.pdf
+# Official cut-off and redirection points are published as race time from Gun Time.
+# GateChecker stores absolute cutoff clock times, so the gate cutoffs below use 2026-08-30 06:30 gun time + official race time.
+# Start line cut-off is officially 06:30-08:15, but 0.0km START is not stored as a gate because existing GateChecker gates begin from the first on-course checkpoint.
+
+display_name:
+  jpn: "シドニーマラソン 2026"
+  eng: "TCS Sydney Marathon 2026"
+
+meta:
+  country: "AU"
+  region: "Oceania"
+  category: "marathon"
+  sample_free: false
+  race_abbr: "SYD"
+
+race:
+  date: "2026/08/30"
+  timezone: "Australia/Sydney"
+
+courses:
+  - course_id: "full"
+    race_code: "SYD26-F42-8LLH"
+    course_name:
+      jpn: "フルマラソン"
+      eng: "Marathon"
+    distance_km: 42.195
+    gates:
+      - point: 6.0 # G1 Pyrmont - Harris St at Union St, official gun time based 2:45, skip approx 1.5km
+        cutoff: "2026/08/30 09:15"
+      - point: 12.5 # G2 Pitt St at Hunter St, official gun time based 3:50, skip approx 0.5km
+        cutoff: "2026/08/30 10:20"
+      - point: 17.8 # G3 Anzac Pde at Dacey Ave, official gun time based 4:42, skip approx 1.0km
+        cutoff: "2026/08/30 11:12"
+      - point: 21.2 # G4 Half-Way Point at Baker St, official gun time based 5:15, major skip approx 4.0km
+        cutoff: "2026/08/30 11:45"
+      - point: 22.0 # G5 Anzac Pde at Sturt St, official gun time based 5:24, skip approx 2.0km
+        cutoff: "2026/08/30 11:54"
+      - point: 27.5 # G6 Anzac Pde at Lang Rd, official gun time based 6:20, skip approx 2.5km
+        cutoff: "2026/08/30 12:50"
+      - point: 28.3 # G7 Walk home, official gun time based 6:20, major skip approx 14.0km
+        cutoff: "2026/08/30 12:50"
+      - point: 32.5 # G8 Centennial Park - Drink Station 12, official gun time based 7:08, SAG pick up approx 10.0km
+        cutoff: "2026/08/30 13:38"
+      - point: GOAL # Official course cut-off time 7:00 / 15:15
+        cutoff: "2026/08/30 15:15"
+    aids:
+      - km: 6.6 # W+ water + electrolyte, elevation profile based, approximate
+      - km: 7.4 # W water, elevation profile based, approximate
+      - km: 9.8 # W+ water + electrolyte, elevation profile based, approximate
+      - km: 13.1 # W water, elevation profile based, approximate
+      - km: 15.1 # W+ water + electrolyte, elevation profile based, approximate
+      - km: 18.6 # W water, elevation profile based, approximate
+      - km: 20.3 # W+E water + electrolyte + energy gel, elevation profile based, approximate
+      - km: 23.0 # W water, elevation profile based, approximate
+      - km: 24.7 # W+ water + electrolyte, elevation profile based, approximate
+      - km: 27.6 # W water, elevation profile based, approximate
+      - km: 30.5 # W+E water + electrolyte + energy gel, elevation profile based, approximate
+      - km: 32.5 # W water, elevation profile based, approximate
+      - km: 35.0 # W+ water + electrolyte, elevation profile based, approximate
+      - km: 37.5 # W water, elevation profile based, approximate
+      - km: 39.7 # W+ water + electrolyte, elevation profile based, approximate
+      - km: 40.6 # W water, elevation profile based, approximate

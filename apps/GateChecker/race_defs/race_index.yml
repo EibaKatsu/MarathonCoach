@@ -148,6 +148,15 @@ races:
       app_id: 662bad21-6d5e-4b20-949a-e27b75c8e3b7
       version: 0.1.0
 
+  - race_id: sydney_marathon_2026
+    file: races/sydney_marathon_2026.yml
+    status: active
+    sample_free: false
+    sort:
+      region: Oceania
+      country: AU
+      category: marathon
+
   - race_id: 20261018_gatechecker_mile_sample
     file: races/20261018_gatechecker_mile_sample.yml
     status: active

@@ -45,6 +45,7 @@ METERS_PER_KM = Decimal("1000")
 RACE_CODE_SALT_ENV = "GATECHECKER_RACE_CODE_SALT"
 APP_NAME_ENG = "Cutoff Guide"
 APP_NAME_JPN = "関門ガイド"
+DEFAULT_RACE_CODE = "SYD26-F42-8LLH"
 STRINGS_COMMON_ENG = {
     "code_ok": "READY",
     "code_error": "CONFIG ERROR",
@@ -337,8 +338,11 @@ def parse_gates(
                 f"{label_prefix}[{index}].cutoff must not be before race.date."
             )
         cutoff_minute_of_day = (cutoff_dt.hour * 60) + cutoff_dt.minute
-        if last_cutoff is not None and cutoff_dt <= last_cutoff:
-            raise ValidationError(f"{label_prefix}[].cutoff must be strictly ascending.")
+        # Some official course plans publish multiple redirection points with the
+        # same cutoff clock time. Preserve those definitions as-is while still
+        # rejecting time regressions.
+        if last_cutoff is not None and cutoff_dt < last_cutoff:
+            raise ValidationError(f"{label_prefix}[].cutoff must be ascending.")
         last_cutoff = cutoff_dt
 
         if point == GOAL_TOKEN:
@@ -978,7 +982,7 @@ def build_global_properties_text() -> str:
         '<resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
         'xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">\n'
         "    <properties>\n"
-        '        <property id="raceCode" type="string"></property>\n'
+        f'        <property id="raceCode" type="string">{DEFAULT_RACE_CODE}</property>\n'
         "    </properties>\n"
         "\n"
         "    <settings>\n"

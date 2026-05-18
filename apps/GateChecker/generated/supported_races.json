@@ -242,6 +242,28 @@
     ]
   },
   {
+    "race_id": "sydney_marathon_2026",
+    "display_name": {
+      "eng": "TCS Sydney Marathon 2026",
+      "jpn": "シドニーマラソン 2026"
+    },
+    "country": "AU",
+    "region": "Oceania",
+    "category": "marathon",
+    "sample_free": false,
+    "courses": [
+      {
+        "course_id": "full",
+        "course_name": {
+          "eng": "Marathon",
+          "jpn": "フルマラソン"
+        },
+        "race_code": "SYD26-F42-8LLH",
+        "distance_meters": 42195
+      }
+    ]
+  },
+  {
     "race_id": "20261018_gatechecker_mile_sample",
     "display_name": {
       "eng": "GateChecker Mile Sample 2026",
