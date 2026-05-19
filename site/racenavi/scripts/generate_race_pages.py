@@ -1021,6 +1021,9 @@ def render_home_page(lang: str) -> str:
 """
         section_title = "2つのアプリを、目的で分ける。"
         section_copy = "トップページでは、RaceNaviと関門ガイドを別アプリとして案内します。関門ガイドは1つのアプリにRace Codeを入力して使う方式です。"
+        support_title = "開発を応援する"
+        support_copy = "RaceNaviと関門ガイドは個人開発のアプリです。役に立った場合は、今後の開発や大会情報更新のために、Buy Me a Coffeeから応援してもらえるとうれしいです。"
+        support_note = "チップは任意であり、作成保証や個別対応の対価ではありません。"
         quick_cards = """
           <article class="quick-card">
             <span class="meta-pill">RaceNavi</span>
@@ -1093,6 +1096,9 @@ def render_home_page(lang: str) -> str:
 """
         section_title = "Two apps, two different race-day jobs."
         section_copy = "RaceNavi handles pacing and heart-rate decisions. Cutoff Guide handles cutoff and aid-station awareness through one app and race-specific Race Codes."
+        support_title = "Support the project"
+        support_copy = "RaceNavi and Cutoff Guide are personal projects. If they help your racing, you can support future development and race-data updates through Buy me a coffee."
+        support_note = "Support is optional and does not guarantee race requests or individual support."
         quick_cards = """
           <article class="quick-card">
             <span class="meta-pill">RaceNavi</span>
@@ -1133,6 +1139,18 @@ def render_home_page(lang: str) -> str:
       <div class="app-grid">
         {app_cards}
       </div>
+    </section>
+
+    <section class="page-section">
+      <article class="cta-panel">
+        <span class="badge badge-support">{escape(support_title)}</span>
+        <h2>{escape(support_title)}</h2>
+        <p class="page-copy">{escape(support_copy)}</p>
+        <div class="actions">
+          {optional_link_button(BUY_ME_A_COFFEE_URL, "Buy Me a Coffeeで応援する" if lang == "ja" else "Buy me a coffee", lang, "primary")}
+        </div>
+        <p class="pricing-disclaimer">{escape(support_note)}</p>
+      </article>
     </section>
 
     <section class="page-section">
