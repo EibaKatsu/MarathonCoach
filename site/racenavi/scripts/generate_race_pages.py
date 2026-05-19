@@ -63,7 +63,7 @@ PAID_RACE_CODE_PRICE = "US$4"
 GARMIN_LACTATE_THRESHOLD_URL = "https://www.garmin.com/en-XD/garmin-technology/running-science/physiological-measurements/lactate-threshold/"
 GARMIN_HR_ZONES_URL = "https://support.garmin.com/en-US/?faq=s3HqdKNtWV1NYrK16eFcc7"
 GOOGLE_FORM_URL_JA = "https://forms.gle/xy492imp9MCXxNRP7"
-GOOGLE_FORM_URL_EN = "https://forms.gle/5e8J9hBNDotUr6NR9"
+GOOGLE_FORM_URL_EN = "https://forms.gle/m2k85w17z62gnCP37"
 FREE_SAMPLE_RACE_CODES = {
     "20260503_bmo_vancouver_marathon": "BMO26-F42-2QTP",
     "20260524_kurobe_meisui_marathon": "KURO26-F42-M1AF",
