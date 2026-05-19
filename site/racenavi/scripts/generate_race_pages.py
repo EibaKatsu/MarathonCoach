@@ -14,6 +14,13 @@ BASE_URL = "https://racenavi.jpn.org"
 SITE_DIR = Path(__file__).resolve().parents[1]
 REPO_DIR = SITE_DIR.parents[1]
 RACE_DEFS_DIR = REPO_DIR / "apps" / "GateChecker" / "race_defs"
+
+
+def versioned_asset_url(public_path: str, source_path: Path) -> str:
+    stamp = int(source_path.stat().st_mtime)
+    return f"{public_path}?v={stamp}"
+
+
 ASSET_SYNC_MAP = {
     REPO_DIR / "assets" / "store_shots" / "mainIcon.png": SITE_DIR / "assets" / "mainIcon.png",
     REPO_DIR / "assets" / "store_shots" / "heroImage_jpn.png": SITE_DIR / "assets" / "heroImage_jpn.png",
@@ -31,18 +38,27 @@ RACENAVI_HERO_EN = "/assets/heroImage_eng.png"
 RACENAVI_SCREEN_IMAGE = "/assets/screen_discription.jpg"
 RACENAVI_SETUP_IMAGE = "/assets/shot05_four_settings.jpg"
 GATE_ICON = "/assets/gatechecker_icon.png"
-GATE_HERO_JA = "/assets/GateChecker_Hero_Image_jp.png"
-GATE_HERO_EN = "/assets/GateChecker_Hero_Image_en.png"
-GATE_SCREEN_IMAGE = "/assets/screen_image.png"
+GATE_HERO_JA = versioned_asset_url(
+    "/assets/GateChecker_Hero_Image_jp.png",
+    REPO_DIR / "apps" / "GateChecker" / "assets" / "GateChecker_Hero_Image_jp.png",
+)
+GATE_HERO_EN = versioned_asset_url(
+    "/assets/GateChecker_Hero_Image_en.png",
+    REPO_DIR / "apps" / "GateChecker" / "assets" / "GateChecker_Hero_Image_en.png",
+)
+GATE_SCREEN_IMAGE = versioned_asset_url(
+    "/assets/screen_image.png",
+    REPO_DIR / "apps" / "GateChecker" / "assets" / "screen_image.png",
+)
 FAVICON_IMAGE = RACENAVI_ICON
 OG_IMAGE = f"{BASE_URL}{RACENAVI_HERO_JA}"
 X_URL = "https://x.com/racenavi_run"
 RACENAVI_CONNECT_IQ_JA = "https://apps.garmin.com/ja-JP/apps/00ebf0d8-4f9f-47d0-a59c-27f9b286c830"
 RACENAVI_CONNECT_IQ_EN = "https://apps.garmin.com/apps/00ebf0d8-4f9f-47d0-a59c-27f9b286c830"
-GATE_CONNECT_IQ_URL = "TODO_CONNECT_IQ_URL"
-BUY_ME_A_COFFEE_URL = "TODO_BUY_ME_A_COFFEE_URL"
-STRIPE_PAYMENT_LINK_MARATHON = "TODO_STRIPE_PAYMENT_LINK_MARATHON"
-STRIPE_PAYMENT_LINK_ULTRA_TRAIL = "TODO_STRIPE_PAYMENT_LINK_ULTRA_TRAIL"
+GATE_CONNECT_IQ_URL = "https://apps.garmin.com/ja-JP/apps/8424ea31-8acc-4bfe-9548-defecf1eb018"
+BUY_ME_A_COFFEE_URL = "https://buymeacoffee.com/racenavi"
+STRIPE_PAYMENT_LINK_MARATHON = "https://buy.stripe.com/cNibJ2bRW571a9YcBP8IU00"
+STRIPE_PAYMENT_LINK_ULTRA_TRAIL = STRIPE_PAYMENT_LINK_MARATHON
 PAID_RACE_CODE_PRICE = "US$4"
 GARMIN_LACTATE_THRESHOLD_URL = "https://www.garmin.com/en-XD/garmin-technology/running-science/physiological-measurements/lactate-threshold/"
 GARMIN_HR_ZONES_URL = "https://support.garmin.com/en-US/?faq=s3HqdKNtWV1NYrK16eFcc7"
@@ -243,14 +259,12 @@ def render_request_form_status(lang: str) -> str:
 def render_paid_code_pricing_cards(lang: str) -> str:
     if lang == "ja":
         cards = [
-            ("フルマラソン", PAID_RACE_CODE_PRICE, "Marathon Race Code"),
-            ("ウルトラ / トレイル", PAID_RACE_CODE_PRICE, "Ultra / Trail Race Code"),
+            ("すべてのRace Code", PAID_RACE_CODE_PRICE, "フルマラソン / ウルトラ / トレイル共通"),
             ("案内方法", "Manual", "購入後にRace Codeをメール送付"),
         ]
     else:
         cards = [
-            ("Marathon", PAID_RACE_CODE_PRICE, "Marathon Race Code"),
-            ("Ultra / Trail", PAID_RACE_CODE_PRICE, "Ultra / Trail Race Code"),
+            ("All Race Codes", PAID_RACE_CODE_PRICE, "Same price for marathon, ultra, and trail"),
             ("Delivery", "Manual", "Race Code is sent after purchase"),
         ]
 
@@ -438,7 +452,7 @@ def race_price_label(race: Race, lang: str) -> str:
 def race_payment_link(race: Race) -> str | None:
     if is_free_sample_race(race):
         return None
-    return STRIPE_PAYMENT_LINK_ULTRA_TRAIL if is_ultra_or_trail_race(race) else STRIPE_PAYMENT_LINK_MARATHON
+    return STRIPE_PAYMENT_LINK_MARATHON
 
 
 def race_status_badge_class(race: Race) -> str:
@@ -524,6 +538,96 @@ def render_paid_race_card(race: Race, lang: str) -> str:
             {button_link(detail_href, detail_label, "secondary")}
           </div>
         </article>
+"""
+
+
+def render_free_sample_table(races: list[Race], lang: str) -> str:
+    if lang == "ja":
+        headers = ("大会名", "開催日", "Race Code", "詳細")
+    else:
+        headers = ("Race", "Date", "Race Code", "Details")
+
+    rows = []
+    for race in races:
+        title = race.name_ja if lang == "ja" else race.name_en
+        detail_href = f"/gatechecker/races/{race.slug}/" if lang == "ja" else f"/en/gatechecker/races/{race.slug}/"
+        detail_label = "詳細" if lang == "ja" else "Details"
+        rows.append(
+            "<tr>"
+            f"<td>{escape(title)}</td>"
+            f"<td>{escape(race.date)}</td>"
+            f"<td><strong class=\"code-value\">{escape(race_code_summary(race, lang))}</strong></td>"
+            f"<td>{button_link(detail_href, detail_label, 'secondary')}</td>"
+            "</tr>"
+        )
+
+    return f"""
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{escape(headers[0])}</th>
+                <th>{escape(headers[1])}</th>
+                <th>{escape(headers[2])}</th>
+                <th>{escape(headers[3])}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {''.join(rows)}
+            </tbody>
+          </table>
+        </div>
+"""
+
+
+def render_paid_race_table(races: list[Race], lang: str) -> str:
+    if lang == "ja":
+        headers = ("大会名", "開催日", "種別", "コース", "価格", "Race Code", "リンク")
+        detail_label = "詳細"
+    else:
+        headers = ("Race", "Date", "Type", "Course", "Price", "Race Code", "Links")
+        detail_label = "Details"
+
+    rows = []
+    for race in races:
+        title = race.name_ja if lang == "ja" else race.name_en
+        detail_href = f"/gatechecker/races/{race.slug}/" if lang == "ja" else f"/en/gatechecker/races/{race.slug}/"
+        purchase_label = "Get Race Code"
+        action_links = (
+            optional_link_button(race_payment_link(race), purchase_label, lang, "primary")
+            + button_link(detail_href, detail_label, "secondary")
+        )
+        rows.append(
+            "<tr>"
+            f"<td>{escape(title)}</td>"
+            f"<td>{escape(race.date)}</td>"
+            f"<td>{escape(race_category_label(race, lang))}</td>"
+            f"<td>{escape(race_course_list_label(race, lang))}</td>"
+            f"<td>{escape(race_price_label(race, lang))}</td>"
+            f"<td>{escape(race_code_summary(race, lang))}</td>"
+            f"<td><div class=\"actions\">{action_links}</div></td>"
+            "</tr>"
+        )
+
+    return f"""
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>{escape(headers[0])}</th>
+                <th>{escape(headers[1])}</th>
+                <th>{escape(headers[2])}</th>
+                <th>{escape(headers[3])}</th>
+                <th>{escape(headers[4])}</th>
+                <th>{escape(headers[5])}</th>
+                <th>{escape(headers[6])}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {''.join(rows)}
+            </tbody>
+          </table>
+        </div>
 """
 
 
@@ -1407,7 +1511,7 @@ def render_gatechecker_page(lang: str) -> str:
         path = "/gatechecker/"
         other = "/en/gatechecker/"
         hero_title = "Garminで関門・エイド・残り時間を確認する"
-        hero_lead = "関門ガイドは、マラソンやウルトラマラソンの関門時刻とエイド地点をGarminで確認するためのアプリです。アプリは1つで、Garmin Connectの設定画面にRace Codeを入力すると、その大会・コースの関門情報を表示します。"
+        hero_lead = "関門ガイドは、マラソンやウルトラマラソンの関門時刻とエイド地点をGarminで確認するためのアプリです。Garmin Connectの設定画面にRace Codeを入力すると、その大会・コースの関門情報を表示します。"
         actions = "".join([
             optional_link_button(GATE_CONNECT_IQ_URL, "Connect IQでダウンロード", lang, "primary"),
             button_link("/gatechecker/races/", "対応大会を見る", "secondary"),
@@ -1417,10 +1521,9 @@ def render_gatechecker_page(lang: str) -> str:
         hero_follow = "レース中にスマホを取り出したり、頭の中で関門時刻を計算したりする余裕がない場面を想定しています。"
         info_points = [
             "次の関門地点",
-            "関門までの残り距離",
             "関門時刻",
+            "関門までの残り距離",
             "関門までの残り時間",
-            "次のエイド地点",
             "エイドまでの残り距離",
         ]
         audience_title = "Race Codeで大会を選ぶ"
@@ -1432,9 +1535,9 @@ def render_gatechecker_page(lang: str) -> str:
             "レース中に関門・エイド情報を確認",
         ]
         screen_rows = [
-            ("1段目", "次の関門地点の距離と、そこまでの残り距離を確認します。"),
-            ("2段目", "次の関門地点の設定時間と、残り時間を確認します。"),
-            ("3段目", "次のエイドまでの距離と、残り距離を確認します。"),
+            ("1段目", "次の関門地点の距離と時間を確認します。"),
+            ("2段目", "次の関門地点までの残り距離と残り時間を確認します。"),
+            ("3段目", "次のエイドまでの残り距離を確認します。"),
         ]
         audience_copy = "関門ガイドは、大会ごとにアプリを分けず、1つのアプリで複数の大会に対応します。このサイトでRace Codeを確認し、Garmin Connectのアプリ設定に入力してください。Race Codeは大会とコースを選ぶためのコードです。"
         sample_title = "無料サンプル大会"
@@ -1470,9 +1573,9 @@ def render_gatechecker_page(lang: str) -> str:
         hero_follow = "It is built for races where checking your phone or calculating cutoff times in your head is not realistic."
         info_points = [
             "Where the next cutoff is",
+            "What time the next cutoff is",
             "How far away the cutoff is",
             "How much time is left before the cutoff",
-            "Where the next aid station is",
             "How far away the next aid station is",
         ]
         audience_title = "One app. Many races."
@@ -1484,9 +1587,9 @@ def render_gatechecker_page(lang: str) -> str:
             "Check cutoff and aid information during the race",
         ]
         screen_rows = [
-            ("Row 1", "Distance of the next cutoff point and the remaining distance to it."),
-            ("Row 2", "Configured cutoff time and the remaining time before it."),
-            ("Row 3", "Distance to the next aid station and the remaining distance."),
+            ("Row 1", "Check the distance and cutoff time of the next cutoff point."),
+            ("Row 2", "Check the remaining distance and time to the next cutoff point."),
+            ("Row 3", "Check the remaining distance to the next aid station."),
         ]
         audience_copy = "Cutoff Guide does not use separate apps for each race. Find your Race Code on this website, enter it in the app settings, and sync your watch."
         sample_title = "Free sample races"
@@ -1559,9 +1662,7 @@ def render_gatechecker_page(lang: str) -> str:
         <span class="badge badge-free">{escape(sample_title)}</span>
         <h2>{escape(sample_title)}</h2>
         <p class="page-copy">{escape(sample_copy)}</p>
-        <div class="race-list-grid">
-          {''.join(render_sample_race_card(race, lang) for race in sample_races)}
-        </div>
+        {render_free_sample_table(sample_races, lang)}
       </article>
     </section>
 
@@ -1601,12 +1702,12 @@ def render_gatechecker_page(lang: str) -> str:
 def render_gatechecker_request_page(lang: str) -> str:
     if lang == "ja":
         title = "未対応大会のリクエスト | 関門ガイド"
-        description = "関門ガイドに未対応の大会について、公式サイトや大会要項のURLを送るリクエストページです。立ち上げ初期のため、大会リクエストは無料で受け付けています。"
+        description = "関門ガイドに未対応の大会について、公式サイトや大会要項のURLを送るリクエストページです。大会リクエストは無料で受け付けています。"
         path = "/gatechecker/request/"
         other = "/en/gatechecker/request/"
         hero_title = "未対応大会のリクエスト"
         hero_lead = "対応してほしい大会がある場合は、公式サイトや大会要項のURLを送ってください。"
-        hero_copy = "立ち上げ初期のため、大会リクエストは無料で受け付けています。ただし、すべての大会に対応できるとは限りません。公式情報が確認しやすい大会、リクエストが多い大会、需要がありそうな大会から順番に対応します。"
+        hero_copy = "大会リクエストは無料で受け付けています。ただし、すべての大会に対応できるとは限りません。公式情報が確認しやすい大会、リクエストが多い大会、需要がありそうな大会から順番に対応します。"
         actions = "".join([
             request_form_button("大会をリクエストする", lang, "primary"),
             button_link("/gatechecker/races/", "対応大会を見る", "secondary"),
@@ -1641,12 +1742,12 @@ def render_gatechecker_request_page(lang: str) -> str:
         ]
     else:
         title = "Request a Race | Cutoff Guide"
-        description = "Request a race for Cutoff Guide by sending the official race website or race guide PDF. Race requests are currently free during the launch phase."
+        description = "Request a race for Cutoff Guide by sending the official race website or race guide PDF. Race requests are currently free."
         path = "/en/gatechecker/request/"
         other = "/gatechecker/request/"
         hero_title = "Request a Race"
         hero_lead = "Can’t find your race? Send me the official race website or race guide PDF."
-        hero_copy = "Race requests are currently free during the launch phase. I can’t guarantee every request, but I’ll prioritize races with clear official cutoff information and higher demand."
+        hero_copy = "Race requests are currently free. I can’t guarantee every request, but I’ll prioritize races with clear official cutoff information and higher demand."
         actions = "".join([
             request_form_button("Request a Race", lang, "primary"),
             button_link("/en/gatechecker/races/", "View Supported Races", "secondary"),
@@ -1858,7 +1959,7 @@ def render_races_index(races: list[Race], lang: str) -> str:
         path = "/gatechecker/races/"
         other = "/en/gatechecker/races/"
         hero_title = "対応大会・Race Code一覧"
-        hero_lead = "関門ガイドは、Race Codeを入力して大会・コースを選ぶ方式です。無料サンプル大会はRace Codeをこのページで公開しています。その他の大会は、有料Race Codeとして提供予定です。"
+        hero_lead = "関門ガイドは、Race Codeを入力して大会・コースを選ぶ方式です。無料サンプル大会はRace Codeをこのページで公開しています。その他の大会のRace Codeを有償で販売しています。"
         how_title = "Race Codeの使い方"
         how_copy = "関門ガイドは1つのアプリにRace Codeを入力して使います。アプリ内に決済処理はなく、有料Race Codeは外部決済後に案内します。"
         how_points = [
@@ -1870,10 +1971,10 @@ def render_races_index(races: list[Race], lang: str) -> str:
         free_title = "無料Race Codes"
         free_copy = "無料サンプル大会として公開しているRace Codeです。"
         paid_title = "有料Race Codes"
-        paid_copy = "その他の対応大会は、有料Race Codeとして提供予定です。Race Code購入後、Garmin Connectの設定画面に入力すると、その大会・コースの関門情報を利用できます。購入後のRace Code案内は当面メールで手動対応します。"
-        paid_note = "未確定の決済リンク: TODO_STRIPE_PAYMENT_LINK_MARATHON / TODO_STRIPE_PAYMENT_LINK_ULTRA_TRAIL"
-        request_title = "Coming Soon / Requested"
-        request_copy = "対応してほしい大会がある場合は、大会リクエストページから公式サイトや大会要項のURLを送ってください。立ち上げ初期のため、大会リクエストは無料で受け付けています。"
+        paid_copy = "Race Codeを有償で販売しています。Race Code購入後、Garmin Connectの設定画面に入力すると、その大会・コースの関門情報を利用できます。購入後のRace Code案内は当面メールで手動対応します。"
+        paid_note = "購入ページは共通です。Race Code購入後、対象大会のコードを案内します。"
+        request_title = "リクエスト受付中の大会"
+        request_copy = "対応してほしい大会がある場合は、大会リクエストページから公式サイトや大会要項のURLを送ってください。大会リクエストは無料で受け付けています。"
         notice_items = [
             "関門ガイドはGarmin公式アプリではありません。",
             "大会公式アプリではありません。",
@@ -1902,10 +2003,10 @@ def render_races_index(races: list[Race], lang: str) -> str:
         free_title = "Free Race Codes"
         free_copy = "These free sample Race Codes are currently published on the site."
         paid_title = "Paid Race Codes"
-        paid_copy = "Other supported races are planned as paid Race Codes. After purchase, you will receive the Race Code for your selected race. Enter the Race Code in Garmin Connect app settings."
-        paid_note = "Current placeholders: TODO_STRIPE_PAYMENT_LINK_MARATHON / TODO_STRIPE_PAYMENT_LINK_ULTRA_TRAIL"
-        request_title = "Coming Soon / Requested"
-        request_copy = "If you want a race that is not listed yet, send the official website or race guide URL from the request page. Race requests are currently free during the launch phase."
+        paid_copy = "Race Codes are sold for supported races. After purchase, you will receive the Race Code for your selected race. Enter the Race Code in Garmin Connect app settings."
+        paid_note = "A single purchase page is used for all Race Codes. After purchase, you will receive the code for your selected race."
+        request_title = "Requested Races"
+        request_copy = "If you want a race that is not listed yet, send the official website or race guide URL from the request page. Race requests are currently free."
         notice_items = [
             "Cutoff Guide is not an official Garmin app.",
             "It is not an official race app.",
@@ -1949,9 +2050,7 @@ def render_races_index(races: list[Race], lang: str) -> str:
         <h2>{escape(free_title)}</h2>
         <p class="section-copy">{escape(free_copy)}</p>
       </div>
-      <div class="race-list-grid">
-        {''.join(render_sample_race_card(race, lang) for race in free_races)}
-      </div>
+      {render_free_sample_table(free_races, lang)}
     </section>
 
     <section class="page-section">
@@ -1967,11 +2066,18 @@ def render_races_index(races: list[Race], lang: str) -> str:
     </section>
 
     <section class="page-section">
-      <div class="race-list-grid">
-        {''.join(render_paid_race_card(race, lang) for race in paid_races)}
-      </div>
+      {''.join(
+          f'''
+      <section class="race-group">
+        <div class="section-header">
+          <span class="badge badge-gate">{escape(country)}</span>
+          <h2>{escape(country)}</h2>
+        </div>
+        {render_paid_race_table(country_races, lang)}
+      </section>
+''' for country, country_races in group_races_by_country(paid_races, lang)
+      )}
       {render_todo_note(STRIPE_PAYMENT_LINK_MARATHON, lang)}
-      {render_todo_note(STRIPE_PAYMENT_LINK_ULTRA_TRAIL, lang)}
     </section>
 
     <section class="page-section">
@@ -2150,7 +2256,7 @@ def render_race_detail(race: Race, lang: str) -> str:
         ]
         purchase_copy = "有料Race Codeはアプリ本体ではなく、この大会データを利用するためのコードです。購入後は当面メールで手動案内します。"
         request_title = "別の大会もリクエストできます"
-        request_copy = "未対応大会のリクエストは、立ち上げ初期のため無料で受け付けています。"
+        request_copy = "未対応大会のリクエストは無料で受け付けています。"
         request_copy_2 = "公式サイトや大会要項から関門・エイド情報を確認できる大会から順番に対応します。"
         request_button = "大会リクエストを見る"
         request_note = "チップは任意であり、作成保証や個別対応の対価ではありません。"
@@ -2192,7 +2298,7 @@ def render_race_detail(race: Race, lang: str) -> str:
         ]
         purchase_copy = "A paid Race Code is sold outside the app. It gives access to race-specific data for this race and is delivered manually after purchase for now."
         request_title = "Request another race"
-        request_copy = "Race requests are currently free during the launch phase."
+        request_copy = "Race requests are currently free."
         request_copy_2 = "Races with clearer official information and stronger demand are prioritized first."
         request_button = "Request a Race"
         request_note = "Tips are optional and do not guarantee race requests or individual support."
