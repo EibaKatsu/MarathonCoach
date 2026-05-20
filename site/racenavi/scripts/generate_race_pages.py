@@ -67,6 +67,7 @@ GOOGLE_FORM_URL_EN = "https://forms.gle/m2k85w17z62gnCP37"
 FREE_SAMPLE_RACE_CODES = {
     "20260503_bmo_vancouver_marathon": "BMO26-F42-2QTP",
     "20260524_kurobe_meisui_marathon": "KURO26-F42-M1AF",
+    "20260531_nara_ultra_marathon": "NARA26-100K-R7P4",
 }
 
 
@@ -1008,7 +1009,7 @@ def render_home_page(lang: str) -> str:
           <span class="app-label label-gate">関門ガイド</span>
           <h2>次の関門とエイドまでの余裕を確認する。</h2>
           <p class="app-summary">次の関門まであと何kmか。制限時刻まであと何分あるか。1つのアプリにRace Codeを入力して、大会ごとの関門・エイド情報をGarmin上で確認します。</p>
-          <p class="page-copy">BMO Vancouver Marathon と 黒部名水マラソン は無料サンプルとしてRace Codeを公開しています。その他の大会は有料Race Codeとして提供予定で、未対応大会のリクエストは立ち上げ初期は無料で受け付けます。</p>
+          <p class="page-copy">無料サンプルとしてRace Codeを公開している大会があります。その他の大会は有料Race Codeとして提供予定で、未対応大会のリクエストは立ち上げ初期は無料で受け付けます。</p>
           <div class="app-image">
             <img src="{GATE_HERO_JA}" alt="関門ガイドのHeroイメージ。次の関門までの残り時間と次のエイドまでの距離をGarminで確認するアプリ。" />
           </div>
@@ -1083,7 +1084,7 @@ def render_home_page(lang: str) -> str:
           <span class="app-label label-gate">Cutoff Guide</span>
           <h2>Check the next cutoff and aid station before they become a problem.</h2>
           <p class="app-summary">How far is the next cutoff? How much time is left? Cutoff Guide uses one app and a Race Code to load race-specific cutoff and aid data.</p>
-          <p class="page-copy">BMO Vancouver Marathon and Kurobe Meisui Marathon are published as free sample Race Codes. Other races are planned as paid Race Codes, and race requests are currently free during the launch phase.</p>
+          <p class="page-copy">Some races are published as free sample Race Codes. Other races are planned as paid Race Codes, and race requests are currently free during the launch phase.</p>
           <div class="app-image">
             <img src="{GATE_HERO_EN}" alt="Cutoff Guide hero image showing the next cutoff, time left, and next aid station." />
           </div>
@@ -2272,7 +2273,7 @@ def render_race_detail(race: Race, lang: str) -> str:
             "時計に同期",
             "レース中に関門・エイド情報を確認",
         ]
-        purchase_copy = "有料Race Codeはアプリ本体ではなく、この大会データを利用するためのコードです。購入後は当面メールで手動案内します。"
+        purchase_copy = "このRace Codeは無料サンプルとして公開しています。" if free_sample else "有料Race Codeはアプリ本体ではなく、この大会データを利用するためのコードです。購入後は当面メールで手動案内します。"
         request_title = "別の大会もリクエストできます"
         request_copy = "未対応大会のリクエストは無料で受け付けています。"
         request_copy_2 = "公式サイトや大会要項から関門・エイド情報を確認できる大会から順番に対応します。"
@@ -2285,7 +2286,7 @@ def render_race_detail(race: Race, lang: str) -> str:
             "コース変更、ウェーブスタート、天候変更などにより、実際の条件と異なる場合があります。",
             "完走、関門通過、記録達成を保証するものではありません。",
             "Race Codeは大会とコースを選ぶためのコードです。",
-            "有料Race Codeはアプリ本体ではなく、大会別データを利用するためのコードです。",
+            "Race Codeはアプリ本体ではなく、大会別データを選ぶためのコードです。" if free_sample else "有料Race Codeはアプリ本体ではなく、大会別データを利用するためのコードです。",
         ]
         meta_rows = [
             ("開催日", race.date),
@@ -2314,7 +2315,7 @@ def render_race_detail(race: Race, lang: str) -> str:
             "Sync your watch",
             "Use the app during the race",
         ]
-        purchase_copy = "A paid Race Code is sold outside the app. It gives access to race-specific data for this race and is delivered manually after purchase for now."
+        purchase_copy = "This Race Code is published as a free sample." if free_sample else "A paid Race Code is sold outside the app. It gives access to race-specific data for this race and is delivered manually after purchase for now."
         request_title = "Request another race"
         request_copy = "Race requests are currently free."
         request_copy_2 = "Races with clearer official information and stronger demand are prioritized first."
@@ -2327,7 +2328,7 @@ def render_race_detail(race: Race, lang: str) -> str:
             "Race information may change because of course changes, wave starts, weather, or organizer updates.",
             "Finishing, beating a cutoff, or hitting a goal time is not guaranteed.",
             "A Race Code selects a race and course.",
-            "A paid Race Code gives access to race-specific data, not the app itself.",
+            "A Race Code selects race-specific data and does not include the app itself." if free_sample else "A paid Race Code gives access to race-specific data, not the app itself.",
         ]
         meta_rows = [
             ("Date", race.date),

@@ -1,0 +1,83 @@
+race_id: 20260531_nara_ultra_marathon
+
+# Sources checked on 2026-05-21:
+# - https://www.r-wellness.com/nara/outline/
+# - https://www.r-wellness.com/nara/course/
+# - https://www.r-wellness.com/nara/wp-content/themes/nara/images/course/2026aid-100km-0508.pdf
+# - https://www.r-wellness.com/nara/wp-content/themes/nara/images/course/nara_course2026_map.pdf
+#
+# Notes:
+# - Official outline lists the event as 100km and time limit as 14h30.
+# - Official course page lists WAVE A-K, but gates 1-7 share the same absolute cutoff times.
+# - This definition intentionally uses a single course as requested.
+# - GOAL uses the latest FINISH time shown on the official WAVE A-K course table.
+# - Aid distances use numbered aid stations 1-26 from the official 2026 aid PDF.
+# - Start and Finish rows in the aid PDF are not included in aids.
+
+display_name:
+  jpn: "第1回奈良ウルトラマラソン"
+  eng: "Nara Ultra Marathon"
+
+meta:
+  country: "JP"
+  region: "Asia"
+  category: "ultra"
+  sample_free: true
+  race_abbr: "NARA"
+
+race:
+  date: "2026/05/31"
+  timezone: "Asia/Tokyo"
+
+courses:
+  - course_id: "100k"
+    race_code: "NARA26-100K-R7P4"
+    course_name:
+      jpn: "100km"
+      eng: "100km"
+    distance_km: 100.16
+    gates:
+      - point: 12.8
+        cutoff: "2026/05/31 06:50"
+      - point: 33.1
+        cutoff: "2026/05/31 09:40"
+      - point: 47.2
+        cutoff: "2026/05/31 11:50"
+      - point: 61.0
+        cutoff: "2026/05/31 13:55"
+      - point: 78.2
+        cutoff: "2026/05/31 16:20"
+      - point: 84.4
+        cutoff: "2026/05/31 17:15"
+      - point: 94.5
+        cutoff: "2026/05/31 18:40"
+      - point: GOAL
+        cutoff: "2026/05/31 19:30"
+    aids:
+      - km: 6.2
+      - km: 8.3
+      - km: 12.8
+      - km: 17.3
+      - km: 21.5
+      - km: 25.0
+      - km: 29.6
+      - km: 33.1
+      - km: 36.8
+      - km: 41.4
+      - km: 47.2
+      - km: 50.7
+      - km: 54.1
+      - km: 56.3
+      - km: 58.8
+      - km: 61.0
+      - km: 65.9
+      - km: 69.4
+      - km: 72.7
+      - km: 75.5
+      - km: 78.2
+      - km: 81.8
+      - km: 84.4
+      - km: 88.9
+      - km: 94.5
+      - km: 98.4
+      

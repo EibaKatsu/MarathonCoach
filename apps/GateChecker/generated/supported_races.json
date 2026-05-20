@@ -198,6 +198,28 @@
     ]
   },
   {
+    "race_id": "20260531_nara_ultra_marathon",
+    "display_name": {
+      "eng": "Nara Ultra Marathon",
+      "jpn": "第1回奈良ウルトラマラソン"
+    },
+    "country": "JP",
+    "region": "Asia",
+    "category": "ultra",
+    "sample_free": true,
+    "courses": [
+      {
+        "course_id": "100k",
+        "course_name": {
+          "eng": "100km",
+          "jpn": "100km"
+        },
+        "race_code": "NARA26-100K-R7P4",
+        "distance_meters": 100160
+      }
+    ]
+  },
+  {
     "race_id": "20260628_hakodate_marathon",
     "display_name": {
       "eng": "Hakodate Marathon 2026",
