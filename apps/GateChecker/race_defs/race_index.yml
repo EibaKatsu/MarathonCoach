@@ -122,6 +122,15 @@ races:
       app_id: ebe0b2bf-a312-4e3f-b0c5-b6483a1f940f
       version: 0.1.0
 
+  - race_id: 20260531_nara_ultra_marathon
+    file: races/20260531_nara_ultra_marathon.yml
+    status: active
+    sample_free: true
+    sort:
+      region: Asia
+      country: JP
+      category: ultra
+
   - race_id: 20260628_hakodate_marathon
     file: races/20260628_hakodate_marathon.yml
     status: active
