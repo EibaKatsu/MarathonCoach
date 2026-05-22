@@ -283,6 +283,23 @@ h3 {
   margin: 14px 0 0;
 }
 
+.action-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+}
+
+.action-note a {
+  color: var(--muted-strong);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.action-note a:hover,
+.action-note a:focus-visible {
+  color: var(--text);
+}
+
 .page-section {
   padding: 0 0 56px;
 }
