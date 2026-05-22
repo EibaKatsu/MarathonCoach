@@ -261,7 +261,7 @@ def render_paid_code_pricing_cards(lang: str) -> str:
     if lang == "ja":
         cards = [
             ("すべてのRace Code", PAID_RACE_CODE_PRICE, "フルマラソン / ウルトラ / トレイル共通"),
-            ("案内方法", "Manual", "購入後にRace Codeをメール送付"),
+            ("案内方法", "手動", "購入後にRace Codeをメールで案内"),
         ]
     else:
         cards = [
@@ -284,11 +284,11 @@ def render_paid_code_pricing_cards(lang: str) -> str:
 def render_request_flow_steps(lang: str) -> str:
     if lang == "ja":
         steps = [
-            "Googleフォームからリクエスト送信",
-            "公式サイトや要項PDFから関門・エイド情報を確認",
-            "情報の見やすさと需要を見て優先順位を決定",
-            "対応できる大会からRace Codeを追加または更新",
-            "公開済みコードや今後の対応状況をサイトで案内",
+            "フォームで大会名とURLを送る",
+            "こちらで公式サイトや要項から関門とエイドを拾う",
+            "情報が足りるか、使う人がいそうかを見て順番を決める",
+            "対応できる大会からRace Codeを追加する",
+            "公開できたらこのサイトで案内する",
         ]
     else:
         steps = [
@@ -509,7 +509,7 @@ def render_sample_race_card(race: Race, lang: str) -> str:
 def render_paid_race_card(race: Race, lang: str) -> str:
     title = race.name_ja if lang == "ja" else race.name_en
     detail_href = f"/gatechecker/races/{race.slug}/" if lang == "ja" else f"/en/gatechecker/races/{race.slug}/"
-    get_label = "Get Race Code"
+    get_label = "Race Codeを受け取る" if lang == "ja" else "Get Race Code"
     detail_label = "詳細を見る" if lang == "ja" else "View details"
     type_label = "種別" if lang == "ja" else "Type"
     country_label = "国" if lang == "ja" else "Country"
@@ -585,15 +585,16 @@ def render_paid_race_table(races: list[Race], lang: str) -> str:
     if lang == "ja":
         headers = ("大会名", "開催日", "種別", "コース", "価格", "Race Code", "リンク")
         detail_label = "詳細"
+        purchase_label = "Race Codeを受け取る"
     else:
         headers = ("Race", "Date", "Type", "Course", "Price", "Race Code", "Links")
         detail_label = "Details"
+        purchase_label = "Get Race Code"
 
     rows = []
     for race in races:
         title = race.name_ja if lang == "ja" else race.name_en
         detail_href = f"/gatechecker/races/{race.slug}/" if lang == "ja" else f"/en/gatechecker/races/{race.slug}/"
-        purchase_label = "Get Race Code"
         action_links = (
             optional_link_button(race_payment_link(race), purchase_label, lang, "primary")
             + button_link(detail_href, detail_label, "secondary")
@@ -847,8 +848,6 @@ def render_header(lang: str) -> str:
         nav_items = [
             ("/racenavi/", "RaceNavi"),
             ("/gatechecker/", "関門ガイド"),
-            ("/gatechecker/races/", "対応大会"),
-            ("/gatechecker/request/", "大会リクエスト"),
             ("/en/", "English"),
         ]
     else:
@@ -882,8 +881,6 @@ def render_footer(lang: str) -> str:
         links = [
             ("/racenavi/", "RaceNavi"),
             ("/gatechecker/", "関門ガイド"),
-            ("/gatechecker/races/", "対応大会"),
-            ("/gatechecker/request/", "大会リクエスト"),
             ("/en/", "English"),
             (X_URL, "X DM"),
         ]
@@ -965,79 +962,68 @@ def build_page(
 def render_home_page(lang: str) -> str:
     if lang == "ja":
         title = "RaceNavi | Garmin向けレース支援アプリ"
-        description = "RaceNaviは、フルマラソン中の心拍・ペース・目標差を確認するRaceNaviと、関門・エイドを確認する関門ガイドを提供するGarmin向けアプリサイトです。"
+        description = "RaceNaviは、目標タイムを狙うときのRaceNaviと、関門が不安なときの関門ガイドを置いているGarmin向けアプリサイトです。レース中の判断や計算を少し減らしたくて作っています。"
         path = "/"
         other = "/en/"
         hero_title = "レース中の迷いを、Garminの1画面で減らす。"
-        hero_lead = "RaceNaviは、心拍・ペース・目標差を確認するマラソン用アプリ。関門ガイドは、1つのアプリにRace Codeを入力して関門とエイドを確認するアプリです。"
-        hero_copy = "どちらも、走っている最中にスマホを見たり、頭の中で計算したりする負担を減らすために作っています。"
+        hero_lead = "レース中に、心拍を見るか、ペースを見るか、関門まであと何分か。走りながら考える余裕がなくなるので、必要な情報をGarminに出したくて作っています。"
+        hero_copy = "目標タイムを狙うなら RaceNavi。関門が不安なら 関門ガイド。どちらも、スマホを見たり頭の中で計算したりする回数を減らしたいときのためのアプリです。"
         actions = "".join([
             button_link(RACENAVI_CONNECT_IQ_JA, "RaceNaviをConnect IQで見る", "primary", external=True),
-            button_link("/gatechecker/races/", "関門ガイドの対応大会を見る", "secondary"),
-            button_link("/racenavi/custom/", "カスタム設定を見る", "secondary"),
+            button_link(GATE_CONNECT_IQ_URL, "関門ガイドをConnect IQで見る", "secondary", external=True),
         ])
+        action_note = '<p class="action-note"><a href="/racenavi/custom/">カスタム設定を触りたい場合はこちら</a></p>'
         hero_visual = f"""
-          <article class="icon-card">
+          <a class="icon-card icon-card-link" href="/racenavi/">
             <img class="icon-card-image" src="{RACENAVI_ICON}" alt="RaceNavi app icon" />
             <div>
               <strong>RaceNavi</strong>
-              <p>心拍・ペース・目標差を確認する。</p>
+              <p>目標タイムを狙うときの画面です。</p>
             </div>
-          </article>
-          <article class="icon-card">
+          </a>
+          <a class="icon-card icon-card-link" href="/gatechecker/">
             <img class="icon-card-image" src="{GATE_ICON}" alt="関門ガイド app icon" />
             <div>
               <strong>関門ガイド</strong>
-              <p>関門情報とエイド情報を確認する。</p>
+              <p>次の関門まで何km・何分かを見ます。</p>
             </div>
-          </article>
+          </a>
 """
         app_cards = f"""
         <article class="app-card">
           <span class="app-label label-racenavi">RaceNavi</span>
-          <h2>心拍・ペース・目標差を、レース中に確認する。</h2>
-          <p class="app-summary">序盤で突っ込みすぎていないか。このままのペースで目標に届くか。心拍とペースを見ながら、フルマラソン中の判断を支えるGarminデータフィールドです。</p>
+          <h2>目標タイムを狙うなら、上げすぎも落としすぎも見たい。</h2>
+          <p class="app-summary">心拍、ペース、目標との差、予測タイムを1画面にまとめています。序盤で突っ込みすぎていないか、このままで目標に届くかを、その場で見やすくしたくて作った画面です。</p>
           <div class="app-image">
             <img src="{RACENAVI_HERO_JA}" alt="RaceNaviのHeroイメージ。心拍、ペース、目標との差、到達予測を表示するGarminデータフィールド。" />
           </div>
           <div class="actions">
             {button_link(RACENAVI_CONNECT_IQ_JA, "Connect IQで見る", "primary", external=True)}
             {button_link("/racenavi/", "RaceNaviの使い方を見る", "secondary")}
+            {button_link("/racenavi/custom/", "カスタム設定を見る", "secondary")}
           </div>
         </article>
         <article class="app-card">
           <span class="app-label label-gate">関門ガイド</span>
-          <h2>次の関門とエイドまでの余裕を確認する。</h2>
-          <p class="app-summary">次の関門まであと何kmか。制限時刻まであと何分あるか。1つのアプリにRace Codeを入力して、大会ごとの関門・エイド情報をGarmin上で確認します。</p>
-          <p class="page-copy">無料サンプルとしてRace Codeを公開している大会があります。その他の大会は有料Race Codeとして提供予定で、未対応大会のリクエストは立ち上げ初期は無料で受け付けます。</p>
+          <h2>関門が気になるなら、次の関門まであと何km・あと何分かを見る。</h2>
+          <p class="app-summary">関門表を事前に見ていても、走り出すと細かい情報はすぐ飛びます。関門ガイドは、次の関門までの残り距離と残り時間をGarminに出します。エイド情報も必要なときに見られます。</p>
+          <p class="page-copy">1つのアプリにRace Codeを入れて大会ごとのデータを切り替える形です。無料サンプルの大会もあり、未対応大会のリクエストも受けています。</p>
           <div class="app-image">
-            <img src="{GATE_HERO_JA}" alt="関門ガイドのHeroイメージ。次の関門までの残り時間と次のエイドまでの距離をGarminで確認するアプリ。" />
+            <img src="{GATE_HERO_JA}" alt="関門ガイドのHeroイメージ。次の関門までの残り時間を中心に、必要に応じてエイド情報も見られるGarminアプリ。" />
           </div>
           <div class="actions">
-            {button_link("/gatechecker/", "関門ガイドを見る", "primary")}
+            {button_link(GATE_CONNECT_IQ_URL, "Connect IQで見る", "primary", external=True)}
+            {button_link("/gatechecker/", "関門ガイドの使い方を見る", "secondary")}
             {button_link("/gatechecker/races/", "対応大会を見る", "secondary")}
-            {button_link("/gatechecker/request/", "大会リクエストを見る", "secondary")}
           </div>
         </article>
 """
-        section_title = "2つのアプリを、目的で分ける。"
-        section_copy = "トップページでは、RaceNaviと関門ガイドを別アプリとして案内します。関門ガイドは1つのアプリにRace Codeを入力して使う方式です。"
+        section_title = "同じレースでも、困ることは少し違います。"
+        section_copy = "ペースが上がりすぎていないかを見たい日もあれば、とにかく次の関門まで持つか知りたい日もあります。そこで、RaceNaviと関門ガイドを分けています。"
         support_title = "開発を応援する"
         support_copy = "RaceNaviと関門ガイドは個人開発のアプリです。役に立った場合は、今後の開発や大会情報更新のために、Buy Me a Coffeeから応援してもらえるとうれしいです。"
         support_note = "チップは任意であり、作成保証や個別対応の対価ではありません。"
-        quick_cards = """
-          <article class="quick-card">
-            <span class="meta-pill">RaceNavi</span>
-            <strong>心拍・ペース・目標差</strong>
-            <p>フルマラソン中の判断を減らす。</p>
-          </article>
-          <article class="quick-card">
-            <span class="meta-pill">関門ガイド</span>
-            <strong>関門・エイド</strong>
-            <p>大会ごとの余裕時間を確認する。</p>
-          </article>
-"""
-        notice = "RaceNaviと関門ガイドはGarmin向けアプリです。Garmin公式、大会公式のアプリではありません。関門・エイド情報は必ず大会公式情報も確認してください。"
+        notice = "RaceNaviと関門ガイドはGarmin向けの個人開発アプリです。Garmin公式・大会公式のアプリではありません。関門やエイドの情報は更新に追いつけないこともあるので、使う前に大会公式情報も見てください。"
     else:
         title = "RaceNavi | Garmin apps for pacing and cutoff guidance"
         description = "RaceNavi helps marathon runners check heart rate, pace, target gap, and estimated finish time, while Cutoff Guide helps them check cutoffs and aid stations on Garmin watches."
@@ -1124,6 +1110,7 @@ def render_home_page(lang: str) -> str:
             <p class="lead">{escape(hero_lead)}</p>
             <p class="section-copy">{escape(hero_copy)}</p>
             <div class="actions">{actions}</div>
+            {action_note if lang == "ja" else ""}
           </div>
         <div class="hero-quick-grid hero-icon-grid">
           {hero_visual}
@@ -1156,7 +1143,7 @@ def render_home_page(lang: str) -> str:
 
     <section class="page-section">
       <div class="notice">
-        <strong>{"注意事項" if lang == "ja" else "Disclaimer"}:</strong>
+        <strong>{"使う前に" if lang == "ja" else "Disclaimer"}:</strong>
         {escape(notice)}
       </div>
     </section>
@@ -1176,23 +1163,23 @@ def render_home_page(lang: str) -> str:
 def render_racenavi_page(lang: str) -> str:
     if lang == "ja":
         title = "RaceNavi | 心拍・ペース・目標差を1画面で確認するGarminアプリ"
-        description = "RaceNaviは、フルマラソン中に心拍、ペース、目標との差、到達予測をGarminの1画面で確認するためのデータフィールドです。"
+        description = "RaceNaviは、目標タイムを狙う日に心拍、ペース、目標との差、予測タイムをGarminの1画面で見やすくするデータフィールドです。"
         path = "/racenavi/"
         other = "/en/racenavi/"
         hero_title = "心拍とペースで、レース中の判断を減らす。"
-        hero_lead = "RaceNaviは、フルマラソン本番で心拍・ペース・目標との差・到達予測を1画面で確認するGarmin向けデータフィールドです。"
-        hero_copy = "数字を増やすためではなく、走りながら判断しやすくするために作っています。"
+        hero_lead = "フルマラソンで、心拍、ペース、目標との差、予測タイムを1画面にまとめています。序盤で上げすぎていないか、このままで目標に届くかを、その場で見やすくしたくて作っています。"
+        hero_copy = "数字を増やすためではなく、走りながら頭の中で組み立てることを減らしたい日に使う想定です。"
         actions = "".join([
             button_link(RACENAVI_CONNECT_IQ_JA, "Connect IQでRaceNaviを見る", "primary", external=True),
             button_link("#screen-preview", "画面イメージを見る", "secondary"),
             button_link("/racenavi/custom/", "カスタム設定を見る", "secondary"),
         ])
         decision_points = [
-            "序盤で心拍を上げすぎていないか",
-            "今のペースで目標タイムに届きそうか",
-            "目標に対して貯金か、借金か",
-            "このまま行くとゴール予測はどれくらいか",
-            "後半まで押せる状態か",
+            "序盤で突っ込みすぎていないか",
+            "今のペースで目標タイムにまだ届きそうか",
+            "目標に対して今どれくらい前後しているか",
+            "このまま行くとゴール予測がどこに落ちそうか",
+            "後半まで押せる範囲にまだ収まっているか",
         ]
         info_points = [
             "現在の心拍",
@@ -1204,21 +1191,21 @@ def render_racenavi_page(lang: str) -> str:
             "経過時間",
         ]
         screen_labels = [
-            ("CAP HR", "その時点での心拍上限目安です。"),
-            ("HR", "現在の心拍を確認します。"),
+            ("CAP HR", "その時点で上げすぎたくない心拍の目安です。"),
+            ("HR", "今の心拍です。"),
             ("Pace", "現在の走行ペースです。"),
-            ("Prediction", "このまま進んだ場合の到達予測です。"),
-            ("Difference from goal", "目標に対して貯金か借金かを見ます。"),
+            ("Prediction", "このまま進んだ場合のゴール予測です。"),
+            ("Difference from goal", "目標に対して前か後ろかを見ます。"),
             ("Distance", "経過距離です。"),
             ("Time", "経過時間です。"),
         ]
-        cap_copy = "CAP心拍は、その時点で許容する心拍上限の目安です。医療的な心拍管理ではなく、レース中に突っ込みすぎを避けるための参考値として扱います。"
+        cap_copy = "CAP心拍は、その時点で上げすぎたくない心拍の目安です。医療的な心拍管理ではなく、レース中に飛ばしすぎないための参考として使う想定です。"
         setup_items = [
-            "Race Distance: Full Marathon / Half Marathon / 10Km から選択します。",
-            "Target Time Hour / Minutes: 目標タイムを時分で設定します。",
-            "LTHR: 心拍閾値の心拍数です。設定すると目安の精度を合わせやすくなります。",
-            "LTHRを設定しない場合は、Garmin側の心拍ゾーン設定を使います。",
-            "Custom Code: カスタム設定ページで作成したコードを入力すると個別設定を反映できます。",
+            "Race Distance: Full Marathon / Half Marathon / 10Km から選びます。",
+            "Target Time Hour / Minutes: 目標タイムを時分で入れます。",
+            "LTHR: 分かっていれば、心拍閾値の心拍数を入れます。",
+            "LTHRを入れない場合は、Garmin側の心拍ゾーン設定を使います。",
+            "Custom Code: カスタム設定ページで作成したコードを入れると個別設定を反映できます。",
         ]
         setup_copy = (
             f'LTHR の考え方は <a href="{GARMIN_LACTATE_THRESHOLD_URL}" target="_blank" rel="noreferrer">'
@@ -1232,8 +1219,8 @@ def render_racenavi_page(lang: str) -> str:
             "体調、暑さ、コース条件によって適切な判断は変わります。",
             "最終判断はランナー本人が行ってください。",
         ]
-        cta_title = "まずは通常版で試す"
-        cta_copy = "まずは通常設定で使い、必要であれば目標タイムや心拍情報に合わせたカスタム設定を検討してください。"
+        cta_title = "まずは通常版で走ってみる"
+        cta_copy = "まずは通常設定で使ってみて、もっと合わせたくなったらカスタム設定を見る流れを想定しています。"
         cta_actions = "".join([
             button_link(RACENAVI_CONNECT_IQ_JA, "Connect IQでRaceNaviを見る", "primary", external=True),
             button_link("/racenavi/custom/", "カスタム設定を見る", "secondary"),
@@ -1403,18 +1390,18 @@ def render_racenavi_page(lang: str) -> str:
 def render_custom_page(lang: str) -> str:
     if lang == "ja":
         title = "RaceNaviカスタム設定 | 目標レースに合わせたモニター募集予定ページ"
-        description = "RaceNaviのカスタム設定は、目標タイム、心拍情報、過去のレースデータをもとに設定を整理するモニター募集予定ページです。"
+        description = "RaceNaviのカスタム設定は、目標タイムや心拍情報、過去レースの傾向を見ながら、自分のレース用に少し詰めたい人向けの案内ページです。"
         path = "/racenavi/custom/"
         other = "/en/racenavi/custom/"
-        hero_title = "RaceNaviを、自分の目標レース用に調整する。"
-        hero_lead = "同じサブ4狙いでも、心拍の上がり方や後半の落ち方は人によって違います。カスタム設定では、目標タイム、心拍情報、過去のレースデータをもとに、RaceNaviで使う設定を整理します。"
+        hero_title = "RaceNaviを、自分のレース用に少し細かく合わせる。"
+        hero_lead = "同じサブ4狙いでも、心拍の上がり方も後半の落ち方も人によって違います。ここでは、RaceNaviの設定を自分の目標レースに合わせて詰めたい人向けに案内しています。"
         actions = "".join([
             button_link(X_URL, "モニター希望をXで送る", "primary", external=True),
             button_link("#needed-info", "必要な情報を見る", "secondary"),
         ])
         audience = [
-            "目標タイムに合わせて、心拍の上限目安を整理したい",
-            "後半に失速しやすく、序盤の抑え方を決めておきたい",
+            "目標タイムに合わせて、心拍の上限目安をもう少し詰めたい",
+            "後半に失速しやすく、序盤をどう抑えるか決めておきたい",
             "GarminやFITデータはあるが、どう見ればいいか分からない",
             "RaceNaviを自分のレース用に調整して使いたい",
         ]
@@ -1427,7 +1414,7 @@ def render_custom_page(lang: str) -> str:
             "出場予定レース",
         ]
         status_title = "現在の募集状況"
-        status_copy = "現在は正式販売前のため、先着モニター募集の形を検討しています。希望があれば、XのDMで「RaceNaviカスタム設定希望」と送ってください。提供内容・価格・募集人数は、準備ができ次第案内します。"
+        status_copy = "まだ固定メニューにはしておらず、まずはモニターで少しずつ試している段階です。興味があれば、XのDMで「RaceNaviカスタム設定希望」と送ってください。できる範囲と順番を見ながら案内します。"
         note_items = [
             "医療的助言ではありません。",
             "体調、暑さ、コース条件によって適切な心拍は変わります。",
@@ -1525,44 +1512,44 @@ def render_custom_page(lang: str) -> str:
 def render_gatechecker_page(lang: str) -> str:
     sample_races = [race for race in load_races() if is_public_race(race.slug, race.name_ja, race.name_en) and is_free_sample_race(race)]
     if lang == "ja":
-        title = "関門ガイド | Garminで関門・エイド・残り時間を確認"
-        description = "関門ガイドは、マラソンやウルトラマラソンの関門時刻とエイド地点をGarminで確認するアプリです。1つのアプリにRace Codeを入力して大会とコースを選びます。"
+        title = "関門ガイド | Garminで次の関門までの残り距離と時間を見る"
+        description = "関門ガイドは、次の関門まであと何km・あと何分かをGarminで見やすくするアプリです。Race Codeで大会とコースを切り替えます。"
         path = "/gatechecker/"
         other = "/en/gatechecker/"
-        hero_title = "Garminで関門・エイド・残り時間を確認する"
-        hero_lead = "関門ガイドは、マラソンやウルトラマラソンの関門時刻とエイド地点をGarminで確認するためのアプリです。Garmin Connectの設定画面にRace Codeを入力すると、その大会・コースの関門情報を表示します。"
+        hero_title = "次の関門まで、あと何km・あと何分かを見る。"
+        hero_lead = "関門表を事前に見ていても、レース中は細かい数字をすぐ忘れます。関門ガイドは、次の関門までの残り距離と残り時間をGarminに出すためのアプリです。"
         actions = "".join([
             optional_link_button(GATE_CONNECT_IQ_URL, "Connect IQでダウンロード", lang, "primary"),
             button_link("/gatechecker/races/", "対応大会を見る", "secondary"),
             button_link("/gatechecker/request/", "大会をリクエストする", "secondary"),
             optional_link_button(BUY_ME_A_COFFEE_URL, "Buy Me a Coffeeで応援する", lang, "secondary"),
         ])
-        hero_follow = "レース中にスマホを取り出したり、頭の中で関門時刻を計算したりする余裕がない場面を想定しています。"
+        hero_follow = "エイド情報も必要なら見られます。Race Codeを入れると、その大会・コースのデータに切り替わります。"
         info_points = [
-            "次の関門地点",
-            "関門時刻",
-            "関門までの残り距離",
-            "関門までの残り時間",
-            "エイドまでの残り距離",
+            "次の関門の場所",
+            "次の関門までの残り距離",
+            "次の関門までの残り時間",
+            "次の関門の制限時刻",
+            "必要なら次のエイドまでの距離",
         ]
-        audience_title = "Race Codeで大会を選ぶ"
+        audience_title = "Race Codeで大会を切り替える"
         audience = [
             "Connect IQ Storeから関門ガイドをインストール",
             "このサイトでRace Codeを確認",
             "Garmin Connectのアプリ設定でRace Codeを入力",
             "時計に同期",
-            "レース中に関門・エイド情報を確認",
+            "レース中に次の関門までの距離と時間を見る",
         ]
         screen_rows = [
-            ("1段目", "次の関門地点の距離と時間を確認します。"),
-            ("2段目", "次の関門地点までの残り距離と残り時間を確認します。"),
-            ("3段目", "次のエイドまでの残り距離を確認します。"),
+            ("1段目", "次の関門がどこか、制限時刻が何時かを出します。"),
+            ("2段目", "次の関門まであと何km・あと何分かを出します。"),
+            ("3段目", "必要なら次のエイドまでの距離も見られます。"),
         ]
-        audience_copy = "関門ガイドは、大会ごとにアプリを分けず、1つのアプリで複数の大会に対応します。このサイトでRace Codeを確認し、Garmin Connectのアプリ設定に入力してください。Race Codeは大会とコースを選ぶためのコードです。"
+        audience_copy = "大会ごとにアプリを入れ替える形ではなく、1つのアプリで複数の大会に対応します。このサイトでRace Codeを見つけて、Garmin Connectの設定に入れる使い方です。"
         sample_title = "無料サンプル大会"
-        sample_copy = "現在、以下の大会は無料サンプルとしてRace Codeを公開しています。全関門・全AID情報を利用できます。"
+        sample_copy = "まず試しやすいように、無料サンプルとして公開している大会です。"
         support_title = "開発を応援する"
-        support_copy = "関門ガイドは個人開発のアプリです。役に立った場合は、今後の大会対応や情報更新のために、コーヒー1杯分で応援してもらえるとうれしいです。"
+        support_copy = "関門ガイドは個人開発で作っています。役に立った場合は、今後の大会追加や情報更新のためにコーヒー1杯分で応援してもらえるとうれしいです。"
         support_note = "チップは任意であり、作成保証や個別対応の対価ではありません。"
         notice_items = [
             "Garmin公式アプリではありません。",
@@ -1721,12 +1708,12 @@ def render_gatechecker_page(lang: str) -> str:
 def render_gatechecker_request_page(lang: str) -> str:
     if lang == "ja":
         title = "未対応大会のリクエスト | 関門ガイド"
-        description = "関門ガイドに未対応の大会について、公式サイトや大会要項のURLを送るリクエストページです。大会リクエストは無料で受け付けています。"
+        description = "関門ガイドにまだない大会について、公式サイトや大会要項のURLを送るためのページです。大会リクエストは無料で受け付けています。"
         path = "/gatechecker/request/"
         other = "/en/gatechecker/request/"
         hero_title = "未対応大会のリクエスト"
-        hero_lead = "対応してほしい大会がある場合は、公式サイトや大会要項のURLを送ってください。"
-        hero_copy = "大会リクエストは無料で受け付けています。ただし、すべての大会に対応できるとは限りません。公式情報が確認しやすい大会、リクエストが多い大会、需要がありそうな大会から順番に対応します。"
+        hero_lead = "関門ガイドにまだない大会で使いたいものがあれば、公式サイトや大会要項のURLを送ってください。"
+        hero_copy = "リクエスト自体は無料です。ただし、どの大会でもすぐ作れるわけではありません。公式情報が揃っているか、他にも必要としている人がいそうかを見ながら順番に対応します。"
         actions = "".join([
             request_form_button("大会をリクエストする", lang, "primary"),
             button_link("/gatechecker/races/", "対応大会を見る", "secondary"),
@@ -1744,11 +1731,11 @@ def render_gatechecker_request_page(lang: str) -> str:
             "連絡先メールアドレス 任意",
         ]
         process_title = "対応の進め方"
-        process_copy_1 = "リクエストを受けたあと、まず公式サイトや大会要項から関門・エイド情報を確認します。"
-        process_copy_2 = "情報の見やすさと需要を見て優先順位を付け、対応できる大会からRace Codeを追加します。"
+        process_copy_1 = "リクエストを受けたら、まず公式サイトや大会要項から関門とエイドの情報を拾います。"
+        process_copy_2 = "そのあと、情報が足りるかと需要を見て順番を決め、対応できる大会からRace Codeを追加します。"
         support_title = "開発を応援する"
-        support_copy_1 = "大会情報の確認やRace Code作成には時間がかかります。関門ガイドの開発を応援していただける場合は、Buy Me a Coffeeからチップを送ってもらえるとうれしいです。"
-        support_copy_2 = "チップは任意です。チップは作成保証や優先対応の対価ではなく、今後の開発・情報更新への応援として受け取ります。"
+        support_copy_1 = "大会情報の確認やRace Code作成にはそれなりに時間がかかります。関門ガイドの開発を応援してもらえる場合は、Buy Me a Coffee からチップを送ってもらえるとうれしいです。"
+        support_copy_2 = "チップは任意です。優先対応や作成保証の料金ではなく、今後の開発や情報更新への応援として受け取ります。"
         notice_items = [
             "Garmin公式アプリではありません。",
             "大会公式アプリではありません。",
@@ -1974,13 +1961,13 @@ def render_races_index(races: list[Race], lang: str) -> str:
     paid_races = [race for race in races if not is_free_sample_race(race)]
     if lang == "ja":
         title = "対応大会・Race Code一覧 | 関門ガイド"
-        description = "関門ガイドの対応大会とRace Code一覧です。無料サンプルRace Codeと、有料Race Code予定の大会をまとめています。"
+        description = "関門ガイドで使える大会とRace Codeをまとめた一覧です。無料サンプルと、有料で案内している大会をここに並べています。"
         path = "/gatechecker/races/"
         other = "/en/gatechecker/races/"
         hero_title = "対応大会・Race Code一覧"
-        hero_lead = "関門ガイドは、Race Codeを入力して大会・コースを選ぶ方式です。無料サンプル大会はRace Codeをこのページで公開しています。その他の大会のRace Codeを有償で販売しています。"
+        hero_lead = "関門ガイドは、Race Codeを入れて大会とコースを切り替える形です。無料サンプルの大会もあれば、有料で案内している大会もあります。"
         how_title = "Race Codeの使い方"
-        how_copy = "関門ガイドは1つのアプリにRace Codeを入力して使います。アプリ内に決済処理はなく、有料Race Codeは外部決済後に案内します。"
+        how_copy = "1つのアプリにRace Codeを入れて使います。アプリ内で決済する形ではなく、有料のものは外部決済のあとにこちらから案内します。"
         how_points = [
             "Connect IQ Storeから関門ガイドをインストール",
             "このページでRace Codeを確認",
@@ -1988,12 +1975,12 @@ def render_races_index(races: list[Race], lang: str) -> str:
             "時計に同期して使用",
         ]
         free_title = "無料Race Codes"
-        free_copy = "無料サンプル大会として公開しているRace Codeです。"
+        free_copy = "まず試せるように、無料サンプルとして公開しているRace Codeです。"
         paid_title = "有料Race Codes"
-        paid_copy = "Race Codeを有償で販売しています。Race Code購入後、Garmin Connectの設定画面に入力すると、その大会・コースの関門情報を利用できます。購入後のRace Code案内は当面メールで手動対応します。"
-        paid_note = "購入ページは共通です。Race Code購入後、対象大会のコードを案内します。"
+        paid_copy = "有料のRace Codeは、購入後にGarmin Connectの設定へ入れて使います。今のところ、購入後の案内はメールで手動対応しています。"
+        paid_note = "購入ページは共通です。購入後に対象大会のコードを案内します。"
         request_title = "リクエスト受付中の大会"
-        request_copy = "対応してほしい大会がある場合は、大会リクエストページから公式サイトや大会要項のURLを送ってください。大会リクエストは無料で受け付けています。"
+        request_copy = "まだない大会で使いたいものがあれば、リクエストページから公式サイトや大会要項のURLを送ってください。リクエスト自体は無料です。"
         notice_items = [
             "関門ガイドはGarmin公式アプリではありません。",
             "大会公式アプリではありません。",
@@ -2042,7 +2029,7 @@ def render_races_index(races: list[Race], lang: str) -> str:
     <section class="hero">
       <div class="hero-card">
         <div>
-          <span class="eyebrow eyebrow-gate">Supported Races</span>
+          <span class="eyebrow eyebrow-gate">{"Race Code" if lang == "ja" else "Supported Races"}</span>
           <h1>{escape(hero_title)}</h1>
           <p class="lead">{escape(hero_lead)}</p>
         </div>
@@ -2255,31 +2242,31 @@ def render_race_detail(race: Race, lang: str) -> str:
     purchase_link = race_payment_link(race)
     if lang == "ja":
         title = f"{race.name_ja}のRace Codeと関門・エイド情報 | 関門ガイド"
-        description = f"{race.name_ja}のRace Code、関門地点、制限時刻、エイド地点を整理したページです。関門ガイドは1つのアプリにRace Codeを入力して利用します。"
+        description = f"{race.name_ja}のRace Codeと、次の関門までの判断に使うための関門・エイド情報をまとめたページです。"
         path = f"/gatechecker/races/{race.slug}/"
         other = f"/en/gatechecker/races/{race.slug}/"
         hero_title = f"{race.name_ja}のRace Codeと関門・エイド情報"
-        hero_lead = f"このページでは、{race.name_ja}の関門地点・制限時刻・エイド地点を整理しています。関門ガイドは1つのアプリにRace Codeを入力して使う方式です。"
+        hero_lead = f"このページは、{race.name_ja}の関門表をレース前に見返しやすくするためのまとめです。関門ガイドでは、この大会のRace Codeを入れると次の関門までの距離と時間を見られます。"
         primary_cta = optional_link_button(GATE_CONNECT_IQ_URL, "Connect IQでダウンロード", lang, "primary")
         secondary_cta = button_link("/gatechecker/races/", "対応大会一覧に戻る", "secondary")
-        cutoff_copy = "以下は参照時点で確認した関門地点と制限時刻です。実際の大会では変更される可能性があるため、必ず大会公式情報も確認してください。"
-        aid_copy = "次のエイドまでの距離確認に使うための情報です。給水・給食の内容までは保証しません。"
+        cutoff_copy = "ここでは、参照時点で確認できた関門地点と制限時刻を並べています。直前変更の可能性はあるので、最終的には大会公式情報も見てください。"
+        aid_copy = "エイドは補足です。次のエイドまでどれくらいあるかを見るための情報で、給水や給食の内容までは保証しません。"
         code_title = "この大会のRace Code"
-        code_copy = "Garmin Connectのアプリ設定にRace Codeを入力し、時計に同期して使用してください。"
+        code_copy = "Garmin Connectのアプリ設定にRace Codeを入れて時計に同期すると、この大会のデータを使えます。"
         code_steps = [
             "関門ガイドをConnect IQ Storeからインストール",
             "このページでRace Codeを確認",
             "Garmin Connectの設定画面にRace Codeを入力",
             "時計に同期",
-            "レース中に関門・エイド情報を確認",
+            "レース中に次の関門までの距離と時間を見る",
         ]
-        purchase_copy = "このRace Codeは無料サンプルとして公開しています。" if free_sample else "有料Race Codeはアプリ本体ではなく、この大会データを利用するためのコードです。購入後は当面メールで手動案内します。"
-        request_title = "別の大会もリクエストできます"
+        purchase_copy = "このRace Codeは無料サンプルとして公開しています。" if free_sample else "有料Race Codeはアプリ本体ではなく、この大会データを使うためのコードです。購入後は当面メールで手動案内します。"
+        request_title = "別の大会も必要ならリクエストできます"
         request_copy = "未対応大会のリクエストは無料で受け付けています。"
-        request_copy_2 = "公式サイトや大会要項から関門・エイド情報を確認できる大会から順番に対応します。"
+        request_copy_2 = "公式サイトや大会要項から情報を拾える大会から順番に対応します。"
         request_button = "大会リクエストを見る"
         request_note = "チップは任意であり、作成保証や個別対応の対価ではありません。"
-        footer_title = "注意事項"
+        footer_title = "使う前に"
         disclaimer_items = [
             "このページはGarmin公式、大会公式の情報ではありません。",
             "関門・エイド情報は大会公式情報を必ず確認してください。",
@@ -2349,7 +2336,7 @@ def render_race_detail(race: Race, lang: str) -> str:
     code_button = (
         button_link("/gatechecker/races/" if lang == "ja" else "/en/gatechecker/races/", "対応大会一覧を見る" if lang == "ja" else "See all Race Codes", "secondary")
         if free_sample
-        else optional_link_button(purchase_link, "Get Race Code", lang, "primary")
+        else optional_link_button(purchase_link, "Race Codeを受け取る" if lang == "ja" else "Get Race Code", lang, "primary")
     )
 
     body = f"""
