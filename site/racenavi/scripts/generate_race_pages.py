@@ -854,8 +854,6 @@ def render_header(lang: str) -> str:
         nav_items = [
             ("/en/racenavi/", "RaceNavi"),
             ("/en/gatechecker/", "Cutoff Guide"),
-            ("/en/gatechecker/races/", "Supported Races"),
-            ("/en/gatechecker/request/", "Request a Race"),
             ("/", "Japanese"),
         ]
 
@@ -890,12 +888,10 @@ def render_footer(lang: str) -> str:
         links = [
             ("/en/racenavi/", "RaceNavi"),
             ("/en/gatechecker/", "Cutoff Guide"),
-            ("/en/gatechecker/races/", "Supported Races"),
-            ("/en/gatechecker/request/", "Request a Race"),
             ("/", "Japanese"),
             (X_URL, "X DM"),
         ]
-        summary = "RaceNavi provides Garmin apps for race-day pacing decisions and cutoff awareness."
+        summary = "RaceNavi is where I put the Garmin apps I make to cut down race-day guessing and mental math."
         disclaimer = "RaceNavi and Cutoff Guide are not official Garmin apps or official race apps."
 
     link_html = []
@@ -1025,80 +1021,69 @@ def render_home_page(lang: str) -> str:
         support_note = "チップは任意であり、作成保証や個別対応の対価ではありません。"
         notice = "RaceNaviと関門ガイドはGarmin向けの個人開発アプリです。Garmin公式・大会公式のアプリではありません。関門やエイドの情報は更新に追いつけないこともあるので、使う前に大会公式情報も見てください。"
     else:
-        title = "RaceNavi | Garmin apps for pacing and cutoff guidance"
-        description = "RaceNavi helps marathon runners check heart rate, pace, target gap, and estimated finish time, while Cutoff Guide helps them check cutoffs and aid stations on Garmin watches."
+        title = "RaceNavi | Garmin apps for pacing and cutoff worries"
+        description = "RaceNavi is where I put two Garmin apps I am building from my own race-day problems: one for chasing a goal time, and one for watching the next cutoff."
         path = "/en/"
         other = "/"
-        hero_title = "Make race-day decisions faster on your Garmin."
-        hero_lead = "RaceNavi helps you check heart rate, pace, target gap, and estimated finish time during a marathon. Cutoff Guide uses one app plus a Race Code to show the next cutoff and aid station for each race."
-        hero_copy = "Both apps are built to reduce the need to look at your phone or calculate race information in your head while you are running."
+        hero_title = "Cut race-day second-guessing down to one Garmin screen."
+        hero_lead = "In a race, you run out of room to think about whether to watch heart rate, pace, or the next cutoff. I am building these so the numbers I keep needing are already on the watch."
+        hero_copy = "If you are chasing a goal time, use RaceNavi. If cutoffs worry you, use Cutoff Guide. Both are there to cut down phone checks and mental math while you are moving."
         actions = "".join([
             button_link(RACENAVI_CONNECT_IQ_EN, "View RaceNavi on Connect IQ", "primary", external=True),
-            button_link("/en/gatechecker/races/", "View Supported Races", "secondary"),
-            button_link("/en/racenavi/custom/", "Learn about Custom Setup", "secondary"),
+            button_link(GATE_CONNECT_IQ_URL, "View Cutoff Guide on Connect IQ", "secondary", external=True),
         ])
+        action_note = '<p class="action-note"><a href="/en/racenavi/custom/">If you want to tune RaceNavi more closely, start here</a></p>'
         hero_visual = f"""
-          <article class="icon-card">
+          <a class="icon-card icon-card-link" href="/en/racenavi/">
             <img class="icon-card-image" src="{RACENAVI_ICON}" alt="RaceNavi app icon" />
             <div>
               <strong>RaceNavi</strong>
-              <p>Heart rate, pace, and target gap.</p>
+              <p>The screen I use when I am trying to hold a goal time.</p>
             </div>
-          </article>
-          <article class="icon-card">
+          </a>
+          <a class="icon-card icon-card-link" href="/en/gatechecker/">
             <img class="icon-card-image" src="{GATE_ICON}" alt="Cutoff Guide app icon" />
             <div>
               <strong>Cutoff Guide</strong>
-              <p>Cutoffs and aid stations for each race.</p>
+              <p>The screen for seeing how far and how long to the next cutoff.</p>
             </div>
-          </article>
+          </a>
 """
         app_cards = f"""
         <article class="app-card">
           <span class="app-label label-racenavi">RaceNavi</span>
-          <h2>Check heart rate, pace, and target gap while you race.</h2>
-          <p class="app-summary">Are you pushing too hard early? Are you still on pace for your goal? RaceNavi keeps the key pacing decisions on one Garmin screen.</p>
+          <h2>If you are chasing a goal time, you want to know when you are pushing too hard or letting it slip.</h2>
+          <p class="app-summary">RaceNavi puts heart rate, pace, gap to goal, and predicted finish on one screen. It is for the part of the race where you want to judge early overcooking and late fade without piecing the numbers together in your head.</p>
           <div class="app-image">
             <img src="{RACENAVI_HERO_EN}" alt="RaceNavi hero image showing heart rate, pace, target gap, and estimated finish time." />
           </div>
           <div class="actions">
             {button_link(RACENAVI_CONNECT_IQ_EN, "View on Connect IQ", "primary", external=True)}
             {button_link("/en/racenavi/", "Learn about RaceNavi", "secondary")}
+            {button_link("/en/racenavi/custom/", "Custom Setup", "secondary")}
           </div>
         </article>
         <article class="app-card">
           <span class="app-label label-gate">Cutoff Guide</span>
-          <h2>Check the next cutoff and aid station before they become a problem.</h2>
-          <p class="app-summary">How far is the next cutoff? How much time is left? Cutoff Guide uses one app and a Race Code to load race-specific cutoff and aid data.</p>
-          <p class="page-copy">Some races are published as free sample Race Codes. Other races are planned as paid Race Codes, and race requests are currently free during the launch phase.</p>
+          <h2>If cutoffs are what keep bothering you, look at the next cutoff first.</h2>
+          <p class="app-summary">Even if you studied the cutoff table before the race, the small details disappear once you are moving. Cutoff Guide shows the remaining distance and remaining time to the next cutoff on Garmin. Aid info is there when you need it, but it is secondary.</p>
+          <p class="page-copy">It works as one app plus a Race Code for each race and course. Some races are free samples, and you can also request a race that is not listed yet.</p>
           <div class="app-image">
             <img src="{GATE_HERO_EN}" alt="Cutoff Guide hero image showing the next cutoff, time left, and next aid station." />
           </div>
           <div class="actions">
-            {button_link("/en/gatechecker/", "Learn about Cutoff Guide", "primary")}
+            {button_link(GATE_CONNECT_IQ_URL, "View on Connect IQ", "primary", external=True)}
+            {button_link("/en/gatechecker/", "Learn about Cutoff Guide", "secondary")}
             {button_link("/en/gatechecker/races/", "View Supported Races", "secondary")}
-            {button_link("/en/gatechecker/request/", "Request a Race", "secondary")}
           </div>
         </article>
 """
-        section_title = "Two apps, two different race-day jobs."
-        section_copy = "RaceNavi handles pacing and heart-rate decisions. Cutoff Guide handles cutoff and aid-station awareness through one app and race-specific Race Codes."
+        section_title = "The problem changes depending on the race."
+        section_copy = "Some days the real question is pace control. On other days it is just whether you are safely getting to the next cutoff. That is why these are split into two apps."
         support_title = "Support the project"
-        support_copy = "RaceNavi and Cutoff Guide are personal projects. If they help your racing, you can support future development and race-data updates through Buy me a coffee."
+        support_copy = "RaceNavi and Cutoff Guide are personal projects. If they help, you can support future tweaks and race-data updates through Buy me a coffee."
         support_note = "Support is optional and does not guarantee race requests or individual support."
-        quick_cards = """
-          <article class="quick-card">
-            <span class="meta-pill">RaceNavi</span>
-            <strong>Heart rate, pace, target gap</strong>
-            <p>Built for marathon pacing decisions.</p>
-          </article>
-          <article class="quick-card">
-            <span class="meta-pill">Cutoff Guide</span>
-            <strong>Cutoffs and aid stations</strong>
-            <p>Built for supported race-specific pages.</p>
-          </article>
-"""
-        notice = "RaceNavi and Cutoff Guide are independently developed Garmin apps. They are not official Garmin apps or official race apps. Always check official race information as well."
+        notice = "RaceNavi and Cutoff Guide are independently developed Garmin apps. They are not official Garmin apps or official race apps. Cutoff and aid details can change, so always check the official race information too."
 
     body = f"""
   <main class="page-shell">
@@ -1110,7 +1095,7 @@ def render_home_page(lang: str) -> str:
             <p class="lead">{escape(hero_lead)}</p>
             <p class="section-copy">{escape(hero_copy)}</p>
             <div class="actions">{actions}</div>
-            {action_note if lang == "ja" else ""}
+            {action_note if lang == "ja" else action_note}
           </div>
         <div class="hero-quick-grid hero-icon-grid">
           {hero_visual}
@@ -1226,67 +1211,67 @@ def render_racenavi_page(lang: str) -> str:
             button_link("/racenavi/custom/", "カスタム設定を見る", "secondary"),
         ])
     else:
-        title = "RaceNavi | Garmin marathon app for heart rate, pace, and target gap"
-        description = "RaceNavi is a Garmin marathon data field that shows heart rate, pace, target gap, and estimated finish time on a single screen."
+        title = "RaceNavi | A Garmin screen for chasing a goal time"
+        description = "RaceNavi is a Garmin marathon data field for runners who want heart rate, pace, gap to goal, and predicted finish on one screen while they race."
         path = "/en/racenavi/"
         other = "/racenavi/"
-        hero_title = "Use heart rate and pace to reduce race-day guesswork."
-        hero_lead = "RaceNavi is a Garmin marathon data field that shows heart rate, pace, target gap, and estimated finish time on a single screen."
-        hero_copy = "It is built to help you make simpler decisions while running, not to add more numbers to think about."
+        hero_title = "Use heart rate and pace to cut down race-day guesswork."
+        hero_lead = "RaceNavi puts heart rate, pace, gap to goal, and predicted finish on one screen for the marathon. I made it for the moments when you want to tell whether you are going out too hard or quietly drifting away from your target."
+        hero_copy = "The point is not to add more numbers. It is to stop rebuilding the same judgment in your head while you run."
         actions = "".join([
             button_link(RACENAVI_CONNECT_IQ_EN, "View RaceNavi on Connect IQ", "primary", external=True),
-            button_link("#screen-preview", "View Screen Preview", "secondary"),
-            button_link("/en/racenavi/custom/", "Learn about Custom Setup", "secondary"),
+            button_link("#screen-preview", "See the screen", "secondary"),
+            button_link("/en/racenavi/custom/", "Custom Setup", "secondary"),
         ])
         decision_points = [
-            "Whether your early effort is too high",
-            "Whether your current pace still supports your goal time",
-            "Whether you are ahead of or behind your target",
-            "What your projected finish looks like",
-            "Whether your effort still looks sustainable for the second half",
+            "Whether your early effort is already too high",
+            "Whether your current pace still leaves your goal time in range",
+            "How far ahead of or behind goal you are right now",
+            "Where your finish is drifting if you keep going like this",
+            "Whether the effort still looks survivable for the second half",
         ]
         info_points = [
             "Current heart rate",
             "CAP heart rate",
             "Current pace",
-            "Gap from target",
-            "Estimated finish time",
+            "Gap from goal",
+            "Predicted finish",
             "Distance",
             "Elapsed time",
         ]
         screen_labels = [
-            ("CAP HR", "A practical upper effort guide for that point in the race."),
+            ("CAP HR", "A rough ceiling for effort at that point in the race."),
             ("HR", "Your current heart rate."),
             ("Pace", "Your current running pace."),
-            ("Prediction", "Estimated finish based on the current trend."),
-            ("Difference from goal", "How far ahead of or behind goal you are."),
+            ("Prediction", "Where your finish looks headed if the trend stays the same."),
+            ("Difference from goal", "Whether you are ahead of or behind the goal."),
             ("Distance", "Elapsed distance."),
             ("Time", "Elapsed time."),
         ]
-        cap_copy = "CAP heart rate is a practical upper guide for race effort at that point in the marathon. It is not a medical threshold."
+        cap_copy = "CAP heart rate is a rough upper guide for marathon effort at that point in the race. It is there to help with pacing judgment, not as a medical threshold."
         setup_items = [
             "Race Distance: choose Full Marathon, Half Marathon, or 10Km.",
-            "Target Time Hour / Minutes: set your goal finish time.",
+            "Target Time Hour / Minutes: enter the finish time you are aiming for.",
             "LTHR: your lactate threshold heart rate if you have it.",
-            "If LTHR is not set, RaceNavi falls back to your Garmin heart-rate zone setup.",
-            "Custom Code: enter a code generated from the Custom Setup page for personalized tuning.",
+            "If LTHR is not set, RaceNavi uses your Garmin heart-rate zone setup instead.",
+            "Custom Code: enter a code from the Custom Setup page if you want more personal tuning.",
         ]
         setup_copy = (
             f'Read <a href="{GARMIN_LACTATE_THRESHOLD_URL}" target="_blank" rel="noreferrer">Garmin Lactate Threshold</a> '
             f'and <a href="{GARMIN_HR_ZONES_URL}" target="_blank" rel="noreferrer">Garmin Heart Rate Zones</a> '
-            "for the underlying Garmin setup."
+            "if you want the Garmin-side setup details."
         )
         notice_items = [
             "RaceNavi is not an official Garmin app.",
             "RaceNavi is not medical advice.",
-            "Appropriate race effort changes with weather, course, and runner condition.",
+            "The right effort changes with weather, course, and runner condition.",
             "Final decisions remain with the runner.",
         ]
-        cta_title = "Start with the standard setup"
-        cta_copy = "Try the standard setup first. If you need more tuning later, use the Custom Setup page as the next step."
+        cta_title = "Start with the standard setup first"
+        cta_copy = "The normal flow is simple: run with the standard setup first, then look at Custom Setup only if you want to tune it more closely."
         cta_actions = "".join([
             button_link(RACENAVI_CONNECT_IQ_EN, "View RaceNavi on Connect IQ", "primary", external=True),
-            button_link("/en/racenavi/custom/", "Learn about Custom Setup", "secondary"),
+            button_link("/en/racenavi/custom/", "Custom Setup", "secondary"),
         ])
 
     body = f"""
@@ -1309,11 +1294,11 @@ def render_racenavi_page(lang: str) -> str:
     <section class="page-section">
       <div class="info-grid">
         <article class="info-card">
-          <h2>{"レース中に見たいこと" if lang == "ja" else "Things to check during the race"}</h2>
+          <h2>{"レース中に見たいこと" if lang == "ja" else "What you probably want to judge mid-race"}</h2>
           <ul>{render_list(decision_points)}</ul>
         </article>
         <article class="info-card">
-          <h2>{"表示する情報" if lang == "ja" else "What RaceNavi shows"}</h2>
+          <h2>{"表示する情報" if lang == "ja" else "What RaceNavi puts on screen"}</h2>
           <ul>{render_list(info_points)}</ul>
         </article>
       </div>
@@ -1322,7 +1307,7 @@ def render_racenavi_page(lang: str) -> str:
     <section class="page-section" id="screen-preview">
       <div class="section-header">
         <span class="eyebrow">Screen</span>
-        <h2>{"画面イメージ" if lang == "ja" else "Screen Preview"}</h2>
+        <h2>{"画面イメージ" if lang == "ja" else "Screen preview"}</h2>
       </div>
       <article class="cta-panel hero-media">
         <div class="app-image app-image-narrow">
@@ -1352,8 +1337,8 @@ def render_racenavi_page(lang: str) -> str:
     <section class="page-section">
       <div class="section-header">
         <span class="eyebrow">Setup</span>
-        <h2>{"使用前の設定" if lang == "ja" else "Setup Before Your Race"}</h2>
-        <p class="section-copy">{"インストール後、使用前に事前設定が必要です。" if lang == "ja" else "RaceNavi needs a quick setup before you use it."}</p>
+        <h2>{"使用前の設定" if lang == "ja" else "Before your race"}</h2>
+        <p class="section-copy">{"インストール後、使用前に事前設定が必要です。" if lang == "ja" else "There is a short setup step before you use it."}</p>
       </div>
       <article class="cta-panel hero-media">
         <div class="app-image app-image-narrow">
@@ -1421,21 +1406,21 @@ def render_custom_page(lang: str) -> str:
             "最終判断はランナー本人が行ってください。",
         ]
     else:
-        title = "Custom Setup | Planned monitor page for personalized RaceNavi tuning"
-        description = "Custom Setup is a planned monitor page for runners who want RaceNavi adjusted around their goal time, heart-rate profile, and past race data."
+        title = "Custom Setup | For runners who want RaceNavi tuned a bit more closely"
+        description = "Custom Setup is for runners who want to tune RaceNavi more closely around their goal race, heart-rate profile, and past race data."
         path = "/en/racenavi/custom/"
         other = "/racenavi/custom/"
-        hero_title = "Tune RaceNavi for your goal race."
-        hero_lead = "Runners with the same finish goal still respond differently in heart rate and late-race fade. Custom Setup is meant to organize RaceNavi settings around your target time, heart-rate profile, and past race data."
+        hero_title = "Tune RaceNavi a bit closer to your own race."
+        hero_lead = "Two runners chasing the same finish time can still have very different heart-rate behavior and late-race fade. This page is for runners who want to adjust RaceNavi more closely to their own race and past data."
         actions = "".join([
             button_link(X_URL, "Send a monitor request on X", "primary", external=True),
-            button_link("#needed-info", "See Required Info", "secondary"),
+            button_link("#needed-info", "See what is needed", "secondary"),
         ])
         audience = [
-            "Runners who want a clearer upper effort guide for their target pace",
-            "Runners who often fade late and want a better early-race plan",
-            "Runners who have Garmin or FIT data but are not sure how to use it",
-            "Runners who want RaceNavi tuned for a specific goal race",
+            "You want the upper effort guide tightened a bit for your goal pace",
+            "You often fade late and want a better plan for the first half",
+            "You have Garmin or FIT data but are not sure how to use it",
+            "You want RaceNavi adjusted around a specific goal race",
         ]
         required = [
             "Target finish time",
@@ -1446,10 +1431,10 @@ def render_custom_page(lang: str) -> str:
             "Your target race",
         ]
         status_title = "Current status"
-        status_copy = "This is still under consideration as a monitor program rather than a fixed commercial service. If you are interested, send an X DM with “RaceNavi Custom Setup”. Details such as scope, pricing, and number of monitor users will be shared when ready."
+        status_copy = "This is still being tried in a small monitor-style format, not as a fixed service page. If you are interested, send an X DM with “RaceNavi Custom Setup” and I will reply with what I can handle and in what order."
         note_items = [
             "This is not medical advice.",
-            "Appropriate race effort changes with weather, course, and runner condition.",
+            "The right effort changes with weather, course, and runner condition.",
             "Final decisions remain with the runner.",
         ]
 
@@ -1473,7 +1458,7 @@ def render_custom_page(lang: str) -> str:
           <ul>{render_list(audience)}</ul>
         </article>
         <article class="info-card" id="needed-info">
-          <h2>{"必要な情報" if lang == "ja" else "Required information"}</h2>
+          <h2>{"必要な情報" if lang == "ja" else "What I would need"}</h2>
           <ul>{render_list(required)}</ul>
         </article>
       </div>
@@ -1564,44 +1549,44 @@ def render_gatechecker_page(lang: str) -> str:
         hero_image = GATE_HERO_JA
         image_alt = "関門ガイドのHeroイメージ"
     else:
-        title = "Cutoff Guide | Check cutoff times and aid stations on your Garmin"
-        description = "Cutoff Guide is a Garmin app that shows cutoff points, cutoff times, remaining time, and aid stations. One app works with many races through a Race Code."
+        title = "Cutoff Guide | See the next cutoff on your Garmin"
+        description = "Cutoff Guide is a Garmin app for runners who want to see the distance and time left to the next cutoff, with aid information kept as a secondary extra."
         path = "/en/gatechecker/"
         other = "/gatechecker/"
-        hero_title = "Check cutoff times and aid stations on your Garmin."
-        hero_lead = "Cutoff Guide is a Garmin app for runners who want to check cutoff points, cutoff times, remaining time, and aid stations during a race. Install one app, enter the Race Code for your race in Garmin Connect, and the app will show the cutoff and aid station data for that race and course."
+        hero_title = "See how far and how long to the next cutoff."
+        hero_lead = "Even if you looked at the cutoff table before the race, the details are easy to lose once you are moving. Cutoff Guide is the app I am building to keep the remaining distance and remaining time to the next cutoff on Garmin."
         actions = "".join([
             optional_link_button(GATE_CONNECT_IQ_URL, "Download on Connect IQ", lang, "primary"),
             button_link("/en/gatechecker/races/", "Supported Races", "secondary"),
             button_link("/en/gatechecker/request/", "Request a Race", "secondary"),
             optional_link_button(BUY_ME_A_COFFEE_URL, "Buy me a coffee", lang, "secondary"),
         ])
-        hero_follow = "It is built for races where checking your phone or calculating cutoff times in your head is not realistic."
+        hero_follow = "Aid information can also be shown when needed, but the main job is cutoff awareness. One app works with many races through Race Codes."
         info_points = [
             "Where the next cutoff is",
-            "What time the next cutoff is",
-            "How far away the cutoff is",
-            "How much time is left before the cutoff",
-            "How far away the next aid station is",
+            "How far to the next cutoff",
+            "How much time is left before that cutoff",
+            "What time that cutoff is set for",
+            "How far to the next aid station if you need it",
         ]
-        audience_title = "One app. Many races."
+        audience_title = "One app, switched by Race Code"
         audience = [
             "Install Cutoff Guide from Connect IQ",
             "Find your Race Code on this website",
             "Enter the Race Code in Garmin Connect app settings",
             "Sync your watch",
-            "Check cutoff and aid information during the race",
+            "Use the watch to see the next cutoff during the race",
         ]
         screen_rows = [
-            ("Row 1", "Check the distance and cutoff time of the next cutoff point."),
-            ("Row 2", "Check the remaining distance and time to the next cutoff point."),
-            ("Row 3", "Check the remaining distance to the next aid station."),
+            ("Row 1", "Shows where the next cutoff is and what time it closes."),
+            ("Row 2", "Shows how far and how long to that cutoff."),
+            ("Row 3", "Can show the next aid distance when needed."),
         ]
-        audience_copy = "Cutoff Guide does not use separate apps for each race. Find your Race Code on this website, enter it in the app settings, and sync your watch."
+        audience_copy = "This is not a separate app for every race. You use one app, find the Race Code for your race here, put it into Garmin Connect, and sync your watch."
         sample_title = "Free sample races"
-        sample_copy = "These races are currently published as free sample Race Codes with full cutoff and aid station data."
+        sample_copy = "These races are published as free sample Race Codes so you can try the flow first."
         support_title = "Support the project"
-        support_copy = "Cutoff Guide is a personal project. If it helped your race preparation, you can buy me a coffee to support future race data updates."
+        support_copy = "Cutoff Guide is a personal project. If it helped, you can buy me a coffee to support more race pages and data updates."
         support_note = "Tips are optional and do not guarantee race requests or individual support."
         notice_items = [
             "This is not an official Garmin app.",
@@ -1638,7 +1623,7 @@ def render_gatechecker_page(lang: str) -> str:
     <section class="page-section">
       <div class="info-grid">
         <article class="info-card">
-          <h2>{"レース中に確認できること" if lang == "ja" else "What you can check during the race"}</h2>
+          <h2>{"レース中に確認できること" if lang == "ja" else "What it lets you see mid-race"}</h2>
           <ul>{render_list(info_points)}</ul>
         </article>
         <article class="info-card">
@@ -1655,7 +1640,7 @@ def render_gatechecker_page(lang: str) -> str:
           <img src="{GATE_SCREEN_IMAGE}" alt="Cutoff Guide screen preview" />
         </div>
         <div>
-          <span class="badge badge-gate">{"画面項目" if lang == "ja" else "Screen Fields"}</span>
+          <span class="badge badge-gate">{"画面項目" if lang == "ja" else "Screen fields"}</span>
           <ul class="page-link-list bullet-copy">
             {''.join(f'<li><strong>{escape(label)}</strong>: {escape(copy)}</li>' for label, copy in screen_rows)}
           </ul>
@@ -1748,18 +1733,18 @@ def render_gatechecker_request_page(lang: str) -> str:
         ]
     else:
         title = "Request a Race | Cutoff Guide"
-        description = "Request a race for Cutoff Guide by sending the official race website or race guide PDF. Race requests are currently free."
+        description = "Request a race for Cutoff Guide by sending the official race website or race guide PDF. Requests are free, but I add races in the order I can verify them."
         path = "/en/gatechecker/request/"
         other = "/gatechecker/request/"
         hero_title = "Request a Race"
-        hero_lead = "Can’t find your race? Send me the official race website or race guide PDF."
-        hero_copy = "Race requests are currently free. I can’t guarantee every request, but I’ll prioritize races with clear official cutoff information and higher demand."
+        hero_lead = "If your race is not here yet, send the official race website or race guide PDF."
+        hero_copy = "Requests are free. I cannot promise every race, but I work through the ones where the official cutoff information is clear enough to build from."
         actions = "".join([
             request_form_button("Request a Race", lang, "primary"),
             button_link("/en/gatechecker/races/", "View Supported Races", "secondary"),
             optional_link_button(BUY_ME_A_COFFEE_URL, "Buy me a coffee", lang, "secondary"),
         ])
-        request_title = "Request form fields"
+        request_title = "What to send"
         request_items = [
             "Race name",
             "Race year",
@@ -1768,14 +1753,14 @@ def render_gatechecker_request_page(lang: str) -> str:
             "Cutoff information URL or PDF",
             "Aid station information URL or PDF",
             "Wave start or course variation information if available",
-            "Your email optional",
+            "Your email (optional)",
         ]
-        process_title = "How requests are prioritized"
-        process_copy_1 = "After I receive your request, I review the official race website or race guide PDF to confirm cutoff and aid station data."
-        process_copy_2 = "Races with clearer official information and stronger demand are prioritized first. When a race can be supported, I add or update the Race Code on this website."
+        process_title = "How I work through requests"
+        process_copy_1 = "After I get a request, I first check the official website or race guide PDF and pull the cutoff and aid data from there."
+        process_copy_2 = "Then I work through races where the official information is clear enough and demand looks real. When a race is ready, I add its Race Code here."
         support_title = "Support the project"
-        support_copy_1 = "If you want to support this project, you can buy me a coffee. Your support helps me check official race guides, add more races, and keep cutoff information up to date."
-        support_copy_2 = "Support is optional and does not guarantee that a requested race will be added."
+        support_copy_1 = "Checking race guides and building Race Codes takes time. If you want to support that work, you can buy me a coffee."
+        support_copy_2 = "Support is optional. It does not buy priority handling or guarantee that a requested race will be added."
         notice_items = [
             "This is not an official Garmin app.",
             "This is not an official race app.",
@@ -1783,7 +1768,6 @@ def render_gatechecker_request_page(lang: str) -> str:
             "Course changes, wave starts, weather, and organizer updates can change the information.",
             "Finishing, beating a cutoff, or hitting a goal time is not guaranteed.",
             "Some races cannot be supported if the official information cannot be verified.",
-            "Support is optional and does not guarantee race requests or individual support.",
             "Tips are optional and do not guarantee race requests or individual support.",
         ]
 
@@ -1993,13 +1977,13 @@ def render_races_index(races: list[Race], lang: str) -> str:
         ]
     else:
         title = "Supported Races & Race Codes | Cutoff Guide"
-        description = "Supported races and Race Codes for Cutoff Guide, including free sample Race Codes and planned paid Race Codes."
+        description = "Supported races and Race Codes for Cutoff Guide. This is the list to check when you want to know whether your race already has a Race Code."
         path = "/en/gatechecker/races/"
         other = "/gatechecker/races/"
         hero_title = "Supported Races & Race Codes"
-        hero_lead = "Cutoff Guide uses Race Codes to select a race and course. Free sample Race Codes are listed on this page. Other Race Codes may be available as paid Race Codes."
+        hero_lead = "Cutoff Guide works by entering a Race Code to switch the race and course. Some races are published as free samples. Others are handled as paid Race Codes."
         how_title = "How Race Codes work"
-        how_copy = "Cutoff Guide uses one app plus a Race Code. Payments happen outside the app, and paid Race Codes are delivered separately after purchase."
+        how_copy = "You use one app and put a Race Code into its settings. Paid Race Codes are handled outside the app, then sent over separately after purchase."
         how_points = [
             "Install Cutoff Guide from Connect IQ",
             "Find the Race Code on this page",
@@ -2007,12 +1991,12 @@ def render_races_index(races: list[Race], lang: str) -> str:
             "Sync your watch and use it during the race",
         ]
         free_title = "Free Race Codes"
-        free_copy = "These free sample Race Codes are currently published on the site."
+        free_copy = "These are the free sample Race Codes you can try first."
         paid_title = "Paid Race Codes"
-        paid_copy = "Race Codes are sold for supported races. After purchase, you will receive the Race Code for your selected race. Enter the Race Code in Garmin Connect app settings."
-        paid_note = "A single purchase page is used for all Race Codes. After purchase, you will receive the code for your selected race."
-        request_title = "Requested Races"
-        request_copy = "If you want a race that is not listed yet, send the official website or race guide URL from the request page. Race requests are currently free."
+        paid_copy = "Paid Race Codes are for race-specific data, not for the app itself. After purchase, you receive the code for the race you selected and enter it in Garmin Connect."
+        paid_note = "The purchase page is shared. After purchase, the Race Code for your selected race is sent separately."
+        request_title = "Need another race?"
+        request_copy = "If your race is not listed yet, send the official website or race guide URL from the request page. Requests are free."
         notice_items = [
             "Cutoff Guide is not an official Garmin app.",
             "It is not an official race app.",
@@ -2284,31 +2268,31 @@ def render_race_detail(race: Race, lang: str) -> str:
         ]
     else:
         title = f"{race.name_en} Race Code and Cutoff Info | Cutoff Guide"
-        description = f"Race Code, cutoff, and aid station information for {race.name_en}. Cutoff Guide uses one app plus a Race Code for race-specific data."
+        description = f"Race Code and cutoff information for {race.name_en}, with aid details kept as a secondary reference."
         path = f"/en/gatechecker/races/{race.slug}/"
         other = f"/gatechecker/races/{race.slug}/"
         hero_title = f"{race.name_en} Race Code and Cutoff Info"
-        hero_lead = f"This page summarizes Race Code, cutoff points, cutoff times, and aid station locations for {race.name_en}. Cutoff Guide uses one app plus a Race Code for race-specific data."
+        hero_lead = f"This page is a race-prep summary for {race.name_en}. It is here so you can look back at the cutoff table more easily before race day, and use the Race Code in Cutoff Guide to see the next cutoff on your watch."
         primary_cta = optional_link_button(GATE_CONNECT_IQ_URL, "Download on Connect IQ", lang, "primary")
         secondary_cta = button_link("/en/gatechecker/races/", "Back to Supported Races", "secondary")
-        cutoff_copy = "The cutoff points and times below are based on available race information at the time of preparation. Please always check the official race information before race day."
-        aid_copy = "This information is used to estimate the distance to the next aid station. Food and drink availability is not guaranteed on this page."
+        cutoff_copy = "These are the cutoff points and cutoff times I could confirm from the available race information when preparing the page. Always recheck the official race information before race day."
+        aid_copy = "Aid information is secondary here. It is mainly for seeing how far the next aid is, and it does not guarantee food or drink details."
         code_title = "Race Code for this race"
-        code_copy = "Enter the Race Code in Garmin Connect app settings, then sync your watch."
+        code_copy = "Put the Race Code into Garmin Connect app settings, then sync your watch to load this race."
         code_steps = [
             "Install Cutoff Guide from Connect IQ",
             "Check the Race Code on this page",
-            "Enter the code in Garmin Connect app settings",
+            "Enter it in Garmin Connect app settings",
             "Sync your watch",
-            "Use the app during the race",
+            "Use the watch to see the next cutoff during the race",
         ]
-        purchase_copy = "This Race Code is published as a free sample." if free_sample else "A paid Race Code is sold outside the app. It gives access to race-specific data for this race and is delivered manually after purchase for now."
-        request_title = "Request another race"
-        request_copy = "Race requests are currently free."
-        request_copy_2 = "Races with clearer official information and stronger demand are prioritized first."
+        purchase_copy = "This Race Code is published as a free sample." if free_sample else "This paid Race Code is for the race data only, not for the app itself. For now, it is sent manually after purchase."
+        request_title = "Need another race?"
+        request_copy = "Race requests are free."
+        request_copy_2 = "I work through races where the official information is clear enough to build from."
         request_button = "Request a Race"
         request_note = "Tips are optional and do not guarantee race requests or individual support."
-        footer_title = "Important Notes"
+        footer_title = "Before you use it"
         disclaimer_items = [
             "This site is not affiliated with Garmin or the race organizer.",
             "Always confirm cutoff and aid-station details with official race information.",
@@ -2391,7 +2375,7 @@ def render_race_detail(race: Race, lang: str) -> str:
     <section class="page-section">
       <div class="section-header">
         <span class="eyebrow eyebrow-gate">Cutoff</span>
-        <h2>{"関門情報" if lang == "ja" else "Cutoff Information"}</h2>
+        <h2>{"関門情報" if lang == "ja" else "Cutoff information"}</h2>
         <p class="section-copy">{escape(cutoff_copy)}</p>
       </div>
       <div class="course-section-grid">
@@ -2402,7 +2386,7 @@ def render_race_detail(race: Race, lang: str) -> str:
     <section class="page-section">
       <div class="section-header">
         <span class="eyebrow eyebrow-gate">Aid</span>
-        <h2>{"エイド情報" if lang == "ja" else "Aid Station Information"}</h2>
+        <h2>{"エイド情報" if lang == "ja" else "Aid information"}</h2>
         <p class="section-copy">{escape(aid_copy)}</p>
       </div>
       <div class="course-section-grid">
@@ -2425,7 +2409,7 @@ def render_race_detail(race: Race, lang: str) -> str:
 
     <section class="page-section">
       <article class="cta-panel">
-        <span class="badge badge-gate">{"注意事項" if lang == "ja" else "Important Notes"}</span>
+        <span class="badge badge-gate">{"注意事項" if lang == "ja" else "Important notes"}</span>
         <h2>{escape(footer_title)}</h2>
         <ul class="page-link-list">{render_list(disclaimer_items)}</ul>
       </article>
