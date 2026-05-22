@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RaceNavi | 心拍・ペース・目標差を1画面で確認するGarminアプリ</title>
-  <meta name="description" content="RaceNaviは、フルマラソン中に心拍、ペース、目標との差、到達予測をGarminの1画面で確認するためのデータフィールドです。" />
+  <meta name="description" content="RaceNaviは、目標タイムを狙う日に心拍、ペース、目標との差、予測タイムをGarminの1画面で見やすくするデータフィールドです。" />
   <link rel="canonical" href="https://racenavi.jpn.org/racenavi/" />
   <link rel="alternate" hreflang="ja" href="https://racenavi.jpn.org/racenavi/" />
   <link rel="alternate" hreflang="en" href="https://racenavi.jpn.org/en/racenavi/" />
   <meta property="og:title" content="RaceNavi | 心拍・ペース・目標差を1画面で確認するGarminアプリ" />
-  <meta property="og:description" content="RaceNaviは、フルマラソン中に心拍、ペース、目標との差、到達予測をGarminの1画面で確認するためのデータフィールドです。" />
+  <meta property="og:description" content="RaceNaviは、目標タイムを狙う日に心拍、ペース、目標との差、予測タイムをGarminの1画面で見やすくするデータフィールドです。" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://racenavi.jpn.org/racenavi/" />
   <meta property="og:image" content="https://racenavi.jpn.org/assets/heroImage_jpn.png" />
@@ -27,7 +27,7 @@
       <span>RaceNavi</span>
     </a>
     <nav class="site-nav" aria-label="メインナビゲーション">
-      <a href="/racenavi/">RaceNavi</a><a href="/gatechecker/">関門ガイド</a><a href="/gatechecker/races/">対応大会</a><a href="/gatechecker/request/">大会リクエスト</a><a href="/en/">English</a>
+      <a href="/racenavi/">RaceNavi</a><a href="/gatechecker/">関門ガイド</a><a href="/en/">English</a>
     </nav>
   </header>
 
@@ -38,8 +38,8 @@
         <div>
           <span class="eyebrow">RaceNavi</span>
           <h1>心拍とペースで、レース中の判断を減らす。</h1>
-          <p class="lead">RaceNaviは、フルマラソン本番で心拍・ペース・目標との差・到達予測を1画面で確認するGarmin向けデータフィールドです。</p>
-          <p class="section-copy">数字を増やすためではなく、走りながら判断しやすくするために作っています。</p>
+          <p class="lead">フルマラソンで、心拍、ペース、目標との差、予測タイムを1画面にまとめています。序盤で上げすぎていないか、このままで目標に届くかを、その場で見やすくしたくて作っています。</p>
+          <p class="section-copy">数字を増やすためではなく、走りながら頭の中で組み立てることを減らしたい日に使う想定です。</p>
           <div class="actions"><a class="button button-primary" href="https://apps.garmin.com/ja-JP/apps/00ebf0d8-4f9f-47d0-a59c-27f9b286c830" target="_blank" rel="noreferrer">Connect IQでRaceNaviを見る</a><a class="button button-secondary" href="#screen-preview">画面イメージを見る</a><a class="button button-secondary" href="/racenavi/custom/">カスタム設定を見る</a></div>
         </div>
         <div class="hero-image-panel">
@@ -52,7 +52,7 @@
       <div class="info-grid">
         <article class="info-card">
           <h2>レース中に見たいこと</h2>
-          <ul><li>序盤で心拍を上げすぎていないか</li><li>今のペースで目標タイムに届きそうか</li><li>目標に対して貯金か、借金か</li><li>このまま行くとゴール予測はどれくらいか</li><li>後半まで押せる状態か</li></ul>
+          <ul><li>序盤で突っ込みすぎていないか</li><li>今のペースで目標タイムにまだ届きそうか</li><li>目標に対して今どれくらい前後しているか</li><li>このまま行くとゴール予測がどこに落ちそうか</li><li>後半まで押せる範囲にまだ収まっているか</li></ul>
         </article>
         <article class="info-card">
           <h2>表示する情報</h2>
@@ -72,7 +72,7 @@
         </div>
         <div>
           <ul class="page-link-list bullet-copy">
-            <li><strong>CAP HR</strong>: その時点での心拍上限目安です。</li><li><strong>HR</strong>: 現在の心拍を確認します。</li><li><strong>Pace</strong>: 現在の走行ペースです。</li><li><strong>Prediction</strong>: このまま進んだ場合の到達予測です。</li><li><strong>Difference from goal</strong>: 目標に対して貯金か借金かを見ます。</li><li><strong>Distance</strong>: 経過距離です。</li><li><strong>Time</strong>: 経過時間です。</li>
+            <li><strong>CAP HR</strong>: その時点で上げすぎたくない心拍の目安です。</li><li><strong>HR</strong>: 今の心拍です。</li><li><strong>Pace</strong>: 現在の走行ペースです。</li><li><strong>Prediction</strong>: このまま進んだ場合のゴール予測です。</li><li><strong>Difference from goal</strong>: 目標に対して前か後ろかを見ます。</li><li><strong>Distance</strong>: 経過距離です。</li><li><strong>Time</strong>: 経過時間です。</li>
           </ul>
         </div>
       </article>
@@ -82,7 +82,7 @@
       <div class="info-grid">
         <article class="info-card">
           <h2>CAP心拍について</h2>
-          <p class="page-copy">CAP心拍は、その時点で許容する心拍上限の目安です。医療的な心拍管理ではなく、レース中に突っ込みすぎを避けるための参考値として扱います。</p>
+          <p class="page-copy">CAP心拍は、その時点で上げすぎたくない心拍の目安です。医療的な心拍管理ではなく、レース中に飛ばしすぎないための参考として使う想定です。</p>
         </article>
         <article class="info-card">
           <h2>注意事項</h2>
@@ -102,7 +102,7 @@
           <img src="/assets/shot05_four_settings.jpg" alt="RaceNavi setup screen" />
         </div>
         <div>
-          <ul class="page-link-list bullet-copy"><li>Race Distance: Full Marathon / Half Marathon / 10Km から選択します。</li><li>Target Time Hour / Minutes: 目標タイムを時分で設定します。</li><li>LTHR: 心拍閾値の心拍数です。設定すると目安の精度を合わせやすくなります。</li><li>LTHRを設定しない場合は、Garmin側の心拍ゾーン設定を使います。</li><li>Custom Code: カスタム設定ページで作成したコードを入力すると個別設定を反映できます。</li></ul>
+          <ul class="page-link-list bullet-copy"><li>Race Distance: Full Marathon / Half Marathon / 10Km から選びます。</li><li>Target Time Hour / Minutes: 目標タイムを時分で入れます。</li><li>LTHR: 分かっていれば、心拍閾値の心拍数を入れます。</li><li>LTHRを入れない場合は、Garmin側の心拍ゾーン設定を使います。</li><li>Custom Code: カスタム設定ページで作成したコードを入れると個別設定を反映できます。</li></ul>
           <p class="page-copy">LTHR の考え方は <a href="https://www.garmin.com/en-XD/garmin-technology/running-science/physiological-measurements/lactate-threshold/" target="_blank" rel="noreferrer">Garmin の Lactate Threshold 解説</a> を参照してください。 心拍ゾーンについては <a href="https://support.garmin.com/en-US/?faq=s3HqdKNtWV1NYrK16eFcc7" target="_blank" rel="noreferrer">Garmin の Heart Rate Zones 解説</a> も確認できます。</p>
         </div>
       </article>
@@ -111,8 +111,8 @@
     <section class="page-section">
       <article class="cta-panel">
         <span class="badge badge-racenavi">RaceNavi</span>
-        <h2>まずは通常版で試す</h2>
-        <p class="page-copy">まずは通常設定で使い、必要であれば目標タイムや心拍情報に合わせたカスタム設定を検討してください。</p>
+        <h2>まずは通常版で走ってみる</h2>
+        <p class="page-copy">まずは通常設定で使ってみて、もっと合わせたくなったらカスタム設定を見る流れを想定しています。</p>
         <div class="actions"><a class="button button-primary" href="https://apps.garmin.com/ja-JP/apps/00ebf0d8-4f9f-47d0-a59c-27f9b286c830" target="_blank" rel="noreferrer">Connect IQでRaceNaviを見る</a><a class="button button-secondary" href="/racenavi/custom/">カスタム設定を見る</a></div>
       </article>
     </section>
@@ -126,7 +126,7 @@
       <p>RaceNaviと関門ガイドはGarmin公式・大会公式のアプリではありません。</p>
     </div>
     <div class="footer-links">
-      <a href="/racenavi/">RaceNavi</a><a href="/gatechecker/">関門ガイド</a><a href="/gatechecker/races/">対応大会</a><a href="/gatechecker/request/">大会リクエスト</a><a href="/en/">English</a><a href="https://x.com/racenavi_run" target="_blank" rel="noreferrer">X DM</a>
+      <a href="/racenavi/">RaceNavi</a><a href="/gatechecker/">関門ガイド</a><a href="/en/">English</a><a href="https://x.com/racenavi_run" target="_blank" rel="noreferrer">X DM</a>
     </div>
   </footer>
 
