@@ -22,6 +22,7 @@ class MarathonCoachField extends Ui.DataField {
     const LAP_DIAG_LOG = true;
     const FINISH_DIAG_LOG = false;
     const FINISH_DIAG_MARGIN_KM = 1.0;
+    const FINISH_PREDICTION_DISTANCE_FACTOR = 1.01;
     const MIN_DISTANCE_FOR_PREDICTION_KM = 0.05;
     const PREDICTION_ON_PACE_THRESHOLD_SEC = 60;
     const SLOPE_UP_THRESHOLD = 0.03;
@@ -1908,7 +1909,8 @@ class MarathonCoachField extends Ui.DataField {
             _raceDistanceKm > 0 and
             distanceKm >= MIN_DISTANCE_FOR_PREDICTION_KM
         ) {
-            var remainingDistanceKm = _raceDistanceKm - distanceKm;
+            var predictionDistanceKm = _resolveFinishPredictionDistanceKm();
+            var remainingDistanceKm = predictionDistanceKm - distanceKm;
             if (remainingDistanceKm < 0) {
                 remainingDistanceKm = 0;
             }
@@ -3549,6 +3551,13 @@ class MarathonCoachField extends Ui.DataField {
         var predictedText = _buildGoalPredictionTimeText(predictedTotalSec);
         var diffText = _buildGoalPredictionDiffText(predictedTotalSec);
         return predictedText + "(" + diffText + ")";
+    }
+
+    function _resolveFinishPredictionDistanceKm() {
+        if (_raceDistanceKm == null or _raceDistanceKm <= 0) {
+            return _raceDistanceKm;
+        }
+        return _raceDistanceKm * FINISH_PREDICTION_DISTANCE_FACTOR;
     }
 
     function _isPastRaceDistance(distanceKm) {

@@ -532,6 +532,46 @@ function testBuildGoalDiffSecondsText_usesSignedMinuteDelta(logger) {
 }
 
 (:test)
+function testResolveFinishPredictionDistanceKm_appliesOnePercentFactor(logger) {
+    var sut = _newUtilsSut();
+    sut._raceDistanceKm = 42.195;
+
+    _assertFloatNear(
+        sut._resolveFinishPredictionDistanceKm(),
+        42.61695,
+        0.0001,
+        "full marathon prediction distance should be official distance plus 1 percent"
+    );
+    return true;
+}
+
+(:test)
+function testUpdateSummaryMetrics_usesAdjustedDistanceOnlyForGoalPrediction(logger) {
+    var sut = _newSmoothingSut();
+    sut._targetTimeSec = 18000;
+    sut._raceDistanceKm = 42.195;
+    sut._paceNowSecPerKm = 300.0;
+    sut._testElapsedSec = 3600;
+    sut._testDistanceKm = 10.0;
+
+    sut._updateSummaryMetrics(null);
+
+    Test.assertEqual("10.0 km", sut._distanceText);
+    Test.assertEqual("3:43", sut._goalPredictionTimeText);
+    return true;
+}
+
+(:test)
+function testIsPastRaceDistance_keepsOfficialDistanceForFinishCutoff(logger) {
+    var sut = _newUtilsSut();
+    sut._raceDistanceKm = 42.195;
+
+    Test.assertEqual(true, sut._isPastRaceDistance(42.3));
+    Test.assertEqual(false, sut._isPastRaceDistance(42.19));
+    return true;
+}
+
+(:test)
 function testResolveGoalRunnerOffsetRatioForDeltaSec_mapsAheadRightAndBehindLeft(logger) {
     var sut = _newUtilsSut();
 
