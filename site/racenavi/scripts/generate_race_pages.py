@@ -1975,8 +1975,7 @@ def race_course_list_label(race: Race, lang: str) -> str:
     for course in race.courses:
         name = course.name_ja if lang == "ja" else course.name_en
         distance = course.distance_label_ja if lang == "ja" else course.distance_label_en
-        same_as_race = name == (race.name_ja if lang == "ja" else race.name_en)
-        if len(race.courses) == 1 and (course.code == "default" or same_as_race):
+        if len(race.courses) == 1:
             labels.append(distance or name)
         else:
             labels.append(f"{name} ({distance})" if distance else name)
