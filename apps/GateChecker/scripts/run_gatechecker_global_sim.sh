@@ -5,7 +5,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 DEVICE_ID="fr57042mm"
-RACE_CODE=""
 SIM_WAIT_SEC="${CIQ_SIM_WAIT_SEC:-12}"
 SIM_APP_PATH="${CONNECTIQ_HOME:-}/bin/ConnectIQ.app"
 SIM_EXEC_PATH="${SIM_APP_PATH}/Contents/MacOS/simulator"
@@ -16,18 +15,13 @@ while [[ $# -gt 0 ]]; do
       DEVICE_ID="$2"
       shift 2
       ;;
-    --race-code)
-      RACE_CODE="$2"
-      shift 2
-      ;;
     -h|--help)
       cat <<'EOF'
 Usage:
-  apps/GateChecker/scripts/run_gatechecker_global_sim.sh [--device <device_id>] [--race-code <code>]
+  apps/GateChecker/scripts/run_gatechecker_global_sim.sh [--device <device_id>]
 
 Examples:
   apps/GateChecker/scripts/run_gatechecker_global_sim.sh
-  apps/GateChecker/scripts/run_gatechecker_global_sim.sh --race-code SAMP26-F42-A7K3
 EOF
       exit 0
       ;;
@@ -41,7 +35,6 @@ done
 TARGET_DIR="$APP_DIR/dist/global"
 TARGET_PRG="$TARGET_DIR/gatechecker-global-${DEVICE_ID}.prg"
 TARGET_SETTINGS_JSON="$TARGET_DIR/gatechecker-global-${DEVICE_ID}-settings.json"
-OVERRIDE_SETTINGS_JSON="$TARGET_DIR/gatechecker-global-${DEVICE_ID}-settings-override.json"
 
 simulator_is_running() {
   pgrep -f "ConnectIQ.app/Contents/MacOS/simulator" >/dev/null 2>&1
@@ -92,26 +85,7 @@ build_settings_send_spec() {
     return 1
   fi
 
-  local settings_path="$TARGET_SETTINGS_JSON"
-  if [[ -n "$RACE_CODE" ]]; then
-    python3 - "$TARGET_SETTINGS_JSON" "$OVERRIDE_SETTINGS_JSON" "$RACE_CODE" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-src = Path(sys.argv[1])
-dst = Path(sys.argv[2])
-race_code = sys.argv[3].strip().upper().replace(" ", "").replace("\u3000", "")
-data = json.loads(src.read_text(encoding="utf-8"))
-for setting in data.get("settings", []):
-    if setting.get("key") == "raceCode":
-        setting["defaultValue"] = race_code
-dst.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-PY
-    settings_path="$OVERRIDE_SETTINGS_JSON"
-  fi
-
-  echo "$settings_path:GARMIN/Settings/GATECHECKER-GLOBAL-${DEVICE_ID:u}-SETTINGS.JSON"
+  echo "$TARGET_SETTINGS_JSON:GARMIN/Settings/GATECHECKER-GLOBAL-${DEVICE_ID:u}-SETTINGS.JSON"
 }
 
 if [[ -z "${CONNECTIQ_HOME:-}" ]]; then
