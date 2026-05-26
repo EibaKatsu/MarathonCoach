@@ -220,6 +220,46 @@
     ]
   },
   {
+    "race_id": "20260614_hida_takayama_ultramarathon",
+    "display_name": {
+      "eng": "Hida Takayama Ultramarathon",
+      "jpn": "第14回 飛騨高山ウルトラマラソン"
+    },
+    "country": "JP",
+    "region": "Asia",
+    "category": "ultra",
+    "sample_free": false,
+    "courses": [
+      {
+        "course_id": "100k_wave_a",
+        "course_name": {
+          "eng": "100 km Wave A",
+          "jpn": "100km WAVE A"
+        },
+        "race_code": "HIDA26-100A-K7P2",
+        "distance_meters": 100000
+      },
+      {
+        "course_id": "100k_wave_b",
+        "course_name": {
+          "eng": "100 km Wave B",
+          "jpn": "100km WAVE B"
+        },
+        "race_code": "HIDA26-100B-R8M4",
+        "distance_meters": 100000
+      },
+      {
+        "course_id": "71k_wave_c",
+        "course_name": {
+          "eng": "71 km Wave C",
+          "jpn": "71km WAVE C"
+        },
+        "race_code": "HIDA26-71C-N9Q5",
+        "distance_meters": 70200
+      }
+    ]
+  },
+  {
     "race_id": "20260628_hakodate_marathon",
     "display_name": {
       "eng": "Hakodate Marathon 2026",
