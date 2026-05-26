@@ -303,10 +303,10 @@ module GateRaceData {
 
     function loadRequestedRaceCodeFromProperties() {
         _resolvedCourseStateCache = null;
-        _requestedRaceCode = _normalizeRaceCode(GateSettingsLoader.loadRaceCode());
+        _requestedRaceCode = _normalizeRaceCode(GateSettingsLoader.loadSelectionCode());
         _log(
             "loadRequestedRaceCodeFromProperties",
-            "raceCode=" + _diag(_requestedRaceCode)
+            "selectionCode=" + _diag(_requestedRaceCode)
         );
         return _requestedRaceCode;
     }
@@ -356,6 +356,17 @@ module GateRaceData {
             return [requestedCourse, requestedRaceCode, "race_code_matched"];
         }
 
+        requestedCourse = _findCourseByCourseCode(courses, requestedRaceCode);
+        if (requestedCourse != null) {
+            _log(
+                "_buildResolvedCourseState",
+                "requested=" + _diag(requestedRaceCode) +
+                " selected=" + _diag(_getEntryValue(requestedCourse, ENTRY_RACE_CODE)) +
+                " reason=course_code_matched"
+            );
+            return [requestedCourse, requestedRaceCode, "course_code_matched"];
+        }
+
         _log(
             "_buildResolvedCourseState",
             "requested=" + _diag(requestedRaceCode) +
@@ -371,6 +382,24 @@ module GateRaceData {
         for (var i = 0; i < courses.size(); i += 1) {
             var course = courses[i];
             if (_stringEquals(_getEntryValue(course, ENTRY_RACE_CODE), raceCode)) {
+                return course;
+            }
+        }
+        return null;
+    }
+
+    function _findCourseByCourseCode(courses, courseCode) {
+        if (courses == null or !(courses instanceof Lang.Array)) {
+            return null;
+        }
+        for (var i = 0; i < courses.size(); i += 1) {
+            var course = courses[i];
+            if (
+                _stringEquals(
+                    _normalizeRaceCode(_getEntryValue(course, ENTRY_COURSE_ID)),
+                    courseCode
+                )
+            ) {
                 return course;
             }
         }
