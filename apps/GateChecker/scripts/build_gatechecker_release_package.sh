@@ -72,25 +72,36 @@ WORK_APP_DIR="$TMP_ROOT/GateChecker"
 cp -R "$APP_DIR" "$WORK_APP_DIR"
 
 if [[ -n "$OUTPUT_VERSION" ]]; then
-  python3 - "$WORK_APP_DIR/race_defs/race_index.yml" "$RACE_KEY" "$OUTPUT_VERSION" <<'PY'
+  python3 - "$WORK_APP_DIR" "$RACE_KEY" "$OUTPUT_VERSION" <<'PY'
 from pathlib import Path
 import sys
 import yaml
 
-path = Path(sys.argv[1])
+app_dir = Path(sys.argv[1])
 race_key = sys.argv[2]
 version = sys.argv[3]
+path = app_dir / "race_defs" / "race_index.yml"
 
 data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
 races = data.get("races")
-if not isinstance(races, dict) or race_key not in races:
+if not isinstance(races, list):
+    raise SystemExit("race_index.yml must define races as a list.")
+
+for entry in races:
+    if not isinstance(entry, dict):
+        continue
+    if entry.get("race_id") != race_key:
+        legacy = entry.get("legacy")
+        if not isinstance(legacy, dict) or legacy.get("race_key") != race_key:
+            continue
+    legacy = entry.get("legacy")
+    if not isinstance(legacy, dict):
+        raise SystemExit(f"legacy build metadata is required for race_key: {race_key}")
+    legacy["version"] = version
+    break
+else:
     raise SystemExit(f"race_key not found in race_index.yml: {race_key}")
 
-entry = races[race_key]
-if not isinstance(entry, dict):
-    raise SystemExit(f"races.{race_key} must be a mapping.")
-
-entry["version"] = version
 path.write_text(
     yaml.safe_dump(
         data,
@@ -104,28 +115,23 @@ PY
 fi
 
 resolved_lines="$(
-  python3 - "$WORK_APP_DIR/race_defs/race_index.yml" "$RACE_KEY" <<'PY'
+  python3 - "$WORK_APP_DIR" "$RACE_KEY" <<'PY'
 from pathlib import Path
 import sys
-import yaml
 
-path = Path(sys.argv[1])
+app_dir = Path(sys.argv[1])
 race_key = sys.argv[2]
-data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-races = data.get("races")
-if not isinstance(races, dict) or race_key not in races:
-    raise SystemExit(f"race_key not found in race_index.yml: {race_key}")
+sys.path.insert(0, str((app_dir / "scripts").resolve()))
 
-entry = races[race_key]
-if not isinstance(entry, dict):
-    raise SystemExit(f"races.{race_key} must be a mapping.")
+from gatechecker_defs import find_race_entry, load_index_entries  # noqa: E402
 
-version = entry.get("version")
-definition = entry.get("definition")
-if not isinstance(version, str) or not version:
-    raise SystemExit(f"races.{race_key}.version must be a non-empty string.")
-if not isinstance(definition, str) or not definition:
-    raise SystemExit(f"races.{race_key}.definition must be a non-empty string.")
+_, entries = load_index_entries(app_dir / "race_defs" / "race_index.yml")
+entry = find_race_entry(race_key, entries)
+if entry.legacy_build is None:
+    raise SystemExit(f"legacy build metadata is not available for {race_key}")
+
+version = entry.legacy_build.version
+definition = entry.definition_path.resolve().relative_to((app_dir / "race_defs").resolve())
 
 print(version)
 print(definition)

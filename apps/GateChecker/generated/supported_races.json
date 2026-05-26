@@ -228,7 +228,7 @@
     "country": "JP",
     "region": "Asia",
     "category": "ultra",
-    "sample_free": false,
+    "sample_free": true,
     "courses": [
       {
         "course_id": "100k_wave_a",
