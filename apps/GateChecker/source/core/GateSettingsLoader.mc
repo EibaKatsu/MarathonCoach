@@ -11,28 +11,6 @@ module GateSettingsLoader {
         return raceCode;
     }
 
-    function loadCourseCode() {
-        var courseCode = loadPropertyString("courseCode");
-        _log("loadCourseCode", "courseCode=" + _diag(courseCode));
-        return courseCode;
-    }
-
-    function loadSelectionCode() {
-        var raceCode = loadPropertyString("raceCode");
-        var courseCode = loadPropertyString("courseCode");
-        var selectionCode = raceCode;
-        if (selectionCode.length() <= 0) {
-            selectionCode = courseCode;
-        }
-        _log(
-            "loadSelectionCode",
-            "raceCode=" + _diag(raceCode) +
-            " courseCode=" + _diag(courseCode) +
-            " selected=" + _diag(selectionCode)
-        );
-        return selectionCode;
-    }
-
     function loadPropertyString(key) {
         var value = getPropertyValue(key);
         if (value == null) {
@@ -44,9 +22,7 @@ module GateSettingsLoader {
     function loadAppProperties() {
         _log(
             "loadAppProperties",
-            "raceCode=" + _diag(getPropertyValue("raceCode")) +
-            " courseCode=" + _diag(getPropertyValue("courseCode")) +
-            " courseIndex=" + _diag(getPropertyValue("courseIndex"))
+            "raceCode=" + _diag(getPropertyValue("raceCode"))
         );
     }
 

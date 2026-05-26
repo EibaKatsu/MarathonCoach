@@ -27,8 +27,8 @@ description: GateChecker 向けの大会定義を作るスキル。ユーザー�
 
 ## File Rules
 
-- race 定義ファイルは `apps/GateChecker/race_defs/races/<race_key>.yml` に置く。
-- `race_key` は `YYYYMMDD_<race_name>` 形式にする。例: `20260517_iwate_oshu_kirameki_marathon`
+- race 定義ファイルは `apps/GateChecker/race_defs/races/<race_id>.yml` に置く。
+- `race_id` は `YYYYMMDD_<race_name>` 形式にする。例: `20260517_iwate_oshu_kirameki_marathon`
 - `display_name.jpn` は大会名のみを入れる。`関門チェッカー` は付けない。
 - `display_name.eng` も大会名のみを基本にする。`Gate Checker` は付けない。公式英語名がなければ過度に凝らず一貫したローマ字/英訳にする。
 - `race.timezone` は日本国内大会なら通常 `Asia/Tokyo`
@@ -38,14 +38,13 @@ description: GateChecker 向けの大会定義を作るスキル。ユーザー�
 ## race_index Rules
 
 - `apps/GateChecker/race_defs/race_index.yml` に該当 race がなければ追加する。
-- 既存 entry があれば `app_id` を壊さず維持する。
-- 新規 entry の既定 version は `0.1.0`。
-- `app_id` が未確定なら `null` でもよい。生成スクリプトが採番する構成を尊重する。
+- entry には `race_id` / `file` / `status` / `sample_free` / `sort` を設定する。
+- `global_app` や他 race の順序・値は壊さない。
 
 ## Validation
 
 - まず定義ファイル単体を見直し、距離・時刻・日付書式を確認する。
-- 検証は `python3 apps/GateChecker/scripts/generate_gatechecker_race.py <race_key>` を使う。
+- 検証は `python3 apps/GateChecker/scripts/generate_gatechecker_all_races.py` を使う。
 - 生成検証で作業ツリーを不要に汚したくない場合は、`apps/GateChecker` を一時ディレクトリへコピーしてそこで検証する。
 - 検証失敗時は、推測で直さず `どの値が公式根拠とズレているか` を先に確認する。
 
@@ -61,4 +60,4 @@ description: GateChecker 向けの大会定義を作るスキル。ユーザー�
 - 形式確認: `apps/GateChecker/README.md`
 - index: `apps/GateChecker/race_defs/race_index.yml`
 - 既存例: `apps/GateChecker/race_defs/races/20261101_toyama_marathon.yml`
-- 生成検証: `apps/GateChecker/scripts/generate_gatechecker_race.py`
+- 生成検証: `apps/GateChecker/scripts/generate_gatechecker_all_races.py`

@@ -27,7 +27,7 @@ class GateCheckerApp extends App.AppBase {
     }
 
     function onValidateProperty(key, value) {
-        if (key == "raceCode" or key == "courseCode") {
+        if (key == "raceCode") {
             GateRaceData.applyRaceCodeSelectionFromPropertyValue(value);
             _log(
                 "onValidateProperty",

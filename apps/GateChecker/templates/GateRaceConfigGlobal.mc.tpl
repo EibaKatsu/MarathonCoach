@@ -38,34 +38,6 @@ module GateRaceConfig {
     // point:
     //   numeric = distanceMeters
     //   GOAL = GateRaceConfig.GOAL
-    function getRaceKey() {
-        return _getValueFromFirstCourse(RACE_ID, "");
-    }
-
-    function getRaceNameJpn() {
-        return _getValueFromFirstCourse(RACE_NAME_JPN, "");
-    }
-
-    function getRaceNameEng() {
-        return _getValueFromFirstCourse(RACE_NAME_ENG, "");
-    }
-
-    function getRaceYear() {
-        return _getValueFromFirstCourse(RACE_YEAR, 0);
-    }
-
-    function getRaceMonth() {
-        return _getValueFromFirstCourse(RACE_MONTH, 0);
-    }
-
-    function getRaceDay() {
-        return _getValueFromFirstCourse(RACE_DAY, 0);
-    }
-
-    function getRaceTimezone() {
-        return _getValueFromFirstCourse(RACE_TIMEZONE, "");
-    }
-
     function getRaceCourses() {
         if (_raceCourses == null) {
             _raceCourses = [
@@ -73,24 +45,5 @@ $race_courses_body
             ];
         }
         return _raceCourses;
-    }
-
-    function _getValueFromFirstCourse(index, fallback) {
-        var course = _getFirstCourse();
-        if (course == null) {
-            return fallback;
-        }
-        if (index < 0 or index >= course.size()) {
-            return fallback;
-        }
-        return course[index];
-    }
-
-    function _getFirstCourse() {
-        var courses = getRaceCourses();
-        if (courses == null or courses.size() <= 0) {
-            return null;
-        }
-        return courses[0];
     }
 }
