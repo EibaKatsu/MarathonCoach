@@ -65,15 +65,45 @@ GARMIN_HR_ZONES_URL = "https://support.garmin.com/en-US/?faq=s3HqdKNtWV1NYrK16eF
 GOOGLE_FORM_URL_JA = "https://forms.gle/xy492imp9MCXxNRP7"
 GOOGLE_FORM_URL_EN = "https://forms.gle/m2k85w17z62gnCP37"
 FREE_SAMPLE_RACE_CODES = {
-    "20260503_bmo_vancouver_marathon": "BMO26-F42-2QTP",
-    "20260524_kurobe_meisui_marathon": "KURO26-F42-M1AF",
-    "20260531_nara_ultra_marathon": "NARA26-100K-R7P4",
+    "20260503_bmo_vancouver_marathon": [
+        {
+            "course": {"ja": "フルマラソン", "en": "Marathon"},
+            "code": "BMO26-F42-2QTP",
+        },
+    ],
+    "20260524_kurobe_meisui_marathon": [
+        {
+            "course": {"ja": "フルマラソン", "en": "Marathon"},
+            "code": "KURO26-F42-M1AF",
+        },
+    ],
+    "20260531_nara_ultra_marathon": [
+        {
+            "course": {"ja": "100km", "en": "100km"},
+            "code": "NARA26-100K-R7P4",
+        },
+    ],
+    "20260614_hida_takayama_ultramarathon": [
+        {
+            "course": {"ja": "100km WAVE A", "en": "100 km Wave A"},
+            "code": "HIDA26-100A-K7P2",
+        },
+        {
+            "course": {"ja": "100km WAVE B", "en": "100 km Wave B"},
+            "code": "HIDA26-100B-R8M4",
+        },
+        {
+            "course": {"ja": "71km WAVE C", "en": "71 km Wave C"},
+            "code": "HIDA26-71C-N9Q5",
+        },
+    ],
 }
 
 
 @dataclass
 class Course:
     code: str
+    race_code: str
     name_ja: str
     name_en: str
     distance_label_ja: str
@@ -92,6 +122,7 @@ class Race:
     name_en: str
     date: str
     timezone: str
+    sample_free: bool
     country_ja: str
     country_en: str
     connect_iq_url_ja: str | None
@@ -418,11 +449,78 @@ def render_steps(steps: list[str]) -> str:
 
 
 def is_free_sample_race(race: Race) -> bool:
-    return race.slug in FREE_SAMPLE_RACE_CODES
+    return race.slug in FREE_SAMPLE_RACE_CODES or race.sample_free
 
 
-def race_code_value(race: Race) -> str:
-    return FREE_SAMPLE_RACE_CODES.get(race.slug, "")
+def free_sample_code_entries(race: Race, lang: str) -> list[tuple[str, str]]:
+    manual_entries = FREE_SAMPLE_RACE_CODES.get(race.slug)
+    if isinstance(manual_entries, list) and manual_entries:
+        items: list[tuple[str, str]] = []
+        for entry in manual_entries:
+            if not isinstance(entry, dict):
+                continue
+            course = entry.get("course") or {}
+            code = normalize_text(entry.get("code"))
+            if not code:
+                continue
+            label = localized_name(course, lang, "")
+            items.append((label, code))
+        if items:
+            return items
+
+    if race.sample_free:
+        return [
+            ((course.name_ja if lang == "ja" else course.name_en), course.race_code)
+            for course in race.courses
+            if course.race_code
+        ]
+
+    return []
+
+
+def race_code_value(race: Race, lang: str) -> str:
+    entries = free_sample_code_entries(race, lang)
+    if not entries:
+        return ""
+    if len(entries) == 1:
+        return entries[0][1]
+    return " / ".join(code for _, code in entries)
+
+
+def sample_code_count_label(race: Race, lang: str) -> str:
+    count = len(free_sample_code_entries(race, lang))
+    if count <= 1:
+        return race_code_value(race, lang)
+    return f"{count} codes published" if lang == "en" else f"{count}コード公開中"
+
+
+def render_race_code_list(race: Race, lang: str) -> str:
+    entries = free_sample_code_entries(race, lang)
+    if not entries:
+        return ""
+    if len(entries) == 1:
+        return render_single_code_box(entries[0][1])
+
+    heading = "公開Race Code" if lang == "ja" else "Published Race Codes"
+    rows = []
+    for label, code in entries:
+        label_html = f'<span class="code-label">{escape(label)}</span>' if label else ""
+        rows.append(
+            '<div class="code-box">'
+            f"{label_html}"
+            f'<strong class="code-value">{escape(code)}</strong>'
+            "</div>"
+        )
+    return f'<div class="code-list"><span class="code-label">{escape(heading)}</span>{"".join(rows)}</div>'
+
+
+def render_single_code_box(code_value: str) -> str:
+    return (
+        '          <div class="code-box">\n'
+        '            <span class="code-label">Race Code</span>\n'
+        f'            <strong class="code-value">{escape(code_value)}</strong>\n'
+        "          </div>"
+    )
 
 
 def is_ultra_or_trail_race(race: Race) -> bool:
@@ -468,7 +566,7 @@ def race_status_badge_label(race: Race, lang: str) -> str:
 
 def race_code_summary(race: Race, lang: str) -> str:
     if is_free_sample_race(race):
-        return race_code_value(race)
+        return sample_code_count_label(race, lang)
     return "購入後に案内" if lang == "ja" else "Available after purchase"
 
 
@@ -553,11 +651,22 @@ def render_free_sample_table(races: list[Race], lang: str) -> str:
         title = race.name_ja if lang == "ja" else race.name_en
         detail_href = f"/gatechecker/races/{race.slug}/" if lang == "ja" else f"/en/gatechecker/races/{race.slug}/"
         detail_label = "詳細" if lang == "ja" else "Details"
+        entries = free_sample_code_entries(race, lang)
+        if len(entries) == 1:
+            code_cell = f"<strong class=\"code-value\">{escape(entries[0][1])}</strong>"
+        else:
+            code_cell = "".join(
+                (
+                    f"<div><strong>{escape(label)}</strong></div>" if label else ""
+                )
+                + f"<div><strong class=\"code-value\">{escape(code)}</strong></div>"
+                for label, code in entries
+            )
         rows.append(
             "<tr>"
             f"<td>{escape(title)}</td>"
             f"<td>{escape(race.date)}</td>"
-            f"<td><strong class=\"code-value\">{escape(race_code_summary(race, lang))}</strong></td>"
+            f"<td>{code_cell}</td>"
             f"<td>{button_link(detail_href, detail_label, 'secondary')}</td>"
             "</tr>"
         )
@@ -680,8 +789,21 @@ def optional_course_start(course: dict[str, Any], race_info: dict[str, Any]) -> 
 
 
 def normalize_course_names(course: dict[str, Any], race_name_ja: str, race_name_en: str, index: int) -> tuple[str, str]:
-    name_ja = first_non_empty(course.get("courseNameJa"), course.get("courseName"), course.get("courseCode"))
-    name_en = first_non_empty(course.get("courseNameEn"), course.get("courseName"), course.get("courseCode"))
+    localized_course_name = course.get("course_name")
+    name_ja = first_non_empty(
+        localized_name(localized_course_name, "ja", ""),
+        course.get("courseNameJa"),
+        course.get("courseName"),
+        course.get("course_id"),
+        course.get("courseCode"),
+    )
+    name_en = first_non_empty(
+        localized_name(localized_course_name, "en", ""),
+        course.get("courseNameEn"),
+        course.get("courseName"),
+        course.get("course_id"),
+        course.get("courseCode"),
+    )
     if name_ja and name_en:
         return name_ja, name_en
     if name_ja:
@@ -718,7 +840,8 @@ def normalize_courses(data: dict[str, Any], race_name_ja: str, race_name_en: str
             label = ""
 
         courses.append(Course(
-            code=str(raw_course.get("courseCode") or f"course-{index}"),
+            code=str(raw_course.get("course_id") or raw_course.get("courseCode") or f"course-{index}"),
+            race_code=normalize_text(raw_course.get("race_code")),
             name_ja=name_ja,
             name_en=name_en,
             distance_label_ja=label,
@@ -833,6 +956,7 @@ def load_races() -> list[Race]:
             name_en=name_en,
             date=str(race_info.get("date") or ""),
             timezone=str(race_info.get("timezone") or ""),
+            sample_free=bool((data.get("meta") or {}).get("sample_free", meta.get("sample_free", False))),
             country_ja=country_ja,
             country_en=country_en,
             connect_iq_url_ja=connect_iq_url_ja,
@@ -1851,8 +1975,7 @@ def race_course_list_label(race: Race, lang: str) -> str:
     for course in race.courses:
         name = course.name_ja if lang == "ja" else course.name_en
         distance = course.distance_label_ja if lang == "ja" else course.distance_label_en
-        same_as_race = name == (race.name_ja if lang == "ja" else race.name_en)
-        if len(race.courses) == 1 and (course.code == "default" or same_as_race):
+        if len(race.courses) == 1:
             labels.append(distance or name)
         else:
             labels.append(f"{name} ({distance})" if distance else name)
@@ -2101,8 +2224,8 @@ def render_races_index(races: list[Race], lang: str) -> str:
 
 
 def detail_course_heading(race: Race, course: Course, lang: str) -> str:
-    if len(race.courses) == 1 and course.code == "default":
-        return ""
+    if len(race.courses) == 1:
+        return race.name_ja if lang == "ja" else race.name_en
     return course.name_ja if lang == "ja" else course.name_en
 
 
@@ -2221,6 +2344,7 @@ def render_aid_course_block(race: Race, course: Course, lang: str) -> str:
 
 def render_race_detail(race: Race, lang: str) -> str:
     free_sample = is_free_sample_race(race)
+    free_code_count = len(free_sample_code_entries(race, lang)) if free_sample else 0
     code_value = race_code_summary(race, lang)
     price_value = race_price_label(race, lang)
     purchase_link = race_payment_link(race)
@@ -2244,7 +2368,13 @@ def render_race_detail(race: Race, lang: str) -> str:
             "時計に同期",
             "レース中に次の関門までの距離と時間を見る",
         ]
-        purchase_copy = "このRace Codeは無料サンプルとして公開しています。" if free_sample else "有料Race Codeはアプリ本体ではなく、この大会データを使うためのコードです。購入後は当面メールで手動案内します。"
+        purchase_copy = (
+            "このRace Codeは無料サンプルとして公開しています。複数コースがある大会は、コースごとに別のRace Codeを公開します。"
+            if free_sample and free_code_count > 1
+            else "このRace Codeは無料サンプルとして公開しています。"
+            if free_sample
+            else "有料Race Codeはアプリ本体ではなく、この大会データを使うためのコードです。購入後は当面メールで手動案内します。"
+        )
         request_title = "別の大会も必要ならリクエストできます"
         request_copy = "未対応大会のリクエストは無料で受け付けています。"
         request_copy_2 = "公式サイトや大会要項から情報を拾える大会から順番に対応します。"
@@ -2286,7 +2416,13 @@ def render_race_detail(race: Race, lang: str) -> str:
             "Sync your watch",
             "Use the watch to see the next cutoff during the race",
         ]
-        purchase_copy = "This Race Code is published as a free sample." if free_sample else "This paid Race Code is for the race data only, not for the app itself. For now, it is sent manually after purchase."
+        purchase_copy = (
+            "This Race Code is published as a free sample. When a race has multiple courses, each course gets its own published code."
+            if free_sample and free_code_count > 1
+            else "This Race Code is published as a free sample."
+            if free_sample
+            else "This paid Race Code is for the race data only, not for the app itself. For now, it is sent manually after purchase."
+        )
         request_title = "Need another race?"
         request_copy = "Race requests are free."
         request_copy_2 = "I work through races where the official information is clear enough to build from."
@@ -2345,10 +2481,7 @@ def render_race_detail(race: Race, lang: str) -> str:
           <div class="meta-pills">
             {render_pills(extra_pills)}
           </div>
-          <div class="code-box">
-            <span class="code-label">Race Code</span>
-            <strong class="code-value">{escape(code_value)}</strong>
-          </div>
+          {render_race_code_list(race, lang) if free_sample else render_single_code_box(code_value)}
         </div>
       </div>
     </section>
@@ -2358,10 +2491,7 @@ def render_race_detail(race: Race, lang: str) -> str:
         <span class="badge {race_status_badge_class(race)}">{escape(code_title)}</span>
         <h2>{escape(code_title)}</h2>
         <p class="page-copy">{escape(code_copy)}</p>
-        <div class="code-box">
-          <span class="code-label">Race Code</span>
-          <strong class="code-value">{escape(code_value)}</strong>
-        </div>
+        {render_race_code_list(race, lang) if free_sample else render_single_code_box(code_value)}
         <ul class="page-link-list">{render_list(code_steps)}</ul>
         <p class="pricing-disclaimer">{escape(purchase_copy)}</p>
         <div class="actions">
