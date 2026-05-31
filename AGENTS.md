@@ -62,5 +62,12 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
 - 原因未特定のクラッシュや異常系では、まず `PROCESS.md` の診断ログ方針に従って `入力値 / 判定結果 / 表示値` を採取し、原因特定前に推測の修正やフォールバック追加を進めない。
 - Codex への実行モード指定は、今後の既定として `/fast off` を維持する。
 
+## 秘密鍵運用
+- `developer_key` は既存Connect IQアプリの更新に必要な秘密鍵。
+- `developer_key` の削除・再生成・コミットは禁止。
+- 通常は `CIQ_DEV_KEY` / `CIQ_RELEASE_KEY` で参照する。
+- 推奨保存先: `~/.secure/racenavi/connectiq/developer_key`
+- `.vscode/developer_key` は上記保存先への symlink とする。
+
 ## 備考
 - `AGENT.md` は廃止し、以後は本構成を正とする。
