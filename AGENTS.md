@@ -28,6 +28,8 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
   - `skills/new-gatechecker-guide-app/SKILL.md`
 - `x-post-writer`: `X投稿文を作って` / `次の投稿を考えて` / `ポスト文を考えて` 指示時に使用
   - `skills/x-post-writer/SKILL.md`
+- `threads-post-writer`: `Threads投稿文を作って` / `次のThreads投稿を考えて` / `Threadsの既存投稿を見て次の案を出して` 指示時に使用
+  - `skills/threads-post-writer/SKILL.md`
 - `note-post-writer`: `note投稿文を作って` / `note記事の下書きを作って` / `既存のnoteの流れを見て次の記事案を出して` 指示時に使用
   - `skills/note-post-writer/SKILL.md`
 

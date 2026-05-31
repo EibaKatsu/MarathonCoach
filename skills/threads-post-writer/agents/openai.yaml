@@ -1,0 +1,4 @@
+interface:
+  display_name: "Threads Runner Posts"
+  short_description: "Review @eba3.run, analyze reaction patterns, then draft 10 Threads posts."
+  default_prompt: "Use $threads-post-writer to review @eba3.run's recent Threads posts and draft 10 new posts for RaceNavi and 関門ガイド."
