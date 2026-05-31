@@ -9,9 +9,10 @@ module GateRemainingDistance {
     const CFG_HAS_REMAINING = 0;
     const CFG_REMAINING_DISTANCE_KM = 1;
     const CFG_REASON = 2;
+    const CFG_DISPLAY_REMAINING_DISTANCE_KM = 3;
 
     function newDefaultConfig() as Lang.Array {
-        return [false, null, REASON_EMPTY];
+        return [false, null, REASON_EMPTY, null];
     }
 
     function computeRemainingDistance(currentDistanceKm, targetDistanceKm) as Lang.Array {
@@ -25,7 +26,8 @@ module GateRemainingDistance {
             return config;
         }
 
-        var remainingDistanceKm = targetDistanceKm - currentDistanceKm;
+        var rawRemainingDistanceKm = targetDistanceKm - currentDistanceKm;
+        var remainingDistanceKm = rawRemainingDistanceKm;
         if (remainingDistanceKm < 0) {
             remainingDistanceKm = 0.0;
         }
@@ -33,6 +35,7 @@ module GateRemainingDistance {
         config[CFG_HAS_REMAINING] = true;
         config[CFG_REMAINING_DISTANCE_KM] = remainingDistanceKm;
         config[CFG_REASON] = REASON_OK;
+        config[CFG_DISPLAY_REMAINING_DISTANCE_KM] = rawRemainingDistanceKm;
         return config;
     }
 
@@ -42,6 +45,10 @@ module GateRemainingDistance {
 
     function getRemainingDistanceKm(config) {
         return _getConfigValue(config, CFG_REMAINING_DISTANCE_KM, null);
+    }
+
+    function getDisplayRemainingDistanceKm(config) {
+        return _getConfigValue(config, CFG_DISPLAY_REMAINING_DISTANCE_KM, null);
     }
 
     function getReason(config) {

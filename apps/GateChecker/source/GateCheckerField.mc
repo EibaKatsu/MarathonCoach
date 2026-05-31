@@ -4,6 +4,7 @@ using Toybox.System as Sys;
 using Toybox.WatchUi as Ui;
 using GateAidSelector;
 using GateCurrentPace;
+using GateDistanceCorrection;
 using GateDisplayModel;
 using GateDistanceUtils;
 using GateNextSelector;
@@ -12,9 +13,11 @@ using GateRaceData;
 using GateRemainingDistance;
 using GateRequiredPace;
 using GateRemainingTime;
+using GateSettingsLoader;
 
 class GateCheckerField extends Ui.DataField {
     const CODE_DEBUG_LOG = false;
+    const LAP_DEBUG_LOG = true;
     const LAYOUT_DEBUG_LOG = false;
     const FONT_DEBUG_LOG = false;
     const PRESTART_DEBUG_LOG = false;
@@ -41,6 +44,7 @@ class GateCheckerField extends Ui.DataField {
     const AID_TEXT_SAFE_MARGIN = 12;
     const TO_GATE_LABEL_TEXT = "TO GATE";
     const TO_NEXT_AID_LABEL_TEXT = "TO NEXT AID";
+    const LAP_ADJUST_PROMPT_TEXT = "LAP TO ADJUST";
     const GATE_HEADER_VALUE_GAP = 2;
     const LAYOUT_TOP_PERCENT = 6;
     const LAYOUT_BOTTOM_PERCENT = 94;
@@ -76,17 +80,29 @@ class GateCheckerField extends Ui.DataField {
     var _aidDistanceUnitText = "";
     var _aidRemainDistanceText = "--";
     var _aidRemainDistanceUnitText = "";
+    var _aidMergedText = "";
     var _currentPaceConfig = null;
     var _lastCodeDiagLine = null;
     var _lastLayoutDiagLine = null;
     var _lastFontDiagLine = null;
     var _lastPreStartDiagLine = null;
     var _lastAidDiagLine = null;
+    var _lastPromptDiagLine = null;
     var _displayState = GateDisplayModel.STATE_CODE_ERROR;
+    var _distanceCorrectionConfig = null;
+    var _lastRawDistanceKm = null;
+    var _lastEffectiveDistanceKm = null;
+    var _lastLapAdjustTargetDistanceKm = null;
+    var _lastLapAdjustPromptVisible = false;
+    var _simulatorManualLapFallbackEnabled = false;
 
     function initialize() {
         DataField.initialize();
         _currentPaceConfig = GateCurrentPace.newDefaultConfig();
+        _distanceCorrectionConfig = GateDistanceCorrection.newDefaultConfig(
+            GateSettingsLoader.loadGateLapAdjustEnabled()
+        );
+        _simulatorManualLapFallbackEnabled = GateSettingsLoader.loadSimulatorManualLapFallbackEnabled();
         _loadViewState(null);
     }
 
@@ -271,20 +287,31 @@ class GateCheckerField extends Ui.DataField {
             );
         }
 
-        var hasAidBlock = _aidTitleText.length() > 0 or _aidRightLabelText.length() > 0 or _aidDistanceText.length() > 0 or _aidRemainDistanceText.length() > 0;
+        var hasAidBlock = _aidMergedText.length() > 0 or _aidTitleText.length() > 0 or _aidRightLabelText.length() > 0 or _aidDistanceText.length() > 0 or _aidRemainDistanceText.length() > 0;
         if (hasAidBlock) {
             _drawSectionDivider(dc, dividerY, dc.getWidth());
-            _drawStackedMetricBlockCentered(
-                dc,
-                aidRenderRect,
-                labelFont,
-                _aidTitleText,
-                aidValueFont,
-                _aidRemainDistanceText,
-                unitFont,
-                _aidRemainDistanceUnitText,
-                Gfx.COLOR_WHITE
-            );
+            if (_aidMergedText.length() > 0) {
+                var aidMergedFont = _resolveSingleLineTextFont(
+                    dc,
+                    Gfx.FONT_SMALL,
+                    _aidMergedText,
+                    _safeStackedCellWidth(aidRenderRect),
+                    _rectHeight(aidRenderRect)
+                );
+                _drawCenteredCompactInfoBlock(dc, aidRenderRect, labelFont, _aidTitleText, aidMergedFont, _aidMergedText, Gfx.COLOR_WHITE);
+            } else {
+                _drawStackedMetricBlockCentered(
+                    dc,
+                    aidRenderRect,
+                    labelFont,
+                    _aidTitleText,
+                    aidValueFont,
+                    _aidRemainDistanceText,
+                    unitFont,
+                    _aidRemainDistanceUnitText,
+                    Gfx.COLOR_WHITE
+                );
+            }
         }
 
         _logLayoutDiag(
@@ -321,6 +348,11 @@ class GateCheckerField extends Ui.DataField {
     }
 
     function _loadViewState(info) {
+        _distanceCorrectionConfig = GateDistanceCorrection.syncEnabled(
+            _distanceCorrectionConfig,
+            GateSettingsLoader.loadGateLapAdjustEnabled()
+        );
+        _simulatorManualLapFallbackEnabled = GateSettingsLoader.loadSimulatorManualLapFallbackEnabled();
         if (!GateRaceData.hasResolvedRaceCode()) {
             _displayState = GateDisplayModel.STATE_CODE_ERROR;
             _singleText = Ui.loadResource(Rez.Strings.CheckAppSettings);
@@ -334,8 +366,12 @@ class GateCheckerField extends Ui.DataField {
             return;
         }
 
-        var currentDistanceKm = GateDistanceUtils.extractElapsedDistanceKm(info);
-        if (currentDistanceKm == null) {
+        var rawDistanceKm = GateDistanceUtils.extractElapsedDistanceKm(info);
+        _lastRawDistanceKm = rawDistanceKm;
+        if (rawDistanceKm == null) {
+            _lastEffectiveDistanceKm = null;
+            _lastLapAdjustTargetDistanceKm = null;
+            _lastLapAdjustPromptVisible = false;
             _displayState = GateDisplayModel.STATE_WAIT_DIST;
             _singleText = Ui.loadResource(Rez.Strings.WaitDist);
             _line1Text = "";
@@ -356,14 +392,23 @@ class GateCheckerField extends Ui.DataField {
         var paceJudgeConfig = GatePaceJudge.newDefaultConfig();
         var requiredPaceConfig = GateRequiredPace.newDefaultConfig();
         var remainingTimeConfig = GateRemainingTime.newDefaultConfig();
-        _currentPaceConfig = GateCurrentPace.updateCurrentPace(_currentPaceConfig, info, currentDistanceKm);
-        nextGateConfig = GateNextSelector.selectNextGate(gates, currentDistanceKm);
-        nextAidConfig = GateAidSelector.selectNextAid(aids, currentDistanceKm);
+        var effectiveDistanceKm = GateDistanceCorrection.getEffectiveDistanceKm(
+            rawDistanceKm,
+            _distanceCorrectionConfig
+        );
+        _lastEffectiveDistanceKm = effectiveDistanceKm;
+        _lastLapAdjustTargetDistanceKm = GateDistanceCorrection.getAdjustmentCandidateDistanceKm(
+            _distanceCorrectionConfig,
+            rawDistanceKm
+        );
+        _currentPaceConfig = GateCurrentPace.updateCurrentPace(_currentPaceConfig, info, rawDistanceKm);
+        nextGateConfig = GateNextSelector.selectNextGate(gates, effectiveDistanceKm);
+        nextAidConfig = GateAidSelector.selectNextAid(aids, effectiveDistanceKm);
 
         if (GateNextSelector.hasNextGate(nextGateConfig)) {
             var nextGate = GateNextSelector.getNextGate(nextGateConfig);
             remainingDistanceConfig = GateRemainingDistance.computeRemainingDistance(
-                currentDistanceKm,
+                effectiveDistanceKm,
                 GateRaceData.getGateDistanceKm(nextGate)
             );
             remainingTimeConfig = GateRemainingTime.computeRemainingTime(
@@ -381,7 +426,7 @@ class GateCheckerField extends Ui.DataField {
         }
         if (GateAidSelector.hasNextAid(nextAidConfig)) {
             aidRemainingDistanceConfig = GateRemainingDistance.computeRemainingDistance(
-                currentDistanceKm,
+                effectiveDistanceKm,
                 GateRaceData.getAidDistanceKm(GateAidSelector.getNextAid(nextAidConfig))
             );
         }
@@ -392,7 +437,7 @@ class GateCheckerField extends Ui.DataField {
             requiredPaceConfig,
             remainingTimeConfig,
             _currentPaceConfig,
-            currentDistanceKm
+            rawDistanceKm
         );
         _displayState = GateDisplayModel.getState(displayConfig);
         _singleText = GateDisplayModel.getSingleText(displayConfig);
@@ -402,6 +447,7 @@ class GateCheckerField extends Ui.DataField {
         _line3RightText = GateDisplayModel.getLine3Right(displayConfig);
         _line3LeftColor = GateDisplayModel.getLine3LeftColor(displayConfig);
         _line4Text = GateDisplayModel.getLine4(displayConfig);
+        _lastLapAdjustPromptVisible = _shouldRenderLapAdjustPrompt(rawDistanceKm, remainingTimeConfig);
         _refreshRenderPartsFromCore(
             displayConfig,
             gates,
@@ -411,7 +457,14 @@ class GateCheckerField extends Ui.DataField {
             aidRemainingDistanceConfig,
             remainingTimeConfig,
             _currentPaceConfig,
-            currentDistanceKm
+            rawDistanceKm
+        );
+        _logPromptDiag(
+            nextGateConfig,
+            nextAidConfig,
+            rawDistanceKm,
+            effectiveDistanceKm,
+            remainingTimeConfig
         );
         _logCodeDiag(
             gates,
@@ -425,7 +478,7 @@ class GateCheckerField extends Ui.DataField {
             remainingTimeConfig,
             _currentPaceConfig,
             displayConfig,
-            currentDistanceKm,
+            rawDistanceKm,
             _singleText,
             _line1Text,
             _line2Text,
@@ -433,6 +486,46 @@ class GateCheckerField extends Ui.DataField {
             _line3RightText,
             _line4Text
         );
+    }
+
+    function onTimerLap2(trigger) {
+        _logLapDiag("onTimerLap2", trigger, "received");
+        _logLapContext("onTimerLap2", trigger);
+        if (!GateDistanceCorrection.isManualLapTrigger(trigger)) {
+            _logLapDiag("onTimerLap2", trigger, "ignored_non_manual");
+            return false;
+        }
+        return _applyGateLapCorrection("onTimerLap2", trigger);
+    }
+
+    function onTimerLap() {
+        _logLapDiag("onTimerLap", null, "fallback_called");
+        _logLapContext("onTimerLap", null);
+        if (!_simulatorManualLapFallbackEnabled) {
+            _logLapDiag("onTimerLap", null, "ignored_simulator_fallback_disabled");
+            return;
+        }
+        if (GateDistanceCorrection.isExactIntervalMarkerDistance(_lastRawDistanceKm)) {
+            _logLapDiag("onTimerLap", null, "ignored_exact_interval_auto_lap");
+            return;
+        }
+        _applyGateLapCorrection("onTimerLap", null);
+    }
+
+    function onTimerReset() {
+        _distanceCorrectionConfig = GateDistanceCorrection.reset(_distanceCorrectionConfig);
+        _lastRawDistanceKm = null;
+        _lastEffectiveDistanceKm = null;
+        _lastLapAdjustTargetDistanceKm = null;
+        _lastLapAdjustPromptVisible = false;
+    }
+
+    function onTimerStart() {
+        _distanceCorrectionConfig = GateDistanceCorrection.reset(_distanceCorrectionConfig);
+        _lastRawDistanceKm = null;
+        _lastEffectiveDistanceKm = null;
+        _lastLapAdjustTargetDistanceKm = null;
+        _lastLapAdjustPromptVisible = false;
     }
 
     function _refreshRenderPartsFromCore(displayConfig, gates, nextGateConfig, nextAidConfig, remainingDistanceConfig, aidRemainingDistanceConfig, remainingTimeConfig, currentPaceConfig, currentDistanceKm) {
@@ -461,7 +554,7 @@ class GateCheckerField extends Ui.DataField {
             _gateRemainDistanceUnitText = "";
             _gateLeftTimeText = "";
             _remainMergedText = Ui.loadResource(Rez.Strings.AllPassed);
-            _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig);
+            _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig, currentDistanceKm, remainingTimeConfig);
             return;
         }
 
@@ -469,7 +562,6 @@ class GateCheckerField extends Ui.DataField {
         _gateRemainRightLabelText = Ui.loadResource(Rez.Strings.RemainLabel);
         _remainMergedText = "";
         var nextGate = GateNextSelector.getNextGate(nextGateConfig);
-        var remainingDistanceKm = GateRemainingDistance.getRemainingDistanceKm(remainingDistanceConfig);
         if (nextGate != null) {
             var nextGateDisplayParts = GateRaceData.getGateDisplayParts(nextGate);
             _gateTitleText = _formatGateLabel(GateNextSelector.getNextIndex(nextGateConfig));
@@ -484,16 +576,30 @@ class GateCheckerField extends Ui.DataField {
             _gateSummaryText = _buildGateSummaryText();
         }
 
-        var gateRemainDistanceParts = GateDistanceUtils.formatCompactDistanceParts(remainingDistanceKm);
+        var gateRemainDistanceParts = GateDistanceUtils.formatSignedCompactDistanceParts(
+            GateRemainingDistance.getDisplayRemainingDistanceKm(remainingDistanceConfig)
+        );
         _gateRemainDistanceText = gateRemainDistanceParts[0];
         _gateRemainDistanceUnitText = gateRemainDistanceParts[1];
         _gateLeftTimeText = _formatGateRemainingTimeValue(GateRemainingTime.getRemainingSec(remainingTimeConfig));
-        _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig);
+        _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig, currentDistanceKm, remainingTimeConfig);
     }
 
-    function _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig) {
+    function _refreshAidRenderParts(nextAidConfig, aidRemainingDistanceConfig, rawDistanceKm, remainingTimeConfig) {
+        if (_shouldRenderLapAdjustPrompt(rawDistanceKm, remainingTimeConfig)) {
+            _aidTitleText = LAP_ADJUST_PROMPT_TEXT;
+            _aidRightLabelText = "";
+            _aidDistanceText = "";
+            _aidDistanceUnitText = "";
+            _aidRemainDistanceText = "";
+            _aidRemainDistanceUnitText = "";
+            _aidMergedText = _buildLapAdjustPromptDetail(rawDistanceKm);
+            return;
+        }
+
         _aidTitleText = TO_NEXT_AID_LABEL_TEXT;
         _aidRightLabelText = "";
+        _aidMergedText = "";
         if (!GateAidSelector.hasNextAid(nextAidConfig)) {
             _aidDistanceText = "";
             _aidDistanceUnitText = "";
@@ -502,8 +608,8 @@ class GateCheckerField extends Ui.DataField {
             return;
         }
 
-        var aidRemainDistanceParts = GateDistanceUtils.formatCompactDistanceParts(
-            GateRemainingDistance.getRemainingDistanceKm(aidRemainingDistanceConfig)
+        var aidRemainDistanceParts = GateDistanceUtils.formatSignedCompactDistanceParts(
+            GateRemainingDistance.getDisplayRemainingDistanceKm(aidRemainingDistanceConfig)
         );
         _aidDistanceText = "";
         _aidDistanceUnitText = "";
@@ -531,6 +637,7 @@ class GateCheckerField extends Ui.DataField {
         _aidDistanceUnitText = "";
         _aidRemainDistanceText = "--";
         _aidRemainDistanceUnitText = "";
+        _aidMergedText = "";
     }
 
     function _formatGateLabel(index) {
@@ -654,11 +761,197 @@ class GateCheckerField extends Ui.DataField {
         Sys.println(line);
     }
 
+    function _logLapDiag(tag, trigger, message) {
+        if (!LAP_DEBUG_LOG) {
+            return;
+        }
+
+        var lapTriggerValue = "null";
+        if (trigger != null and trigger has :lapTrigger and trigger[:lapTrigger] != null) {
+            lapTriggerValue = trigger[:lapTrigger].toString();
+        }
+
+        Sys.println(
+            "[GATE_LAP_DIAG] " +
+            tag +
+            " lapTrigger=" + lapTriggerValue +
+            " enabled=" + _diagValue(GateDistanceCorrection.isEnabled(_distanceCorrectionConfig)) +
+            " simulatorFallback=" + _diagValue(_simulatorManualLapFallbackEnabled) +
+            " rawDistanceKm=" + _diagValue(_lastRawDistanceKm) +
+            " offsetKm=" + _diagValue(GateDistanceCorrection.getCorrectionOffsetKm(_distanceCorrectionConfig)) +
+            " " + message
+        );
+    }
+
+    function _logLapContext(tag, trigger) {
+        if (!LAP_DEBUG_LOG) {
+            return;
+        }
+
+        var line =
+            "[GATE_LAP_CTX] " +
+            tag +
+            " rawDistanceKm=" + _diagValue(_lastRawDistanceKm) +
+            " effectiveDistanceKm=" + _diagValue(_lastEffectiveDistanceKm) +
+            " offsetKm=" + _diagValue(GateDistanceCorrection.getCorrectionOffsetKm(_distanceCorrectionConfig)) +
+            " candidateTargetDistanceKm=" + _diagValue(_lastLapAdjustTargetDistanceKm) +
+            " promptVisible=" + _diagValue(_lastLapAdjustPromptVisible) +
+            " exactIntervalMarkerDistance=" + _diagValue(GateDistanceCorrection.isExactIntervalMarkerDistance(_lastRawDistanceKm)) +
+            " lastCorrectedMarkerIndex=" + _diagValue(GateDistanceCorrection.getLastCorrectedMarkerIndex(_distanceCorrectionConfig)) +
+            " lapTrigger=" + _diagValue(_resolveLapTriggerValue(trigger));
+        Sys.println(line);
+    }
+
+    function _logPromptDiag(nextGateConfig, nextAidConfig, rawDistanceKm, effectiveDistanceKm, remainingTimeConfig) {
+        if (!LAP_DEBUG_LOG) {
+            return;
+        }
+
+        var targetDistanceKm = GateDistanceCorrection.getAdjustmentCandidateDistanceKm(
+            _distanceCorrectionConfig,
+            rawDistanceKm
+        );
+        var promptTargetAvailable = targetDistanceKm != null;
+        var promptPhase = _isLapAdjustPromptPhase(remainingTimeConfig);
+        var promptVisible = GateDistanceCorrection.isEnabled(_distanceCorrectionConfig) and promptTargetAvailable and promptPhase;
+
+        var nextGateDistanceKm = null;
+        var nextGateIndex = GateNextSelector.getNextIndex(nextGateConfig);
+        if (GateNextSelector.hasNextGate(nextGateConfig)) {
+            nextGateDistanceKm = GateRaceData.getGateDistanceKm(GateNextSelector.getNextGate(nextGateConfig));
+        }
+
+        var nextAidDistanceKm = null;
+        var nextAidIndex = GateAidSelector.getNextIndex(nextAidConfig);
+        if (GateAidSelector.hasNextAid(nextAidConfig)) {
+            nextAidDistanceKm = GateRaceData.getAidDistanceKm(GateAidSelector.getNextAid(nextAidConfig));
+        }
+
+        var line =
+            "[GATE_PROMPT_DIAG]" +
+            " enabled=" + _diagValue(GateDistanceCorrection.isEnabled(_distanceCorrectionConfig)) +
+            " rawDistanceKm=" + _diagValue(rawDistanceKm) +
+            " effectiveDistanceKm=" + _diagValue(effectiveDistanceKm) +
+            " offsetKm=" + _diagValue(GateDistanceCorrection.getCorrectionOffsetKm(_distanceCorrectionConfig)) +
+            " targetDistanceKm=" + _diagValue(targetDistanceKm) +
+            " targetAvailable=" + _diagValue(promptTargetAvailable) +
+            " promptPhase=" + _diagValue(promptPhase) +
+            " promptVisible=" + _diagValue(promptVisible) +
+            " nextGateIndex=" + _diagValue(nextGateIndex) +
+            " nextGateDistanceKm=" + _diagValue(nextGateDistanceKm) +
+            " nextAidIndex=" + _diagValue(nextAidIndex) +
+            " nextAidDistanceKm=" + _diagValue(nextAidDistanceKm) +
+            " aidTitle=" + _diagValue(_aidTitleText) +
+            " aidMerged=" + _diagValue(_aidMergedText) +
+            " aidRemain=" + _diagValue(_aidRemainDistanceText) +
+            " aidRemainUnit=" + _diagValue(_aidRemainDistanceUnitText) +
+            " displayState=" + _diagValue(_displayStateLabel());
+        if (_lastPromptDiagLine == line) {
+            return;
+        }
+        _lastPromptDiagLine = line;
+        Sys.println(line);
+    }
+
+    function _shouldRenderLapAdjustPrompt(rawDistanceKm, remainingTimeConfig) {
+        if (!GateDistanceCorrection.isEnabled(_distanceCorrectionConfig)) {
+            return false;
+        }
+        if (!_isLapAdjustPromptTargetAvailable(rawDistanceKm)) {
+            return false;
+        }
+
+        return _isLapAdjustPromptPhase(remainingTimeConfig);
+    }
+
+    function _isLapAdjustPromptTargetAvailable(rawDistanceKm) {
+        return GateDistanceCorrection.getAdjustmentCandidateDistanceKm(
+            _distanceCorrectionConfig,
+            rawDistanceKm
+        ) != null;
+    }
+
+    function _buildLapAdjustPromptDetail(rawDistanceKm) {
+        var targetDistanceKm = GateDistanceCorrection.getAdjustmentCandidateDistanceKm(
+            _distanceCorrectionConfig,
+            rawDistanceKm
+        );
+        if (targetDistanceKm == null) {
+            return "";
+        }
+
+        var effectiveDistanceKm = GateDistanceCorrection.getEffectiveDistanceKm(
+            rawDistanceKm,
+            _distanceCorrectionConfig
+        );
+        if (effectiveDistanceKm == null) {
+            return "";
+        }
+
+        return GateDistanceUtils.formatPreciseCompactDistanceValue(effectiveDistanceKm) +
+            " -> " +
+            GateDistanceUtils.formatPreciseCompactDistanceValue(targetDistanceKm);
+    }
+
+    function _isLapAdjustPromptPhase(remainingTimeConfig) {
+        var currentClockSec = GateRemainingTime.getCurrentClockSec(remainingTimeConfig);
+        if (currentClockSec == null) {
+            var clockTime = null;
+            try {
+                clockTime = Sys.getClockTime();
+            } catch (e) {
+                clockTime = null;
+            }
+            if (clockTime == null) {
+                return true;
+            }
+            currentClockSec = (clockTime.hour * 3600) + (clockTime.min * 60) + clockTime.sec;
+        }
+
+        return (currentClockSec % 4) < 2;
+    }
+
+    function _applyGateLapCorrection(tag, trigger) {
+        if (!GateDistanceCorrection.isEnabled(_distanceCorrectionConfig)) {
+            _logLapDiag(tag, trigger, "ignored_disabled");
+            return false;
+        }
+
+        var result = GateDistanceCorrection.applyManualLapCorrection(
+            _distanceCorrectionConfig,
+            _lastRawDistanceKm
+        );
+        if (!result[GateDistanceCorrection.RESULT_APPLIED]) {
+            _logLapDiag(
+                tag,
+                trigger,
+                "not_applied reason=" + result[GateDistanceCorrection.RESULT_REASON].toString()
+            );
+            return false;
+        }
+
+        _logLapDiag(
+            tag,
+            trigger,
+            "applied targetDistanceKm=" + result[GateDistanceCorrection.RESULT_TARGET_DISTANCE_KM].toString() +
+            " offsetKm=" + result[GateDistanceCorrection.RESULT_OFFSET_KM].toString()
+        );
+        Ui.requestUpdate();
+        return true;
+    }
+
     function _diagValue(value) {
         if (value == null) {
             return "null";
         }
         return value.toString();
+    }
+
+    function _resolveLapTriggerValue(trigger) {
+        if (trigger == null or !(trigger has :lapTrigger) or trigger[:lapTrigger] == null) {
+            return null;
+        }
+        return trigger[:lapTrigger];
     }
 
     function _diagText(value) {
@@ -668,6 +961,25 @@ class GateCheckerField extends Ui.DataField {
 
         var text = value.toString();
         return "\"" + text + "\"(" + text.length().format("%d") + ")";
+    }
+
+    function _displayStateLabel() {
+        if (_displayState == GateDisplayModel.STATE_WAIT_DIST) {
+            return "wait_dist";
+        }
+        if (_displayState == GateDisplayModel.STATE_ALL_PASSED) {
+            return "all_passed";
+        }
+        if (_displayState == GateDisplayModel.STATE_OVER) {
+            return "over";
+        }
+        if (_displayState == GateDisplayModel.STATE_PACE_NA) {
+            return "pace_na";
+        }
+        if (_displayState == GateDisplayModel.STATE_NORMAL) {
+            return "normal";
+        }
+        return "config_error";
     }
 
     function _isJapaneseAppName() {

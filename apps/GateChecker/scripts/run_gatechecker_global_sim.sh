@@ -8,6 +8,7 @@ DEVICE_ID="fr57042mm"
 SIM_WAIT_SEC="${CIQ_SIM_WAIT_SEC:-12}"
 SIM_APP_PATH="${CONNECTIQ_HOME:-}/bin/ConnectIQ.app"
 SIM_EXEC_PATH="${SIM_APP_PATH}/Contents/MacOS/simulator"
+RUN_LOG_PATH="${CIQ_RUN_LOG_PATH:-/tmp/gatechecker_global_run.log}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -31,6 +32,9 @@ EOF
       ;;
   esac
 done
+
+mkdir -p "$(dirname "$RUN_LOG_PATH")"
+exec > >(tee -a "$RUN_LOG_PATH") 2>&1
 
 TARGET_DIR="$APP_DIR/dist/global"
 TARGET_PRG="$TARGET_DIR/gatechecker-global-${DEVICE_ID}.prg"
@@ -93,7 +97,8 @@ if [[ -z "${CONNECTIQ_HOME:-}" ]]; then
   exit 1
 fi
 
-"$SCRIPT_DIR/build_gatechecker_global.sh" "$DEVICE_ID"
+GATECHECKER_SIMULATOR_MANUAL_LAP_FALLBACK_ENABLED=true \
+  "$SCRIPT_DIR/build_gatechecker_global.sh" "$DEVICE_ID"
 
 if [[ ! -f "$TARGET_PRG" ]]; then
   echo "ERROR: Built global artifact not found: $TARGET_PRG" >&2

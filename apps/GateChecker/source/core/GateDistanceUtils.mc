@@ -38,6 +38,11 @@ module GateDistanceUtils {
         return parts[DISTANCE_PARTS_VALUE] + parts[DISTANCE_PARTS_UNIT];
     }
 
+    function formatSignedCompactDistance(distanceKm) {
+        var parts = formatSignedCompactDistanceParts(distanceKm);
+        return parts[DISTANCE_PARTS_VALUE] + parts[DISTANCE_PARTS_UNIT];
+    }
+
     function formatCompactDistanceKmValue(distanceKm) {
         return formatCompactDistanceValue(distanceKm);
     }
@@ -54,6 +59,16 @@ module GateDistanceUtils {
         }
 
         return [_formatTenthDistance(_convertKmToDisplayDistance(distanceKm, unitSetting)), unit];
+    }
+
+    function formatSignedCompactDistanceParts(distanceKm) {
+        var unitSetting = _getDistanceUnitsSetting();
+        var unit = _distanceUnitsSettingToDisplayUnit(unitSetting);
+        if (distanceKm == null) {
+            return ["--.-", unit];
+        }
+
+        return [_formatSignedTenthDistance(_convertKmToDisplayDistance(distanceKm, unitSetting)), unit];
     }
 
     function formatDistanceTenthKm(distanceTenthKm) {
@@ -106,6 +121,25 @@ module GateDistanceUtils {
             return [_formatHundredthDistance(displayDistance), unit];
         }
         return [_formatTenthDistance(displayDistance), unit];
+    }
+
+    function formatPreciseCompactDistance(distanceKm) {
+        var parts = formatPreciseCompactDistanceParts(distanceKm);
+        return parts[DISTANCE_PARTS_VALUE] + parts[DISTANCE_PARTS_UNIT];
+    }
+
+    function formatPreciseCompactDistanceValue(distanceKm) {
+        return formatPreciseCompactDistanceParts(distanceKm)[DISTANCE_PARTS_VALUE];
+    }
+
+    function formatPreciseCompactDistanceParts(distanceKm) {
+        var unitSetting = _getDistanceUnitsSetting();
+        var unit = _distanceUnitsSettingToDisplayUnit(unitSetting);
+        if (distanceKm == null) {
+            return ["--.--", unit];
+        }
+
+        return [_formatHundredthDistance(_convertKmToDisplayDistance(distanceKm, unitSetting)), unit];
     }
 
     function getDisplayDistanceUnit() {
@@ -174,5 +208,23 @@ module GateDistanceUtils {
         var wholePart = Math.floor(roundedHundredth / 100);
         var fracPart = roundedHundredth - (wholePart * 100);
         return wholePart.format("%d") + "." + fracPart.format("%02d");
+    }
+
+    function _formatSignedTenthDistance(distance) {
+        var absDistance = distance;
+        var isNegative = false;
+        if (absDistance < 0) {
+            absDistance = -absDistance;
+            isNegative = true;
+        }
+
+        var roundedTenth = Math.floor((absDistance * 10.0) + 0.5);
+        var whole = Math.floor(roundedTenth / 10);
+        var decimal = roundedTenth - (whole * 10);
+        var formatted = whole.format("%d") + "." + decimal.format("%d");
+        if (isNegative and roundedTenth > 0) {
+            return "-" + formatted;
+        }
+        return formatted;
     }
 }

@@ -46,6 +46,11 @@ RACE_CODE_SALT_ENV = "GATECHECKER_RACE_CODE_SALT"
 APP_NAME_ENG = "Cutoff Guide"
 APP_NAME_JPN = "関門ガイド"
 DEFAULT_RACE_CODE = "SYD26-F42-8LLH"
+DEFAULT_GATE_LAP_ADJUST_ENABLED = "false"
+DEFAULT_SIMULATOR_MANUAL_LAP_FALLBACK_ENABLED = os.environ.get(
+    "GATECHECKER_SIMULATOR_MANUAL_LAP_FALLBACK_ENABLED",
+    "false",
+).lower()
 STRINGS_COMMON_ENG = {
     "code_ok": "READY",
     "code_error": "CONFIG ERROR",
@@ -878,11 +883,16 @@ def build_global_properties_text() -> str:
         'xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">\n'
         "    <properties>\n"
         f'        <property id="raceCode" type="string">{DEFAULT_RACE_CODE}</property>\n'
+        f'        <property id="gateLapAdjustEnabled" type="boolean">{DEFAULT_GATE_LAP_ADJUST_ENABLED}</property>\n'
+        f'        <property id="simulatorManualLapFallbackEnabled" type="boolean">{DEFAULT_SIMULATOR_MANUAL_LAP_FALLBACK_ENABLED}</property>\n'
         "    </properties>\n"
         "\n"
         "    <settings>\n"
-        '        <setting propertyKey="@Properties.raceCode" title="Race Code / レースコード">\n'
+        '        <setting propertyKey="@Properties.raceCode" title="Race Code">\n'
         '            <settingConfig type="alphaNumeric" maxLength="24" required="false" />\n'
+        "        </setting>\n"
+        '        <setting propertyKey="@Properties.gateLapAdjustEnabled" title="Gate Lap Adjust">\n'
+        '            <settingConfig type="boolean" />\n'
         "        </setting>\n"
         "    </settings>\n"
         "</resources>\n"
