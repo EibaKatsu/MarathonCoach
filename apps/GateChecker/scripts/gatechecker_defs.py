@@ -46,6 +46,11 @@ RACE_CODE_SALT_ENV = "GATECHECKER_RACE_CODE_SALT"
 APP_NAME_ENG = "Cutoff Guide"
 APP_NAME_JPN = "関門ガイド"
 DEFAULT_RACE_CODE = "SYD26-F42-8LLH"
+DEFAULT_GATE_LAP_ADJUST_ENABLED = "false"
+DEFAULT_SIMULATOR_MANUAL_LAP_FALLBACK_ENABLED = os.environ.get(
+    "GATECHECKER_SIMULATOR_MANUAL_LAP_FALLBACK_ENABLED",
+    "false",
+).lower()
 STRINGS_COMMON_ENG = {
     "code_ok": "READY",
     "code_error": "CONFIG ERROR",
@@ -88,13 +93,6 @@ class ValidationError(ValueError):
 
 
 @dataclass(frozen=True)
-class LegacyBuildConfig:
-    app_id: str
-    version: str
-    race_key: str
-
-
-@dataclass(frozen=True)
 class GlobalAppConfig:
     app_id: str
     version: str
@@ -109,7 +107,6 @@ class RaceIndexEntry:
     region: str | None
     country: str | None
     category: str | None
-    legacy_build: LegacyBuildConfig | None
 
 
 @dataclass(frozen=True)
@@ -415,41 +412,6 @@ def load_index_entries(
     raw_races = index_data.get("races")
     global_app = _parse_global_app(index_data.get("global_app"))
 
-    if isinstance(raw_races, dict):
-        entries = []
-        for raw_race_id, raw_entry in raw_races.items():
-            race_id = str(raw_race_id)
-            ensure_race_id(race_id, "race_index key")
-            if not isinstance(raw_entry, dict):
-                raise ValidationError(f"races.{race_id} must be a mapping.")
-            definition = raw_entry.get("definition")
-            version = raw_entry.get("version")
-            app_id = raw_entry.get("app_id")
-            if not isinstance(definition, str) or not definition:
-                raise ValidationError(f"races.{race_id}.definition must be a string.")
-            if not isinstance(version, str) or not version:
-                raise ValidationError(f"races.{race_id}.version must be a string.")
-            if not isinstance(app_id, str) or not app_id:
-                raise ValidationError(f"races.{race_id}.app_id must be a string.")
-            ensure_uuid(app_id, f"races.{race_id}.app_id")
-            entries.append(
-                RaceIndexEntry(
-                    race_id=race_id,
-                    definition_path=RACE_DEFS_DIR / definition,
-                    status="active",
-                    sample_free=False,
-                    region=None,
-                    country=None,
-                    category=None,
-                    legacy_build=LegacyBuildConfig(
-                        app_id=app_id,
-                        version=version,
-                        race_key=race_id,
-                    ),
-                )
-            )
-        return global_app, sorted(entries, key=lambda item: item.race_id)
-
     if not isinstance(raw_races, list) or not raw_races:
         raise ValidationError(f"{index_path} must define races.")
 
@@ -475,7 +437,6 @@ def load_index_entries(
         raw_sort = raw_entry.get("sort")
         if raw_sort is not None and not isinstance(raw_sort, dict):
             raise ValidationError(f"races[{index}].sort must be a mapping when provided.")
-        legacy_build = _parse_legacy_build(raw_entry.get("legacy"), race_id)
         entries.append(
             RaceIndexEntry(
                 race_id=race_id,
@@ -485,7 +446,6 @@ def load_index_entries(
                 region=_optional_mapping_string(raw_sort, "region"),
                 country=_optional_mapping_string(raw_sort, "country"),
                 category=_optional_mapping_string(raw_sort, "category"),
-                legacy_build=legacy_build,
             )
         )
     return global_app, entries
@@ -506,25 +466,6 @@ def _parse_global_app(raw_global_app: Any) -> GlobalAppConfig | None:
     return GlobalAppConfig(app_id=app_id, version=version)
 
 
-def _parse_legacy_build(raw_legacy: Any, race_id: str) -> LegacyBuildConfig | None:
-    if raw_legacy is None:
-        return None
-    if not isinstance(raw_legacy, dict):
-        raise ValidationError(f"legacy for {race_id} must be a mapping.")
-    app_id = raw_legacy.get("app_id")
-    version = raw_legacy.get("version")
-    race_key = raw_legacy.get("race_key", race_id)
-    if not isinstance(app_id, str) or not app_id:
-        raise ValidationError(f"legacy.app_id for {race_id} must be a string.")
-    if not isinstance(version, str) or not version:
-        raise ValidationError(f"legacy.version for {race_id} must be a string.")
-    if not isinstance(race_key, str) or not race_key:
-        raise ValidationError(f"legacy.race_key for {race_id} must be a string.")
-    ensure_uuid(app_id, f"legacy.app_id for {race_id}")
-    ensure_race_id(race_key, f"legacy.race_key for {race_id}")
-    return LegacyBuildConfig(app_id=app_id, version=version, race_key=race_key)
-
-
 def _optional_mapping_string(mapping: Any, key: str) -> str | None:
     if not isinstance(mapping, dict):
         return None
@@ -537,14 +478,7 @@ def _optional_mapping_string(mapping: Any, key: str) -> str | None:
 
 
 def find_race_entry(identifier: str, entries: list[RaceIndexEntry]) -> RaceIndexEntry:
-    matches = [
-        entry
-        for entry in entries
-        if entry.race_id == identifier
-        or (
-            entry.legacy_build is not None and entry.legacy_build.race_key == identifier
-        )
-    ]
+    matches = [entry for entry in entries if entry.race_id == identifier]
     if not matches:
         raise ValidationError(f"race not found in race_index.yml: {identifier}")
     if len(matches) > 1:
@@ -555,9 +489,6 @@ def find_race_entry(identifier: str, entries: list[RaceIndexEntry]) -> RaceIndex
 def parse_race_definition(entry: RaceIndexEntry) -> RaceMeta:
     data = load_yaml(entry.definition_path)
     definition_race_id = data.get("race_id")
-    legacy_race_key = data.get("race_key")
-    if definition_race_id is None:
-        definition_race_id = legacy_race_key
     if definition_race_id != entry.race_id:
         raise ValidationError(
             f"Definition race_id mismatch: {definition_race_id!r} != {entry.race_id!r}"
@@ -729,12 +660,8 @@ def _parse_multi_course_definition(
 
 def _resolve_course_id(raw_course: dict[str, Any], index: int) -> str:
     course_id = raw_course.get("course_id")
-    if course_id is None:
-        course_id = raw_course.get("courseCode")
     if not isinstance(course_id, str) or not course_id:
-        raise ValidationError(
-            f"courses[{index}].course_id or courses[{index}].courseCode must be a non-empty string."
-        )
+        raise ValidationError(f"courses[{index}].course_id must be a non-empty string.")
     ensure_course_id(course_id, f"courses[{index}].course_id")
     return course_id
 
@@ -743,18 +670,9 @@ def _resolve_course_names(raw_course: dict[str, Any], index: int) -> tuple[str, 
     course_name = raw_course.get("course_name")
     if isinstance(course_name, dict):
         return parse_display_names(raw_course, "course_name")
-
-    jpn = raw_course.get("courseNameJa")
-    eng = raw_course.get("courseNameEn")
-    if not isinstance(jpn, str) or not jpn:
-        raise ValidationError(
-            f"courses[{index}].course_name.jpn or courses[{index}].courseNameJa must be a non-empty string."
-        )
-    if not isinstance(eng, str) or not eng:
-        raise ValidationError(
-            f"courses[{index}].course_name.eng or courses[{index}].courseNameEn must be a non-empty string."
-        )
-    return jpn, eng
+    raise ValidationError(
+        f"courses[{index}].course_name must be a mapping with jpn/eng."
+    )
 
 
 def _resolve_race_code(
@@ -920,24 +838,6 @@ def xml_escape(text: str) -> str:
     )
 
 
-def build_legacy_courses_body(courses: list[CourseMeta]) -> str:
-    rendered = []
-    for course in courses:
-        rendered.append(
-            "            [\n"
-            f"                {mc_string_literal(course.course_id)},\n"
-            f"                {mc_string_literal(course.course_name_jpn)},\n"
-            f"                {mc_string_literal(course.course_name_eng)},\n"
-            f"                {format_decimal(course.distance_km)},\n"
-            "                [\n"
-            f"{build_gates_body(course.gates, '                    ')}\n"
-            "                ],\n"
-            f"                [{build_aids_body(course.aids)}]\n"
-            "            ]"
-        )
-    return ",\n".join(rendered)
-
-
 def build_global_course_rows(races: list[RaceMeta]) -> str:
     rendered = []
     for race in races:
@@ -983,11 +883,16 @@ def build_global_properties_text() -> str:
         'xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">\n'
         "    <properties>\n"
         f'        <property id="raceCode" type="string">{DEFAULT_RACE_CODE}</property>\n'
+        f'        <property id="gateLapAdjustEnabled" type="boolean">{DEFAULT_GATE_LAP_ADJUST_ENABLED}</property>\n'
+        f'        <property id="simulatorManualLapFallbackEnabled" type="boolean">{DEFAULT_SIMULATOR_MANUAL_LAP_FALLBACK_ENABLED}</property>\n'
         "    </properties>\n"
         "\n"
         "    <settings>\n"
-        '        <setting propertyKey="@Properties.raceCode" title="Race Code / レースコード">\n'
+        '        <setting propertyKey="@Properties.raceCode" title="Race Code">\n'
         '            <settingConfig type="alphaNumeric" maxLength="24" required="false" />\n'
+        "        </setting>\n"
+        '        <setting propertyKey="@Properties.gateLapAdjustEnabled" title="Gate Lap Adjust">\n'
+        '            <settingConfig type="boolean" />\n'
         "        </setting>\n"
         "    </settings>\n"
         "</resources>\n"

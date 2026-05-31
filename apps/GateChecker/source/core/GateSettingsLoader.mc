@@ -1,5 +1,6 @@
 using Toybox.Application as App;
 using Toybox.Application.Properties as Props;
+using Toybox.Lang as Lang;
 using Toybox.System as Sys;
 
 module GateSettingsLoader {
@@ -11,26 +12,12 @@ module GateSettingsLoader {
         return raceCode;
     }
 
-    function loadCourseCode() {
-        var courseCode = loadPropertyString("courseCode");
-        _log("loadCourseCode", "courseCode=" + _diag(courseCode));
-        return courseCode;
+    function loadGateLapAdjustEnabled() {
+        return loadPropertyBoolean("gateLapAdjustEnabled", false);
     }
 
-    function loadSelectionCode() {
-        var raceCode = loadPropertyString("raceCode");
-        var courseCode = loadPropertyString("courseCode");
-        var selectionCode = raceCode;
-        if (selectionCode.length() <= 0) {
-            selectionCode = courseCode;
-        }
-        _log(
-            "loadSelectionCode",
-            "raceCode=" + _diag(raceCode) +
-            " courseCode=" + _diag(courseCode) +
-            " selected=" + _diag(selectionCode)
-        );
-        return selectionCode;
+    function loadSimulatorManualLapFallbackEnabled() {
+        return loadPropertyBoolean("simulatorManualLapFallbackEnabled", false);
     }
 
     function loadPropertyString(key) {
@@ -41,12 +28,31 @@ module GateSettingsLoader {
         return value.toString();
     }
 
+    function loadPropertyBoolean(key, defaultValue) {
+        var value = getPropertyValue(key);
+        if (value == null) {
+            return defaultValue;
+        }
+        if (value instanceof Lang.Boolean) {
+            return value;
+        }
+
+        var valueText = value.toString();
+        if (valueText == "true" or valueText == "TRUE" or valueText == "1") {
+            return true;
+        }
+        if (valueText == "false" or valueText == "FALSE" or valueText == "0") {
+            return false;
+        }
+        return defaultValue;
+    }
+
     function loadAppProperties() {
         _log(
             "loadAppProperties",
             "raceCode=" + _diag(getPropertyValue("raceCode")) +
-            " courseCode=" + _diag(getPropertyValue("courseCode")) +
-            " courseIndex=" + _diag(getPropertyValue("courseIndex"))
+            " gateLapAdjustEnabled=" + _diag(getPropertyValue("gateLapAdjustEnabled")) +
+            " simulatorManualLapFallbackEnabled=" + _diag(getPropertyValue("simulatorManualLapFallbackEnabled"))
         );
     }
 

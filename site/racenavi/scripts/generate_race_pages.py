@@ -792,17 +792,11 @@ def normalize_course_names(course: dict[str, Any], race_name_ja: str, race_name_
     localized_course_name = course.get("course_name")
     name_ja = first_non_empty(
         localized_name(localized_course_name, "ja", ""),
-        course.get("courseNameJa"),
-        course.get("courseName"),
         course.get("course_id"),
-        course.get("courseCode"),
     )
     name_en = first_non_empty(
         localized_name(localized_course_name, "en", ""),
-        course.get("courseNameEn"),
-        course.get("courseName"),
         course.get("course_id"),
-        course.get("courseCode"),
     )
     if name_ja and name_en:
         return name_ja, name_en
@@ -818,9 +812,8 @@ def normalize_course_names(course: dict[str, Any], race_name_ja: str, race_name_
 def normalize_courses(data: dict[str, Any], race_name_ja: str, race_name_en: str) -> list[Course]:
     race_info = data.get("race", {})
     raw_courses = data.get("courses") or [{
-        "courseCode": "default",
-        "courseNameJa": race_name_ja,
-        "courseNameEn": race_name_en,
+        "course_id": "default",
+        "course_name": {"jpn": race_name_ja, "eng": race_name_en},
         "distance_km": race_info.get("distance_km"),
         "distance_mi": race_info.get("distance_mi"),
         "gates": data.get("gates", []),
@@ -840,7 +833,7 @@ def normalize_courses(data: dict[str, Any], race_name_ja: str, race_name_en: str
             label = ""
 
         courses.append(Course(
-            code=str(raw_course.get("course_id") or raw_course.get("courseCode") or f"course-{index}"),
+            code=str(raw_course.get("course_id") or f"course-{index}"),
             race_code=normalize_text(raw_course.get("race_code")),
             name_ja=name_ja,
             name_en=name_en,
@@ -943,10 +936,10 @@ def load_races() -> list[Race]:
         definition_path = RACE_DEFS_DIR / str(definition_ref)
         data = load_yaml(definition_path)
         display_name = data.get("display_name", {})
-        name_ja = localized_name(display_name, "ja", str(data.get("slug") or data.get("race_key") or ""))
+        name_ja = localized_name(display_name, "ja", str(data.get("slug") or definition_path.stem))
         name_en = localized_name(display_name, "en", name_ja)
         race_info = data.get("race", {})
-        slug = str(data.get("slug") or data.get("race_key") or definition_path.stem)
+        slug = str(data.get("slug") or definition_path.stem)
         country_ja, country_en = resolve_country(str(race_info.get("timezone") or ""))
         connect_iq_url_ja, connect_iq_url_en = extract_connect_iq_urls(meta, data)
 

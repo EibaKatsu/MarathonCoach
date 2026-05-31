@@ -17,7 +17,6 @@ If the entered `Race Code` exists in the generated internal course list, the app
   - global app metadata
   - race file index
   - site/management metadata such as `sample_free`
-  - optional `legacy` metadata for old per-race builds
 - `apps/GateChecker/race_defs/races/*.yml`
   - human-edited race definitions
   - one file per race
@@ -109,13 +108,6 @@ courses:
       - mi: 3.0
       - mi: 6.0
 ```
-
-Compatibility:
-
-- Legacy files that still use `race_key` are still accepted
-- Legacy multi-course files that still use `courseCode`, `courseNameJa`, `courseNameEn` are still accepted
-- Legacy single-course files without `race_code` are still accepted
-- Missing legacy `race_code` values are auto-generated during global build
 
 Validation performed by the generators:
 
@@ -214,29 +206,11 @@ Recommended flow for the global app:
 
 ```bash
 apps/GateChecker/scripts/build_gatechecker_global.sh fr57042mm
-apps/GateChecker/scripts/run_gatechecker_global_sim.sh --race-code SAMP26-F42-A7K3
+apps/GateChecker/scripts/run_gatechecker_global_sim.sh
 ```
 
-`run_gatechecker_global_sim.sh` builds the global app, injects the requested `Race Code` into the generated settings JSON, and sends both PRG and settings JSON to the simulator via `monkeydo`.
-
-Legacy race-specific simulator helper still exists:
-
-```bash
-apps/GateChecker/scripts/run_gatechecker_sim.sh --race 20261018_sample_multi_course --course full_wave2
-```
-
-That path is legacy and does not represent the new store model.
-
-## Legacy Per-Race Build
-
-Race-specific build scripts are still kept for compatibility:
-
-- `apps/GateChecker/scripts/generate_gatechecker_race.py`
-- `apps/GateChecker/scripts/build_gatechecker_race.sh`
-- `apps/GateChecker/scripts/build_gatechecker_release_package.sh`
-- `apps/GateChecker/scripts/run_gatechecker_sim.sh`
-
-These are legacy workflows. The primary product direction is the single global app.
+`run_gatechecker_global_sim.sh` builds the global app and sends both PRG and settings JSON to the simulator via `monkeydo`.
+After launch, enter any supported `Race Code` in Garmin Connect app settings.
 
 ## Notes
 

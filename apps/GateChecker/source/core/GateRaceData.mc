@@ -29,14 +29,6 @@ module GateRaceData {
     const RESOLVED_REQUESTED_CODE = 1;
     const RESOLVED_REASON = 2;
     const COURSE_DEBUG_LOG = false;
-    const LEGACY_COURSE_SIZE = 6;
-
-    const LEGACY_COURSE_CODE = 0;
-    const LEGACY_COURSE_NAME_JPN = 1;
-    const LEGACY_COURSE_NAME_ENG = 2;
-    const LEGACY_COURSE_DISTANCE_KM = 3;
-    const LEGACY_COURSE_GATES = 4;
-    const LEGACY_COURSE_AIDS = 5;
 
     var _requestedRaceCode = null;
     var _resolvedCourseStateCache = null;
@@ -311,10 +303,10 @@ module GateRaceData {
 
     function loadRequestedRaceCodeFromProperties() {
         _resolvedCourseStateCache = null;
-        _requestedRaceCode = _normalizeRaceCode(GateSettingsLoader.loadSelectionCode());
+        _requestedRaceCode = _normalizeRaceCode(GateSettingsLoader.loadRaceCode());
         _log(
             "loadRequestedRaceCodeFromProperties",
-            "selectionCode=" + _diag(_requestedRaceCode)
+            "raceCode=" + _diag(_requestedRaceCode)
         );
         return _requestedRaceCode;
     }
@@ -364,17 +356,6 @@ module GateRaceData {
             return [requestedCourse, requestedRaceCode, "race_code_matched"];
         }
 
-        requestedCourse = _findCourseByCourseCode(courses, requestedRaceCode);
-        if (requestedCourse != null) {
-            _log(
-                "_buildResolvedCourseState",
-                "requested=" + _diag(requestedRaceCode) +
-                " selected=" + _diag(_getEntryValue(requestedCourse, ENTRY_RACE_CODE)) +
-                " reason=course_code_matched"
-            );
-            return [requestedCourse, requestedRaceCode, "course_code_matched"];
-        }
-
         _log(
             "_buildResolvedCourseState",
             "requested=" + _diag(requestedRaceCode) +
@@ -394,28 +375,6 @@ module GateRaceData {
             }
         }
         return null;
-    }
-
-    function _findCourseByCourseCode(courses, courseCode) {
-        if (courses == null or !(courses instanceof Lang.Array)) {
-            return null;
-        }
-        for (var i = 0; i < courses.size(); i += 1) {
-            var course = courses[i];
-            if (
-                _stringEquals(
-                    _normalizeRaceCode(_getEntryValue(course, ENTRY_COURSE_ID)),
-                    courseCode
-                )
-            ) {
-                return course;
-            }
-        }
-        return null;
-    }
-
-    function _isLegacyCourseEntry(course) as Lang.Boolean {
-        return course != null and course instanceof Lang.Array and course.size() == LEGACY_COURSE_SIZE;
     }
 
     function _normalizeRaceCode(rawRaceCode) {
@@ -503,59 +462,10 @@ module GateRaceData {
         if (course == null or !(course instanceof Lang.Array)) {
             return null;
         }
-        if (_isLegacyCourseEntry(course)) {
-            return _getLegacyEntryValue(course, index);
-        }
         if (index < 0 or index >= course.size()) {
             return null;
         }
         return course[index];
-    }
-
-    function _getLegacyEntryValue(course, index) {
-        if (index == ENTRY_RACE_CODE) {
-            return course[LEGACY_COURSE_CODE];
-        }
-        if (index == ENTRY_RACE_ID) {
-            return GateRaceConfig.getRaceKey();
-        }
-        if (index == ENTRY_COURSE_ID) {
-            return course[LEGACY_COURSE_CODE];
-        }
-        if (index == ENTRY_RACE_NAME_JPN) {
-            return GateRaceConfig.getRaceNameJpn();
-        }
-        if (index == ENTRY_RACE_NAME_ENG) {
-            return GateRaceConfig.getRaceNameEng();
-        }
-        if (index == ENTRY_COURSE_NAME_JPN) {
-            return course[LEGACY_COURSE_NAME_JPN];
-        }
-        if (index == ENTRY_COURSE_NAME_ENG) {
-            return course[LEGACY_COURSE_NAME_ENG];
-        }
-        if (index == ENTRY_RACE_YEAR) {
-            return GateRaceConfig.getRaceYear();
-        }
-        if (index == ENTRY_RACE_MONTH) {
-            return GateRaceConfig.getRaceMonth();
-        }
-        if (index == ENTRY_RACE_DAY) {
-            return GateRaceConfig.getRaceDay();
-        }
-        if (index == ENTRY_RACE_TIMEZONE) {
-            return GateRaceConfig.getRaceTimezone();
-        }
-        if (index == ENTRY_DISTANCE_KM) {
-            return course[LEGACY_COURSE_DISTANCE_KM];
-        }
-        if (index == ENTRY_GATES) {
-            return course[LEGACY_COURSE_GATES];
-        }
-        if (index == ENTRY_AIDS) {
-            return course[LEGACY_COURSE_AIDS];
-        }
-        return null;
     }
 
     function _getGateValue(gate, index) {

@@ -20,12 +20,6 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
   - `skills/custom-code-generator/SKILL.md`
 - `gatechecker-race-definition`: `GateCheckerに○○の関門データを設定して` / `大会設定ファイルを作って` / `大会名から race 定義を作って` 指示時に使用
   - `skills/gatechecker-race-definition/SKILL.md`
-- `gatechecker-release-package`: `公開配布用iqを作って` / `大会名とリリースバージョンでiqファイルを作って` / `GateCheckerのリリースパッケージを作って` 指示時に使用
-  - `skills/gatechecker-release-package/SKILL.md`
-- `gatechecker-listing-text`: `Connect IQ Listing Textを作って` / `ストアタイトルと説明文を作って` / `Listing文を作って` 指示時に使用
-  - `skills/gatechecker-listing-text/SKILL.md`
-- `新規関門ガイドアプリ作成`: `新規関門ガイドアプリ作成` / `未取り込みレースを探して関門ガイドアプリを作って` / `大会を選んで取り込みから公開iq作成までやって` 指示時に使用
-  - `skills/new-gatechecker-guide-app/SKILL.md`
 - `x-post-writer`: `X投稿文を作って` / `次の投稿を考えて` / `ポスト文を考えて` 指示時に使用
   - `skills/x-post-writer/SKILL.md`
 - `note-post-writer`: `note投稿文を作って` / `note記事の下書きを作って` / `既存のnoteの流れを見て次の記事案を出して` 指示時に使用
@@ -67,6 +61,13 @@ A skill is a set of local instructions stored in a `SKILL.md` file.
 - 新機能追加は原則ストップし、公開に必要な品質向上を優先する。
 - 原因未特定のクラッシュや異常系では、まず `PROCESS.md` の診断ログ方針に従って `入力値 / 判定結果 / 表示値` を採取し、原因特定前に推測の修正やフォールバック追加を進めない。
 - Codex への実行モード指定は、今後の既定として `/fast off` を維持する。
+
+## 秘密鍵運用
+- `developer_key` は既存Connect IQアプリの更新に必要な秘密鍵。
+- `developer_key` の削除・再生成・コミットは禁止。
+- 通常は `CIQ_DEV_KEY` / `CIQ_RELEASE_KEY` で参照する。
+- 推奨保存先: `~/.secure/racenavi/connectiq/developer_key`
+- `.vscode/developer_key` は上記保存先への symlink とする。
 
 ## 備考
 - `AGENT.md` は廃止し、以後は本構成を正とする。

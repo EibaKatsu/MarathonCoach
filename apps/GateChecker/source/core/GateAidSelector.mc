@@ -1,4 +1,5 @@
 using Toybox.Lang as Lang;
+using GatePointTransitionPolicy;
 using GateRaceData;
 
 module GateAidSelector {
@@ -33,7 +34,7 @@ module GateAidSelector {
             if (aidDistanceKm == null) {
                 continue;
             }
-            if (currentDistanceKm <= aidDistanceKm) {
+            if (GatePointTransitionPolicy.shouldDisplayPoint(currentDistanceKm, aidDistanceKm)) {
                 config[CFG_HAS_NEXT_AID] = true;
                 config[CFG_NEXT_AID] = aids[i];
                 config[CFG_NEXT_INDEX] = i;

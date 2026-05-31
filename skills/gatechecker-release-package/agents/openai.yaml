@@ -1,4 +1,0 @@
-interface:
-  display_name: "GateChecker Release Package"
-  short_description: "Build a race-specific public .iq package for GateChecker"
-  default_prompt: "GateCheckerの大会名とリリースバージョンを指定して公開配布用iqを作って"

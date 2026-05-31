@@ -13,10 +13,6 @@ races:
       region: Sample
       country: ZZ
       category: sample
-    legacy:
-      race_key: 20260428_gatechecker_beta_check
-      app_id: 023ed61c-e951-4e8f-a228-7de069c931ea
-      version: 0.1.1
 
   - race_id: 20260503_bmo_vancouver_marathon
     file: races/20260503_bmo_vancouver_marathon.yml
@@ -26,10 +22,6 @@ races:
       region: North America
       country: CA
       category: marathon
-    legacy:
-      race_key: 20260503_bmo_vancouver_marathon
-      app_id: 5435b1ff-486b-4355-9c14-542b631f266c
-      version: 0.1.0
 
   - race_id: 20260503_flying_pig_marathon
     file: races/20260503_flying_pig_marathon.yml
@@ -39,10 +31,6 @@ races:
       region: North America
       country: US
       category: marathon
-    legacy:
-      race_key: 20260503_flying_pig_marathon
-      app_id: d6f3337a-6862-4ca4-a252-7e0af48ab0c4
-      version: 0.1.0
 
   - race_id: 20260503_pittsburgh_marathon
     file: races/20260503_pittsburgh_marathon.yml
@@ -52,10 +40,6 @@ races:
       region: North America
       country: US
       category: marathon
-    legacy:
-      race_key: 20260503_pittsburgh_marathon
-      app_id: bef26e98-9cdd-4201-ab4a-89fc6ce2e5f9
-      version: 0.1.0
 
   - race_id: 20260517_cleveland_marathon
     file: races/20260517_cleveland_marathon.yml
@@ -65,10 +49,6 @@ races:
       region: North America
       country: US
       category: marathon
-    legacy:
-      race_key: 20260517_cleveland_marathon
-      app_id: 396c147b-b3d1-45ad-9969-1d8d5652afc6
-      version: 0.1.0
 
   - race_id: 20260517_iwate_oshu_kirameki_marathon
     file: races/20260517_iwate_oshu_kirameki_marathon.yml
@@ -78,10 +58,6 @@ races:
       region: Asia
       country: JP
       category: marathon
-    legacy:
-      race_key: 20260517_iwate_oshu_kirameki_marathon
-      app_id: e7edc6e6-be37-4774-8069-4a115ddc67bd
-      version: 0.1.0
 
   - race_id: 20260524_kurobe_meisui_marathon
     file: races/20260524_kurobe_meisui_marathon.yml
@@ -91,10 +67,6 @@ races:
       region: Asia
       country: JP
       category: marathon
-    legacy:
-      race_key: 20260524_kurobe_meisui_marathon
-      app_id: 7d88321e-96e6-42ed-ac95-70baff556612
-      version: 0.1.0
 
   - race_id: 20260524_tartan_ottawa_international_marathon
     file: races/20260524_tartan_ottawa_international_marathon.yml
@@ -104,10 +76,6 @@ races:
       region: North America
       country: CA
       category: marathon
-    legacy:
-      race_key: 20260524_tartan_ottawa_international_marathon
-      app_id: bc7e02d5-9778-4e03-8ed8-d6b986d8dfc6
-      version: 0.1.0
 
   - race_id: 20260530_stockholm_marathon
     file: races/20260530_stockholm_marathon.yml
@@ -117,10 +85,6 @@ races:
       region: Europe
       country: SE
       category: marathon
-    legacy:
-      race_key: 20260530_stockholm_marathon
-      app_id: ebe0b2bf-a312-4e3f-b0c5-b6483a1f940f
-      version: 0.1.0
 
   - race_id: 20260531_nara_ultra_marathon
     file: races/20260531_nara_ultra_marathon.yml
@@ -139,10 +103,6 @@ races:
       region: Asia
       country: JP
       category: ultra
-    legacy:
-      race_key: 20260614_hida_takayama_ultramarathon
-      app_id: e9d0e8dc-eb37-4953-be8e-8547356ab5e9
-      version: 0.1.0
 
   - race_id: 20260628_hakodate_marathon
     file: races/20260628_hakodate_marathon.yml
@@ -152,10 +112,6 @@ races:
       region: Asia
       country: JP
       category: marathon
-    legacy:
-      race_key: 20260628_hakodate_marathon
-      app_id: e19ff169-f77f-44f1-a9ac-7c5ca2aa53f8
-      version: 0.1.0
 
   - race_id: 20260628_lake_saroma_100km_ultra_marathon
     file: races/20260628_lake_saroma_100km_ultra_marathon.yml
@@ -165,10 +121,6 @@ races:
       region: Asia
       country: JP
       category: ultra
-    legacy:
-      race_key: 20260628_lake_saroma_100km_ultra_marathon
-      app_id: 662bad21-6d5e-4b20-949a-e27b75c8e3b7
-      version: 0.1.0
 
   - race_id: sydney_marathon_2026
     file: races/sydney_marathon_2026.yml
@@ -187,10 +139,6 @@ races:
       region: Sample
       country: ZZ
       category: sample
-    legacy:
-      race_key: 20261018_gatechecker_mile_sample
-      app_id: 2c112e57-c887-483a-a989-83651cd0b951
-      version: 0.1.0
 
   - race_id: 20261018_sample_multi_course
     file: races/20261018_sample_multi_course.yml
@@ -200,10 +148,6 @@ races:
       region: Sample
       country: ZZ
       category: sample
-    legacy:
-      race_key: 20261018_sample_multi_course
-      app_id: 8efe4e50-38b8-49c3-acad-3797de088084
-      version: 0.1.0
 
   - race_id: 20261101_toyama_marathon
     file: races/20261101_toyama_marathon.yml
@@ -213,7 +157,3 @@ races:
       region: Asia
       country: JP
       category: marathon
-    legacy:
-      race_key: 20261101_toyama_marathon
-      app_id: 214f6dbb-0476-4778-a81b-eb9c7afc901d
-      version: 0.1.0

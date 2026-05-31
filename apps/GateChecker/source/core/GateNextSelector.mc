@@ -1,4 +1,5 @@
 using Toybox.Lang as Lang;
+using GatePointTransitionPolicy;
 using GateRaceData;
 
 module GateNextSelector {
@@ -18,6 +19,10 @@ module GateNextSelector {
     }
 
     function selectNextGate(gates, currentDistanceKm) as Lang.Array {
+        return selectNextGateFromIndex(gates, currentDistanceKm, 0);
+    }
+
+    function selectNextGateFromIndex(gates, currentDistanceKm, startIndex) as Lang.Array {
         var config = newDefaultConfig();
         if (gates == null or !(gates instanceof Lang.Array) or gates.size() <= 0) {
             config[CFG_REASON] = REASON_NO_GATES;
@@ -28,13 +33,22 @@ module GateNextSelector {
             return config;
         }
 
-        for (var i = 0; i < gates.size(); i += 1) {
+        var resolvedStartIndex = startIndex;
+        if (resolvedStartIndex == null or resolvedStartIndex < 0) {
+            resolvedStartIndex = 0;
+        }
+        if (resolvedStartIndex >= gates.size()) {
+            config[CFG_REASON] = REASON_PASSED_ALL_GATES;
+            return config;
+        }
+
+        for (var i = resolvedStartIndex; i < gates.size(); i += 1) {
             var gate = gates[i];
             var gateDistanceKm = GateRaceData.getGateDistanceKm(gate);
             if (gateDistanceKm == null) {
                 continue;
             }
-            if (currentDistanceKm <= gateDistanceKm) {
+            if (GatePointTransitionPolicy.shouldDisplayPoint(currentDistanceKm, gateDistanceKm)) {
                 config[CFG_HAS_NEXT_GATE] = true;
                 config[CFG_NEXT_GATE] = gate;
                 config[CFG_NEXT_INDEX] = i;
