@@ -73,7 +73,6 @@ Race Navi の X 投稿を、その場しのぎで書かずに「実際の履歴�
 - 追加確認が必要なときだけ以下を読む:
   - `PRODUCT.md`
   - `TASKS.md`
-  - `tasks/04-1_tester-recruitment/draft.md`
   - `site/racenavi/README.md`
 - 質問は最小限にする。イベントや目的が自明なら、確認より先に文案を出す。
 

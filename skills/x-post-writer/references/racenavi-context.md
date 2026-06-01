@@ -56,5 +56,5 @@
 
 - `PRODUCT.md`: プロダクト価値と対象
 - `TASKS.md`: 公開準備と X 募集の方針
-- `tasks/04-1_tester-recruitment/draft.md`: X 運用の温度感と募集文の草案
+- `TASKS.md`: X 運用の温度感と実機テスター募集方針
 - `site/racenavi/README.md`: LP / 公開先の最小情報

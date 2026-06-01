@@ -12,9 +12,9 @@
 - アプリ名: `レースナビ`
 - サブタイトル: `目標達成をサポートするペース&心拍ガイド`
 - 短文説明: `心拍CAPと予測ゴールを 1 画面にまとめ、レース中の迷いを減らし目標達成をサポート。`
-- 詳細説明ベース: `tasks/03-1_store-assets/draft.md`
-- 対応機種説明ベース: `tasks/03-1_store-assets/draft.md`
-- 設定方法説明ベース: `tasks/03-1_store-assets/draft.md`
+- 詳細説明ベース: `TASKS.md` の `3-1. 申請素材`
+- 対応機種説明ベース: `TASKS.md` の `3-1. 申請素材`
+- 設定方法説明ベース: `TASKS.md` の `3-1. 申請素材`
 
 ## 添付ファイル
 - `.iq`: `bin/releases/0.0.10/marathoncoach.iq`
