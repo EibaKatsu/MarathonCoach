@@ -108,20 +108,14 @@ X_USER_ID=
 
 将来追加するスクリプト候補:
 
-- `skills/x-post-writer/scripts/x_post_auth.py`
-  - 初回認可 URL の生成
-  - code -> access token / refresh token 交換
-- `skills/x-post-writer/scripts/x_post_publish.py`
-  - env 読み込み
-  - 必要なら refresh
-  - `POST /2/tweets`
-  - 投稿結果 JSON を返す
+- 認可 URL 生成と token 交換を行う補助スクリプト（未作成）
+- 投稿実行と refresh を行う補助スクリプト（未作成）
 
 ### CLI shape draft
 
 ```bash
-python3 skills/x-post-writer/scripts/x_post_publish.py post --text "本文"
-python3 skills/x-post-writer/scripts/x_post_publish.py reply --text "返信本文" --in-reply-to 1234567890123456789
+python3 <future_publish_script> post --text "本文"
+python3 <future_publish_script> reply --text "返信本文" --in-reply-to 1234567890123456789
 ```
 
 ## Safety rules for implementation

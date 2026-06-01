@@ -1,63 +1,68 @@
 ---
 name: gatechecker-race-definition
-description: GateChecker 向けの大会定義を作るスキル。ユーザーが「GateCheckerに○○の関門データを設定して」「大会設定ファイルを作って」「大会名から race 定義を作って」などと依頼したときに使う。大会名を受けたら公式情報を優先して検索し、関門情報とエイド情報を取得し、`apps/GateChecker/race_defs/races/*.yml` と `apps/GateChecker/race_defs/race_index.yml` を更新し、最後に取得元URLを表示する。
+description: GateChecker の race definition を単一アプリ + Race Code 方針で作成または更新するスキル。`race_id`、`courses[].course_id`、`courses[].course_name`、`courses[].race_code` を揃え、`race_defs` と `race_index` を更新して全体生成で検証する。
+status: active
 ---
 
 # GateChecker Race Definition
 
-このスキルは、GateChecker の大会別 race 定義を「公式情報確認 -> YAML 作成 -> index 登録 -> 検証 -> 出典提示」の順で作る。
+## Trigger
+- `GateCheckerに○○の関門データを設定して`
+- `大会設定ファイルを作って`
+- `大会名から race 定義を作って`
 
-## Quick Flow
+## Read first
+- `apps/GateChecker/README.md`
+- `apps/GateChecker/race_defs/race_index.yml`
+- `apps/GateChecker/race_defs/races/20261101_toyama_marathon.yml`
 
-1. 大会名から公式サイト、公式要項、公式コースページ、公式 PDF/JPG コースマップを優先して探す。
-2. 関門距離・関門時刻・スタート時刻・制限時間・エイド距離を確認する。
-3. `apps/GateChecker/race_defs/races/<race_key>.yml` を作成または更新する。
-4. `apps/GateChecker/race_defs/race_index.yml` に race を登録する。
-5. 生成スクリプトで定義を検証する。
-6. 最後に、使った取得元 URL をユーザーへ表示する。
+## Default flow
+1. 公式サイト、公式要項、公式コースページ、公式 PDF/JPG コースマップを優先して確認する。
+2. `race_id`、大会名、開催日、タイムゾーン、コース一覧を整理する。
+3. 各コースについて `course_id`、`course_name`、距離、関門、エイド、`race_code` の有無を整理する。
+4. `apps/GateChecker/race_defs/races/<race_id>.yml` を作成または更新する。
+5. `apps/GateChecker/race_defs/race_index.yml` に `race_id` と file entry を追加または更新する。
+6. `race_code` が未確定なら `generate_race_code.py` を使って候補を作る。
+7. `python3 apps/GateChecker/scripts/generate_gatechecker_all_races.py` で全体生成と検証を行う。
+8. 必要なら `apps/GateChecker/scripts/build_gatechecker_global.sh fr57042mm` で代表ビルドを確認する。
 
-## Source Rules
+## Commands
+```bash
+python3 apps/GateChecker/scripts/generate_race_code.py \
+  --race-id <race_id> \
+  --course-id <course_id> \
+  --year <year> \
+  --race-abbr <abbr> \
+  --course-label <label>
+```
 
-- 公式情報を最優先する。
-- 優先順は `公式要項 > 公式コースページ > 公式コースマップ画像/PDF > 公式ニュース`。
-- 公式情報で不足する場合だけ、RUNNET など大会公式が参照している準公式ページを補助的に使う。
-- 関門やエイドの距離・時刻は、非公式まとめサイトだけを根拠に確定しない。
-- 画像や PDF から読んだ値は、その URL を必ず最終報告に含める。
-- 推定が入る場合は、推定だと明示する。例: `GOAL cutoff は公式のスタート時刻 + 制限時間から補完`。
+```bash
+python3 apps/GateChecker/scripts/generate_gatechecker_all_races.py
+```
 
-## File Rules
-
-- race 定義ファイルは `apps/GateChecker/race_defs/races/<race_id>.yml` に置く。
-- `race_id` は `YYYYMMDD_<race_name>` 形式にする。例: `20260517_iwate_oshu_kirameki_marathon`
-- `display_name.jpn` は大会名のみを入れる。`関門チェッカー` は付けない。
-- `display_name.eng` も大会名のみを基本にする。`Gate Checker` は付けない。公式英語名がなければ過度に凝らず一貫したローマ字/英訳にする。
-- `race.timezone` は日本国内大会なら通常 `Asia/Tokyo`
-- 最終関門は距離ではなく `GOAL` を使う。
-- `gates` と `aids` は厳密に昇順、`0.1km` 単位に揃える。
-
-## race_index Rules
-
-- `apps/GateChecker/race_defs/race_index.yml` に該当 race がなければ追加する。
-- entry には `race_id` / `file` / `status` / `sample_free` / `sort` を設定する。
-- `global_app` や他 race の順序・値は壊さない。
+```bash
+apps/GateChecker/scripts/build_gatechecker_global.sh fr57042mm
+```
 
 ## Validation
-
-- まず定義ファイル単体を見直し、距離・時刻・日付書式を確認する。
-- 検証は `python3 apps/GateChecker/scripts/generate_gatechecker_all_races.py` を使う。
-- 生成検証で作業ツリーを不要に汚したくない場合は、`apps/GateChecker` を一時ディレクトリへコピーしてそこで検証する。
-- 検証失敗時は、推測で直さず `どの値が公式根拠とズレているか` を先に確認する。
+- `race_id` が `race_index.yml` と race file で一致していることを確認する。
+- `race_code` が全コースで一意で、空でなく、重複していないことを確認する。
+- `course_id` が同一 race 内で一意であることを確認する。
+- `distance_km` と `distance_mi` が排他的であることを確認する。
+- `gates` と `aids` が昇順であることを確認する。
+- `GOAL` sentinel が最後に 1 回だけ出ることを確認する。
+- `gates[].point` / `gates[].point_mi`、`aids[].km` / `aids[].mi` が混在していないことを確認する。
+- 検証失敗時は推測で直さず、公式根拠とのズレを先に確認する。
 
 ## Output
+- `race_key`（file stem）と `race_id`
+- 追加または更新したコース一覧
+- 各コースの `course_id` と `Race Code`
+- 使用した取得元 URL 一覧
+- 実行した検証コマンドと結果
+- 推定で補完した項目があればその明示
 
-- 何を作成/更新したかを短く伝える。
-- 関門と AID の取得根拠を 1 文で要約する。
-- 取得元 URL をフラットな箇条書きで並べる。
-- 推定が混じる場合は、その項目だけを分けて明示する。
-
-## Repo Pointers
-
-- 形式確認: `apps/GateChecker/README.md`
-- index: `apps/GateChecker/race_defs/race_index.yml`
-- 既存例: `apps/GateChecker/race_defs/races/20261101_toyama_marathon.yml`
-- 生成検証: `apps/GateChecker/scripts/generate_gatechecker_all_races.py`
+## Do not
+- 大会別アプリ生成を前提にしない。
+- `generate_gatechecker_all_races.py` を飛ばして完了扱いにしない。
+- 非公式まとめサイトだけを根拠に関門やエイドを確定しない。
